@@ -21,7 +21,7 @@ import java.util.Queue;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
-import org.apache.cassandra.transport.Server;
+import org.apache.cassandra.transport.ProtocolVersion;
 
 /**
  * Wraps a prepared statement and the {@link QueryOptions} of an operation.
@@ -94,7 +94,7 @@ public class PreparedAuditOperation implements AuditOperation
         Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
         for (ColumnSpecification column : options.getColumnSpecifications())
         {
-            String value = column.type.asCQL3Type().toCQLLiteral(values.remove(), Server.CURRENT_VERSION);
+            String value = column.type.asCQL3Type().toCQLLiteral(values.remove(), ProtocolVersion.CURRENT);
 
             fullStatement.append(value).append(", ");
         }

@@ -31,14 +31,15 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
+import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.Permission;
-import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
@@ -100,8 +101,12 @@ public class TestAuditAdapter
     @BeforeClass
     public static void beforeAll()
     {
-        Config.setClientMode(true);
+        DatabaseDescriptor.clientInitialization(true);
         oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
+
+        IAuthorizer authorizer = mock(IAuthorizer.class);
+        when(authorizer.requireAuthorization()).thenReturn(true);
+        DatabaseDescriptor.setAuthorizer(authorizer);
     }
 
     @After
@@ -114,7 +119,8 @@ public class TestAuditAdapter
     public static void afterAll()
     {
         DatabaseDescriptor.setPartitionerUnsafe(oldPartitionerToRestore);
-        Config.setClientMode(false);
+        DatabaseDescriptor.setAuthorizer(null);
+        DatabaseDescriptor.clientInitialization(false);
     }
 
     @Test
@@ -186,7 +192,6 @@ public class TestAuditAdapter
     public void testProcessPreparedStatementSuccessful() throws UnknownHostException
     {
         String preparedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?";
-        MD5Digest statementId = MD5Digest.compute(preparedQuery);
 
         String expectedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?['text', 'text']";
         InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
@@ -208,8 +213,7 @@ public class TestAuditAdapter
                 .permissions(ImmutableSet.of(Permission.SELECT))
                 .resource(DataResource.table("ks", "cf")));
 
-        auditAdapter.mapIdToQuery(statementId, preparedQuery);
-        auditAdapter.auditPrepared(statementId, mockStatement, mockState, mockOptions, expectedStatus);
+        auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus);
 
         // Capture and perform validation
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -230,7 +234,6 @@ public class TestAuditAdapter
     public void testProcessPreparedStatementFailure() throws UnknownHostException
     {
         String preparedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?";
-        MD5Digest statementId = MD5Digest.compute(preparedQuery);
 
         String expectedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?['text', 'text']";
         InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
@@ -252,8 +255,7 @@ public class TestAuditAdapter
                 .permissions(ImmutableSet.of(Permission.SELECT))
                 .resource(DataResource.table("ks", "cf")));
 
-        auditAdapter.mapIdToQuery(statementId, preparedQuery);
-        auditAdapter.auditPrepared(statementId, mockStatement, mockState, mockOptions, expectedStatus);
+        auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus);
 
         // Capture and perform validation
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -294,7 +296,7 @@ public class TestAuditAdapter
                 .permissions(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT))
                 .resource(DataResource.root()));
 
-        auditAdapter.auditBatch(mockBatchStatement, expectedBatchId, mockState, mockBatchOptions, expectedStatus);
+        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus);
 
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
         verify(mockAuditor, times(1)).audit(captor.capture());
@@ -338,7 +340,7 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(String.class), any(ClientState.class)))
         .thenAnswer(a -> a.getArgumentAt(0, AuditEntry.Builder.class));
 
-        auditAdapter.auditBatch(mockBatchStatement, expectedBatchId, mockState, mockBatchOptions, expectedStatus);
+        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus);
 
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
         verify(mockAuditor, times(3)).audit(captor.capture());
@@ -394,8 +396,7 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(ModificationStatement.class)))
         .thenAnswer(a -> a.getArgumentAt(0, AuditEntry.Builder.class));
 
-        auditAdapter.mapIdToQuery(id, preparedQuery);
-        auditAdapter.auditBatch(mockBatchStatement, expectedBatchId, mockState, mockBatchOptions, expectedStatus);
+        auditAdapter.auditBatch(mockBatchStatement, Arrays.asList(preparedQuery), expectedBatchId, mockState, mockBatchOptions, expectedStatus);
 
         // Begin, prepared statement, end
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);

@@ -17,7 +17,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-    <artifactId>ecaudit_c3.0</artifactId>
+    <artifactId>ecaudit_c3.11</artifactId>
     <version>0.12.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -33,7 +33,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <cassandra.version>3.0.16</cassandra.version>
+        <cassandra.version>3.11.2</cassandra.version>
 
         <assertj.version>3.10.0</assertj.version>
         <cassandra-driver.version>3.4.0</cassandra-driver.version>
@@ -191,7 +191,7 @@
             <plugin>
                 <artifactId>maven-release-plugin</artifactId>
                 <configuration>
-                    <tagNameFormat>ecaudit_c3.0-@{project.version}</tagNameFormat>
+                    <tagNameFormat>ecaudit_c3.11-@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
             <plugin>

@@ -20,6 +20,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -30,11 +31,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
+import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.config.Config;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
 import org.apache.commons.lang3.StringUtils;
@@ -66,7 +68,11 @@ public class TestAuditWhitelistManager
     @BeforeClass
     public static void beforeClass()
     {
-        Config.setClientMode(true);
+        DatabaseDescriptor.clientInitialization(true);
+
+        IAuthorizer authorizer = mock(IAuthorizer.class);
+        when(authorizer.requireAuthorization()).thenReturn(true);
+        DatabaseDescriptor.setAuthorizer(authorizer);
     }
 
     @Before
@@ -86,7 +92,8 @@ public class TestAuditWhitelistManager
     @AfterClass
     public static void afterClass()
     {
-        Config.setClientMode(false);
+        DatabaseDescriptor.setAuthenticator(null);
+        DatabaseDescriptor.clientInitialization(false);
     }
 
     @Test

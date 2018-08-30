@@ -6,6 +6,7 @@
 ## Version 0.10.0
 * Add support for combined YAML file and Role Based whitelists
 * Improve documentation and setup guide
+* Reduced memory footprint further for prepared statements (only in ecAudit for C* 3.11.x)
 
 ## Version 0.9.0
 * Explicitly ignoring RPC (Thrift) requests

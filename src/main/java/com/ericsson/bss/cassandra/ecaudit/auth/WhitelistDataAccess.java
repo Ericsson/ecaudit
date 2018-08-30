@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.Schema;
+import org.apache.cassandra.config.SchemaConstants;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.QueryProcessor;
@@ -57,12 +57,12 @@ public class WhitelistDataAccess
 
         loadWhitelistStatement = (SelectStatement) prepare(
                 "SELECT resources from %s.%s WHERE role = ? AND operation = ?",
-                AuthKeyspace.NAME,
+                SchemaConstants.AUTH_KEYSPACE_NAME,
                 AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS);
 
         deleteWhitelistStatement = (DeleteStatement) prepare(
                 "DELETE FROM %s.%s WHERE role = ?",
-                AuthKeyspace.NAME,
+                SchemaConstants.AUTH_KEYSPACE_NAME,
                 AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS);
     }
 
@@ -88,7 +88,7 @@ public class WhitelistDataAccess
 
         String statement = String.format(
                 statementTemplate,
-                AuthKeyspace.NAME,
+                SchemaConstants.AUTH_KEYSPACE_NAME,
                 AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS,
                 StringUtils.join(quotedWhitelistResources, ','),
                 escape(rolename),
@@ -103,7 +103,8 @@ public class WhitelistDataAccess
                 QueryState.forInternalCalls(),
                 QueryOptions.forInternalCalls(
                         consistencyForRole(rolename),
-                        Arrays.asList(ByteBufferUtil.bytes(rolename), ByteBufferUtil.bytes(whitelistOperation))));
+                        Arrays.asList(ByteBufferUtil.bytes(rolename), ByteBufferUtil.bytes(whitelistOperation))),
+                System.nanoTime());
 
         if (rows.result.isEmpty())
         {
@@ -121,7 +122,8 @@ public class WhitelistDataAccess
                 QueryState.forInternalCalls(),
                 QueryOptions.forInternalCalls(
                         consistencyForRole(rolename),
-                        Arrays.asList(ByteBufferUtil.bytes(rolename))));
+                        Arrays.asList(ByteBufferUtil.bytes(rolename))),
+                System.nanoTime());
     }
 
     private static void maybeCreateTable()

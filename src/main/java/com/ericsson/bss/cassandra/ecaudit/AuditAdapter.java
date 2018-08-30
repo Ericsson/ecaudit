@@ -19,9 +19,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
@@ -51,8 +49,6 @@ public class AuditAdapter
 
     private final Auditor auditor;
     private final AuditEntryBuilderFactory entryBuilderFactory;
-
-    private final Map<MD5Digest, String> idQueryCache = new ConcurrentHashMap<>();
 
     /**
      * Test constructor, see {@link #createDefault()}
@@ -93,8 +89,8 @@ public class AuditAdapter
     /**
      * Audit a prepared statement.
      *
-     * @param id
-     *            the statement id
+     * @param rawStatement
+     *            the raw prepared statement string
      * @param statement
      *            the statement to audit
      * @param state
@@ -104,12 +100,12 @@ public class AuditAdapter
      * @param status
      *            the statement operation status
      */
-    public void auditPrepared(MD5Digest id, CQLStatement statement, ClientState state, QueryOptions options, Status status)
+    public void auditPrepared(String rawStatement, CQLStatement statement, ClientState state, QueryOptions options, Status status)
     {
         AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
                 .client(state.getRemoteAddress().getAddress())
                 .user(state.getUser().getName())
-                .operation(new PreparedAuditOperation(idQueryCache.get(id), options))
+                .operation(new PreparedAuditOperation(rawStatement, options))
                 .status(status)
                 .build();
 
@@ -121,6 +117,8 @@ public class AuditAdapter
      *
      * @param statement
      *            the batch statement to audit
+     * @param rawStatements
+     *            an ordered list of raw statements associated with the statements in the batch
      * @param uuid
      *            to identify the batch
      * @param state
@@ -130,7 +128,7 @@ public class AuditAdapter
      * @param status
      *            the status of the operation
      */
-    public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status)
+    public void auditBatch(BatchStatement statement, List<String> rawStatements, UUID uuid, ClientState state, BatchQueryOptions options, Status status)
     {
         AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
                 .client(state.getRemoteAddress().getAddress())
@@ -145,7 +143,7 @@ public class AuditAdapter
         }
         else
         {
-            for (AuditEntry entry : getBatchOperations(builder, statement, state, options))
+            for (AuditEntry entry : getBatchOperations(builder, statement, rawStatements, state, options))
             {
                 auditor.audit(entry);
             }
@@ -177,19 +175,6 @@ public class AuditAdapter
     }
 
     /**
-     * Map a prepared statement id to a raw query string.
-     *
-     * @param id
-     *            the id of the prepared statement
-     * @param query
-     *            the query string
-     */
-    public void mapIdToQuery(MD5Digest id, String query)
-    {
-        idQueryCache.put(id, query);
-    }
-
-    /**
      * Get all the audit entries for a batch
      *
      * @param builder
@@ -202,17 +187,20 @@ public class AuditAdapter
      *            the options to get the operations from
      * @return a collection of operations, as strings
      */
-    private Collection<AuditEntry> getBatchOperations(AuditEntry.Builder builder, BatchStatement batchStatement, ClientState state, BatchQueryOptions options)
+    private Collection<AuditEntry> getBatchOperations(AuditEntry.Builder builder, BatchStatement batchStatement, List<String> rawStatements, ClientState state, BatchQueryOptions options)
     {
         List<AuditEntry> batchOperations = new ArrayList<>();
 
+        // Statements and raw-statements are listed in the same order,
+        // but raw-statement list only contain entries for prepared statements.
         int statementIndex = 0;
+        int rawStatementIndex = 0;
         for (Object queryOrId : options.getQueryOrIdList())
         {
             if(queryOrId instanceof MD5Digest)
             {
                 builder = entryBuilderFactory.updateBatchEntryBuilder(builder, batchStatement.getStatements().get(statementIndex));
-                builder = builder.operation(new PreparedAuditOperation(idQueryCache.get(queryOrId), options.forStatement(statementIndex)));
+                builder = builder.operation(new PreparedAuditOperation(rawStatements.get(rawStatementIndex++), options.forStatement(statementIndex)));
                 batchOperations.add(builder.build());
             }
             else

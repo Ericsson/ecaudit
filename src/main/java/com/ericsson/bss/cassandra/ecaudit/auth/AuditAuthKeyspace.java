@@ -17,8 +17,8 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.config.CFMetaData;
+import org.apache.cassandra.config.SchemaConstants;
 import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.schema.KeyspaceParams;
 import org.apache.cassandra.schema.Tables;
@@ -37,13 +37,13 @@ public final class AuditAuthKeyspace
 
     private static CFMetaData compile(String name, String description, String schema)
     {
-        return CFMetaData.compile(String.format(schema, name), AuthKeyspace.NAME)
+        return CFMetaData.compile(String.format(schema, name), SchemaConstants.AUTH_KEYSPACE_NAME)
                 .comment(description)
                 .gcGraceSeconds((int) TimeUnit.DAYS.toSeconds(90));
     }
 
     public static KeyspaceMetadata metadata()
     {
-        return KeyspaceMetadata.create(AuthKeyspace.NAME, KeyspaceParams.simple(1), Tables.of(CREATE_ROLE_AUDIT_WHITELISTS));
+        return KeyspaceMetadata.create(SchemaConstants.AUTH_KEYSPACE_NAME, KeyspaceParams.simple(1), Tables.of(CREATE_ROLE_AUDIT_WHITELISTS));
     }
 }

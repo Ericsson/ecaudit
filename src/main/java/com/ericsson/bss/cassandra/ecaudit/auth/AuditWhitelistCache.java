@@ -21,14 +21,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import org.apache.cassandra.auth.AuthCache;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.commons.lang3.StringUtils;
-
-import com.ericsson.bss.cassandra.ecaudit.auth.cache.AuthCache;
-import com.ericsson.bss.cassandra.ecaudit.auth.cache.DescriptorBridge;
 
 public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, List<IResource>>>
 {
@@ -41,7 +39,7 @@ public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Lis
                 DatabaseDescriptor::getRolesValidity,
                 DatabaseDescriptor::setRolesUpdateInterval,
                 DatabaseDescriptor::getRolesUpdateInterval,
-                DescriptorBridge::setRolesCacheMaxEntries,
+                DatabaseDescriptor::setRolesCacheMaxEntries,
                 DatabaseDescriptor::getRolesCacheMaxEntries,
                 (r) -> splitCustomOptions(roleManager.getCustomOptions(r)),
                 () -> DatabaseDescriptor.getAuthenticator().requireAuthentication());
