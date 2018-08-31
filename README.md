@@ -1,5 +1,7 @@
 # ecAudit - Ericsson Cassandra Audit
 
+[![Build Status](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c3.0)](https://travis-ci.org/Ericsson/ecaudit)
+
 The ecAudit plug-in provides an audit logging feature for Cassandra to audit CQL statement execution and login attempt through native CQL protocol.
 
 
