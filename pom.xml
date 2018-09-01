@@ -151,6 +151,9 @@
                 <version>${org.apache.maven.plugins.maven-release-plugin.version}</version>
                 <configuration>
                     <tagNameFormat>ecaudit_c3.0-@{project.version}</tagNameFormat>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <goals>deploy</goals>
                 </configuration>
             </plugin>
         </plugins>
