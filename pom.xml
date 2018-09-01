@@ -28,6 +28,13 @@
     </description>
     <url>https://github.com/ericsson/ecaudit</url>
 
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -197,6 +204,19 @@
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -207,8 +227,28 @@
         <tag>HEAD</tag>
     </scm>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
     <organization>
         <name>Ericsson AB</name>
         <url>http://www.ericsson.com</url>
     </organization>
+
+    <developers>
+        <developer>
+            <name>Per Otterström</name>
+            <email>per.otterstrom@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
+    </developers>
 </project>
