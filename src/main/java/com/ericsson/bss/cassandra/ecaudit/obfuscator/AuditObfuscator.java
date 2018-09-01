@@ -28,8 +28,7 @@ public interface AuditObfuscator
      *
      * @param entry
      *            the object to obfuscate
-     * @param an
-     *            instance with potentially obfuscated entries.
+     * @return the obfuscated entry
      */
     AuditEntry obfuscate(AuditEntry entry);
 

@@ -68,7 +68,7 @@ public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Lis
 
     /**
      * Get all custom options immediately associated with the supplied role. The returned options may be cached if
-     * roles_validity_in_ms > 0
+     * roles_validity_in_ms has a value greater than zero.
      *
      * @param role
      *            the Role
