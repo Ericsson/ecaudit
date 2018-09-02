@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * Implements a {@link IRoleManager} that is meant to be paired with {@link AuditPasswordAuthenticator1}.
+ * Implements a {@link IRoleManager} that is meant to be paired with {@link AuditPasswordAuthenticator}.
  *
  * It provides support for audit white-lists based on role options in Cassandra. This implementation inherits the
  * {@link CassandraRoleManager} for generic role management.
@@ -50,7 +50,7 @@ public class AuditRoleManager extends CassandraRoleManager
      * Default constructor.
      *
      * Using this constructor wraps the {@link CassandraRoleManager} for actual role management. But this role manager
-     * is paired with the {@list AuditPasswordAuthenticator} and it adds support for audit white-list options.
+     * is paired with the {@link AuditPasswordAuthenticator} and it adds support for audit white-list options.
      */
     public AuditRoleManager()
     {

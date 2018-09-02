@@ -155,8 +155,7 @@ public class TestAuditQueryHandler
     public void testProcessFailed()
     {
         String query = "select * from ks.ts";
-        when(mockHandler.process(eq(query), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
-                .thenThrow(UnavailableException.class);
+        whenProcessThrowUnavailable(query);
 
         assertThatExceptionOfType(RequestExecutionException.class)
                 .isThrownBy(() -> queryHandler.process(query, mockQueryState, mockOptions, customPayload, System.nanoTime()));
@@ -193,8 +192,7 @@ public class TestAuditQueryHandler
         parsedPrepared.rawCQLStatement = query;
 
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
-        when(mockHandler.processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
-                .thenThrow(UnavailableException.class);
+        whenProcessPreparedThrowUnavailable();
 
         CQLStatement stmt = queryHandler.getPrepared(statementId).statement;
         assertThatExceptionOfType(UnavailableException.class)
@@ -228,8 +226,7 @@ public class TestAuditQueryHandler
         ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
 
         when(mockHandler.getPreparedForThrift(eq(thriftItemId))).thenReturn(parsedPrepared);
-        when(mockHandler.processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
-                .thenThrow(UnavailableException.class);
+        whenProcessPreparedThrowUnavailable();
 
         CQLStatement stmt = queryHandler.getPreparedForThrift(thriftItemId).statement;
         assertThatExceptionOfType(UnavailableException.class)
@@ -289,8 +286,7 @@ public class TestAuditQueryHandler
         parsedPrepared.rawCQLStatement = query;
 
         givenBatchOfTwoStatementsArePrepared(statementId, parsedPrepared);
-        when(mockHandler.processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), anyLong()))
-                        .thenThrow(UnavailableException.class);
+        whenProcessBatchThrowUnavailable();
 
         assertThatExceptionOfType(RequestExecutionException.class)
                 .isThrownBy(() -> queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, System.nanoTime()));
@@ -321,10 +317,27 @@ public class TestAuditQueryHandler
         queryHandler.getPrepared(statementId);
     }
 
-    private void givenBatchOfTwoStatementsAreNotPrepared(MD5Digest statementId, ParsedStatement.Prepared parsedPrepared)
-    {
+    private void givenBatchOfTwoStatementsAreNotPrepared(MD5Digest statementId, ParsedStatement.Prepared parsedPrepared) {
         when(mockHandler.getPrepared(eq(statementId))).thenReturn(parsedPrepared).thenReturn(null);
         queryHandler.getPrepared(statementId);
         queryHandler.getPrepared(statementId);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void whenProcessThrowUnavailable(String query) {
+        when(mockHandler.process(eq(query), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
+                .thenThrow(UnavailableException.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void whenProcessPreparedThrowUnavailable() {
+        when(mockHandler.processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
+                .thenThrow(UnavailableException.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void whenProcessBatchThrowUnavailable() {
+        when(mockHandler.processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), anyLong()))
+                .thenThrow(UnavailableException.class);
     }
 }
