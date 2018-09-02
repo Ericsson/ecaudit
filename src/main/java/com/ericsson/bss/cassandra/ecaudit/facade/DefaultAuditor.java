@@ -22,12 +22,10 @@ import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 
 /**
  * Default implementation of {@link Auditor} which will do following task required to auditing:
- * <p>
- * <ol>
- * <li>Filtering populated {@link AuditEntry} instance using {@link AuditFilter}</li>
- * <li>Obfuscation on filtered using {@link AuditObfuscator}</li>
- * <li>Write log entry using {@link AuditLogger}</li>
- * </ol>
+ *
+ * - Filtering populated {@link AuditEntry} instance using {@link AuditFilter}
+ * - Obfuscation on filtered using {@link AuditObfuscator}
+ * - Write log entry using {@link AuditLogger}
  */
 public class DefaultAuditor implements Auditor
 {

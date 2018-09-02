@@ -39,7 +39,7 @@ public final class AuditYamlConfigurationLoader implements AuditConfigurationLoa
     private final static String DEFAULT_CONFIG_FILE = "/etc/cassandra/conf/audit.yaml";
 
     /**
-     * Property for the path to a {@link Config} file that configures audit logging.
+     * Property for the path to a {@link AuditConfig} file that configures audit logging.
      */
     public final static String PROPERTY_CONFIG_FILE = "com.ericsson.bss.cassandra.eaudit.config";
 
@@ -125,7 +125,7 @@ public final class AuditYamlConfigurationLoader implements AuditConfigurationLoa
      * @param properties
      *            the properties containing the property url
      * @return an instance of {@link AuditYamlConfigurationLoader}.
-     * @see AuditConfigurationLoader#PROPERTY_CONFIG_FILE
+     * @see AuditYamlConfigurationLoader#PROPERTY_CONFIG_FILE
      */
     public static AuditYamlConfigurationLoader withProperties(Properties properties)
     {

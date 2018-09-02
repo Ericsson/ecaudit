@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
+import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IAuthenticator.SaslNegotiator;
 import org.apache.cassandra.exceptions.AuthenticationException;
@@ -38,6 +39,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import org.mockito.stubbing.OngoingStubbing;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestAuditPasswordAuthenticator
@@ -65,7 +67,7 @@ public class TestAuditPasswordAuthenticator
     {
         InetAddress clientAddress = InetAddress.getLocalHost();
         when(mockAuthenticator.newSaslNegotiator(any(InetAddress.class))).thenReturn(mockNegotiator);
-        when(mockNegotiator.getAuthenticatedUser()).thenThrow(RuntimeException.class);
+        whenGetAuthUserThrowRuntimeException();
 
         SaslNegotiator negotiator = authenticator.newSaslNegotiator(clientAddress);
 
@@ -88,7 +90,7 @@ public class TestAuditPasswordAuthenticator
     {
         InetAddress clientAddress = InetAddress.getLocalHost();
         when(mockAuthenticator.newSaslNegotiator(any(InetAddress.class))).thenReturn(mockNegotiator);
-        when(mockNegotiator.getAuthenticatedUser()).thenThrow(AuthenticationException.class);
+        whenGetAuthUserThrowAuthException();
 
         SaslNegotiator negotiator = authenticator.newSaslNegotiator(clientAddress);
 
@@ -119,6 +121,16 @@ public class TestAuditPasswordAuthenticator
 
         negotiator.getAuthenticatedUser();
         verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void whenGetAuthUserThrowRuntimeException() {
+        when(mockNegotiator.getAuthenticatedUser()).thenThrow(RuntimeException.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void whenGetAuthUserThrowAuthException() {
+        when(mockNegotiator.getAuthenticatedUser()).thenThrow(AuthenticationException.class);
     }
 
     /**
