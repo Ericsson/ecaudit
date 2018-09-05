@@ -18,7 +18,7 @@
 
     <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
     <artifactId>ecaudit_c3.0</artifactId>
-    <version>0.21.0-SNAPSHOT</version>
+    <version>0.21.0</version>
     <packaging>jar</packaging>
 
     <name>Ericsson Cassandra Audit Plug-in</name>
@@ -247,7 +247,7 @@
         <url>https://github.com/ericsson/ecaudit</url>
         <connection>scm:git:git@github.com:ericsson/ecaudit.git</connection>
         <developerConnection>scm:git:git@github.com:ericsson/ecaudit.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>ecaudit_c3.0-0.21.0</tag>
     </scm>
 
     <distributionManagement>
