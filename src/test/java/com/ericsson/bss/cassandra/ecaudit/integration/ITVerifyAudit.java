@@ -18,6 +18,7 @@ package com.ericsson.bss.cassandra.ecaudit.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -136,6 +137,11 @@ public class ITVerifyAudit
                 new SimpleStatement(
                         "CREATE ROLE yser2 WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
 
+        session.execute(new SimpleStatement(
+                "CREATE KEYSPACE ecks2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+
+        session.execute(new SimpleStatement(
+                "CREATE KEYSPACE ecks3 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
     }
 
     @Before
@@ -422,8 +428,8 @@ public class ITVerifyAudit
     @Test
     public void testWhitelistedUserValidStatementsWithUseAreNotLogged()
     {
-        // TODO: Driver or Cassandra will add double-quotes to ks on one of the connections if statemens doesn't have it here.
-        // Bug in Cassandra, driver or ecAudit?
+        // Driver or Cassandra will add double-quotes to ks on one of the connections if statemens doesn't have it here.
+        // TODO: Research if this is "bug" in Cassandra, driver or ecAudit?
         List<String> statements = Arrays.asList(
                 "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
                 "SELECT * FROM ecks.ectbl",
@@ -442,7 +448,9 @@ public class ITVerifyAudit
         }
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
-        verify(mockAuditAppender, times(2)).doAppend(loggingEventCaptor.capture()); // Two USE statements, one for each driver connection
+        // Will typically see 2 USE statements, assuming this is one for ordinary connection and one for control connection
+        // TODO: Research if assumption above is correct
+        verify(mockAuditAppender, atLeast(1)).doAppend(loggingEventCaptor.capture());
         List<ILoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
 
         assertThat(loggingEvents
@@ -450,6 +458,40 @@ public class ITVerifyAudit
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(Collectors.toList()))
                 .containsOnlyElementsOf(expectedAttemptsAsUser(Arrays.asList("USE \"ecks\""), user));
+    }
+
+    /**
+     * Each USE statement will typically result in two log entries. Further, the second USE log entry
+     * will only appear just before the next statement is issued from the client. Though this is a bit
+     * unexpected it still seem as if the order is preserved which is verified by this test case.
+     *
+     * TODO: Research why we get this behavior.
+     */
+    @Test
+    public void testMultipleUseStatementsPreserveOrder()
+    {
+        String user = "sam";
+        try (Cluster privateCluster = cdt.createCluster(user, "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks\"");
+            executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks2\"");
+            executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks3\"");
+        }
+    }
+
+    private void executeOneUseWithFollowingSelect(String user, Session privateSession, String useStatement) {
+        ArgumentCaptor<ILoggingEvent> loggingEventCaptor1 = ArgumentCaptor.forClass(ILoggingEvent.class);
+        privateSession.execute(new SimpleStatement(useStatement));
+        privateSession.execute(new SimpleStatement("SELECT * FROM ecks.ectypetbl"));
+        verify(mockAuditAppender, atLeast(2)).doAppend(loggingEventCaptor1.capture());
+        List<ILoggingEvent> loggingEvents1 = loggingEventCaptor1.getAllValues();
+        assertThat(loggingEvents1
+                .stream()
+                .map(ILoggingEvent::getFormattedMessage)
+                .collect(Collectors.toList()))
+                .containsOnlyElementsOf(expectedAttemptsAsUser(Arrays.asList(useStatement, "SELECT * FROM ecks.ectypetbl"), user));
+        reset(mockAuditAppender);
     }
 
     @Test
