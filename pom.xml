@@ -273,5 +273,29 @@
             <organization>Ericsson AB</organization>
             <organizationUrl>http://www.ericsson.com</organizationUrl>
         </developer>
+        <developer>
+            <name>Tobias Eriksson</name>
+            <email>tobias.a.eriksson@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Laxmikant Upadhyay</name>
+            <email>laxmikant.upadhyay@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Anuj Wadhera</name>
+            <email>anuj.wadhera@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Marcus Olsson</name>
+            <email>marcus.olsson@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
     </developers>
 </project>
