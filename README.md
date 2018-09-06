@@ -1,8 +1,13 @@
 # ecAudit - Ericsson Cassandra Audit
 
 [![Build Status](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c3.0)](https://travis-ci.org/Ericsson/ecaudit)
+[![Maven Central](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=Maven%20Central&colorB=brightgreen)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
 
 The ecAudit plug-in provides an audit logging feature for Cassandra to audit CQL statement execution and login attempt through native CQL protocol.
+
+If you are reading this on github.com, please be aware of that this is the documentation for the Cassandra 3.0 flavor of ecAudit.
+To get documentation for a specific flavor and version, refer to the corresponding tag.
+For example, you can read about ecAudit 0.21.0 for Cassandra 3.0 by viewing the [ecaudit_c3.0-0.21.0](https://github.com/Ericsson/ecaudit/tree/ecaudit_c3.0-0.21.0) tag.
 
 
 ## Basic Functionality
@@ -33,11 +38,14 @@ The table below list the Cassandra versions used in the current and previous bui
 
 The ecAudit plug-in is maintained for selected Cassandra versions only.
 It may be possible to use the ecAudit plug-in with related Cassandra versions as well.
-But we recomend users to deploy ecAudit with the Cassandra version that was used during build.
+But we recommend users to deploy ecAudit with the Cassandra version that was used during build.
 New version flavors can be created on request.
 
 The ecAudit versions between flavors are feature compatible as far as it makes sense.
 For instance ecAudit_c3.0 version 0.4.0 and ecAudit_c3.11 0.4.0 have the same plug-in features.
+
+As of version 0.21.0, ecAudit is available on Maven Central.
+Earlier versions are not published on any public repository.
 
 
 ### Cassandra 4.0
@@ -56,11 +64,24 @@ Since ecAudit was developed before CASSANDRA-12151, there are several difference
   [CASSANDRA-14471](https://issues.apache.org/jira/browse/CASSANDRA-14471) is attempting to close this gap.
 
 
-### Known Limitations
+## Known Limitations
+
+
+### Interfaces
 
 ecAudit does not provide auditing on the JMX interface.
 ecAudit does not provide auditing functionality for prepared statements on the legacy RPC (Thrift) interface in Cassandra.
 However, regular (un-prepared) statements on the RPC (Thrift) interface are audit logged.
+
+
+### The USE statement
+
+When a USE statement is used at the client side this will be visible in the audit log.
+However, behavior is somewhat inconsistent with other statements as each USE statement typically will be logged twice.
+The first log entry will appear at the time when the USE statement is sent.
+The second log entry will appear just before the next statement in order is logged.
+So order will be preserved, but timing on second USE log entry may get wrong timestamp.
+This behavior is observed with the Java driver.
 
 
 ## Audit Records
