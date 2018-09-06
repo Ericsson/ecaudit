@@ -56,11 +56,24 @@ Since ecAudit was developed before CASSANDRA-12151, there are several difference
   [CASSANDRA-14471](https://issues.apache.org/jira/browse/CASSANDRA-14471) is attempting to close this gap.
 
 
-### Known Limitations
+## Known Limitations
+
+
+### Interfaces
 
 ecAudit does not provide auditing on the JMX interface.
 ecAudit does not provide auditing functionality for prepared statements on the legacy RPC (Thrift) interface in Cassandra.
 However, regular (un-prepared) statements on the RPC (Thrift) interface are audit logged.
+
+
+### The USE statement
+
+When a USE statement is used at the client side this will be visible in the audit log.
+However, behavior is somewhat inconsistent with other statements as each USE statement typically will be logged twice.
+The first log entry will appear at the time when the USE statement is sent.
+The second log entry will appear just before the next statement in order is logged.
+So order will be preserved, but timing on second USE log entry may get wrong timestamp.
+This behavior is observed with the Java driver.
 
 
 ## Audit Records
