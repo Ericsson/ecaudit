@@ -116,3 +116,20 @@ cassandra@cqlsh> GRANT AUTHORIZE ON ALL KEYSPACES TO micke;
 
 micke@cqlsh> ALTER ROLE micke WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' };
 ```
+
+
+## Tuning
+
+To minimize overhead ecAudit will cache whitelists associated with roles,
+much as Cassandra does natively with roles and permissions.
+The maximum validity time and update interval of cached entries is configurable.
+The audit whitelists cache is using the same configuration parameters as the roles cache.
+They're called ```roles_validity_in_ms``` and ```roles_update_interval_in_ms``` in the ```cassandra.yaml```.
+ 
+By default they're both configured to 2000ms.
+This will effectively disable asynchronous updates in the background.
+As a result client requests will sometimes block on the whitelist check while whitelist settings is refreshed from disk.
+For this reason it is recommended enable background updates
+by setting an explicit value on ```roles_update_interval_in_ms```,
+and then set the ```roles_validity_in_ms``` a few seconds higher than ```roles_update_interval_in_ms```.
+Please review the documentation for these values in the ```cassandra.yaml``` to understand the consequences of these changes.

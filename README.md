@@ -141,6 +141,25 @@ Whitelisted operations will not appear in the audit logs.
 For details, consult the [setup](doc/setup.md) and [whitelist](doc/role_whitelist_management.md) pages.
 
 
+## Performance
+
+When the ecAudit plug-in is installed there is naturally an impact on performance.
+How much depends on your hw spec, traffic pattern and not the least on your whitelist filters.
+
+In the most extreme scenario where all requests are whitelisted,
+you may get an impact of 1-2% less throughput.
+This comes from the overhead of checking every requests towards the whitelist.
+
+In the other extreme, where all requests are recorded in the audit log,
+SLF4J and LOGBack are not able to keep up which results in spikes in the response times.
+
+This is illustrated in this cassandra-stress chart:
+ * [Throughput](doc/ecaudit-performance.html)
+ * [Latency](doc/ecaudit-performance.html?stats=undefined&metric=mean&operation=WRITE&smoothing=1&show_aggregates=true&xmin=0&xmax=715.44&ymin=0&ymax=10)
+
+Hence it is highly recommended to manage you whitelist filters such that the relevant entries only are logged.
+
+
 ## Connections
 
 A typical Cassandra client will connect to many (if not all) nodes in the Cassandra cluster.
