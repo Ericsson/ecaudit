@@ -30,11 +30,11 @@ For instance, ecaudit_c3.11 indicate that the ecAudit flavor was built with Cass
 
 The table below list the Cassandra versions used in the current and previous builds of ecAudit.
 
-| Flavor          | Versions       | Compiled With         |
-| ----------------| -------------- | --------------------- |
-| ecaudit_c3.0    | 0.1  -> 0.10   | Cassandra 3.0.15-E000 |
-| ecaudit_c3.0    | 0.11 ->        | Cassandra 3.0.16-E000 |
-| ecaudit_c3.11   | 0.1  ->        | Cassandra 3.11.2-E000 |
+| Flavor          | Versions       | Compiled With    |
+| ----------------| -------------- | ---------------- |
+| ecaudit_c3.0    | 0.1  -> 0.10   | Cassandra 3.0.15 |
+| ecaudit_c3.0    | 0.11 ->        | Cassandra 3.0.16 |
+| ecaudit_c3.11   | 0.1  ->        | Cassandra 3.11.2 |
 
 The ecAudit plug-in is maintained for selected Cassandra versions only.
 It may be possible to use the ecAudit plug-in with related Cassandra versions as well.
