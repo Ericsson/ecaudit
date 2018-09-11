@@ -1,11 +1,11 @@
 # ecAudit - Ericsson Cassandra Audit
 
-[![Build Status](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c3.0)](https://travis-ci.org/Ericsson/ecaudit)
+[![Build Status](https://travis-ci.org/Ericsson/ecaudit.svg?branch=master)](https://travis-ci.org/Ericsson/ecaudit)
 [![Maven Central](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.11.svg?label=Maven%20Central&colorB=brightgreen)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.11%22)
 
 The ecAudit plug-in provides an audit logging feature for Cassandra to audit CQL statement execution and login attempt through native CQL protocol.
 
-If you are reading this on github.com, please be aware of that this is the documentation for the Cassandra 3.0 flavor of ecAudit.
+If you are reading this on github.com, please be aware of that this is the documentation for the Cassandra 3.11 flavor of ecAudit.
 To get documentation for a specific flavor and version, refer to the corresponding tag.
 For example, you can read about ecAudit 0.21.0 for Cassandra 3.0 by viewing the [ecaudit_c3.0-0.21.0](https://github.com/Ericsson/ecaudit/tree/ecaudit_c3.0-0.21.0) tag.
 
