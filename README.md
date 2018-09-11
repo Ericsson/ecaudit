@@ -154,8 +154,8 @@ In the other extreme, where all requests are recorded in the audit log,
 SLF4J and LOGBack are not able to keep up which results in spikes in the response times.
 
 This is illustrated in this cassandra-stress chart:
- * [Throughput](https://rawgit.com/Ericsson/ecaudit/performance_charts/doc/ecaudit-performance.html)
- * [Latency](https://rawgit.com/Ericsson/ecaudit/performance_charts/doc/ecaudit-performance.html?stats=undefined&metric=mean&operation=WRITE&smoothing=1&show_aggregates=true&xmin=0&xmax=715.44&ymin=0&ymax=10)
+ * [Throughput](https://rawgit.com/Ericsson/ecaudit/master/doc/ecaudit-performance.html)
+ * [Latency](https://rawgit.com/Ericsson/ecaudit/master/doc/ecaudit-performance.html?stats=undefined&metric=mean&operation=WRITE&smoothing=1&show_aggregates=true&xmin=0&xmax=715.44&ymin=0&ymax=10)
 
 Hence it is highly recommended to manage you whitelist filters such that the relevant entries only are logged.
 
