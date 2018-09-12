@@ -5,3 +5,5 @@ cache:
   - $HOME/.m2
 script:
   - mvn test integration-test -B
+after_success:
+  - mvn test jacoco:report coveralls:report -B
