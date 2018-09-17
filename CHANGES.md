@@ -1,5 +1,8 @@
 # Changes
 
+## Version 0.22.0
+* Build with Cassandra 3.0.17 (only in ecAudit for C* 3.0.x)
+
 ## Version 0.21.0
 * Public release on Maven Central
 
