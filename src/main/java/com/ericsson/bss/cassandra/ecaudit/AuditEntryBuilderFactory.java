@@ -15,7 +15,9 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit;
 
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
@@ -23,32 +25,46 @@ import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.cql3.CFName;
 import org.apache.cassandra.cql3.CQLStatement;
+import org.apache.cassandra.cql3.ColumnCondition;
+import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.statements.AlterRoleStatement;
 import org.apache.cassandra.cql3.statements.AuthenticationStatement;
+import org.apache.cassandra.cql3.statements.CFStatement;
 import org.apache.cassandra.cql3.statements.CreateRoleStatement;
 import org.apache.cassandra.cql3.statements.DropRoleStatement;
 import org.apache.cassandra.cql3.statements.ListPermissionsStatement;
 import org.apache.cassandra.cql3.statements.ListRolesStatement;
 import org.apache.cassandra.cql3.statements.ModificationStatement;
+import org.apache.cassandra.cql3.statements.ParsedStatement;
 import org.apache.cassandra.cql3.statements.PermissionsManagementStatement;
 import org.apache.cassandra.cql3.statements.RoleManagementStatement;
 import org.apache.cassandra.cql3.statements.SchemaAlteringStatement;
 import org.apache.cassandra.cql3.statements.SelectStatement;
 import org.apache.cassandra.cql3.statements.TruncateStatement;
 import org.apache.cassandra.cql3.statements.UseStatement;
+import org.apache.cassandra.db.KeyspaceNotDefinedException;
 import org.apache.cassandra.service.ClientState;
+import org.apache.cassandra.utils.Pair;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry.Builder;
 import com.ericsson.bss.cassandra.ecaudit.facade.CassandraAuditException;
 import com.google.common.collect.ImmutableSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AuditEntryBuilderFactory
 {
-    // This list of predefines and immutable permission sets are injected to the audit entries
-    // created in this factory. They should stay immutable since the AduitVO type and its builder
+    public static final Logger LOG = LoggerFactory.getLogger(AuditEntryBuilderFactory.class);
+    private final AtomicBoolean warnedRuntimeOnce = new AtomicBoolean(false);
+    private final AtomicBoolean warnedBatchRuntimeOnce = new AtomicBoolean(false);
+    private final AtomicBoolean warnedUnrecognizedPrepStatementOnce = new AtomicBoolean(false);
+    private final AtomicBoolean warnedUnrecognizedStatementOnce = new AtomicBoolean(false);
+
+    // This list of predefined and immutable permission sets are injected to the audit entries
+    // created in this factory. They should stay immutable since the {@link AuditEntry} type and its builder
     // doesn't make copies of the sets.
     public static final Set<Permission> ALL_PERMISSIONS = Permission.ALL; // NOSONAR
     public static final Set<Permission> SELECT_PERMISSIONS = ImmutableSet.of(Permission.SELECT);
@@ -62,20 +78,56 @@ public class AuditEntryBuilderFactory
 
     public Builder createEntryBuilder(String operation, ClientState state)
     {
-        CQLStatement statement;
         try
         {
-            statement = QueryProcessor.getStatement(operation, state).statement;
+            CQLStatement statement = QueryProcessor.getStatement(operation, state).statement;
+            return createEntryBuilder(statement);
+        }
+        catch (KeyspaceNotDefinedException e)
+        {
+            // This is typically the result of a query towards a non-existing resource
+            LOG.trace("Failed to prepare statement for non-existing resource - trying unprepared", e);
+            ParsedStatement parsedStatement = getParsedStatement(operation, state);
+            return createEntryBuilder(parsedStatement);
         }
         catch (RuntimeException e)
         {
-            // This is typically the result of a query towards a non-existing resource
-            return AuditEntry.newBuilder()
-                    .permissions(ALL_PERMISSIONS)
-                    .resource(DataResource.root());
+            if (warnedRuntimeOnce.compareAndSet(false, true))
+            {
+                LOG.warn("Failed to parse or prepare statement - assuming default permissions and resources", e);
+            }
+            return createDefaultEntryBuilder();
+        }
+    }
+
+    private ParsedStatement getParsedStatement(String operation, ClientState state)
+    {
+        ParsedStatement parsedStatement = QueryProcessor.parseStatement(operation);
+
+        // Set keyspace for statement that require login
+        if (parsedStatement instanceof CFStatement) {
+            ((CFStatement) parsedStatement).prepareKeyspace(state);
+        }
+        return parsedStatement;
+    }
+
+    private Builder createEntryBuilder(ParsedStatement parsedStatement)
+    {
+
+        if (parsedStatement instanceof SelectStatement.RawStatement)
+        {
+            return createSelectEntryBuilder((SelectStatement.RawStatement) parsedStatement);
+        }
+        if (parsedStatement instanceof ModificationStatement.Parsed)
+        {
+            return createModificationEntryBuilder((ModificationStatement.Parsed) parsedStatement);
         }
 
-        return createEntryBuilder(statement);
+        if (warnedUnrecognizedPrepStatementOnce.compareAndSet(false, true))
+        {
+            LOG.warn("Unable to determine statement type for parsing - assuming default permissions and resources");
+        }
+        return createDefaultEntryBuilder();
     }
 
     public Builder createEntryBuilder(CQLStatement statement) // NOSONAR
@@ -133,12 +185,21 @@ public class AuditEntryBuilderFactory
             return createSchemaAlteringEntryBuilder((SchemaAlteringStatement) statement);
         }
 
-        return AuditEntry.newBuilder()
-                .permissions(ALL_PERMISSIONS)
-                .resource(DataResource.root());
+        if (warnedUnrecognizedStatementOnce.compareAndSet(false, true))
+        {
+            LOG.warn("Unrecognized statement type - assuming default permissions and resources");
+        }
+        return createDefaultEntryBuilder();
     }
 
     public Builder createSelectEntryBuilder(SelectStatement statement)
+    {
+        return AuditEntry.newBuilder()
+                .permissions(SELECT_PERMISSIONS)
+                .resource(DataResource.table(statement.keyspace(), statement.columnFamily()));
+    }
+
+    public Builder createSelectEntryBuilder(SelectStatement.RawStatement statement)
     {
         return AuditEntry.newBuilder()
                 .permissions(SELECT_PERMISSIONS)
@@ -149,6 +210,22 @@ public class AuditEntryBuilderFactory
     {
         return AuditEntry.newBuilder()
                 .permissions(statement.hasConditions() ? CAS_PERMISSIONS : MODIFY_PERMISSIONS)
+                .resource(DataResource.table(statement.keyspace(), statement.columnFamily()));
+    }
+
+    public Builder createModificationEntryBuilder(ModificationStatement.Parsed statement)
+    {
+        Set<Permission> permissions;
+        try
+        {
+            boolean hasCondition = !((List<Pair<ColumnIdentifier.Raw, ColumnCondition.Raw>>) FieldUtils.readField(statement, "conditions", true)).isEmpty();
+            permissions = hasCondition ? CAS_PERMISSIONS : MODIFY_PERMISSIONS;
+        } catch (IllegalAccessException e) {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+
+        return AuditEntry.newBuilder()
+                .permissions(permissions)
                 .resource(DataResource.table(statement.keyspace(), statement.columnFamily()));
     }
 
@@ -190,10 +267,14 @@ public class AuditEntryBuilderFactory
         }
         catch (RuntimeException e)
         {
+            if (warnedBatchRuntimeOnce.compareAndSet(false, true))
+            {
+                LOG.warn("Failed to parse or prepare entry in batch statement - assuming default permissions and resources", e);
+            }
             // This is typically the result of a query towards a non-existing resource
-            return builder
-                    .permissions(CAS_PERMISSIONS)
-                    .resource(DataResource.root());
+            // TODO: We should be able to fix this
+            // But right now we don't get here since batch statements fail pre-processing
+            return createDefaultEntryBuilder();
         }
 
         return updateBatchEntryBuilder(builder, (ModificationStatement) statement);
@@ -314,6 +395,13 @@ public class AuditEntryBuilderFactory
         return AuditEntry.newBuilder()
                 .permissions(ALL_PERMISSIONS)
                 .resource(toDataResource(cfName));
+    }
+
+    private Builder createDefaultEntryBuilder()
+    {
+        return AuditEntry.newBuilder()
+                .permissions(ALL_PERMISSIONS)
+                .resource(DataResource.root());
     }
 
     private DataResource toDataResource(CFName cfName)
