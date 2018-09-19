@@ -40,10 +40,15 @@ This is optional, but necessary to get a fully secured Cassandra deployment.
 Add an appender and logger in your ```logback.xml``` configuration
 The logger name of the audit records is ```ECAUDIT```.
 
+Tuning tips:
+* The asynchronous appender can _improve or demote_ performance depending on your setup.
+* Compression on rotated may impact performance significantly.
+* If you are logging large volumes of data, make sure your storage can keep up.
+
 In the example snippet below,
-LOGBack is configured to use rotation of files with an asynchronous appender.
-The asynchronous appender can improve or demote performance depending on your setup.
-Run performance tests to find out.
+LOGBack is configured to use rotation of files with a synchronous appender.
+Run performance tests on your workload to find out what settings works best for you.
+
 
 ```XML
 <!--audit log-->
@@ -54,7 +59,7 @@ Run performance tests to find out.
     <immediateFlush>true</immediateFlush>
   </encoder>
   <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-    <fileNamePattern>${cassandra.logdir}/audit/audit.log.%i.zip</fileNamePattern>
+    <fileNamePattern>${cassandra.logdir}/audit/audit.log.%i</fileNamePattern>
     <minIndex>1</minIndex>
     <maxIndex>5</maxIndex>
   </rollingPolicy>
@@ -63,15 +68,8 @@ Run performance tests to find out.
   </triggeringPolicy>
 </appender>
 
-<appender name="ASYNC-AUDIT-FILE" class="ch.qos.logback.classic.AsyncAppender">
-  <queueSize>1024</queueSize>
-  <discardingThreshold>0</discardingThreshold>
-  <includeCallerData>false</includeCallerData>
-  <appender-ref ref="AUDIT-FILE" />
-</appender>
-
 <logger name="ECAUDIT" level="INFO" additivity="false">
-  <appender-ref ref="ASYNC-AUDIT-FILE" />
+  <appender-ref ref="AUDIT-FILE" />
 </logger>
 ```
 
