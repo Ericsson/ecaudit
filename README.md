@@ -144,22 +144,20 @@ For details, consult the [setup](doc/setup.md) and [whitelist](doc/role_whitelis
 
 ## Performance
 
-The ecAudit plug-in adds a small overhead on each request.
-How much depends on your hw spec, traffic pattern and not the least on your whitelist filters.
+There are two parts of ecAudit that adds an overhead to requests in Cassandra.
 
-In the most extreme scenario where all requests are whitelisted,
-you may get an impact of up to ~1% less throughput.
-This comes from the overhead of checking every requests towards the whitelist.
+First, each request is checked towards the whitelist.
+This adds an overhead of ~1%.
+This check is performed on all requests when ecAudit is enabled.
 
-In the other extreme, where all requests are recorded in the audit log,
-SLF4J and LOGBack adds further to the overhead on each request.
+Second, there is an overhead involved with the actual logging of the audit record.
+This operation is performed on all requests that are not filtered by the whitelist.
+In a busy system this may add as much as 20% overhead.
 
-This is illustrated in this cassandra-stress chart.
-These tests are performed on a 4 node cluster with fast SSDs.
-In the scenario where audit logs are fully enabled each node is generating ~350Mb of audit logs every minute.
+This cassandra-stress chart illustrates typical performance impact of ecAudit:
 
  * [Throughput](https://rawgit.com/Ericsson/ecaudit/release/c3.0/doc/ecaudit-performance.html)
- * [Latency](https://rawgit.com/Ericsson/ecaudit/release/c3.0/doc/ecaudit-performance.html?stats=undefined&metric=mean&operation=WRITE&smoothing=1&show_aggregates=true&xmin=0&xmax=191.29&ymin=0&ymax=2.53)
+ * [Latency](https://rawgit.com/Ericsson/ecaudit/release/c3.0/doc/ecaudit-performance.html?stats=undefined&metric=mean&operation=WRITE&smoothing=1&show_aggregates=true&xmin=0&xmax=91.08&ymin=0&ymax=0.33)
 
 Refer to the guides of LOGBack settings, authentication caches and whitelist settings to get best possible performance.
 
