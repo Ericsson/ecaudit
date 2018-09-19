@@ -16,22 +16,15 @@
 package com.ericsson.bss.cassandra.ecaudit.config;
 
 import java.net.URL;
-import java.time.DateTimeException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import java.util.Properties;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class TestAuditYamlConfigurationLoader
 {
@@ -46,9 +39,7 @@ public class TestAuditYamlConfigurationLoader
         assertThatExceptionOfType(ConfigurationException.class)
         .isThrownBy(config::getYamlWhitelist);
         assertThatExceptionOfType(ConfigurationException.class)
-        .isThrownBy(config::getLogFormat);
-        assertThatExceptionOfType(ConfigurationException.class)
-        .isThrownBy(config::getTimeFormatter);
+        .isThrownBy(config::getLoggerBackendParameters);
     }
 
     @Test
@@ -62,13 +53,11 @@ public class TestAuditYamlConfigurationLoader
         assertThatExceptionOfType(ConfigurationException.class)
         .isThrownBy(config::getYamlWhitelist);
         assertThatExceptionOfType(ConfigurationException.class)
-        .isThrownBy(config::getLogFormat);
-        assertThatExceptionOfType(ConfigurationException.class)
-        .isThrownBy(config::getTimeFormatter);
+        .isThrownBy(config::getLoggerBackendParameters);
     }
 
     // If ecAudit is configured to use a yaml based whitelist we expect a file to be there
-    // This behavior is different for other properties which may fall back to default values
+    // This behavior is different for other properties which should fall back to default values
     @Test
     public void testMissingDefaultFileForWhitelistThrowsConfigurationException()
     {
@@ -109,99 +98,24 @@ public class TestAuditYamlConfigurationLoader
     }
 
     @Test
-    public void testSLF4JconfigWhenMissingDefaultFile()
+    public void testLoggerTypeWhenMissingDefaultFile()
     {
         AuditConfig config = givenLoadedDefaultConfig();
 
-        assertThat(config.getLogFormat()).isEqualTo("client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'");
-        assertThat(config.getTimeFormatter()).isEmpty();
+        assertThat(config.getLoggerBackendParameters().class_name).isEqualTo("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger");
+        assertThat(config.getLoggerBackendParameters().parameters).isEmpty();
     }
 
     @Test
-    public void testSLF4JconfigWhenConfigFileIsEmpty()
-    {
-        Properties properties = getProperties("empty.yaml");
-
-        AuditConfig config = givenLoadedConfig(properties);
-
-        assertThat(config.getLogFormat()).isEqualTo("client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'");
-        assertThat(config.getTimeFormatter()).isEmpty();
-    }
-
-    @Test
-    public void testSLF4JconfigWhenLoadingCustomConfiguration()
+    public void testLoggerParametersWhenLoadingCustomConfiguration()
     {
         Properties properties = getProperties("mock_log_format.yaml");
-
         AuditConfig config = givenLoadedConfig(properties);
 
-        assertThat(config.getLogFormat()).isEqualTo("user:{USER}, client:{CLIENT}");
-    }
-
-    @Test
-    public void testGetTimeFormatterWithFormatAndZoneConfigured()
-    {
-        AuditConfig auditConfig = givenMockedTimeConfig("yyyy-MM-dd HH:mm:ss.SSSZ", "Europe/Stockholm");
-        Optional<DateTimeFormatter> timeFormatter = auditConfig.getTimeFormatter();
-        assertThat(timeFormatter).map(f -> f.format(Instant.EPOCH.plusMillis(42))).contains("1970-01-01 01:00:00.042+0100");
-        assertThat(timeFormatter).map(DateTimeFormatter::getZone).contains(ZoneId.of("Europe/Stockholm"));
-    }
-
-    @Test
-    public void testGetTimeFormatterWithoutZoneConfiguredGetSystemDefault()
-    {
-        AuditConfig auditConfig = givenMockedTimeConfig("yyyy", null);
-        Optional<DateTimeFormatter> timeFormatter = auditConfig.getTimeFormatter();
-        assertThat(timeFormatter).map(DateTimeFormatter::getZone).contains(ZoneId.systemDefault());
-    }
-
-    @Test
-    public void testGetTimeFormatterWithoutFormatConfiguredIsEmpty()
-    {
-        AuditConfig auditConfig = givenMockedTimeConfig(null, "Europe/Stockholm");
-        Optional<DateTimeFormatter> timeFormatter = auditConfig.getTimeFormatter();
-        assertThat(timeFormatter).isEmpty();
-    }
-
-    @Test
-    public void testGetTimeFormatterThrowsExceptionWhenFaultyTimePattern()
-    {
-        AuditConfig auditConfig = givenMockedTimeConfig("]NOK[", "Europe/Stockholm");
-
-        assertThatThrownBy(auditConfig::getTimeFormatter).isInstanceOf(ConfigurationException.class)
-                                                         .hasCauseInstanceOf(IllegalArgumentException.class)
-                                                         .hasMessage("Invalid time format configuration.");
-    }
-
-    @Test
-    public void testGetTimeFormatterThrowsExceptionWhenFaultyTimeZone()
-    {
-        AuditConfig auditConfig = givenMockedTimeConfig("yyyy-MM-dd HH:mm:ss.SSSZ", "DoesNotExist");
-
-        assertThatThrownBy(auditConfig::getTimeFormatter).isInstanceOf(ConfigurationException.class)
-                                                         .hasCauseInstanceOf(DateTimeException.class)
-                                                         .hasMessage("Invalid time zone configuration.");
-    }
-
-    private AuditConfig givenMockedTimeConfig(String timeFormat, String timeZone)
-    {
-        AuditYamlSlf4jConfig slf4jMock = mock(AuditYamlSlf4jConfig.class);
-        if (timeFormat != null)
-        {
-            when(slf4jMock.getTimeFormat()).thenReturn(timeFormat);
-        }
-        if (timeZone != null)
-        {
-            when(slf4jMock.getTimeZone()).thenReturn(timeZone);
-        }
-
-        AuditYamlConfig configMock = mock(AuditYamlConfig.class);
-        when(configMock.getSlf4j()).thenReturn(slf4jMock);
-
-        AuditYamlConfigurationLoader loaderMock = mock(AuditYamlConfigurationLoader.class);
-        when(loaderMock.loadConfig()).thenReturn(configMock);
-
-        return new AuditConfig(loaderMock);
+        assertThat(config.getLoggerBackendParameters().class_name).isEqualTo("com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger");
+        assertThat(config.getLoggerBackendParameters().parameters).containsAllEntriesOf(ImmutableMap.of("log_dir", "/tmp",
+                                                                                                        "roll_cycle", "MINUTELY",
+                                                                                                        "max_log_size", "1000000"));
     }
 
     private AuditConfig givenLoadedConfig(Properties properties)

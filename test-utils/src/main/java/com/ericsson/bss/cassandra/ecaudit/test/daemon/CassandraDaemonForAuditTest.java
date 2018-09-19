@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Cluster;
-import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
 import com.ericsson.bss.cassandra.ecaudit.handler.AuditQueryHandler;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.service.CassandraDaemon;
@@ -45,7 +44,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     private static CassandraDaemonForAuditTest cdtSingleton;
 
-    private CassandraDaemon cassandraDaemon;
+    private final CassandraDaemon cassandraDaemon;
 
     private File tempDir;
 
@@ -72,14 +71,8 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     private CassandraDaemonForAuditTest() throws IOException
     {
-        synchronized (CassandraDaemonForAuditTest.class)
-        {
-            if (cassandraDaemon == null)
-            {
-                setupConfiguration();
-                cassandraDaemon = new CassandraDaemon(true);
-            }
-        }
+        setupConfiguration();
+        cassandraDaemon = new CassandraDaemon(true);
     }
 
     /**
@@ -91,23 +84,15 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
         tempDir = com.google.common.io.Files.createTempDir();
         tempDir.deleteOnExit();
+        Files.createDirectory(getAuditDirectory());
 
-        InputStream inStream = CassandraDaemonForAuditTest.class.getClassLoader().getResourceAsStream("cassandra.yaml");
-        String content = readStream(inStream);
-        Path outPath = Paths.get(tempDir.getPath() + "/cassandra.yaml");
-        content = content.replaceAll("###tmp###", tempDir.getPath().replace("\\", "\\\\"));
-        content = content.replaceAll("###rpc_port###", String.valueOf(rpcPort));
-        content = content.replaceAll("###storage_port###", String.valueOf(storagePort));
-        content = content.replaceAll("###ssl_storage_port###", String.valueOf(sslStoragePort));
-        content = content.replaceAll("###native_transport_port###", String.valueOf(nativePort));
-        java.nio.file.Files.write(outPath, content.getBytes(StandardCharsets.UTF_8));
-
-        System.setProperty("cassandra.config", outPath.toUri().toURL().toExternalForm());
+        Path cassandraYamlPath = moveResourceFileToTempDirWithSubstitution("cassandra.yaml");
+        System.setProperty("cassandra.config", cassandraYamlPath.toUri().toURL().toExternalForm());
 
         System.setProperty("cassandra.jmx.local.port", String.valueOf(jmxPort));
 
-        String rackdcTempPath = moveResourceFileToTempDir("cassandra-rackdc.properties");
-        System.setProperty("cassandra-rackdc.properties", Paths.get(rackdcTempPath).toUri().toURL().toExternalForm());
+        Path cassandraRackDcPath = moveResourceFileToTempDirWithSubstitution("cassandra-rackdc.properties");
+        System.setProperty("cassandra-rackdc.properties", cassandraRackDcPath.toUri().toURL().toExternalForm());
 
         System.setProperty("cassandra-foreground", "true");
         System.setProperty("cassandra.superuser_setup_delay_ms", "1");
@@ -115,8 +100,8 @@ public class CassandraDaemonForAuditTest // NOSONAR
         System.setProperty("cassandra.custom_query_handler_class", AuditQueryHandler.class.getCanonicalName());
         System.setProperty("ecaudit.filter_type", "YAML_AND_ROLE");
 
-        String auditYamlTempPath = moveResourceFileToTempDir("integration_audit.yaml");
-        System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, auditYamlTempPath);
+        Path auditYamlPath = moveResourceFileToTempDirWithSubstitution("integration_audit.yaml");
+        System.setProperty("com.ericsson.bss.cassandra.ecaudit.config", auditYamlPath.toString());
 
         LOG.info("Using temporary cassandra directory: " + tempDir);
     }
@@ -126,7 +111,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
     {
         if (!cassandraDaemon.setupCompleted() && !cassandraDaemon.isNativeTransportRunning())
         {
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> deactivate()));
+            Runtime.getRuntime().addShutdownHook(new Thread(this::deactivate));
             cassandraDaemon.activate();
         }
         else if (!cassandraDaemon.isNativeTransportRunning())
@@ -179,37 +164,12 @@ public class CassandraDaemonForAuditTest // NOSONAR
     public Cluster createCluster(String username, String password)
     {
         return Cluster.builder().addContactPoint(DatabaseDescriptor.getListenAddress().getHostAddress())
-                .withPort(nativePort).withCredentials(username, password).build();
+                      .withPort(nativePort).withCredentials(username, password).build();
     }
 
-    /**
-     * Get the random created Cassandra port.
-     *
-     * @return the port
-     */
-    public int getPort()
+    public Path getAuditDirectory()
     {
-        return nativePort;
-    }
-
-    /**
-     * Get the random created JMX server port.
-     *
-     * @return the port
-     */
-    public int getJMXPort()
-    {
-        return jmxPort;
-    }
-
-    public File getDataDirectory()
-    {
-        return new File(getCassandraDirectory(), "data");
-    }
-
-    public File getCassandraDirectory()
-    {
-        return new File(tempDir.getAbsoluteFile(), "cassandra");
+        return tempDir.toPath().resolve("audit");
     }
 
     private void randomizePorts()
@@ -228,10 +188,10 @@ public class CassandraDaemonForAuditTest // NOSONAR
         {
             port = (new Random().nextInt(16300) + 49200);
             if (rpcPort == port
-                    || storagePort == port
-                    || sslStoragePort == port
-                    || nativePort == port
-                    || jmxPort == port)
+                || storagePort == port
+                || sslStoragePort == port
+                || nativePort == port
+                || jmxPort == port)
             {
                 port = -1;
             }
@@ -250,24 +210,29 @@ public class CassandraDaemonForAuditTest // NOSONAR
         return port;
     }
 
-    private String moveResourceFileToTempDir(String filename) throws IOException
+    private Path moveResourceFileToTempDirWithSubstitution(String filename) throws IOException
     {
         InputStream inStream = CassandraDaemonForAuditTest.class.getClassLoader().getResourceAsStream(filename);
         String content = readStream(inStream);
 
-        Path outPath = Paths.get(tempDir.getPath() + "/" + filename);
+        Path outPath = Paths.get(tempDir.getPath(), filename);
+        content = content.replaceAll("###tmp###", tempDir.getPath().replace("\\", "\\\\"));
+        content = content.replaceAll("###rpc_port###", String.valueOf(rpcPort));
+        content = content.replaceAll("###storage_port###", String.valueOf(storagePort));
+        content = content.replaceAll("###ssl_storage_port###", String.valueOf(sslStoragePort));
+        content = content.replaceAll("###native_transport_port###", String.valueOf(nativePort));
         Files.write(outPath, content.getBytes(StandardCharsets.UTF_8));
 
-        String tempPath = outPath.toString();
-        LOG.debug("Created temporary resource at: " + tempPath);
-        return tempPath;
+        LOG.debug("Created temporary resource at: " + outPath);
+
+        return outPath;
     }
 
     private static String readStream(InputStream inputStream) throws IOException
     {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
-        int length = 0;
+        int length;
         while ((length = inputStream.read(buffer)) != -1)
         {
             out.write(buffer, 0, length);

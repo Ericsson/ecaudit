@@ -15,6 +15,11 @@
  */
 package com.ericsson.bss.cassandra.ecaudit;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Map;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +33,8 @@ import com.ericsson.bss.cassandra.ecaudit.filter.role.RoleAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.YamlAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.yamlandrole.YamlAndRoleAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
-import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
+import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 /**
@@ -46,22 +51,54 @@ class AuditAdapterFactory
     static final String FILTER_TYPE_NONE = "NONE";
 
     /**
-     * Provide a reference to the {@link AuditAdapter} instance, creating it if necessary.
+     * Create a new AuditAdapter instance.
      *
-     * The instance will be configured based on different system properties.
+     * The instance will be configured based on different system properties and the audit.yaml file.
      *
-     * @return a configured instance of {@link AuditAdapter}.
+     * @return a new configured instance of {@link AuditAdapter}.
      */
     static AuditAdapter createAuditAdapter()
     {
-        AuditLogger logger = new Slf4jAuditLogger(AuditConfig.getInstance());
-        PasswordObfuscator obfuscator = new PasswordObfuscator();
+        return createAuditAdapter(AuditConfig.getInstance());
+    }
 
-        AuditFilter filter = createFilter();
+    @VisibleForTesting
+    static AuditAdapter createAuditAdapter(AuditConfig auditConfig)
+    {
+        AuditLogger logger = createLogger(auditConfig);
+        AuditFilter filter = createFilter(auditConfig);
+        PasswordObfuscator obfuscator = new PasswordObfuscator();
 
         Auditor auditor = new DefaultAuditor(logger, filter, obfuscator);
         AuditEntryBuilderFactory entryBuilderFactory = new AuditEntryBuilderFactory();
+
         return new AuditAdapter(auditor, entryBuilderFactory);
+    }
+
+    /**
+     * Construct a audit logger backend based on yaml config.
+     *
+     * @param auditConfig the audit configuration
+     * @return a new audit logger backend
+     */
+    private static AuditLogger createLogger(AuditConfig auditConfig)
+    {
+        ParameterizedClass auditLoggerParameters = auditConfig.getLoggerBackendParameters();
+
+        try
+        {
+            Class<?> loggerBackendClass = Class.forName(auditLoggerParameters.class_name);
+            Map<String, String> parameters = auditLoggerParameters.parameters != null ? auditLoggerParameters.parameters : Collections.emptyMap();
+            return (AuditLogger) loggerBackendClass.getConstructor(Map.class).newInstance(parameters);
+        }
+        catch (InvocationTargetException e)
+        {
+            throw new ConfigurationException("Audit logger backend failed at initialization: " + e.getTargetException().getMessage(), e);
+        }
+        catch (Exception e)
+        {
+            throw new ConfigurationException("Failed to initialize audit logger backend: " + auditLoggerParameters, e);
+        }
     }
 
     /**
@@ -69,9 +106,10 @@ class AuditAdapterFactory
      *
      * A role based filter will be created by default.
      *
+     * @param auditConfig the audit configuration
      * @return a new audit filter
      */
-    private static AuditFilter createFilter()
+    private static AuditFilter createFilter(AuditConfig auditConfig)
     {
         String filterType = System.getProperty(FILTER_TYPE_PROPERTY_NAME, FILTER_TYPE_ROLE);
 
@@ -79,13 +117,13 @@ class AuditAdapterFactory
         {
         case FILTER_TYPE_YAML:
             LOG.info("Audit whitelist from YAML file");
-            return new YamlAuditFilter(AuditConfig.getInstance());
+            return new YamlAuditFilter(auditConfig);
         case FILTER_TYPE_ROLE:
             LOG.info("Audit whitelist from ROLE options");
             return new RoleAuditFilter();
         case FILTER_TYPE_YAML_AND_ROLE:
             LOG.info("Audit whitelist from YAML file and ROLE options");
-            return new YamlAndRoleAuditFilter(AuditConfig.getInstance());
+            return new YamlAndRoleAuditFilter(auditConfig);
         case FILTER_TYPE_NONE:
             LOG.info("No audit whitelist");
             return new DefaultAuditFilter();

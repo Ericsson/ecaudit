@@ -15,21 +15,15 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.config;
 
-import java.time.DateTimeException;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.zone.ZoneRulesException;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 public class AuditConfig
 {
-    private static final String DEFAULT_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
-
     private final AuditYamlConfigurationLoader yamlConfigurationLoader;
     private AuditYamlConfig yamlConfig;
 
@@ -61,45 +55,11 @@ public class AuditConfig
         return yamlConfig.getWhitelist();
     }
 
-    public String getLogFormat() throws ConfigurationException
+    public ParameterizedClass getLoggerBackendParameters() throws ConfigurationException
     {
         loadConfigIfNeeded();
 
-        return Optional.ofNullable(yamlConfig.getSlf4j())
-                       .map(AuditYamlSlf4jConfig::getLogFormat)
-                       .orElse(DEFAULT_FORMAT);
-    }
-
-    public Optional<DateTimeFormatter> getTimeFormatter() throws ConfigurationException
-    {
-        loadConfigIfNeeded();
-        try
-        {
-            Optional<DateTimeFormatter> timeFormatter = getFormatter();
-            return timeFormatter;
-        }
-        catch (IllegalArgumentException e)
-        {
-            throw new ConfigurationException("Invalid time format configuration.", e);
-        }
-        catch (DateTimeException e)
-        {
-            throw new ConfigurationException("Invalid time zone configuration.", e);
-        }
-
-    }
-
-    private Optional<DateTimeFormatter> getFormatter()
-    {
-        Optional<AuditYamlSlf4jConfig> slf4j = Optional.ofNullable(yamlConfig.getSlf4j());
-
-        ZoneId timeZoneId = slf4j.map(AuditYamlSlf4jConfig::getTimeZone)
-                                 .map(ZoneId::of)
-                                 .orElse(ZoneId.systemDefault());
-
-        return slf4j.map(AuditYamlSlf4jConfig::getTimeFormat)
-                    .map(DateTimeFormatter::ofPattern)
-                    .map(formatter -> formatter.withZone(timeZoneId));
+        return yamlConfig.getLoggerBackendParameters();
     }
 
     private synchronized void loadConfigIfNeeded()

@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
----
 whitelist:
   - yser1
   - yser2

@@ -19,31 +19,53 @@ shopt -s extglob
 
 SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 CCM_CONFIG=${CCM_CONFIG_DIR:=~/.ccm}
+JAR_FILE="${SCRIPT_PATH}/../ecaudit/target/ecaudit*.jar"
 
-if [[ ! -f ${CCM_CONFIG}/CURRENT ]]; then
+if [ ! -f ${CCM_CONFIG}/CURRENT ]; then
  echo "Unable to find an active ccm cluster"
  exit 2
 fi
 
+if [ ! -f ${JAR_FILE} ]; then
+ echo "No jar file found. Build project and try again."
+ exit 3
+fi
+
 CCM_CLUSTER_NAME=`cat ${CCM_CONFIG}/CURRENT`
-echo "Preparing ${CCM_CLUSTER_NAME} for performance smoke test"
+echo "Installing ecAudit with SLF4J backend into ${CCM_CLUSTER_NAME}"
 
 CLUSTER_PATH=${CCM_CONFIG}/${CCM_CLUSTER_NAME}
 
+mkdir -p ${CLUSTER_PATH}/lib
+rm -f ${CLUSTER_PATH}/lib/ecaudit.jar
+ln -s ${JAR_FILE} ${CLUSTER_PATH}/lib/ecaudit.jar
+
+grep -sq ecaudit.jar ${CLUSTER_PATH}/cassandra.in.sh
+if [ $? -ne 0 ]; then
+ echo "CLASSPATH=\"\$CLASSPATH:${CLUSTER_PATH}/lib/ecaudit.jar\"" >> ${CLUSTER_PATH}/cassandra.in.sh
+ echo "JVM_EXTRA_OPTS=\"\$JVM_EXTRA_OPTS -Dcassandra.custom_query_handler_class=com.ericsson.bss.cassandra.ecaudit.handler.AuditQueryHandler\"" >> ${CLUSTER_PATH}/cassandra.in.sh
+fi
+
 update_cache_times() {
  sed -i "s/^$1_validity_in_ms:.*/$1_validity_in_ms: 10000/" $2
+ sed -i "/^$1_update_interval_in_ms/d" $2
  sed -i "/^$1_validity_in_ms:.*/a\
 $1_update_interval_in_ms: 2000" $2
 }
 
-for NODE_PATH in ${CLUSTER_PATH}/node*;
-do
- sed -i 's/^authenticator:.*/authenticator: PasswordAuthenticator/' ${NODE_PATH}/conf/cassandra.yaml
- sed -i 's/^authorizer:.*/authorizer: CassandraAuthorizer/' ${NODE_PATH}/conf/cassandra.yaml
- sed -i 's/^role_manager:.*/role_manager: CassandraRoleManager/' ${NODE_PATH}/conf/cassandra.yaml
- update_cache_times roles ${NODE_PATH}/conf/cassandra.yaml
- update_cache_times permissions ${NODE_PATH}/conf/cassandra.yaml
- #update_cache_times credentials ${NODE_PATH}/conf/cassandra.yaml
+update_audit_yaml() {
+ rm -f $1
+ cat <<EOF > $1
+logger_backend:
+  - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
+EOF
+}
+
+update_logback_config() {
+ grep -sq ECAUDIT $1
+ if [ $? -eq 0 ]; then
+   return
+ fi
 
  sed -i '/<\/configuration>/i\
 <!--audit log-->\
@@ -66,6 +88,17 @@ do
 <logger name="ECAUDIT" level="INFO" additivity="false">\
   <appender-ref ref="AUDIT-FILE" />\
 </logger>\
-' ${NODE_PATH}/conf/logback.xml
+' $1
+}
 
+for NODE_PATH in ${CLUSTER_PATH}/node*;
+do
+ sed -i 's/^authenticator:.*/authenticator: com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator/' ${NODE_PATH}/conf/cassandra.yaml
+ sed -i 's/^authorizer:.*/authorizer: com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer/' ${NODE_PATH}/conf/cassandra.yaml
+ sed -i 's/^role_manager:.*/role_manager: com.ericsson.bss.cassandra.ecaudit.auth.AuditRoleManager/' ${NODE_PATH}/conf/cassandra.yaml
+ update_cache_times roles ${NODE_PATH}/conf/cassandra.yaml
+ update_cache_times permissions ${NODE_PATH}/conf/cassandra.yaml
+ #update_cache_times credentials ${NODE_PATH}/conf/cassandra.yaml
+ update_audit_yaml ${NODE_PATH}/conf/audit.yaml
+ update_logback_config ${NODE_PATH}/conf/logback.xml
 done

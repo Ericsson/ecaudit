@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 
-import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
@@ -195,7 +194,7 @@ public class TestSlf4jAuditLogger
     @Test
     public void testAvailableFieldFunctions()
     {
-        AuditConfig configMock = mock(AuditConfig.class);
+        Slf4jAuditLoggerConfig configMock = mock(Slf4jAuditLoggerConfig.class);
         Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
         assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT", "USER", "BATCH_ID", "STATUS", "OPERATION", "TIMESTAMP");
 
@@ -222,7 +221,7 @@ public class TestSlf4jAuditLogger
     @Test
     public void testTimestampFieldFunctionWithTimeFormatConfigured()
     {
-        AuditConfig configMock = mock(AuditConfig.class);
+        Slf4jAuditLoggerConfig configMock = mock(Slf4jAuditLoggerConfig.class);
         when(configMock.getTimeFormatter()).thenReturn(Optional.of(DateTimeFormatter.ISO_INSTANT));
 
         Function<AuditEntry, Object> timestampFunction = Slf4jAuditLogger.getTimeFunction(configMock);
@@ -247,13 +246,13 @@ public class TestSlf4jAuditLogger
 
     private Slf4jAuditLogger loggerWithConfig(String format)
     {
-        AuditConfig mockConfig = mockAuditConfig(format);
+        Slf4jAuditLoggerConfig mockConfig = mockAuditConfig(format);
         return new Slf4jAuditLogger(mockConfig, loggerMock);
     }
 
-    private AuditConfig mockAuditConfig(String logFormat)
+    private Slf4jAuditLoggerConfig mockAuditConfig(String logFormat)
     {
-        AuditConfig mockConfig = mock(AuditConfig.class);
+        Slf4jAuditLoggerConfig mockConfig = mock(Slf4jAuditLoggerConfig.class);
         when(mockConfig.getLogFormat()).thenReturn(logFormat);
         return mockConfig;
     }

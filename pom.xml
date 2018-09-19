@@ -38,9 +38,11 @@
 
     <modules>
         <module>ecaudit</module>
+        <module>eclog</module>
         <module>test-utils</module>
         <module>integration-test-standard</module>
         <module>integration-test-custom-format</module>
+        <module>integration-test-chronicle</module>
     </modules>
 
     <properties>
@@ -50,6 +52,10 @@
 
         <cassandra.version>3.0.11</cassandra.version>
         <artifact.flavor.version>c3.0.11</artifact.flavor.version>
+
+        <commons-cli.version>1.4</commons-cli.version>
+        <chronicle-queue.version>4.16.5</chronicle-queue.version>
+        <slf4j.version>1.7.25</slf4j.version>
 
         <assertj.version>3.12.0</assertj.version>
         <cassandra-driver.version>3.6.0</cassandra-driver.version>
@@ -61,8 +67,10 @@
 
         <com.mycila.license-maven-plugin.version>3.0</com.mycila.license-maven-plugin.version>
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.8.0</org.apache.maven.plugins.maven-compiler-plugin.version>
+        <org.codehaus.mojo.build-helper-maven-plugin.version>1.9.1</org.codehaus.mojo.build-helper-maven-plugin.version>
         <org.apache.maven.plugins.maven-surefire-plugin.version>2.22.0</org.apache.maven.plugins.maven-surefire-plugin.version>
         <org.apache.maven.plugins.maven-failsafe-plugin.version>2.22.0</org.apache.maven.plugins.maven-failsafe-plugin.version>
+        <org.apache.maven.plugins.maven-shade-plugin.version>3.2.1</org.apache.maven.plugins.maven-shade-plugin.version>
         <org.apache.maven.plugins.maven-install-plugin.version>2.5.2</org.apache.maven.plugins.maven-install-plugin.version>
         <org.apache.maven.plugins.maven-release-plugin.version>2.5.3</org.apache.maven.plugins.maven-release-plugin.version>
         <org.apache.maven.plugins.maven-deploy-plugin.version>2.8.2</org.apache.maven.plugins.maven-deploy-plugin.version>
@@ -80,6 +88,21 @@
                 <groupId>org.apache.cassandra</groupId>
                 <artifactId>cassandra-all</artifactId>
                 <version>${cassandra.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-cli</groupId>
+                <artifactId>commons-cli</artifactId>
+                <version>${commons-cli.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>chronicle-queue</artifactId>
+                <version>${chronicle-queue.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
             <!-- Test dependencies -->
             <dependency>
@@ -142,6 +165,11 @@
                         <source>1.8</source>
                         <target>1.8</target>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${org.codehaus.mojo.build-helper-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -224,6 +252,19 @@ limitations under the License.
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>${org.apache.maven.plugins.maven-javadoc-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>${org.apache.maven.plugins.maven-shade-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
