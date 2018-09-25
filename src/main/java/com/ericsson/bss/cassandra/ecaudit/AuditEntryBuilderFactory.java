@@ -42,7 +42,6 @@ import org.apache.cassandra.cql3.statements.SchemaAlteringStatement;
 import org.apache.cassandra.cql3.statements.SelectStatement;
 import org.apache.cassandra.cql3.statements.TruncateStatement;
 import org.apache.cassandra.cql3.statements.UseStatement;
-import org.apache.cassandra.db.KeyspaceNotDefinedException;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.Pair;
