@@ -112,7 +112,7 @@ public class ITVerifyAudit
 
         session.execute(
                 new SimpleStatement(
-                        "CREATE ROLE sam WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system, data/system_schema, data/ecks/ectbl, data/nonexistingks, data/validks/nonexistingtbl, connections' }"));
+                        "CREATE ROLE sam WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system, data/system_schema, data/ecks/ectbl, data/nonexistingks, data/ecks/nonexistingtbl, connections' }"));
         session.execute(
                 new SimpleStatement(
                         "GRANT MODIFY ON ecks.ectbl TO sam"));
@@ -530,9 +530,9 @@ public class ITVerifyAudit
     {
         List<String> statements = Arrays.asList(
                 "SELECT * FROM nonexistingks.nonexistingtbl",
-                "SELECT * FROM validks.nonexistingtbl",
+                "SELECT * FROM ecks.nonexistingtbl",
                 "INSERT INTO nonexistingks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
-                "INSERT INTO validks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')");
+                "INSERT INTO ecks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')");
 
         try (Cluster privateCluster = cdt.createCluster("sam", "secret");
              Session privateSession = privateCluster.connect())

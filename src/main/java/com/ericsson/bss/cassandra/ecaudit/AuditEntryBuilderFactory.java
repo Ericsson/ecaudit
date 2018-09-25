@@ -43,6 +43,7 @@ import org.apache.cassandra.cql3.statements.SelectStatement;
 import org.apache.cassandra.cql3.statements.TruncateStatement;
 import org.apache.cassandra.cql3.statements.UseStatement;
 import org.apache.cassandra.db.KeyspaceNotDefinedException;
+import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.Pair;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -78,7 +79,7 @@ public class AuditEntryBuilderFactory
             CQLStatement statement = QueryProcessor.getStatement(operation, state).statement;
             return createEntryBuilder(statement);
         }
-        catch (KeyspaceNotDefinedException e)
+        catch (InvalidRequestException e)
         {
             LOG.trace("Failed to prepare statement for non-existing resource - trying unprepared", e);
             ParsedStatement parsedStatement = getParsedStatement(operation, state);
