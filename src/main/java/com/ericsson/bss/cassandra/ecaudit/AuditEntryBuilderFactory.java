@@ -17,7 +17,6 @@ package com.ericsson.bss.cassandra.ecaudit;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
@@ -58,10 +57,6 @@ import org.slf4j.LoggerFactory;
 public class AuditEntryBuilderFactory
 {
     public static final Logger LOG = LoggerFactory.getLogger(AuditEntryBuilderFactory.class);
-    private final AtomicBoolean warnedRuntimeOnce = new AtomicBoolean(false);
-    private final AtomicBoolean warnedBatchRuntimeOnce = new AtomicBoolean(false);
-    private final AtomicBoolean warnedUnrecognizedPrepStatementOnce = new AtomicBoolean(false);
-    private final AtomicBoolean warnedUnrecognizedStatementOnce = new AtomicBoolean(false);
 
     // This list of predefined and immutable permission sets are injected to the audit entries
     // created in this factory. They should stay immutable since the {@link AuditEntry} type and its builder
@@ -85,17 +80,13 @@ public class AuditEntryBuilderFactory
         }
         catch (KeyspaceNotDefinedException e)
         {
-            // This is typically the result of a query towards a non-existing resource
             LOG.trace("Failed to prepare statement for non-existing resource - trying unprepared", e);
             ParsedStatement parsedStatement = getParsedStatement(operation, state);
             return createEntryBuilder(parsedStatement);
         }
         catch (RuntimeException e)
         {
-            if (warnedRuntimeOnce.compareAndSet(false, true))
-            {
-                LOG.warn("Failed to parse or prepare statement - assuming default permissions and resources", e);
-            }
+            LOG.trace("Failed to parse or prepare statement - assuming default permissions and resources", e);
             return createDefaultEntryBuilder();
         }
     }
@@ -123,10 +114,7 @@ public class AuditEntryBuilderFactory
             return createModificationEntryBuilder((ModificationStatement.Parsed) parsedStatement);
         }
 
-        if (warnedUnrecognizedPrepStatementOnce.compareAndSet(false, true))
-        {
-            LOG.warn("Unable to determine statement type for parsing - assuming default permissions and resources");
-        }
+        LOG.trace("Unable to determine statement type for parsing - assuming default permissions and resources");
         return createDefaultEntryBuilder();
     }
 
@@ -185,10 +173,7 @@ public class AuditEntryBuilderFactory
             return createSchemaAlteringEntryBuilder((SchemaAlteringStatement) statement);
         }
 
-        if (warnedUnrecognizedStatementOnce.compareAndSet(false, true))
-        {
-            LOG.warn("Unrecognized statement type - assuming default permissions and resources");
-        }
+        LOG.trace("Unrecognized statement type - assuming default permissions and resources");
         return createDefaultEntryBuilder();
     }
 
@@ -267,10 +252,7 @@ public class AuditEntryBuilderFactory
         }
         catch (RuntimeException e)
         {
-            if (warnedBatchRuntimeOnce.compareAndSet(false, true))
-            {
-                LOG.warn("Failed to parse or prepare entry in batch statement - assuming default permissions and resources", e);
-            }
+            LOG.trace("Failed to parse or prepare entry in batch statement - assuming default permissions and resources", e);
             // This is typically the result of a query towards a non-existing resource
             // TODO: We should be able to fix this
             // But right now we don't get here since batch statements fail pre-processing
