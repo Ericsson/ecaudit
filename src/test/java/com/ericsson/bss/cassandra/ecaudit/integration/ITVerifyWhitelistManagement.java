@@ -118,6 +118,7 @@ public class ITVerifyWhitelistManagement
     @After
     public void after()
     {
+        session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
         // LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         // loggerContext.getLogger(FileAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
     }
@@ -167,10 +168,6 @@ public class ITVerifyWhitelistManagement
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
         }
-        finally
-        {
-            session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
-        }
     }
 
     @Test
@@ -181,10 +178,6 @@ public class ITVerifyWhitelistManagement
         {
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
-        }
-        finally
-        {
-            session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
         }
     }
 
@@ -197,10 +190,6 @@ public class ITVerifyWhitelistManagement
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
         }
-        finally
-        {
-            session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
-        }
     }
 
     @Test
@@ -212,9 +201,27 @@ public class ITVerifyWhitelistManagement
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl' }"));
         }
-        finally
+    }
+
+    @Test
+    public void testSuperUserCanCreateWhitelistedOnNonexistingKeyspace()
+    {
+        try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
+             Session privateSession = privateCluster.connect())
         {
-            session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
+            privateSession.execute(new SimpleStatement(
+                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/unknownks' }"));
+        }
+    }
+
+    @Test
+    public void testSuperUserCanCreateWhitelistedOnNonexistingTable()
+    {
+        try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl' }"));
         }
     }
 
@@ -227,10 +234,6 @@ public class ITVerifyWhitelistManagement
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections' }"));
         }
-        finally
-        {
-            session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
-        }
     }
 
     @Test
@@ -241,10 +244,6 @@ public class ITVerifyWhitelistManagement
         {
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles' }"));
-        }
-        finally
-        {
-            session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
         }
     }
 
@@ -258,10 +257,6 @@ public class ITVerifyWhitelistManagement
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true"));
             privateSession.execute(new SimpleStatement(
                     "GRANT whitelist_role TO temporary_user"));
-        }
-        finally
-        {
-            session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
         }
     }
 }

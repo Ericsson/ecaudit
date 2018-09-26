@@ -1,5 +1,8 @@
 # Changes
 
+## Version 0.22.0
+* Fix role based whitelist for non-existing ks/table (Ericsson/ecaudit#10)
+
 ## Version 0.21.0
 * Public release on Maven Central
 
