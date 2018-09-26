@@ -75,19 +75,26 @@ public class AuditEntryBuilderFactory
     {
         try
         {
-            CQLStatement statement = QueryProcessor.getStatement(operation, state).statement;
-            return createEntryBuilder(statement);
-        }
-        catch (InvalidRequestException e)
-        {
-            LOG.trace("Failed to prepare statement for non-existing resource - trying unprepared", e);
-            ParsedStatement parsedStatement = getParsedStatement(operation, state);
-            return createEntryBuilder(parsedStatement);
+            return createEntryBuilderForUnpreparedStatement(operation, state);
         }
         catch (RuntimeException e)
         {
             LOG.trace("Failed to parse or prepare statement - assuming default permissions and resources", e);
             return createDefaultEntryBuilder();
+        }
+    }
+
+    private Builder createEntryBuilderForUnpreparedStatement(String operation, ClientState state) {
+        try
+        {
+            CQLStatement statement = QueryProcessor.getStatement(operation, state).statement;
+            return createEntryBuilder(statement);
+        }
+        catch (InvalidRequestException e)
+        {
+            LOG.trace("Failed to prepare statement - trying direct parsing", e);
+            ParsedStatement parsedStatement = getParsedStatement(operation, state);
+            return createEntryBuilder(parsedStatement);
         }
     }
 
