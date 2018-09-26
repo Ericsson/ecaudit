@@ -16,7 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -111,7 +112,7 @@ public class ITVerifyAudit
 
         session.execute(
                 new SimpleStatement(
-                        "CREATE ROLE sam WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system, data/system_schema, data/ecks/ectbl, connections' }"));
+                        "CREATE ROLE sam WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system, data/system_schema, data/ecks/ectbl, data/nonexistingks, data/ecks/nonexistingtbl, connections' }"));
         session.execute(
                 new SimpleStatement(
                         "GRANT MODIFY ON ecks.ectbl TO sam"));
@@ -503,21 +504,14 @@ public class ITVerifyAudit
                 "CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)",
                 "INSERT INTO invalidks.invalidtbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
                 "SELECT * FROM invalidks.invalidtbl",
+                "SELECT * FROM ecks.invalidtbl",
                 "DELETE FROM invalidks.invalidtbl WHERE partk = 2",
                 "DROP KEYSPACE invalidks",
                 "DROP ROLE invaliduser");
 
         for (String statement : statements)
         {
-            try
-            {
-                session.execute(new SimpleStatement(statement));
-                fail("Expected statement to be rejected");
-            }
-            catch (DriverException e)
-            {
-                // Intentionally left empty
-            }
+            assertThatExceptionOfType(DriverException.class).isThrownBy(() -> session.execute(new SimpleStatement(statement)));
         }
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
@@ -529,6 +523,45 @@ public class ITVerifyAudit
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(Collectors.toList()))
                         .containsAll(expectedAttemptsAndFails(statements));
+    }
+
+    @Test
+    public void testFailedWhitelistedStatementsAreNotLogged()
+    {
+        List<String> statements = Arrays.asList(
+                "SELECT * FROM nonexistingks.nonexistingtbl",
+                "SELECT * FROM ecks.nonexistingtbl",
+                "INSERT INTO nonexistingks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
+                "INSERT INTO ecks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')");
+
+        try (Cluster privateCluster = cdt.createCluster("sam", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            for (String statement : statements)
+            {
+                assertThatExceptionOfType(InvalidQueryException.class).isThrownBy(() -> privateSession.execute(new SimpleStatement(statement)));
+            }
+        }
+    }
+
+    @Test
+    public void testFailedWhitelistedBatchStatementIsNotLogged()
+    {
+            List<String> statements = Arrays.asList(
+                "INSERT INTO nonexistingks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
+                "INSERT INTO validks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')");
+
+        try (Cluster privateCluster = cdt.createCluster("sam", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            for (String statement : statements)
+            {
+                BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
+                batch.add(new SimpleStatement("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"));
+                batch.add(new SimpleStatement(statement));
+                assertThatExceptionOfType(InvalidQueryException.class).isThrownBy(() -> privateSession.execute(batch));
+            }
+        }
     }
 
     @Test
