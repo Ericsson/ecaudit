@@ -42,8 +42,8 @@
 
         <cassandra.version>3.11.3</cassandra.version>
 
-        <assertj.version>3.10.0</assertj.version>
-        <cassandra-driver.version>3.4.0</cassandra-driver.version>
+        <assertj.version>3.11.1</assertj.version>
+        <cassandra-driver.version>3.6.0</cassandra-driver.version>
         <commons-io.version>2.6</commons-io.version>
         <jcip-annotations.version>1.0</jcip-annotations.version>
         <junit.version>4.12</junit.version>
