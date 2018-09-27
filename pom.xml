@@ -40,7 +40,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <cassandra.version>3.11.2</cassandra.version>
+        <cassandra.version>3.11.3</cassandra.version>
 
         <assertj.version>3.10.0</assertj.version>
         <cassandra-driver.version>3.4.0</cassandra-driver.version>

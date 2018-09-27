@@ -36,7 +36,8 @@ The table below list the Cassandra versions used in the current and previous bui
 | ecaudit_c3.0    | 0.1  -> 0.10   | Cassandra 3.0.15 |
 | ecaudit_c3.0    | 0.11 -> 0.21   | Cassandra 3.0.16 |
 | ecaudit_c3.0    | 0.22 ->        | Cassandra 3.0.17 |
-| ecaudit_c3.11   | 0.1  ->        | Cassandra 3.11.2 |
+| ecaudit_c3.11   | 0.1  -> 0.21   | Cassandra 3.11.2 |
+| ecaudit_c3.11   | 0.22 ->        | Cassandra 3.11.3 |
 
 The ecAudit plug-in is maintained for selected Cassandra versions only.
 It may be possible to use the ecAudit plug-in with related Cassandra versions as well.
