@@ -1,7 +1,6 @@
 # ecAudit - Ericsson Cassandra Audit
 
 [![build](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c3.0)](https://travis-ci.org/Ericsson/ecaudit)
-
 [![coverage](https://coveralls.io/repos/github/Ericsson/ecaudit/badge.svg?branch=release/c3.0)](https://coveralls.io/github/Ericsson/ecaudit?branch=release/c3.0)
 [![maven central](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=maven%20central)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
 
