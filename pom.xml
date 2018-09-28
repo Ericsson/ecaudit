@@ -121,8 +121,13 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${org.apache.maven.plugins.maven-surefire-plugin.version}</version>
                     <executions>
-                        <execution />
+                        <execution/>
                     </executions>
+                    <configuration>
+                        <excludes>
+                            <exclude>com.ericsson.bss.cassandra.ecaudit.integration.*</exclude>
+                        </excludes>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
