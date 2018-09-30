@@ -15,7 +15,6 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit;
 
-import org.apache.cassandra.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +26,9 @@ import com.ericsson.bss.cassandra.ecaudit.filter.role.RoleAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.YamlAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.yamlandrole.YamlAndRoleAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
-import com.ericsson.bss.cassandra.ecaudit.logger.FileAuditLogger;
+import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
+import org.apache.cassandra.exceptions.ConfigurationException;
 
 /**
  * Factory class for creating configured instances of {@link AuditAdapter}.
@@ -59,7 +59,7 @@ public class AuditAdapterFactory
             return AUDIT_ADAPTER_INSTANCE;
         }
 
-        AuditLogger logger = new FileAuditLogger();
+        AuditLogger logger = new Slf4jAuditLogger();
         PasswordObfuscator obfuscator = new PasswordObfuscator();
 
         AuditFilter filter = createFilter();

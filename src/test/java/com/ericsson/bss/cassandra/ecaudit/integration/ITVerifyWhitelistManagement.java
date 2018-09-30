@@ -108,19 +108,10 @@ public class ITVerifyWhitelistManagement
 
     }
 
-    @Before
-    public void before()
-    {
-        // LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        // loggerContext.getLogger(FileAuditLogger.AUDIT_LOGGER_NAME).addAppender(mockAuditAppender);
-    }
-
     @After
     public void after()
     {
         session.execute(new SimpleStatement("DROP ROLE IF EXISTS temporary_user"));
-        // LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        // loggerContext.getLogger(FileAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
     }
 
     @AfterClass

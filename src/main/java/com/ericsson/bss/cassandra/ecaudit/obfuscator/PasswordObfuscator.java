@@ -47,7 +47,7 @@ public class PasswordObfuscator implements AuditObfuscator
     @Override
     public AuditEntry obfuscate(final AuditEntry entry)
     {
-        if (isRolseResource(entry.getResource()) && isPasswordPermission(entry.getPermissions()))
+        if (isRoleResource(entry.getResource()) && isPasswordPermission(entry.getPermissions()))
         {
             AuditEntry obfuscatedEntry = entry;
 
@@ -65,7 +65,7 @@ public class PasswordObfuscator implements AuditObfuscator
         return entry;
     }
 
-    private boolean isRolseResource(IResource resource)
+    private boolean isRoleResource(IResource resource)
     {
         return resource instanceof RoleResource;
     }

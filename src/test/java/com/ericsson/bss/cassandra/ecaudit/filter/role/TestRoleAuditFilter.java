@@ -39,8 +39,8 @@ public class TestRoleAuditFilter
         RoleAuditFilter filter = new RoleAuditFilter();
         Map<String, List<IResource>> optionMap = Collections.singletonMap("audit_whitelist_for_all", Arrays.asList(DataResource.root(), ConnectionResource.root()));
 
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data"))).isEqualTo(true);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(true);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data"))).isEqualTo(true);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(true);
     }
 
     @Test
@@ -49,8 +49,8 @@ public class TestRoleAuditFilter
         RoleAuditFilter filter = new RoleAuditFilter();
         Map<String, List<IResource>> optionMap = Collections.singletonMap("audit_whitelist_for_all", Arrays.asList(DataResource.root()));
 
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data"))).isEqualTo(true);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data"))).isEqualTo(true);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(false);
     }
 
     @Test
@@ -59,10 +59,10 @@ public class TestRoleAuditFilter
         RoleAuditFilter filter = new RoleAuditFilter();
         Map<String, List<IResource>> optionMap = Collections.singletonMap("audit_whitelist_for_all", Arrays.asList(DataResource.fromName("data/wlks1"), DataResource.fromName("data/wlks2")));
 
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data/ks/tbl"))).isEqualTo(false);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data/wlk1s/wltbl1"))).isEqualTo(false);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data/wlks1"))).isEqualTo(true);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data/ks/tbl"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data/wlk1s/wltbl1"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data/wlks1"))).isEqualTo(true);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(false);
     }
 
     @Test
@@ -71,9 +71,9 @@ public class TestRoleAuditFilter
         RoleAuditFilter filter = new RoleAuditFilter();
         Map<String, List<IResource>> optionMap = Collections.singletonMap("audit_whitelist_for_all", Arrays.asList(DataResource.fromName("data/wlks1/wltbl1"), DataResource.fromName("data/wlks2/wltb2l")));
 
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data/ks/tbl"))).isEqualTo(false);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data/wlks1/wltbl1"))).isEqualTo(true);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data/ks/tbl"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data/wlks1/wltbl1"))).isEqualTo(true);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(false);
     }
 
     @Test
@@ -82,8 +82,8 @@ public class TestRoleAuditFilter
         RoleAuditFilter filter = new RoleAuditFilter();
         Map<String, List<IResource>> optionMap = Collections.singletonMap("audit_whitelist_for_all", Arrays.asList(ConnectionResource.root()));
 
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data"))).isEqualTo(false);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(true);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(true);
     }
 
     @Test
@@ -92,8 +92,8 @@ public class TestRoleAuditFilter
         RoleAuditFilter filter = new RoleAuditFilter();
         Map<String, List<IResource>> optionMap = Collections.emptyMap();
 
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, DataResource.fromName("data"))).isEqualTo(false);
-        assertThat(filter.isResourceOperatoinWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, DataResource.fromName("data"))).isEqualTo(false);
+        assertThat(filter.isResourceOperationWhitelisted(optionMap, ConnectionResource.fromName("connections"))).isEqualTo(false);
     }
 
 }

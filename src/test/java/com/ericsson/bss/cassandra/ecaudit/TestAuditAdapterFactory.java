@@ -15,18 +15,14 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Collections;
 
-import org.apache.cassandra.exceptions.ConfigurationException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
@@ -38,9 +34,13 @@ import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoad
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.YamlAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.yamlandrole.YamlAndRoleAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
-import com.ericsson.bss.cassandra.ecaudit.logger.FileAuditLogger;
+import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
+import org.apache.cassandra.exceptions.ConfigurationException;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestAuditAdapterFactory
@@ -77,7 +77,7 @@ public class TestAuditAdapterFactory
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
 
         DefaultAuditor defaultAuditor = (DefaultAuditor) auditor;
-        assertThat(loggerIn(defaultAuditor)).isInstanceOf(FileAuditLogger.class);
+        assertThat(loggerIn(defaultAuditor)).isInstanceOf(Slf4jAuditLogger.class);
         assertThat(filterIn(defaultAuditor)).isInstanceOf(RoleAuditFilter.class);
         assertThat(obfuscatorIn(defaultAuditor)).isInstanceOf(PasswordObfuscator.class);
     }
@@ -94,7 +94,7 @@ public class TestAuditAdapterFactory
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
 
         DefaultAuditor defaultAuditor = (DefaultAuditor) auditor;
-        assertThat(loggerIn(defaultAuditor)).isInstanceOf(FileAuditLogger.class);
+        assertThat(loggerIn(defaultAuditor)).isInstanceOf(Slf4jAuditLogger.class);
         assertThat(filterIn(defaultAuditor)).isInstanceOf(YamlAuditFilter.class);
         assertThat(obfuscatorIn(defaultAuditor)).isInstanceOf(PasswordObfuscator.class);
     }
@@ -110,7 +110,7 @@ public class TestAuditAdapterFactory
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
 
         DefaultAuditor defaultAuditor = (DefaultAuditor) auditor;
-        assertThat(loggerIn(defaultAuditor)).isInstanceOf(FileAuditLogger.class);
+        assertThat(loggerIn(defaultAuditor)).isInstanceOf(Slf4jAuditLogger.class);
         assertThat(filterIn(defaultAuditor)).isInstanceOf(RoleAuditFilter.class);
         assertThat(obfuscatorIn(defaultAuditor)).isInstanceOf(PasswordObfuscator.class);
     }
@@ -127,7 +127,7 @@ public class TestAuditAdapterFactory
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
 
         DefaultAuditor defaultAuditor = (DefaultAuditor) auditor;
-        assertThat(loggerIn(defaultAuditor)).isInstanceOf(FileAuditLogger.class);
+        assertThat(loggerIn(defaultAuditor)).isInstanceOf(Slf4jAuditLogger.class);
         assertThat(filterIn(defaultAuditor)).isInstanceOf(YamlAndRoleAuditFilter.class);
         assertThat(obfuscatorIn(defaultAuditor)).isInstanceOf(PasswordObfuscator.class);
     }
@@ -143,7 +143,7 @@ public class TestAuditAdapterFactory
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
 
         DefaultAuditor defaultAuditor = (DefaultAuditor) auditor;
-        assertThat(loggerIn(defaultAuditor)).isInstanceOf(FileAuditLogger.class);
+        assertThat(loggerIn(defaultAuditor)).isInstanceOf(Slf4jAuditLogger.class);
         assertThat(filterIn(defaultAuditor)).isInstanceOf(DefaultAuditFilter.class);
         assertThat(obfuscatorIn(defaultAuditor)).isInstanceOf(PasswordObfuscator.class);
     }
