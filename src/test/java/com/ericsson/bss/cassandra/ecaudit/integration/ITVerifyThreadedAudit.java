@@ -45,7 +45,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
-import com.ericsson.bss.cassandra.ecaudit.logger.FileAuditLogger;
+import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -106,7 +106,7 @@ public class ITVerifyThreadedAudit
     public void before()
     {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(FileAuditLogger.AUDIT_LOGGER_NAME).addAppender(mockAuditAppender);
+        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).addAppender(mockAuditAppender);
     }
 
     @After
@@ -114,7 +114,7 @@ public class ITVerifyThreadedAudit
     {
         verifyNoMoreInteractions(mockAuditAppender);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(FileAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
+        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
     }
 
     @AfterClass

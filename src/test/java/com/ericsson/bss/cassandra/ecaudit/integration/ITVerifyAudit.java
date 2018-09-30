@@ -15,14 +15,6 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.integration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -31,18 +23,17 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.LocalDate;
@@ -51,12 +42,20 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverException;
-import com.ericsson.bss.cassandra.ecaudit.logger.FileAuditLogger;
-
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import net.jcip.annotations.NotThreadSafe;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  * This test class provides a functional integration test with Cassandra itself.
@@ -149,7 +148,7 @@ public class ITVerifyAudit
     public void before()
     {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(FileAuditLogger.AUDIT_LOGGER_NAME).addAppender(mockAuditAppender);
+        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).addAppender(mockAuditAppender);
     }
 
     @After
@@ -157,7 +156,7 @@ public class ITVerifyAudit
     {
         verifyNoMoreInteractions(mockAuditAppender);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(FileAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
+        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
     }
 
     @AfterClass

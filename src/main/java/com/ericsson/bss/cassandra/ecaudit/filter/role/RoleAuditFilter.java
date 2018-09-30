@@ -47,7 +47,7 @@ public class RoleAuditFilter implements AuditFilter
         for (RoleResource role : Roles.getRoles(primaryRole))
         {
             Map<String, List<IResource>> roleOptions = AuditWhitelistCache.getCustomOptions(role);
-            if (isResourceOperatoinWhitelisted(roleOptions, logEntry.getResource()))
+            if (isResourceOperationWhitelisted(roleOptions, logEntry.getResource()))
             {
                 return true;
             }
@@ -57,17 +57,15 @@ public class RoleAuditFilter implements AuditFilter
     }
 
     /**
-     * Returns true if the supplied option map is white-listing the specified category/operation and resource.
+     * Returns true if the supplied option map is white-listing the specified resource.
      *
      * @param roleOptions
      *            the role options as stored in Cassandra
-     * @param operationCategory
-     *            the category of the operation
      * @param operationResource
      *            the resource being accessed
-     * @return true if the role category and resource is white-listed, false otherwise
+     * @return true if the resource is white-listed, false otherwise
      */
-    boolean isResourceOperatoinWhitelisted(Map<String, List<IResource>> roleOptions, IResource operationResource)
+    boolean isResourceOperationWhitelisted(Map<String, List<IResource>> roleOptions, IResource operationResource)
     {
         List<IResource> whitelistResources = roleOptions.get(AuditWhitelistManager.OPTION_AUDIT_WHITELIST_ALL);
         if (whitelistResources == null)
