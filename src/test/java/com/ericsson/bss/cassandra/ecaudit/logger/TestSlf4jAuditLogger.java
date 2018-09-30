@@ -15,37 +15,36 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.net.InetAddress;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
-import com.ericsson.bss.cassandra.ecaudit.logger.FileAuditLogger;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TestFileAuditLogger
+public class TestSlf4jAuditLogger
 {
     @Mock
     Logger mockLogger;
 
     @InjectMocks
-    FileAuditLogger logger;
+    Slf4jAuditLogger logger;
 
     @Test
     public void testAuditEntryNoBatch() throws Exception
@@ -59,11 +58,11 @@ public class TestFileAuditLogger
         when(expectedAddress.getHostAddress()).thenReturn(expectedHostAddress);
 
         AuditEntry logEntry = AuditEntry.newBuilder()
-                .user(expectedUser)
-                .client(expectedAddress)
-                .operation(new SimpleAuditOperation(expectedStatement))
-                .status(expectedStatus)
-                .build();
+                                        .user(expectedUser)
+                                        .client(expectedAddress)
+                                        .operation(new SimpleAuditOperation(expectedStatement))
+                                        .status(expectedStatus)
+                                        .build();
 
         logger.log(logEntry);
 
@@ -74,10 +73,10 @@ public class TestFileAuditLogger
         String auditLogEntry = captor.getValue();
         assertThat(StringUtils.split(auditLogEntry, '|').length).isEqualTo(4);
         assertThat(auditLogEntry).contains(
-                String.format("user:'%s'", expectedUser),
-                String.format("client:'%s'", expectedHostAddress),
-                String.format("operation:'%s'", expectedStatement),
-                String.format("status:'%s'", expectedStatus.toString()));
+        String.format("user:'%s'", expectedUser),
+        String.format("client:'%s'", expectedHostAddress),
+        String.format("operation:'%s'", expectedStatement),
+        String.format("status:'%s'", expectedStatus.toString()));
         assertThat(auditLogEntry).doesNotContain("batchId:");
     }
 
@@ -94,12 +93,12 @@ public class TestFileAuditLogger
         when(expectedAddress.getHostAddress()).thenReturn(expectedHostAddress);
 
         AuditEntry logEntry = AuditEntry.newBuilder()
-                .user(expectedUser)
-                .client(expectedAddress)
-                .operation(new SimpleAuditOperation(expectedStatement))
-                .status(expectedStatus)
-                .batch(expectedBatchId)
-                .build();
+                                        .user(expectedUser)
+                                        .client(expectedAddress)
+                                        .operation(new SimpleAuditOperation(expectedStatement))
+                                        .status(expectedStatus)
+                                        .batch(expectedBatchId)
+                                        .build();
 
         logger.log(logEntry);
 
@@ -110,10 +109,10 @@ public class TestFileAuditLogger
         String auditLogEntry = captor.getValue();
         assertThat(StringUtils.split(auditLogEntry, '|').length).isEqualTo(5);
         assertThat(auditLogEntry).contains(
-                String.format("user:'%s'", expectedUser),
-                String.format("client:'%s'", expectedHostAddress),
-                String.format("operation:'%s'", expectedStatement),
-                String.format("batchId:'%s'", expectedBatchId.toString()),
-                String.format("status:'%s'", expectedStatus.toString()));
+        String.format("user:'%s'", expectedUser),
+        String.format("client:'%s'", expectedHostAddress),
+        String.format("operation:'%s'", expectedStatement),
+        String.format("batchId:'%s'", expectedBatchId.toString()),
+        String.format("status:'%s'", expectedStatus.toString()));
     }
 }

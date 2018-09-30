@@ -1,5 +1,8 @@
 # Changes
 
+## Version 0.23.0
+* Improve logger performance with micro benchmarks
+
 ## Version 0.22.0
 * Build with Cassandra 3.0.17 (only in ecAudit for C* 3.0.x)
 * Fix role based whitelist for non-existing ks/table (Ericsson/ecaudit#10)

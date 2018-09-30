@@ -48,6 +48,7 @@
         <jcip-annotations.version>1.0</jcip-annotations.version>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
+        <jmh.version>1.21</jmh.version>
 
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.8.0</org.apache.maven.plugins.maven-compiler-plugin.version>
         <org.apache.maven.plugins.maven-surefire-plugin.version>2.22.0</org.apache.maven.plugins.maven-surefire-plugin.version>
@@ -106,6 +107,18 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>${jmh.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>${jmh.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -129,6 +142,7 @@
                     </executions>
                     <configuration>
                         <excludes>
+                            <exclude>com.ericsson.bss.cassandra.ecaudit.microbench.*</exclude>
                             <exclude>com.ericsson.bss.cassandra.ecaudit.integration.*</exclude>
                         </excludes>
                     </configuration>

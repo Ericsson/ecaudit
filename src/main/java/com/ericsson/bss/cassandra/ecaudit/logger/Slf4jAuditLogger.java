@@ -23,9 +23,9 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 /**
  * Implements an {@link AuditLogger} that writes {@link AuditEntry} instance into file using {@link Logger}.
  */
-public class FileAuditLogger implements AuditLogger
+public class Slf4jAuditLogger implements AuditLogger
 {
-    public static final Logger LOG = LoggerFactory.getLogger(FileAuditLogger.class);
+    public static final Logger LOG = LoggerFactory.getLogger(Slf4jAuditLogger.class);
 
     public static final String AUDIT_LOGGER_NAME = "ECAUDIT";
     private final Logger auditLogger; // NOSONAR
@@ -33,7 +33,7 @@ public class FileAuditLogger implements AuditLogger
     /**
      * Default constructor, injects logger from {@link LoggerFactory}.
      */
-    public FileAuditLogger()
+    public Slf4jAuditLogger()
     {
         this(LoggerFactory.getLogger(AUDIT_LOGGER_NAME));
     }
@@ -41,10 +41,9 @@ public class FileAuditLogger implements AuditLogger
     /**
      * Test constructor.
      *
-     * @param logger
-     *            the logger backend to use for audit logs
+     * @param logger the logger backend to use for audit logs
      */
-    FileAuditLogger(Logger logger)
+    Slf4jAuditLogger(Logger logger)
     {
         auditLogger = logger;
     }
@@ -55,20 +54,19 @@ public class FileAuditLogger implements AuditLogger
         auditLogger.info(getLogString(logEntry));
     }
 
-    private static String getLogString(AuditEntry logEntry)
+    public static String getLogString(AuditEntry logEntry)
     {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("client:'").append(logEntry.getClientAddress().getHostAddress()).append("'|");
-        builder.append("user:'").append(logEntry.getUser()).append("'|");
+        builder.append("client:'").append(logEntry.getClientAddress().getHostAddress());
+        builder.append("'|user:'").append(logEntry.getUser());
         if (logEntry.getBatchId().isPresent())
         {
-            builder.append("batchId:'").append(logEntry.getBatchId().get()).append("'|");
+            builder.append("'|batchId:'").append(logEntry.getBatchId().get());
         }
-        builder.append("status:'").append(logEntry.getStatus()).append("'|");
-        builder.append("operation:'").append(logEntry.getOperation().getOperationString()).append("'");
+        builder.append("'|status:'").append(logEntry.getStatus());
+        builder.append("'|operation:'").append(logEntry.getOperation().getOperationString()).append("'");
 
         return builder.toString();
     }
-
 }
