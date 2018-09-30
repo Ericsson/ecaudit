@@ -31,6 +31,9 @@ public class TestConnectionResource
         ConnectionResource root = ConnectionResource.root();
 
         assertThat(root).isEqualTo(ConnectionResource.fromName("connections"));
+        assertThat(root).isEqualByComparingTo(ConnectionResource.fromName("connections"));
+        assertThat(root).isNotEqualTo(null);
+        assertThat(root).isNotEqualTo("other type");
         assertThat(root.exists()).isEqualTo(true);
         assertThat(root.applicablePermissions()).containsExactly(Permission.AUTHORIZE, Permission.EXECUTE);
         assertThat(root.getName()).isEqualTo("connections");

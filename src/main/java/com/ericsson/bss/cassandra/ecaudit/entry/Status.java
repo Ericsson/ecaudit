@@ -31,11 +31,5 @@ public enum Status
     /**
      * Operation executed and failed.
      */
-    FAILED;
-
-    @Override
-    public String toString()
-    {
-        return this.name();
-    }
+    FAILED
 }
