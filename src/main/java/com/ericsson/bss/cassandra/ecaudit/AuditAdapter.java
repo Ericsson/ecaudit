@@ -55,7 +55,9 @@ public class AuditAdapter
     private final Map<MD5Digest, String> idQueryCache = new ConcurrentHashMap<>();
 
     /**
-     * Test constructor, see {@link #createDefault()}
+     * Constructor, see {@link AuditAdapterFactory#getInstance()}
+     *
+     * Visible for testing.
      *
      * @param auditor
      *            the auditor to use

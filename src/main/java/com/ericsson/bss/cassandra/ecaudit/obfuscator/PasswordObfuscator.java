@@ -105,7 +105,7 @@ public class PasswordObfuscator implements AuditObfuscator
         int matchStart = matcher.start(REGEX_PASSWORD_GROUP);
         int matchStop = matcher.end(REGEX_PASSWORD_GROUP);
 
-        obfuscated.append(operation.substring(0, matchStart)).append(PASSWORD_OBFUSCATED).append(operation.substring(matchStop, operation.length()));
+        obfuscated.append(operation, 0, matchStart).append(PASSWORD_OBFUSCATED).append(operation.substring(matchStop));
 
         return obfuscated.toString();
     }
