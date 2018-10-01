@@ -51,7 +51,9 @@ public class AuditAdapter
     private final AuditEntryBuilderFactory entryBuilderFactory;
 
     /**
-     * Test constructor, see {@link #createDefault()}
+     * Constructor, see {@link AuditAdapterFactory#getInstance()}
+     *
+     * Visible for testing.
      *
      * @param auditor
      *            the auditor to use

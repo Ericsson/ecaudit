@@ -196,6 +196,9 @@
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
                 <version>${org.pitest.pitest-maven.version}</version>
+                <configuration>
+                    <timestampedReports>false</timestampedReports>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

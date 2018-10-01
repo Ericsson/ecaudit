@@ -15,19 +15,8 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +25,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthorizer;
@@ -52,51 +56,45 @@ import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.MD5Digest;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.entry.Status;
-import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestAuditAdapter
 {
     @Mock
-    AuthenticatedUser mockUser;
+    private AuthenticatedUser mockUser;
 
     @Mock
-    ClientState mockState;
+    private ClientState mockState;
 
     @Mock
-    CQLStatement mockStatement;
+    private CQLStatement mockStatement;
 
     @Mock
-    QueryOptions mockOptions;
+    private QueryOptions mockOptions;
 
     @Mock
-    Auditor mockAuditor;
+    private Auditor mockAuditor;
 
     @Mock
-    AuditEntryBuilderFactory mockAuditEntryBuilderFactory;
+    private AuditEntryBuilderFactory mockAuditEntryBuilderFactory;
 
-    @InjectMocks
-    AuditAdapter auditAdapter;
+    private AuditAdapter auditAdapter;
 
-    static IPartitioner oldPartitionerToRestore;
+    private static IPartitioner oldPartitionerToRestore;
 
     @BeforeClass
     public static void beforeAll()
@@ -107,6 +105,12 @@ public class TestAuditAdapter
         IAuthorizer authorizer = mock(IAuthorizer.class);
         when(authorizer.requireAuthorization()).thenReturn(true);
         DatabaseDescriptor.setAuthorizer(authorizer);
+    }
+
+    @Before
+    public void before()
+    {
+        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory);
     }
 
     @After
@@ -137,8 +141,8 @@ public class TestAuditAdapter
 
         when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(expectedStatement), eq(mockState)))
         .thenReturn(AuditEntry.newBuilder()
-                .permissions(ImmutableSet.of(Permission.SELECT))
-                .resource(DataResource.table("ks", "tbl")));
+                              .permissions(ImmutableSet.of(Permission.SELECT))
+                              .resource(DataResource.table("ks", "tbl")));
 
         auditAdapter.auditRegular(expectedStatement, mockState, expectedStatus);
 
@@ -168,9 +172,9 @@ public class TestAuditAdapter
         when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
 
         when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(expectedStatement), eq(mockState)))
-                .thenReturn(AuditEntry.newBuilder()
-                        .permissions(ImmutableSet.of(Permission.SELECT))
-                        .resource(DataResource.table("ks", "tbl")));
+        .thenReturn(AuditEntry.newBuilder()
+                              .permissions(ImmutableSet.of(Permission.SELECT))
+                              .resource(DataResource.table("ks", "tbl")));
 
         auditAdapter.auditRegular(expectedStatement, mockState, expectedStatus);
 
@@ -186,10 +190,10 @@ public class TestAuditAdapter
         assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
         assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.SELECT));
         assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "tbl"));
-}
+    }
 
     @Test
-    public void testProcessPreparedStatementSuccessful() throws UnknownHostException
+    public void testProcessPreparedStatementSuccessful()
     {
         String preparedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?";
 
@@ -210,8 +214,8 @@ public class TestAuditAdapter
 
         when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(mockStatement)))
         .thenReturn(AuditEntry.newBuilder()
-                .permissions(ImmutableSet.of(Permission.SELECT))
-                .resource(DataResource.table("ks", "cf")));
+                              .permissions(ImmutableSet.of(Permission.SELECT))
+                              .resource(DataResource.table("ks", "cf")));
 
         auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus);
 
@@ -231,7 +235,7 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessPreparedStatementFailure() throws UnknownHostException
+    public void testProcessPreparedStatementFailure()
     {
         String preparedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?";
 
@@ -252,8 +256,8 @@ public class TestAuditAdapter
 
         when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(mockStatement)))
         .thenReturn(AuditEntry.newBuilder()
-                .permissions(ImmutableSet.of(Permission.SELECT))
-                .resource(DataResource.table("ks", "cf")));
+                              .permissions(ImmutableSet.of(Permission.SELECT))
+                              .resource(DataResource.table("ks", "cf")));
 
         auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus);
 
@@ -292,9 +296,9 @@ public class TestAuditAdapter
 
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder())
         .thenReturn(AuditEntry
-                .newBuilder()
-                .permissions(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT))
-                .resource(DataResource.root()));
+                    .newBuilder()
+                    .permissions(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT))
+                    .resource(DataResource.root()));
 
         auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus);
 
@@ -310,7 +314,6 @@ public class TestAuditAdapter
         assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsOnly(expectedQuery);
         assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT));
         assertThat(entries).extracting(AuditEntry::getResource).containsOnly(DataResource.root());
-
     }
 
     @SuppressWarnings("unchecked")
@@ -334,9 +337,9 @@ public class TestAuditAdapter
 
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder())
         .thenReturn(AuditEntry
-                .newBuilder()
-                .permissions(Sets.immutableEnumSet(Permission.MODIFY))
-                .resource(DataResource.root()));
+                    .newBuilder()
+                    .permissions(Sets.immutableEnumSet(Permission.MODIFY))
+                    .resource(DataResource.root()));
         when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(String.class), any(ClientState.class)))
         .thenAnswer(a -> a.getArgumentAt(0, AuditEntry.Builder.class));
 
@@ -390,9 +393,9 @@ public class TestAuditAdapter
 
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder())
         .thenReturn(AuditEntry
-                .newBuilder()
-                .permissions(Sets.immutableEnumSet(Permission.MODIFY))
-                .resource(DataResource.root()));
+                    .newBuilder()
+                    .permissions(Sets.immutableEnumSet(Permission.MODIFY))
+                    .resource(DataResource.root()));
         when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(ModificationStatement.class)))
         .thenAnswer(a -> a.getArgumentAt(0, AuditEntry.Builder.class));
 
@@ -415,7 +418,7 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessAuth() throws UnknownHostException
+    public void testProcessAuth()
     {
         InetAddress expectedAddress = mock(InetAddress.class);
         String expectedUser = "user";
@@ -439,7 +442,7 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessAuthFailed() throws UnknownHostException
+    public void testProcessAuthFailed()
     {
         InetAddress expectedAddress = mock(InetAddress.class);
         String expectedUser = "user";

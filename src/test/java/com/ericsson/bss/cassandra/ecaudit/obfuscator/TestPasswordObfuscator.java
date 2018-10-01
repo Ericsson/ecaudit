@@ -15,6 +15,7 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.obfuscator;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,7 +66,7 @@ public class TestPasswordObfuscator
                                          .build();
 
             AuditEntry obfuscated = myObfuscator.obfuscate(entry);
-            assertThat(obfuscated.getOperation()).isEqualTo(query);
+            assertThat(obfuscated.getOperation()).isSameAs(query);
         }
     }
 
@@ -73,13 +74,11 @@ public class TestPasswordObfuscator
     public void testNoObfuscationOfNonPasswordRoleStatement()
     {
         // These queries manages roles but shouldn't be obfuscated
-        Map<String, String> alterRoleQueries = new HashMap<>();
-        alterRoleQueries.put("ALTER ROLE helena WITH LOGIN = true;", "ALTER ROLE helena WITH LOGIN = true;");
-        alterRoleQueries.put(
-        "ALTER ROLE helena WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data, roles, connection' }",
-        "ALTER ROLE helena WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data, roles, connection' }");
+        List<String> alterRoleQueries = new ArrayList<>();
+        alterRoleQueries.add("ALTER ROLE helena WITH LOGIN = true;");
+        alterRoleQueries.add("ALTER ROLE helena WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data, roles, connection' }");
 
-        validateQueries(alterRoleQueries, "helena", Permission.ALTER);
+        validateUnmodifiedQueries(alterRoleQueries, "helena", Permission.ALTER);
     }
 
     @Test
@@ -129,6 +128,21 @@ public class TestPasswordObfuscator
         "ALTER USER moss WITH PASSWORD  '%s'    ;");
 
         validateQueries(alterUserQueries, "moss", Permission.ALTER);
+    }
+
+    private void validateUnmodifiedQueries(List<String> queries, String username, Permission permission)
+    {
+        for (String query : queries)
+        {
+            AuditEntry entry = AuditEntry.newBuilder()
+                                         .operation(new SimpleAuditOperation(query))
+                                         .permissions(Sets.immutableEnumSet(permission))
+                                         .resource(RoleResource.fromName("roles/" + username))
+                                         .build();
+
+            AuditEntry obfuscated = myObfuscator.obfuscate(entry);
+            assertThat(obfuscated.getOperation().getOperationString()).isSameAs(query);
+        }
     }
 
     private void validateQueries(Map<String, String> queries, String username, Permission permission)

@@ -156,16 +156,16 @@ public class AuditPasswordAuthenticator implements IAuthenticator
          */
         private String decodeUserNameFromSasl(byte[] bytes) throws AuthenticationException
         {
+            boolean passConsumed = false;
             byte[] user = null;
-            byte[] pass = null;
             int end = bytes.length;
             for (int i = bytes.length - 1; i >= 0; i--)
             {
                 if (bytes[i] == 0 /* null */)
                 {
-                    if (pass == null)
+                    if (!passConsumed)
                     {
-                        pass = Arrays.copyOfRange(bytes, i + 1, end);
+                        passConsumed = true;
                     }
                     else if (user == null)
                     {
