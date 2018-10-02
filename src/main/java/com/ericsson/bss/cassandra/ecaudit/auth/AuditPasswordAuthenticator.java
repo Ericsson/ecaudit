@@ -21,25 +21,25 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.cassandra.auth.AuthenticatedUser;
-import org.apache.cassandra.auth.IAuthenticator;
-import org.apache.cassandra.auth.IResource;
-import org.apache.cassandra.auth.PasswordAuthenticator;
-import org.apache.cassandra.exceptions.AuthenticationException;
-import org.apache.cassandra.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapterFactory;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import org.apache.cassandra.auth.AuthenticatedUser;
+import org.apache.cassandra.auth.IAuthenticator;
+import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.PasswordAuthenticator;
+import org.apache.cassandra.exceptions.AuthenticationException;
+import org.apache.cassandra.exceptions.ConfigurationException;
 
 /**
  * A proxy for {@link PasswordAuthenticator} with audit logging.
  */
 public class AuditPasswordAuthenticator implements IAuthenticator
 {
-    public static final Logger LOG = LoggerFactory.getLogger(AuditPasswordAuthenticator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuditPasswordAuthenticator.class);
 
     private IAuthenticator wrappedAuthenticator;
     private AuditAdapter auditAdapter;

@@ -18,6 +18,10 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.CassandraRoleManager;
 import org.apache.cassandra.auth.IRoleManager;
@@ -26,10 +30,6 @@ import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Implements a {@link IRoleManager} that is meant to be paired with {@link AuditPasswordAuthenticator}.
@@ -39,7 +39,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public class AuditRoleManager extends CassandraRoleManager
 {
-    public static final Logger LOG = LoggerFactory.getLogger(AuditRoleManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuditRoleManager.class);
 
     private final AuditWhitelistManager whitelistManager;
 
@@ -63,7 +63,7 @@ public class AuditRoleManager extends CassandraRoleManager
                 : ImmutableSet.of(Option.LOGIN, Option.SUPERUSER);
         alterableOptions = DatabaseDescriptor.getAuthenticator().getClass().equals(AuditPasswordAuthenticator.class)
                 ? ImmutableSet.of(Option.PASSWORD)
-                : ImmutableSet.<Option> of();
+                : ImmutableSet.of();
     }
 
     @Override
