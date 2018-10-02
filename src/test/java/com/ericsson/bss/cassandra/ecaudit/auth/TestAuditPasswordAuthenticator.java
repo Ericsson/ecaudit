@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
@@ -136,14 +137,11 @@ public class TestAuditPasswordAuthenticator
     /**
      * Create a client response as SASL encoded bytes
      *
-     * @param username
-     *            the user name
-     * @param password
-     *            the user password
+     * @param username the user name
+     * @param password the user password
      * @return a plain-sasl encoded byte buffer
-     * @throws UnsupportedEncodingException
      */
-    private static byte[] createClientResponse(String username, String password) throws UnsupportedEncodingException
+    private static byte[] createClientResponse(String username, String password)
     {
         // Encoded format is: <NUL>username<NUL>password
         final int capacity = 1 + username.length() + 1 + password.length();
@@ -151,9 +149,9 @@ public class TestAuditPasswordAuthenticator
 
         ByteBuffer bb = ByteBuffer.allocate(capacity);
         bb.put((byte) 0x00); // <NUL>
-        bb.put(username.getBytes("UTF-8")); // username
+        bb.put(username.getBytes(StandardCharsets.UTF_8)); // username
         bb.put((byte) 0x00); // <NUL>
-        bb.put(password.getBytes("UTF-8")); // password
+        bb.put(password.getBytes(StandardCharsets.UTF_8)); // password
 
         // Get the data as a byte array
         bb.rewind();

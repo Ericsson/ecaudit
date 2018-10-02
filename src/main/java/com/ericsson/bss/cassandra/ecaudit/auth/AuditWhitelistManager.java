@@ -15,16 +15,16 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
-import org.apache.cassandra.auth.DataResource;
-import org.apache.cassandra.auth.FunctionResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleOptions;
@@ -33,9 +33,6 @@ import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.common.collect.ImmutableMap;
 
 /**
  * The {@link AuditWhitelistManager} maintain role specific audit white-lists in a dedicated table in Cassandra.
@@ -91,7 +88,7 @@ public class AuditWhitelistManager
                     throw new InvalidRequestException("Invalid create user option: " + optionEntry.getKey());
                 }
 
-                Set<IResource> resources = toResourceSet(optionEntry);
+                Set<IResource> resources = tryConvertToResourceSet(optionEntry.getValue());
 
                 checkPermissionToWhitelist(performer, resources);
 
@@ -117,19 +114,19 @@ public class AuditWhitelistManager
                     throw new InvalidRequestException("Invalid alter user option: " + optionEntry.getKey());
                 }
 
-                Set<IResource> resources = toResourceSet(optionEntry);
+                Set<IResource> resources = tryConvertToResourceSet(optionEntry.getValue());
 
                 checkPermissionToWhitelist(performer, resources);
 
                 if (OPTION_GRANT_WHITELIST_ALL.equals(optionEntry.getKey()))
                 {
                     addStatements.put(VALID_ALTER_OPTIONS.get(optionEntry.getKey()),
-                            resources.stream().map(r -> r.getName()).collect(Collectors.toSet()));
+                            resources.stream().map(IResource::getName).collect(Collectors.toSet()));
                 }
                 else
                 {
                     removeStatements.put(VALID_ALTER_OPTIONS.get(optionEntry.getKey()),
-                            resources.stream().map(r -> r.getName()).collect(Collectors.toSet()));
+                            resources.stream().map(IResource::getName).collect(Collectors.toSet()));
                 }
             }
 
@@ -164,31 +161,15 @@ public class AuditWhitelistManager
         }
     }
 
-    private static Set<IResource> toResourceSet(Map.Entry<String, String> optionEntry)
+    private Set<IResource> tryConvertToResourceSet(String resourceCsv)
     {
-        String[] resources = StringUtils.split(optionEntry.getValue(), ',');
-        return Arrays.stream(resources)
-                .map(r -> r.trim())
-                .map(r -> toResource(r))
-                .collect(Collectors.toSet());
-    }
-
-    public static IResource toResource(String resourceName)
-    {
-        String[] parts = StringUtils.split(resourceName, '/');
-
-        switch (parts[0])
+        try
         {
-        case "data":
-            return DataResource.fromName(resourceName);
-        case "roles":
-            return RoleResource.fromName(resourceName);
-        case "connections":
-            return ConnectionResource.fromName(resourceName);
-        case "functions":
-            return FunctionResource.fromName(resourceName);
-        default:
-            throw new InvalidRequestException("Invalid resource specified for whitelisting: " + resourceName);
+            return ResourceFactory.toResourceSet(resourceCsv);
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new InvalidRequestException(String.format("Unable to parse whitelisted resources [%s]: %s", resourceCsv, e.getMessage()));
         }
     }
 }

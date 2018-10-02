@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.Schema;
 import org.apache.cassandra.config.SchemaConstants;
@@ -39,7 +41,6 @@ import org.apache.cassandra.service.MigrationManager;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * This DAO provides an interface for updating and retrieving role specific audit white-lists.
@@ -58,12 +59,12 @@ public class WhitelistDataAccess
         loadWhitelistStatement = (SelectStatement) prepare(
                 "SELECT resources from %s.%s WHERE role = ? AND operation = ?",
                 SchemaConstants.AUTH_KEYSPACE_NAME,
-                AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS);
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME);
 
         deleteWhitelistStatement = (DeleteStatement) prepare(
                 "DELETE FROM %s.%s WHERE role = ?",
                 SchemaConstants.AUTH_KEYSPACE_NAME,
-                AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS);
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME);
     }
 
     public void addToWhitelist(String rolename, String whitelistOperation, Set<String> whitelistResources)
@@ -89,7 +90,7 @@ public class WhitelistDataAccess
         String statement = String.format(
                 statementTemplate,
                 SchemaConstants.AUTH_KEYSPACE_NAME,
-                AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS,
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME,
                 StringUtils.join(quotedWhitelistResources, ','),
                 escape(rolename),
                 whitelistOperation);

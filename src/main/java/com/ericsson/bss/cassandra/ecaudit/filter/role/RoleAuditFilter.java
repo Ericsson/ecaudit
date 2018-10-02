@@ -15,17 +15,16 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.filter.role;
 
-import java.util.List;
 import java.util.Map;
-
-import org.apache.cassandra.auth.IResource;
-import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.auth.Roles;
+import java.util.Set;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistManager;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
+import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.RoleResource;
+import org.apache.cassandra.auth.Roles;
 
 /**
  * A role based white-list filter that exempts users based on custom options on roles in Cassandra.
@@ -46,7 +45,7 @@ public class RoleAuditFilter implements AuditFilter
         RoleResource primaryRole = RoleResource.role(logEntry.getUser());
         for (RoleResource role : Roles.getRoles(primaryRole))
         {
-            Map<String, List<IResource>> roleOptions = AuditWhitelistCache.getCustomOptions(role);
+            Map<String, Set<IResource>> roleOptions = AuditWhitelistCache.getCustomOptions(role);
             if (isResourceOperationWhitelisted(roleOptions, logEntry.getResource()))
             {
                 return true;
@@ -65,9 +64,9 @@ public class RoleAuditFilter implements AuditFilter
      *            the resource being accessed
      * @return true if the resource is white-listed, false otherwise
      */
-    boolean isResourceOperationWhitelisted(Map<String, List<IResource>> roleOptions, IResource operationResource)
+    boolean isResourceOperationWhitelisted(Map<String, Set<IResource>> roleOptions, IResource operationResource)
     {
-        List<IResource> whitelistResources = roleOptions.get(AuditWhitelistManager.OPTION_AUDIT_WHITELIST_ALL);
+        Set<IResource> whitelistResources = roleOptions.get(AuditWhitelistManager.OPTION_AUDIT_WHITELIST_ALL);
         if (whitelistResources == null)
         {
             return false;

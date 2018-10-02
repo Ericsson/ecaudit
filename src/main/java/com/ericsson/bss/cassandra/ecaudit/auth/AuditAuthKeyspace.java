@@ -23,26 +23,23 @@ import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.schema.KeyspaceParams;
 import org.apache.cassandra.schema.Tables;
 
-public final class AuditAuthKeyspace
+final class AuditAuthKeyspace
 {
-    public static final String ROLE_AUDIT_WHITELISTS = "role_audit_whitelists";
+    static final String WHITELIST_TABLE_NAME = "role_audit_whitelists";
+    private static final String WHITELIST_TABLE_SCHEMA = "CREATE TABLE " + WHITELIST_TABLE_NAME + " ("
+                                                         + "role text,"
+                                                         + "operation text,"
+                                                         + "resources set<text>,"
+                                                         + "PRIMARY KEY(role, operation))";
+    private static final String WHITELIST_TABLE_DESCRIPTION = "audit whitelist assigned to db roles";
+    private static final int WHITELIST_TABLE_GC_GRACE_SECONDS = (int) TimeUnit.DAYS.toSeconds(90);
 
-    private static final CFMetaData CREATE_ROLE_AUDIT_WHITELISTS = compile(ROLE_AUDIT_WHITELISTS,
-            "audit whitelist assigned to db roles",
-            "CREATE TABLE %s ("
-                    + "role text,"
-                    + "operation text,"
-                    + "resources set<text>,"
-                    + "PRIMARY KEY(role, operation))");
+    private static final CFMetaData CREATE_ROLE_AUDIT_WHITELISTS =
+    CFMetaData.compile(WHITELIST_TABLE_SCHEMA, SchemaConstants.AUTH_KEYSPACE_NAME)
+              .comment(WHITELIST_TABLE_DESCRIPTION)
+              .gcGraceSeconds(WHITELIST_TABLE_GC_GRACE_SECONDS);
 
-    private static CFMetaData compile(String name, String description, String schema)
-    {
-        return CFMetaData.compile(String.format(schema, name), SchemaConstants.AUTH_KEYSPACE_NAME)
-                .comment(description)
-                .gcGraceSeconds((int) TimeUnit.DAYS.toSeconds(90));
-    }
-
-    public static KeyspaceMetadata metadata()
+    static KeyspaceMetadata metadata()
     {
         return KeyspaceMetadata.create(SchemaConstants.AUTH_KEYSPACE_NAME, KeyspaceParams.simple(1), Tables.of(CREATE_ROLE_AUDIT_WHITELISTS));
     }
