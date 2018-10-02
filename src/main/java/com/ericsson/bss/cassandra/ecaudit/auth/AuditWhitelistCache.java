@@ -15,66 +15,53 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import org.apache.cassandra.auth.IResource;
-import org.apache.cassandra.auth.IRoleManager;
-import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.commons.lang3.StringUtils;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.cache.AuthCache;
 import com.ericsson.bss.cassandra.ecaudit.auth.cache.DescriptorBridge;
+import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.IRoleManager;
+import org.apache.cassandra.auth.RoleResource;
+import org.apache.cassandra.config.DatabaseDescriptor;
 
-public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, List<IResource>>>
+public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Set<IResource>>>
 {
     private static final AuditWhitelistCache CACHE = new AuditWhitelistCache(DatabaseDescriptor.getRoleManager());
 
-    public AuditWhitelistCache(IRoleManager roleManager)
+    private AuditWhitelistCache(IRoleManager roleManager)
     {
         super("AuditWhitelistCache",
-                DatabaseDescriptor::setRolesValidity,
-                DatabaseDescriptor::getRolesValidity,
-                DatabaseDescriptor::setRolesUpdateInterval,
-                DatabaseDescriptor::getRolesUpdateInterval,
-                DescriptorBridge::setRolesCacheMaxEntries,
-                DatabaseDescriptor::getRolesCacheMaxEntries,
-                (r) -> splitCustomOptions(roleManager.getCustomOptions(r)),
-                () -> DatabaseDescriptor.getAuthenticator().requireAuthentication());
+              DatabaseDescriptor::setRolesValidity,
+              DatabaseDescriptor::getRolesValidity,
+              DatabaseDescriptor::setRolesUpdateInterval,
+              DatabaseDescriptor::getRolesUpdateInterval,
+              DescriptorBridge::setRolesCacheMaxEntries,
+              DatabaseDescriptor::getRolesCacheMaxEntries,
+              (r) -> splitCustomOptions(roleManager.getCustomOptions(r)),
+              () -> DatabaseDescriptor.getAuthenticator().requireAuthentication());
     }
 
-    private static Map<String, List<IResource>> splitCustomOptions(Map<String, String> customOptions)
+    private static Map<String, Set<IResource>> splitCustomOptions(Map<String, String> customOptions)
     {
         return customOptions
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(p -> p.getKey(), p -> toResourceList(StringUtils.split(p.getValue(), ','))));
-    }
-
-    private static List<IResource> toResourceList(String[] resourceStrings)
-    {
-        List<IResource> list = Arrays
-                .stream(resourceStrings)
-                .map(r -> r.trim())
-                .map(r -> AuditWhitelistManager.toResource(r))
-                .collect(Collectors.toList());
-
-        return list;
+               .entrySet()
+               .stream()
+               .collect(Collectors.toMap(Map.Entry::getKey, p -> ResourceFactory.toResourceSet(StringUtils.split(p.getValue(), ','))));
     }
 
     /**
      * Get all custom options immediately associated with the supplied role. The returned options may be cached if
      * roles_validity_in_ms has a value greater than zero.
      *
-     * @param role
-     *            the Role
+     * @param role the Role
      * @return map of all custom options associated with the role
      */
-    public static Map<String, List<IResource>> getCustomOptions(RoleResource role)
+    public static Map<String, Set<IResource>> getCustomOptions(RoleResource role)
     {
         try
         {

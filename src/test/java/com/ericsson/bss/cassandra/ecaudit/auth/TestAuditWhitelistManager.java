@@ -15,19 +15,20 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IRoleManager;
@@ -37,17 +38,16 @@ import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.google.common.collect.ImmutableSet;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestAuditWhitelistManager
@@ -261,6 +261,13 @@ public class TestAuditWhitelistManager
         verify(mockWhitelistDataAccess, times(1)).deleteWhitelist(eq(expectedRoleName));
     }
 
+    @Test
+    public void testSetup()
+    {
+        whitelistManager.setup();
+        verify(mockWhitelistDataAccess, times(1)).setup();
+    }
+
     private RoleOptions createRoleOptions(Map<String, String> whitelistOptions)
     {
         RoleOptions options = new RoleOptions();
@@ -272,7 +279,7 @@ public class TestAuditWhitelistManager
     {
         String[] stringArray = StringUtils.split(string, ',');
         return Arrays.stream(stringArray)
-                .map(r -> r.trim())
+                .map(String::trim)
                 .collect(Collectors.toSet());
     }
 }
