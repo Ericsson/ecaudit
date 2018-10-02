@@ -21,6 +21,11 @@ public class ResourceFactory
 
     private static final String SEPARATOR = "/";
 
+    public static Set<IResource> toResourceSet(String resourceCsv)
+    {
+        return toResourceSet(StringUtils.split(resourceCsv, ','));
+    }
+
     public static Set<IResource> toResourceSet(String[] resourceNames)
     {
         return Arrays
@@ -45,7 +50,7 @@ public class ResourceFactory
             case FUNCTIONS_ROOT:
                 return FunctionResource.fromName(resourceName);
             default:
-                throw new InvalidRequestException("Invalid resource specified for whitelisting: " + resourceName);
+                throw new IllegalArgumentException("Invalid resource type: " + resourceName);
         }
     }
 }

@@ -88,7 +88,7 @@ public class AuditWhitelistManager
                     throw new InvalidRequestException("Invalid create user option: " + optionEntry.getKey());
                 }
 
-                Set<IResource> resources = toResourceSet(optionEntry);
+                Set<IResource> resources = tryConvertToResourceSet(optionEntry.getValue());
 
                 checkPermissionToWhitelist(performer, resources);
 
@@ -114,7 +114,7 @@ public class AuditWhitelistManager
                     throw new InvalidRequestException("Invalid alter user option: " + optionEntry.getKey());
                 }
 
-                Set<IResource> resources = toResourceSet(optionEntry);
+                Set<IResource> resources = tryConvertToResourceSet(optionEntry.getValue());
 
                 checkPermissionToWhitelist(performer, resources);
 
@@ -161,8 +161,15 @@ public class AuditWhitelistManager
         }
     }
 
-    private static Set<IResource> toResourceSet(Map.Entry<String, String> optionEntry)
+    private Set<IResource> tryConvertToResourceSet(String resourceCsv)
     {
-        return ResourceFactory.toResourceSet(StringUtils.split(optionEntry.getValue(), ','));
+        try
+        {
+            return ResourceFactory.toResourceSet(resourceCsv);
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new InvalidRequestException(String.format("Unable to parse whitelisted resources [%s]: %s", resourceCsv, e.getMessage()));
+        }
     }
 }

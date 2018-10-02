@@ -118,7 +118,7 @@ public class TestResourceFactory
     @Test
     public void testInvalidResourceType()
     {
-        assertThatExceptionOfType(InvalidRequestException.class)
+        assertThatIllegalArgumentException()
         .isThrownBy(() -> ResourceFactory.toResource("unknown"));
     }
 }

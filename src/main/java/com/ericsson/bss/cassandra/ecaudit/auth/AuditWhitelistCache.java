@@ -51,7 +51,7 @@ public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Set
         return customOptions
                .entrySet()
                .stream()
-               .collect(Collectors.toMap(Map.Entry::getKey, p -> ResourceFactory.toResourceSet(StringUtils.split(p.getValue(), ','))));
+               .collect(Collectors.toMap(Map.Entry::getKey, p -> ResourceFactory.toResourceSet(p.getValue())));
     }
 
     /**

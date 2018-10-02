@@ -21,6 +21,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -235,6 +237,17 @@ public class ITVerifyWhitelistManagement
         {
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles' }"));
+        }
+    }
+
+    @Test (expected = InvalidQueryException.class)
+    public void testSuperUserCannotCreateWhitelistedOnInvalidResource()
+    {
+        try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl/invalid' }"));
         }
     }
 
