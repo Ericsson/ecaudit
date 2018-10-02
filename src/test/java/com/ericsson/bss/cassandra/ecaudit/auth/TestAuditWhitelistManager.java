@@ -135,7 +135,7 @@ public class TestAuditWhitelistManager
         whitelistManager.createRoleWhitelist(performer, role, options);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = InvalidRequestException.class)
     public void testUnsupportedResourceAtCreate()
     {
         RoleOptions options = createRoleOptions(
@@ -220,7 +220,7 @@ public class TestAuditWhitelistManager
         whitelistManager.alterRoleWhitelist(performer, role, options);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = InvalidRequestException.class)
     public void testUnsupportedResourceAtAlter()
     {
         RoleOptions options = createRoleOptions(
