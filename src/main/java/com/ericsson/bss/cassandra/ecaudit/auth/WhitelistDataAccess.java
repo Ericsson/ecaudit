@@ -59,12 +59,12 @@ public class WhitelistDataAccess
         loadWhitelistStatement = (SelectStatement) prepare(
                 "SELECT resources from %s.%s WHERE role = ? AND operation = ?",
                 AuthKeyspace.NAME,
-                AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS);
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME);
 
         deleteWhitelistStatement = (DeleteStatement) prepare(
                 "DELETE FROM %s.%s WHERE role = ?",
                 AuthKeyspace.NAME,
-                AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS);
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME);
     }
 
     public void addToWhitelist(String rolename, String whitelistOperation, Set<String> whitelistResources)
@@ -90,7 +90,7 @@ public class WhitelistDataAccess
         String statement = String.format(
                 statementTemplate,
                 AuthKeyspace.NAME,
-                AuditAuthKeyspace.ROLE_AUDIT_WHITELISTS,
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME,
                 StringUtils.join(quotedWhitelistResources, ','),
                 escape(rolename),
                 whitelistOperation);
