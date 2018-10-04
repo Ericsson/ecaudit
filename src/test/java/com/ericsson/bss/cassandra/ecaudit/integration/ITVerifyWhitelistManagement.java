@@ -64,60 +64,57 @@ public class ITVerifyWhitelistManagement
         session = cluster.connect();
 
         session.execute(new SimpleStatement(
-                "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
-        session.execute(
-                new SimpleStatement("CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
+        "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+        session.execute(new SimpleStatement(
+        "CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
 
-        session.execute(
-                new SimpleStatement("CREATE ROLE ordinary_user WITH PASSWORD = 'secret' AND LOGIN = true"));
-        session.execute(
-                new SimpleStatement("GRANT SELECT ON TABLE ecks.ectbl TO ordinary_user"));
+        session.execute(new SimpleStatement(
+        "CREATE ROLE ordinary_user WITH PASSWORD = 'secret' AND LOGIN = true"));
+        session.execute(new SimpleStatement(
+        "GRANT SELECT ON TABLE ecks.ectbl TO ordinary_user"));
 
-        session.execute(
-                new SimpleStatement("CREATE ROLE create_user WITH PASSWORD = 'secret' AND LOGIN = true"));
-        session.execute(
-                new SimpleStatement("GRANT SELECT ON TABLE ecks.ectbl TO create_user"));
-        session.execute(
-                new SimpleStatement("GRANT CREATE ON ALL ROLES TO create_user"));
+        session.execute(new SimpleStatement(
+        "CREATE ROLE create_user WITH PASSWORD = 'secret' AND LOGIN = true"));
+        session.execute(new SimpleStatement(
+        "GRANT SELECT ON TABLE ecks.ectbl TO create_user"));
+        session.execute(new SimpleStatement(
+        "GRANT CREATE ON ALL ROLES TO create_user"));
 
         session.execute(new SimpleStatement(
         "CREATE ROLE other_user WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = false"));
 
-        session.execute(
-                new SimpleStatement("CREATE ROLE authorized_user WITH PASSWORD = 'secret' AND LOGIN = true"));
-        session.execute(
-                new SimpleStatement("GRANT SELECT ON TABLE ecks.ectbl TO authorized_user"));
-        session.execute(
-                new SimpleStatement("GRANT CREATE ON ALL ROLES TO authorized_user"));
-        session.execute(
-                new SimpleStatement("GRANT AUTHORIZE ON ALL KEYSPACES TO authorized_user"));
+        session.execute(new SimpleStatement(
+        "CREATE ROLE authorized_user WITH PASSWORD = 'secret' AND LOGIN = true"));
+        session.execute(new SimpleStatement(
+        "GRANT SELECT ON TABLE ecks.ectbl TO authorized_user"));
+        session.execute(new SimpleStatement(
+        "GRANT CREATE ON ALL ROLES TO authorized_user"));
+        session.execute(new SimpleStatement(
+        "GRANT AUTHORIZE ON ALL KEYSPACES TO authorized_user"));
 
-        session.execute(
-        new SimpleStatement("CREATE ROLE uber_role WITH LOGIN = false"));
-        session.execute(
-        new SimpleStatement("GRANT ALTER ON ALL ROLES TO uber_role"));
+        session.execute(new SimpleStatement(
+        "CREATE ROLE uber_role WITH LOGIN = false"));
+        session.execute(new SimpleStatement(
+        "GRANT ALTER ON ALL ROLES TO uber_role"));
 
-        session.execute(
-        new SimpleStatement("CREATE ROLE uber_user WITH PASSWORD = 'secret' AND LOGIN = true"));
-        session.execute(
-        new SimpleStatement("GRANT uber_role TO uber_user"));
+        session.execute(new SimpleStatement(
+        "CREATE ROLE uber_user WITH PASSWORD = 'secret' AND LOGIN = true"));
+        session.execute(new SimpleStatement(
+        "GRANT uber_role TO uber_user"));
 
-        session.execute(
-                new SimpleStatement(
-                        "CREATE ROLE super_user WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
+        session.execute(new SimpleStatement(
+        "CREATE ROLE super_user WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
 
-        session.execute(
-                new SimpleStatement(
-                        "CREATE ROLE whitelist_role WITH LOGIN = false AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
-        session.execute(
-                new SimpleStatement("CREATE ROLE trusted_user WITH PASSWORD = 'secret' AND LOGIN = true"));
-        session.execute(
-                new SimpleStatement("GRANT SELECT ON TABLE ecks.ectbl TO trusted_user"));
-        session.execute(
-                new SimpleStatement("GRANT AUTHORIZE ON ROLE whitelist_role TO trusted_user"));
-        session.execute(
-                new SimpleStatement("GRANT CREATE ON ALL ROLES TO trusted_user"));
-
+        session.execute(new SimpleStatement(
+        "CREATE ROLE whitelist_role WITH LOGIN = false AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+        session.execute(new SimpleStatement(
+        "CREATE ROLE trusted_user WITH PASSWORD = 'secret' AND LOGIN = true"));
+        session.execute(new SimpleStatement(
+        "GRANT SELECT ON TABLE ecks.ectbl TO trusted_user"));
+        session.execute(new SimpleStatement(
+        "GRANT AUTHORIZE ON ROLE whitelist_role TO trusted_user"));
+        session.execute(new SimpleStatement(
+        "GRANT CREATE ON ALL ROLES TO trusted_user"));
     }
 
     @After
@@ -158,7 +155,7 @@ public class ITVerifyWhitelistManagement
                 Session privateSession = privateCluster.connect())
         {
             privateSession.execute(new SimpleStatement(
-                    "ALTER ROLE ordinary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data, connections' }"));
+                    "ALTER ROLE ordinary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
         }
     }
 

@@ -48,7 +48,7 @@ public class TestRoleAuditFilter
 {
     @Mock
     private AuditWhitelistCache auditWhitelistCacheMock;
-    private Map<RoleResource, Map<String, Set<IResource>>> whitelistMap;
+    private Map<RoleResource, Map<Permission, Set<IResource>>> whitelistMap;
 
     @Mock
     private WhitelistDataAccess whitelistDataAccessMock;
@@ -63,7 +63,7 @@ public class TestRoleAuditFilter
         whitelistMap = Maps.newHashMap();
         when(auditWhitelistCacheMock.getWhitelist(any(RoleResource.class)))
         .thenAnswer((invocation) -> {
-            Map<String, Set<IResource>> whitelist = whitelistMap.get(invocation.getArgument(0));
+            Map<Permission, Set<IResource>> whitelist = whitelistMap.get(invocation.getArgument(0));
             return whitelist != null ? whitelist : Collections.emptyMap();
         });
     }
@@ -78,7 +78,7 @@ public class TestRoleAuditFilter
     @Test
     public void primaryRoleWithWhitelistedDataRootDoSelect()
     {
-        givenRoleIsWhitelisted("primary", "ALL", DataResource.root());
+        givenRoleIsWhitelisted("primary", Permission.SELECT, DataResource.root());
         Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
         assertThat(filter.isFiltered(effectiveRoles, Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"))).isEqualTo(true);
     }
@@ -86,7 +86,7 @@ public class TestRoleAuditFilter
     @Test
     public void primaryRoleWithWhitelistedKsDoSelect()
     {
-        givenRoleIsWhitelisted("primary", "ALL", DataResource.fromName("data/ks"));
+        givenRoleIsWhitelisted("primary", Permission.SELECT, DataResource.fromName("data/ks"));
         Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
         assertThat(filter.isFiltered(effectiveRoles, Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"))).isEqualTo(true);
     }
@@ -94,15 +94,24 @@ public class TestRoleAuditFilter
     @Test
     public void primaryRoleWithWhitelistedTableDoSelect()
     {
-        givenRoleIsWhitelisted("primary", "ALL", DataResource.fromName("data/ks/tbl"));
+        givenRoleIsWhitelisted("primary", Permission.SELECT, DataResource.fromName("data/ks/tbl"));
         Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
         assertThat(filter.isFiltered(effectiveRoles, Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"))).isEqualTo(true);
     }
 
     @Test
+    public void primaryRoleWithWhitelistedTableDoModify()
+    {
+        givenRoleIsWhitelisted("primary", Permission.MODIFY, DataResource.fromName("data/ks/tbl"));
+        Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
+        assertThat(filter.isFiltered(effectiveRoles, Collections.singleton(Permission.MODIFY), DataResource.fromName("data/ks/tbl"))).isEqualTo(true);
+    }
+
+    @Test
     public void primaryRoleWithWhitelistedTableDoCAS()
     {
-        givenRoleIsWhitelisted("primary", "ALL", DataResource.fromName("data/ks/tbl"));
+        givenRoleIsWhitelisted("primary", Permission.SELECT, DataResource.fromName("data/ks/tbl"));
+        givenRoleIsWhitelisted("primary", Permission.MODIFY, DataResource.fromName("data/ks/tbl"));
         Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
         assertThat(filter.isFiltered(effectiveRoles, Sets.newHashSet(Permission.SELECT, Permission.MODIFY), DataResource.fromName("data/ks/tbl"))).isEqualTo(true);
     }
@@ -110,7 +119,7 @@ public class TestRoleAuditFilter
     @Test
     public void primaryRoleWithOtherWhitelistedTableDoSelect()
     {
-        givenRoleIsWhitelisted("primary", "ALL", DataResource.fromName("data/ks/tbl"));
+        givenRoleIsWhitelisted("primary", Permission.SELECT, DataResource.fromName("data/ks/tbl"));
         Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
         assertThat(filter.isFiltered(effectiveRoles, Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/other_tbl"))).isEqualTo(false);
     }
@@ -118,7 +127,7 @@ public class TestRoleAuditFilter
     @Test
     public void inheritedRoleWithWhitelistedDataRootDoSelect()
     {
-        givenRoleIsWhitelisted("inherited", "ALL", DataResource.root());
+        givenRoleIsWhitelisted("inherited", Permission.SELECT, DataResource.root());
         Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
         assertThat(filter.isFiltered(effectiveRoles, Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"))).isEqualTo(true);
     }
@@ -126,7 +135,7 @@ public class TestRoleAuditFilter
     @Test
     public void inheritedRoleWithWhitelistedConnectionDoConnect()
     {
-        givenRoleIsWhitelisted("inherited", "ALL", ConnectionResource.root());
+        givenRoleIsWhitelisted("inherited", Permission.EXECUTE, ConnectionResource.root());
         Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
         assertThat(filter.isFiltered(effectiveRoles, Collections.singleton(Permission.EXECUTE), ConnectionResource.root())).isEqualTo(true);
     }
@@ -152,14 +161,14 @@ public class TestRoleAuditFilter
                      .collect(Collectors.toSet());
     }
 
-    private void givenRoleIsWhitelisted(String roleName, String operation, IResource resource)
+    private void givenRoleIsWhitelisted(String roleName, Permission operation, IResource resource)
     {
         whitelistMap.compute(RoleResource.role(roleName), (name, operWl) -> createOrExtend(operWl, operation, resource));
     }
 
-    private Map<String, Set<IResource>> createOrExtend(Map<String, Set<IResource>> operWl, String operation, IResource resource)
+    private Map<Permission, Set<IResource>> createOrExtend(Map<Permission, Set<IResource>> operWl, Permission operation, IResource resource)
     {
-        Map<String, Set<IResource>> newOperaitonWhitelist = operWl != null ? operWl : Maps.newHashMap();
+        Map<Permission, Set<IResource>> newOperaitonWhitelist = operWl != null ? operWl : Maps.newHashMap();
         newOperaitonWhitelist.compute(operation, (oper, res) -> createOrExtend(res, resource));
         return newOperaitonWhitelist;
     }

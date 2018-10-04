@@ -223,6 +223,5 @@ public class AuditEntry
         {
             return new AuditEntry(this);
         }
-
     }
 }

@@ -90,58 +90,69 @@ public class ITVerifyAudit
         cluster = cdt.createCluster();
         session = cluster.connect();
 
-        session.execute(
-                new SimpleStatement(
-                        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }"));
 
         session.execute(new SimpleStatement(
-                "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
-        session.execute(
-                new SimpleStatement("CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
-        session.execute(
-                new SimpleStatement(
-                        "CREATE TABLE ecks.ectypetbl (partk int PRIMARY KEY, v0 text, v1 ascii, v2 bigint, v3 blob, v4 boolean, "
-                                + "v5 date, v6 decimal, v7 double, v8 float, v9 inet, v10 int, v11 smallint, v12 time, v13 timestamp, "
-                                + "v14 uuid, v15 varchar, v16 varint)"));
+        "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+        session.execute(new SimpleStatement("CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
+        session.execute(new SimpleStatement(
+        "CREATE TABLE ecks.ectypetbl (partk int PRIMARY KEY, v0 text, v1 ascii, v2 bigint, v3 blob, v4 boolean, "
+        + "v5 date, v6 decimal, v7 double, v8 float, v9 inet, v10 int, v11 smallint, v12 time, v13 timestamp, "
+        + "v14 uuid, v15 varchar, v16 varint)"));
 
-        session.execute(
-                new SimpleStatement("CREATE ROLE ecuser WITH PASSWORD = 'secret' AND LOGIN = true"));
-        session.execute(
-                new SimpleStatement("GRANT CREATE ON ALL ROLES TO ecuser"));
-
-        session.execute(
-                new SimpleStatement(
-                        "CREATE ROLE sam WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system, data/system_schema, data/ecks/ectbl, data/nonexistingks, data/ecks/nonexistingtbl, connections' }"));
-        session.execute(
-                new SimpleStatement(
-                        "GRANT MODIFY ON ecks.ectbl TO sam"));
-        session.execute(
-                new SimpleStatement(
-                        "GRANT SELECT ON ecks.ectbl TO sam"));
-
-        session.execute(
-                new SimpleStatement(
-                        "CREATE ROLE foo WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data, roles, connections' }"));
-
-        session.execute(
-                new SimpleStatement(
-                        "CREATE ROLE bar WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
-        session.execute(
-                new SimpleStatement(
-                        "CREATE ROLE mute WITH LOGIN = false AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data, roles, connections' }"));
-        session.execute(
-                new SimpleStatement(
-                        "GRANT mute TO bar"));
-
-        session.execute(
-                new SimpleStatement(
-                        "CREATE ROLE yser2 WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
+        session.execute(new SimpleStatement("CREATE ROLE ecuser WITH PASSWORD = 'secret' AND LOGIN = true"));
+        session.execute(new SimpleStatement("GRANT CREATE ON ALL ROLES TO ecuser"));
 
         session.execute(new SimpleStatement(
-                "CREATE KEYSPACE ecks2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+        "CREATE ROLE sam WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/nonexistingks'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/nonexistingtbl'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}"));
+        session.execute(new SimpleStatement(
+        "GRANT MODIFY ON ecks.ectbl TO sam"));
+        session.execute(new SimpleStatement(
+        "GRANT SELECT ON ecks.ectbl TO sam"));
 
         session.execute(new SimpleStatement(
-                "CREATE KEYSPACE ecks3 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+        "CREATE ROLE foo WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}"));
+
+        session.execute(new SimpleStatement(
+        "CREATE ROLE bar WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
+        session.execute(new SimpleStatement(
+        "CREATE ROLE mute WITH LOGIN = false"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}"));
+        session.execute(new SimpleStatement(
+        "GRANT mute TO bar"));
+
+        session.execute(new SimpleStatement(
+        "CREATE ROLE yser2 WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
+
+        session.execute(new SimpleStatement(
+        "CREATE KEYSPACE ecks2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+
+        session.execute(new SimpleStatement(
+        "CREATE KEYSPACE ecks3 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
     }
 
     @Before

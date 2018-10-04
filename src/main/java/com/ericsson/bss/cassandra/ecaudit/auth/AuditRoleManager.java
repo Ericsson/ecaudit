@@ -110,7 +110,7 @@ public class AuditRoleManager extends CassandraRoleManager
     public Map<String, String> getCustomOptions(RoleResource role)
     {
         return whitelistManager.getRoleWhitelist(role).entrySet().stream()
-                               .collect(Collectors.toMap(e -> e.getKey(), e -> ResourceFactory.toNameCsv(e.getValue())));
+                               .collect(Collectors.toMap(e -> e.getKey().name(), e -> ResourceFactory.toNameCsv(e.getValue())));
     }
 
     @Override

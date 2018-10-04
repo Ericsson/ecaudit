@@ -15,10 +15,22 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import java.util.Set;
+
+import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 
 class WhitelistContract
 {
+    void verify(Set<Permission> operations, IResource suppliedResource)
+    {
+        if (!suppliedResource.applicablePermissions().containsAll(operations))
+        {
+            throw new InvalidRequestException(String.format("Operation(s) %s are not applicable on %s", operations, suppliedResource));
+        }
+    }
+
     void verifyCreateRoleOption(WhitelistOperation whitelistOperation)
     {
         if (whitelistOperation != WhitelistOperation.GRANT)

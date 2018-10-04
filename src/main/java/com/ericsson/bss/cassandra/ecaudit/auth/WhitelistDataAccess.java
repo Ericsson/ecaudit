@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.Schema;
@@ -94,38 +95,44 @@ public class WhitelistDataAccess
         setupCompleted = true;
     }
 
-    void addToWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
+    void addToWhitelist(RoleResource role, Map<Permission, Set<IResource>> whitelist)
     {
-        updateWhitelist(role, whitelistOperation, whitelistResources,
+        updateWhitelist(role, whitelist,
                         "UPDATE %s.%s SET resources = resources + {%s} WHERE role = '%s' AND operation = '%s'");
     }
 
-    void removeFromWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
+    void removeFromWhitelist(RoleResource role, Map<Permission, Set<IResource>> whitelist)
     {
-        updateWhitelist(role, whitelistOperation, whitelistResources,
+        updateWhitelist(role, whitelist,
                         "UPDATE %s.%s SET resources = resources - {%s} WHERE role = '%s' AND operation = '%s'");
     }
 
-    private void updateWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources, String statementTemplate)
+    private void updateWhitelist(RoleResource role, Map<Permission, Set<IResource>> whitelist, String statementTemplate)
     {
-        List<String> quotedWhitelistResources = whitelistResources
-                                                .stream()
-                                                .map(IResource::getName)
-                                                .map(r -> "'" + r + "'")
-                                                .collect(Collectors.toList());
+        for (Map.Entry<Permission, Set<IResource>> whitelistEntry : whitelist.entrySet())
+        {
+            Set<IResource> whitelistResources = whitelistEntry.getValue();
 
-        String statement = String.format(
-        statementTemplate,
-        AuthKeyspace.NAME,
-        AuditAuthKeyspace.WHITELIST_TABLE_NAME,
-        StringUtils.join(quotedWhitelistResources, ','),
-        escape(role.getRoleName()),
-        whitelistOperation);
+            List<String> quotedWhitelistResources = whitelistResources
+                                                    .stream()
+                                                    .map(IResource::getName)
+                                                    .map(r -> "'" + r + "'")
+                                                    .collect(Collectors.toList());
 
-        QueryProcessor.process(statement, consistencyForRole(role));
+            Permission whitelistOperation = whitelistEntry.getKey();
+            String statement = String.format(
+            statementTemplate,
+            AuthKeyspace.NAME,
+            AuditAuthKeyspace.WHITELIST_TABLE_NAME,
+            StringUtils.join(quotedWhitelistResources, ','),
+            escape(role.getRoleName()),
+            whitelistOperation.name());
+
+            QueryProcessor.process(statement, consistencyForRole(role));
+        }
     }
 
-    public Map<String, Set<IResource>> getWhitelist(RoleResource role)
+    public Map<Permission, Set<IResource>> getWhitelist(RoleResource role)
     {
         ResultMessage.Rows rows = loadWhitelistStatement.execute(
                 QueryState.forInternalCalls(),
@@ -144,9 +151,10 @@ public class WhitelistDataAccess
                                          this::extractResourceSet));
     }
 
-    private String extractOperation(UntypedResultSet.Row untypedRow)
+    private Permission extractOperation(UntypedResultSet.Row untypedRow)
     {
-        return untypedRow.getString("operation");
+        String operationName = untypedRow.getString("operation");
+        return Permission.valueOf(operationName);
     }
 
     private Set<IResource> extractResourceSet(UntypedResultSet.Row untypedRow)

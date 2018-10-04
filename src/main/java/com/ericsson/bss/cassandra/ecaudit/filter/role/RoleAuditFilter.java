@@ -19,9 +19,10 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
-import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistManager;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
@@ -35,6 +36,8 @@ import org.apache.cassandra.auth.Roles;
  */
 public class RoleAuditFilter implements AuditFilter
 {
+    private static final Logger LOG = LoggerFactory.getLogger(RoleAuditFilter.class);
+
     private final AuditWhitelistCache whitelistCache;
     private final WhitelistDataAccess whitelistDataAccess;
 
@@ -75,8 +78,8 @@ public class RoleAuditFilter implements AuditFilter
     {
         for (RoleResource role : roles)
         {
-            Map<String, Set<IResource>> roleOptions = whitelistCache.getWhitelist(role);
-            if (isResourceOperationWhitelisted(roleOptions, resource))
+            Map<Permission, Set<IResource>> roleOptions = whitelistCache.getWhitelist(role);
+            if (isResourceOperationWhitelisted(roleOptions, operations, resource))
             {
                 return true;
             }
@@ -94,9 +97,24 @@ public class RoleAuditFilter implements AuditFilter
      *            the resource being accessed
      * @return true if the resource is white-listed, false otherwise
      */
-    boolean isResourceOperationWhitelisted(Map<String, Set<IResource>> roleOptions, IResource operationResource)
+    boolean isResourceOperationWhitelisted(Map<Permission, Set<IResource>> roleOptions, Set<Permission> operationPermissions, IResource operationResource)
     {
-        Set<IResource> whitelistResources = roleOptions.get(AuditWhitelistManager.OPERATION_ALL);
+        for (Permission operationPermission : operationPermissions)
+        {
+            if (!isOperationResourceWhitelisted(roleOptions, operationResource, operationPermission))
+            {
+                LOG.trace("Operation {} on {} is NOT whitelisted by {}", operationPermissions, operationResource, roleOptions);
+                return false;
+            }
+        }
+
+        LOG.trace("Operation {} on {} is whitelisted by {}", operationPermissions, operationResource, roleOptions);
+        return true;
+    }
+
+    private boolean isOperationResourceWhitelisted(Map<Permission, Set<IResource>> roleOptions, IResource operationResource, Permission operationPermission)
+    {
+        Set<IResource> whitelistResources = roleOptions.get(operationPermission);
         if (whitelistResources == null)
         {
             return false;

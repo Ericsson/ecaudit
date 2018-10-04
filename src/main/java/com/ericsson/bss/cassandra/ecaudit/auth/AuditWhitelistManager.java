@@ -15,12 +15,12 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IResource;
@@ -40,10 +40,6 @@ import org.apache.cassandra.exceptions.UnauthorizedException;
  */
 public class AuditWhitelistManager
 {
-    public static final String OPERATION_ALL = "ALL";
-
-    public static final String OPTION_AUDIT_WHITELIST_ALL = "audit_whitelist_for_all";
-
     private final WhitelistDataAccess whitelistDataAccess;
     private final WhitelistOptionParser whitelistOptionParser;
     private final WhitelistContract whitelistContract;
@@ -66,67 +62,73 @@ public class AuditWhitelistManager
     {
         if (options.getCustomOptions().isPresent())
         {
-            Map<String, Set<IResource>> addStatements = new HashMap<>();
+            Map<Permission, Set<IResource>> whitelistToGrant = new HashMap<>();
             for (Map.Entry<String, String> optionEntry : options.getCustomOptions().get().entrySet())
             {
                 WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
-                Set<IResource> resources = whitelistOptionParser.parseResource(optionEntry.getValue());
-                String operation = whitelistOptionParser.parseTargetOperation(optionEntry.getKey());
+                IResource resource = whitelistOptionParser.parseResource(optionEntry.getValue());
+                Set<Permission> operations = whitelistOptionParser.parseTargetOperation(optionEntry.getKey(), resource);
 
                 whitelistContract.verifyCreateRoleOption(whitelistOperation);
-                checkPermissionToWhitelist(performer, resources);
+                whitelistContract.verify(operations, resource);
+                checkPermissionToWhitelist(performer, resource);
 
-                addStatements.put(operation, resources);
+                for (Permission operation : operations)
+                {
+                    whitelistToGrant.compute(operation, (opr, res) -> createOrExtend(res, resource));
+                }
             }
 
-            addStatements.forEach(
-                    (o, r) -> whitelistDataAccess.addToWhitelist(role, o, r));
+            whitelistDataAccess.addToWhitelist(role, whitelistToGrant);
         }
+    }
+
+    private Set<IResource> createOrExtend(Set<IResource> resources, IResource resource)
+    {
+        Set<IResource> newSet = resources != null ? resources : Sets.newHashSet();
+        newSet.add(resource);
+        return newSet;
     }
 
     void alterRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
     {
         if (options.getCustomOptions().isPresent())
         {
-            Map<String, Set<IResource>> addStatements = new HashMap<>();
-            Map<String, Set<IResource>> removeStatements = new HashMap<>();
+            Map<Permission, Set<IResource>> whitelistToGrant = new HashMap<>();
+            Map<Permission, Set<IResource>> whitelistToRevoke = new HashMap<>();
             for (Map.Entry<String, String> optionEntry : options.getCustomOptions().get().entrySet())
             {
                 WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
-                Set<IResource> resources = whitelistOptionParser.parseResource(optionEntry.getValue());
-                String operation = whitelistOptionParser.parseTargetOperation(optionEntry.getKey());
+                IResource resource = whitelistOptionParser.parseResource(optionEntry.getValue());
+                Set<Permission> operations = whitelistOptionParser.parseTargetOperation(optionEntry.getKey(), resource);
 
-                checkPermissionToWhitelist(performer, resources);
+                whitelistContract.verify(operations, resource);
+                checkPermissionToWhitelist(performer, resource);
 
                 if (whitelistOperation == WhitelistOperation.GRANT)
                 {
-                    addStatements.put(operation, resources);
+                    for (Permission operation : operations)
+                    {
+                        whitelistToGrant.compute(operation, (opr, res) -> createOrExtend(res, resource));
+                    }
                 }
                 else
                 {
-                    removeStatements.put(operation, resources);
+                    for (Permission operation : operations)
+                    {
+                        whitelistToRevoke.compute(operation, (opr, res) -> createOrExtend(res, resource));
+                    }
                 }
             }
 
-            addStatements.forEach(
-                    (o, r) -> whitelistDataAccess.addToWhitelist(role, o, r));
-            removeStatements.forEach(
-                    (o, r) -> whitelistDataAccess.removeFromWhitelist(role, o, r));
+            whitelistDataAccess.addToWhitelist(role, whitelistToGrant);
+            whitelistDataAccess.removeFromWhitelist(role, whitelistToRevoke);
         }
     }
 
-    Map<String, Set<IResource>> getRoleWhitelist(RoleResource role)
+    Map<Permission, Set<IResource>> getRoleWhitelist(RoleResource role)
     {
-        Map<String, Set<IResource>> daoWhitelist = whitelistDataAccess.getWhitelist(role);
-        Set<IResource> resources = daoWhitelist.get(OPERATION_ALL);
-        if (resources != null)
-        {
-            return Collections.singletonMap(OPTION_AUDIT_WHITELIST_ALL, resources);
-        }
-        else
-        {
-            return Collections.emptyMap();
-        }
+        return whitelistDataAccess.getWhitelist(role);
     }
 
     void dropRoleWhitelist(RoleResource role)
@@ -134,16 +136,13 @@ public class AuditWhitelistManager
         whitelistDataAccess.deleteWhitelist(role);
     }
 
-    private static void checkPermissionToWhitelist(AuthenticatedUser performer, Set<IResource> resources)
+    private static void checkPermissionToWhitelist(AuthenticatedUser performer, IResource resource)
     {
-        for (IResource resource : resources)
+        Set<Permission> userPermissions = performer.getPermissions(resource);
+        if (!userPermissions.contains(Permission.AUTHORIZE))
         {
-            Set<Permission> userPermissions = performer.getPermissions(resource);
-            if (!userPermissions.contains(Permission.AUTHORIZE))
-            {
-                throw new UnauthorizedException(String.format("User %s is not authorized to whitelist access to %s",
-                        performer.getName(), resource));
-            }
+            throw new UnauthorizedException(String.format("User %s is not authorized to whitelist access to %s",
+                                                          performer.getName(), resource));
         }
     }
 }

@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class TestWhitelistOptionParser
 {
-    private WhitelistOptionParser parser = null;
+    private WhitelistOptionParser parser;
 
     @Before
     public void before()
@@ -61,50 +62,50 @@ public class TestWhitelistOptionParser
     @Test
     public void testParseGrantSelect()
     {
-        assertThatExceptionOfType(InvalidRequestException.class)
-        .isThrownBy(() -> parser.parseTargetOperation("grant_audit_whitelist_for_select"));
+        Set<Permission> operations = parser.parseTargetOperation("grant_audit_whitelist_for_select", DataResource.fromName("data"));
+        assertThat(operations).containsExactlyInAnyOrder(Permission.SELECT);
     }
 
     @Test
     public void testParseRevokeSelect()
     {
-        assertThatExceptionOfType(InvalidRequestException.class)
-        .isThrownBy(() -> parser.parseTargetOperation("revoke_audit_whitelist_for_select"));
+        Set<Permission> operations = parser.parseTargetOperation("revoke_audit_whitelist_for_select", DataResource.fromName("data"));
+        assertThat(operations).containsExactlyInAnyOrder(Permission.SELECT);
     }
 
     @Test
     public void testParseGrantModify()
     {
-        assertThatExceptionOfType(InvalidRequestException.class)
-        .isThrownBy(() -> parser.parseTargetOperation("grant_audit_whitelist_for_modify"));
+        Set<Permission> operations = parser.parseTargetOperation("grant_audit_whitelist_for_modify", DataResource.fromName("data"));
+        assertThat(operations).containsExactlyInAnyOrder(Permission.MODIFY);
     }
 
     @Test
     public void testParseGrantAll()
     {
-        String operation = parser.parseTargetOperation("grant_audit_whitelist_for_all");
-        assertThat(operation).isEqualTo("ALL");
+        Set<Permission> operations = parser.parseTargetOperation("grant_audit_whitelist_for_all", DataResource.fromName("data"));
+        assertThat(operations).containsExactlyInAnyOrder(Permission.CREATE, Permission.ALTER, Permission.DROP, Permission.SELECT, Permission.MODIFY, Permission.AUTHORIZE);
     }
 
     @Test
     public void testParseGrantGuck()
     {
         assertThatExceptionOfType(InvalidRequestException.class)
-        .isThrownBy(() -> parser.parseTargetOperation("grant_audit_whitelist_for_guck"));
+        .isThrownBy(() -> parser.parseTargetOperation("grant_audit_whitelist_for_guck", DataResource.fromName("data")));
     }
 
     @Test
     public void testParseSingleResource()
     {
-        Set<IResource> resources = parser.parseResource("data/ks/tbl");
-        assertThat(resources).containsExactly(DataResource.fromName("data/ks/tbl"));
+        IResource resource = parser.parseResource("data/ks/tbl");
+        assertThat(resource).isEqualTo(DataResource.fromName("data/ks/tbl"));
     }
 
     @Test
     public void testParseSeveralResources()
     {
-        Set<IResource> resources = parser.parseResource("data/ks/tbl1, data/ks/tbl2,data/ks/tbl3");
-        assertThat(resources).containsExactlyInAnyOrder(DataResource.fromName("data/ks/tbl1"), DataResource.fromName("data/ks/tbl2"), DataResource.fromName("data/ks/tbl3"));
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> parser.parseResource("data/ks/tbl1, data/ks/tbl2,data/ks/tbl3"));
     }
 
     @Test

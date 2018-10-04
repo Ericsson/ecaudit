@@ -1,5 +1,9 @@
 # Changes
 
+## Version ?.?.?
+* Add support for whitelist based on specific operations
+ * Upgrading: TBD...
+
 ## Version 1.0.0
 * Fix ability to grant whitelist to all other roles as long as grantee has AUTHORIZE permission on the resource (Ericsson/ecaudit#31)
   * __NOTE__: As of this version it is required to configure the AuditAuthorizer in the cassandra.yaml - refer to the [setup guide](doc/setup.md) for details

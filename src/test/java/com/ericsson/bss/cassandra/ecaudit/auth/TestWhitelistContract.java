@@ -15,9 +15,12 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.apache.cassandra.auth.DataResource;
+import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -43,5 +46,47 @@ public class TestWhitelistContract
     {
         assertThatExceptionOfType(InvalidRequestException.class)
         .isThrownBy(() -> contract.verifyCreateRoleOption(WhitelistOperation.REVOKE));
+    }
+
+    @Test
+    public void testGrantSelectOnData()
+    {
+        contract.verify(ImmutableSet.of(Permission.SELECT), DataResource.fromName("data/ks/table"));
+    }
+
+    @Test
+    public void testRevokeSelectOnData()
+    {
+        contract.verify(ImmutableSet.of(Permission.SELECT), DataResource.fromName("data/ks/table"));
+    }
+
+    @Test
+    public void testGrantModifyOnData()
+    {
+        contract.verify(ImmutableSet.of(Permission.MODIFY), DataResource.fromName("data/ks/table"));
+    }
+
+    @Test
+    public void testGrantSelectAndModifyOnData()
+    {
+        contract.verify(ImmutableSet.of(Permission.SELECT, Permission.MODIFY), DataResource.fromName("data/ks/table"));
+    }
+
+    @Test
+    public void testRevokeModifyOnData()
+    {
+        contract.verify(ImmutableSet.of(Permission.MODIFY), DataResource.fromName("data/ks/table"));
+    }
+
+    @Test
+    public void testGrantExecuteOnConnections()
+    {
+        contract.verify(ImmutableSet.of(Permission.EXECUTE), ConnectionResource.fromName("connections"));
+    }
+
+    @Test
+    public void testGrantSelectOnConnections()
+    {
+        assertThatExceptionOfType(InvalidRequestException.class).isThrownBy(() -> contract.verify(ImmutableSet.of(Permission.SELECT), ConnectionResource.fromName("connections")));
     }
 }
