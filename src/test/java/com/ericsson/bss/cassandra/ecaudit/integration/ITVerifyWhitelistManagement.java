@@ -83,6 +83,9 @@ public class ITVerifyWhitelistManagement
         session.execute(
                 new SimpleStatement("GRANT CREATE ON ALL ROLES TO create_user"));
 
+        session.execute(new SimpleStatement(
+        "CREATE ROLE other_user WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = false"));
+
         session.execute(
                 new SimpleStatement("CREATE ROLE authorized_user WITH PASSWORD = 'secret' AND LOGIN = true"));
         session.execute(
@@ -91,6 +94,16 @@ public class ITVerifyWhitelistManagement
                 new SimpleStatement("GRANT CREATE ON ALL ROLES TO authorized_user"));
         session.execute(
                 new SimpleStatement("GRANT AUTHORIZE ON ALL KEYSPACES TO authorized_user"));
+
+        session.execute(
+        new SimpleStatement("CREATE ROLE uber_role WITH LOGIN = false"));
+        session.execute(
+        new SimpleStatement("GRANT ALTER ON ALL ROLES TO uber_role"));
+
+        session.execute(
+        new SimpleStatement("CREATE ROLE uber_user WITH PASSWORD = 'secret' AND LOGIN = true"));
+        session.execute(
+        new SimpleStatement("GRANT uber_role TO uber_user"));
 
         session.execute(
                 new SimpleStatement(
@@ -171,6 +184,39 @@ public class ITVerifyWhitelistManagement
         {
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+        }
+    }
+
+    @Test
+    public void testAuthorizedUserCanGrantWhitelistToOther()
+    {
+        try (Cluster privateCluster = cdt.createCluster("authorized_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+            "ALTER ROLE other_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+        }
+    }
+
+    @Test(expected = UnauthorizedException.class)
+    public void testAuthorizedUserCanNotAlterPasswordOfOther()
+    {
+        try (Cluster privateCluster = cdt.createCluster("authorized_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+            "ALTER ROLE other_user WITH PASSWORD = 'secret'"));
+        }
+    }
+
+    @Test
+    public void testUberUserCanAlterPasswordOfOther()
+    {
+        try (Cluster privateCluster = cdt.createCluster("uber_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+            "ALTER ROLE other_user WITH PASSWORD = 'secret'"));
         }
     }
 

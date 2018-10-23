@@ -22,7 +22,7 @@
 sed -i 's/# \(data_file_directories:\)/\1/' cassandra.yaml
 sed -i 's@^# \(.*\)/var/lib/cassandra/\(.*\)@\1###tmp###/cassandra/\2@' cassandra.yaml
 sed -i 's/^\(authenticator: \).*/\1com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator/' cassandra.yaml
-sed -i 's/^\(authorizer: \).*/\1CassandraAuthorizer/' cassandra.yaml
+sed -i 's/^\(authorizer: \).*/\1com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer/' cassandra.yaml
 sed -i 's/^\(role_manager: \).*/\1com.ericsson.bss.cassandra.ecaudit.auth.AuditRoleManager/' cassandra.yaml
 sed -i 's/roles_validity_in_ms:.*/roles_validity_in_ms: 0/' cassandra.yaml
 sed -i 's/permissions_validity_in_ms:.*/permissions_validity_in_ms: 0/' cassandra.yaml
