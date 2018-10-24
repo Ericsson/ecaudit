@@ -35,3 +35,20 @@ mvn clean compile test org.pitest:pitest-maven:mutationCoverage
 ```
 
 The report will be available in the ```target/pit-reports/``` directory.
+
+
+## CCM
+
+If you have [CCM](https://github.com/riptano/ccm) installed on your workstation you can easily verify parts of ecAudit in a local test cluster.
+Prepare by building the ecAudit project with maven and initialize a ccm cluster using a matching Cassandra version.
+
+To install ecAudit into the ccm cluster, execute:
+```bash
+./bin/install_into_current_ccm.sh
+```
+
+Now you can operate your ccm cluster as always and try out ecAudit.
+Remember to provide the standard credentials when you login:
+```bash
+ccm node1 cqlsh -u cassandra -p cassandra
+```
