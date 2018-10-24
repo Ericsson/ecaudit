@@ -15,12 +15,13 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import org.apache.cassandra.auth.Permission;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+
+import org.apache.cassandra.auth.Permission;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestConnectionResource

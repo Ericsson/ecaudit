@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

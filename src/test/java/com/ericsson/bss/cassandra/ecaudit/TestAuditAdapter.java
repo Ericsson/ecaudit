@@ -58,11 +58,11 @@ import org.apache.cassandra.utils.MD5Digest;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -339,7 +339,7 @@ public class TestAuditAdapter
                     .permissions(Sets.immutableEnumSet(Permission.MODIFY))
                     .resource(DataResource.root()));
         when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(String.class), any(ClientState.class)))
-        .thenAnswer(a -> a.getArgumentAt(0, AuditEntry.Builder.class));
+        .thenAnswer(a -> a.getArgument(0));
 
         auditAdapter.auditBatch(mockBatchStatement, expectedBatchId, mockState, mockBatchOptions, expectedStatus);
 
@@ -395,7 +395,7 @@ public class TestAuditAdapter
                     .permissions(Sets.immutableEnumSet(Permission.MODIFY))
                     .resource(DataResource.root()));
         when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(ModificationStatement.class)))
-        .thenAnswer(a -> a.getArgumentAt(0, AuditEntry.Builder.class));
+        .thenAnswer(a -> a.getArgument(0));
 
         auditAdapter.mapIdToQuery(id, preparedQuery);
         auditAdapter.auditBatch(mockBatchStatement, expectedBatchId, mockState, mockBatchOptions, expectedStatus);

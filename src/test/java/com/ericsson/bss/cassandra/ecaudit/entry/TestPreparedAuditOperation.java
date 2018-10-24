@@ -15,26 +15,25 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.entry;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.db.marshal.UTF8Type;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
-import com.google.common.collect.ImmutableList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestPreparedAuditOperation
@@ -105,7 +104,6 @@ public class TestPreparedAuditOperation
         String preparedStatement = "select value1, value2 from ks.cf where pk = ? and ck = ?";
 
         when(mockOptions.hasColumnSpecifications()).thenReturn(false);
-        when(mockOptions.getColumnSpecifications()).thenThrow(new UnsupportedOperationException());
 
         PreparedAuditOperation auditOperation;
         auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);

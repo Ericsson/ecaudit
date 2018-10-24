@@ -33,7 +33,7 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -15,19 +15,19 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.filter.yamlandrole;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.role.RoleAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.YamlAuditFilter;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestYamlAndRoleAuditFilter
@@ -53,7 +53,6 @@ public class TestYamlAndRoleAuditFilter
     public void testFilteredByBothResultInFiltered()
     {
         when(yamlFilter.isFiltered(eq(auditEntry))).thenReturn(true);
-        when(roleFilter.isFiltered(eq(auditEntry))).thenReturn(true);
 
         assertThat(combinedFilter.isFiltered(auditEntry)).isEqualTo(true);
     }
@@ -62,7 +61,6 @@ public class TestYamlAndRoleAuditFilter
     public void testFilteredByYamlOnlyResultInFiltered()
     {
         when(yamlFilter.isFiltered(eq(auditEntry))).thenReturn(true);
-        when(roleFilter.isFiltered(eq(auditEntry))).thenReturn(false);
 
         assertThat(combinedFilter.isFiltered(auditEntry)).isEqualTo(true);
     }

@@ -15,18 +15,16 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.filter.yaml;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.net.URL;
 import java.util.Properties;
 
-import org.apache.cassandra.exceptions.ConfigurationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
+import org.apache.cassandra.exceptions.ConfigurationException;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestAuditYamlConfigurationLoader
