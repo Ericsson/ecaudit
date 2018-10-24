@@ -8,6 +8,11 @@ if [ ! -f ~/.ccm/CURRENT ]; then
  exit 2
 fi
 
+if [ ! -f ${SCRIPT_PATH}/../target/ecaudit*.jar ]; then
+ echo "No jar file found. Build project and try again."
+ exit 3
+fi
+
 CCM_CLUSTER_NAME=`cat ~/.ccm/CURRENT`
 echo "Installing ecAudit into ${CCM_CLUSTER_NAME}"
 
@@ -26,6 +31,6 @@ fi
 for NODE_PATH in ${CLUSTER_PATH}/node*;
 do
  sed -i 's/^authenticator:.*/authenticator: com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator/' ${NODE_PATH}/conf/cassandra.yaml
- sed -i 's/^authorizer:.*/authorizer: CassandraAuthorizer/' ${NODE_PATH}/conf/cassandra.yaml
+ sed -i 's/^authorizer:.*/authorizer: com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer/' ${NODE_PATH}/conf/cassandra.yaml
  sed -i 's/^role_manager:.*/role_manager: com.ericsson.bss.cassandra.ecaudit.auth.AuditRoleManager/' ${NODE_PATH}/conf/cassandra.yaml
 done
