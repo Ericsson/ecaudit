@@ -47,7 +47,7 @@ import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import net.jcip.annotations.NotThreadSafe;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
