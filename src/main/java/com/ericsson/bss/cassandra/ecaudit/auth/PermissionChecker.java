@@ -53,30 +53,41 @@ class PermissionChecker
             return;
         }
 
-        boolean needAlterPermission = false;
+        if (isChangingPasswordOfOtherRole(performer, role, options) || isChangingRestrictedSettings(options))
+        {
+            if (!hasPermissionToAlterRole(performer, role))
+            {
+                throw new UnauthorizedException(String.format("User %s is not authorized to alter role %s",
+                                                              performer.getName(), role.getRoleName()));
+            }
+        }
+    }
+
+    private boolean isChangingPasswordOfOtherRole(AuthenticatedUser performer, RoleResource role, RoleOptions options)
+    {
         if (options.getPassword().isPresent())
         {
-            if (!performer.getName().equals(role.getRoleName()))
-            {
-                needAlterPermission = true;
-            }
+            return !performer.getName().equals(role.getRoleName());
         }
+        return false;
+    }
 
+    private boolean isChangingRestrictedSettings(RoleOptions options)
+    {
+        return options.getLogin().isPresent() || options.getSuperuser().isPresent();
+    }
 
-        if (needAlterPermission || options.getLogin().isPresent() || options.getSuperuser().isPresent())
+    private boolean hasPermissionToAlterRole(AuthenticatedUser performer, RoleResource roleResource)
+    {
+        for (IResource resource : Resources.chain(roleResource))
         {
-            for (IResource resource : Resources.chain(role))
+            Set<Permission> grantedPermissions = getPermissions(performer, resource);
+            if (grantedPermissions.contains(Permission.ALTER))
             {
-                Set<Permission> grantedPermissions = getPermissions(performer, resource);
-                if (grantedPermissions.contains(Permission.ALTER))
-                {
-                    return;
-                }
+                return true;
             }
-
-            throw new UnauthorizedException(String.format("User %s is not authorized to alter role %s",
-                                                          performer.getName(), role.getRoleName()));
         }
+        return false;
     }
 
     private Set<Permission> getPermissions(AuthenticatedUser performer, IResource resource)
