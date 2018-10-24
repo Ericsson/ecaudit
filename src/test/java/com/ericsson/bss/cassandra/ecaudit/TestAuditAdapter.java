@@ -103,7 +103,6 @@ public class TestAuditAdapter
         oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
 
         IAuthorizer authorizer = mock(IAuthorizer.class);
-        when(authorizer.requireAuthorization()).thenReturn(true);
         DatabaseDescriptor.setAuthorizer(authorizer);
     }
 
