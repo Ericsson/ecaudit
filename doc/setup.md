@@ -23,16 +23,14 @@ Change the following setting in your ```cassandra.yaml```
 
 ```
 authenticator: com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator
+authorizer: com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer
 role_manager:  com.ericsson.bss.cassandra.ecaudit.auth.AuditRoleManager
 ```
 
-The AuditPasswordAuthenticator and AuditRoleManager extends the standard PasswordAuthenticator and CassandraRoleManager respectivelly.
+The AuditPasswordAuthenticator, AuditAuthorizer and AuditRoleManager extends the standard PasswordAuthenticator, CassandraAuthorizer and CassandraRoleManager respectively.
 All configuration options and recommendations for the standard plug-ins applies for the Audit plug-ins as well.
 For instance, remember to increase the replication factor of the ```system_auth``` keyspace.
 Consult the Cassandra [configuration documentation](http://cassandra.apache.org/doc/latest/configuration/index.html) for details.
-
-To get permission management in Cassandra, enable the standard ```CassandraAuthorizer```.
-This is optional, but necessary to get a fully secured Cassandra deployment.
 
 
 ## Configure LOGBack
