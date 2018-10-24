@@ -15,21 +15,21 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.filter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.net.URL;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+import static org.assertj.core.api.Assertions.assertThat;
+
+@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestDefaultAuditFilter
 {
     @Test

@@ -15,25 +15,25 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.facade;
 
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
+import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
+import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
-import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
-import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
-
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestDefaultAuditor
 {
     @Mock
