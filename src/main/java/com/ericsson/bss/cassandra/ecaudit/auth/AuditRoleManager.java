@@ -32,16 +32,19 @@ import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
 
 /**
- * Implements a {@link IRoleManager} that is meant to be paired with {@link AuditPasswordAuthenticator}.
+ * Implements a {@link IRoleManager} that is meant to be paired with {@link AuditPasswordAuthenticator} and {@link AuditAuthorizer}.
  *
  * It provides support for audit white-lists based on role options in Cassandra. This implementation inherits the
  * {@link CassandraRoleManager} for generic role management.
+ *
+ * An explicit permission check is enforced on ALTER statements. This makes it possible to grant whitelists from one role to another.
  */
 public class AuditRoleManager extends CassandraRoleManager
 {
     private static final Logger LOG = LoggerFactory.getLogger(AuditRoleManager.class);
 
     private final AuditWhitelistManager whitelistManager;
+    private final PermissionChecker permissionChecker;
 
     private final Set<Option> supportedOptions;
     private final Set<Option> alterableOptions;
@@ -57,6 +60,7 @@ public class AuditRoleManager extends CassandraRoleManager
         LOG.info("Auditing enabled on role manager");
 
         whitelistManager = new AuditWhitelistManager();
+        permissionChecker = new PermissionChecker();
 
         supportedOptions = DatabaseDescriptor.getAuthenticator().getClass() == AuditPasswordAuthenticator.class
                 ? ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.PASSWORD, Option.OPTIONS)
@@ -97,6 +101,7 @@ public class AuditRoleManager extends CassandraRoleManager
     @Override
     public void alterRole(AuthenticatedUser performer, RoleResource role, RoleOptions options)
     {
+        permissionChecker.checkAlterRoleAccess(performer, role, options);
         whitelistManager.alterRoleWhitelist(performer, role, options);
         super.alterRole(performer, role, options);
     }
