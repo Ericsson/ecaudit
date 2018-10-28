@@ -51,13 +51,34 @@ import org.apache.cassandra.utils.ByteBufferUtil;
  */
 public class WhitelistDataAccess
 {
+    private boolean setupCompleted = false;
+
     private static final String DEFAULT_SUPERUSER_NAME = "cassandra";
 
     private DeleteStatement deleteWhitelistStatement;
     private SelectStatement loadWhitelistStatement;
 
-    public void setup()
+    private WhitelistDataAccess()
     {
+    }
+
+    public static WhitelistDataAccess getInstance()
+    {
+        return SingletonHolder.INSTANCE;
+    }
+
+    private static class SingletonHolder
+    {
+        private static final WhitelistDataAccess INSTANCE = new WhitelistDataAccess();
+    }
+
+    public synchronized void setup()
+    {
+        if (setupCompleted)
+        {
+            return;
+        }
+
         maybeCreateTable();
 
         loadWhitelistStatement = (SelectStatement) prepare(
@@ -69,15 +90,17 @@ public class WhitelistDataAccess
                 "DELETE FROM %s.%s WHERE role = ?",
                 AuthKeyspace.NAME,
                 AuditAuthKeyspace.WHITELIST_TABLE_NAME);
+
+        setupCompleted = true;
     }
 
-    public void addToWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
+    void addToWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
     {
         updateWhitelist(role, whitelistOperation, whitelistResources,
                         "UPDATE %s.%s SET resources = resources + {%s} WHERE role = '%s' AND operation = '%s'");
     }
 
-    public void removeFromWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
+    void removeFromWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
     {
         updateWhitelist(role, whitelistOperation, whitelistResources,
                         "UPDATE %s.%s SET resources = resources - {%s} WHERE role = '%s' AND operation = '%s'");
@@ -132,7 +155,7 @@ public class WhitelistDataAccess
         return ResourceFactory.toResourceSet(resourceStrings);
     }
 
-    public void deleteWhitelist(RoleResource role)
+    void deleteWhitelist(RoleResource role)
     {
         deleteWhitelistStatement.execute(
                 QueryState.forInternalCalls(),

@@ -39,6 +39,12 @@ public class TestYamlAuditFilter
     private AuditConfigurationLoader configLoaderMock;
 
     @Test
+    public void testSetupDoNotFail()
+    {
+        new YamlAuditFilter().setup();
+    }
+
+    @Test
     public void testWhitelistOnlyFiltersWhitelistedUsers()
     {
         AuditConfig config = new AuditConfig();

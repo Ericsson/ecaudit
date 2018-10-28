@@ -33,6 +33,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestDefaultAuditFilter
 {
     @Test
+    public void testSetupDoNotFail()
+    {
+        new DefaultAuditFilter().setup();
+    }
+
+    @Test
     public void testWhitelistNotFilteredWithDefaultFilter()
     {
         Properties properties = getProperties("mock_configuration.yaml");

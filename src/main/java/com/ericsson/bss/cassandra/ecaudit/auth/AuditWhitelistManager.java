@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
@@ -38,7 +40,7 @@ import org.apache.cassandra.exceptions.UnauthorizedException;
  */
 public class AuditWhitelistManager
 {
-    private static final String OPERATION_ALL = "ALL";
+    public static final String OPERATION_ALL = "ALL";
 
     public static final String OPTION_AUDIT_WHITELIST_ALL = "audit_whitelist_for_all";
 
@@ -46,11 +48,12 @@ public class AuditWhitelistManager
     private final WhitelistOptionParser whitelistOptionParser;
     private final WhitelistContract whitelistContract;
 
-    public AuditWhitelistManager()
+    AuditWhitelistManager()
     {
-        this(new WhitelistDataAccess());
+        this(WhitelistDataAccess.getInstance());
     }
 
+    @VisibleForTesting
     AuditWhitelistManager(WhitelistDataAccess whitelistDataAccess)
     {
         this.whitelistDataAccess = whitelistDataAccess;
@@ -58,12 +61,7 @@ public class AuditWhitelistManager
         this.whitelistContract = new WhitelistContract();
     }
 
-    public void setup()
-    {
-        whitelistDataAccess.setup();
-    }
-
-    public void createRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
+    void createRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
             throws RequestValidationException, RequestExecutionException
     {
         if (options.getCustomOptions().isPresent())
@@ -86,7 +84,7 @@ public class AuditWhitelistManager
         }
     }
 
-    public void alterRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
+    void alterRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
     {
         if (options.getCustomOptions().isPresent())
         {
@@ -117,7 +115,7 @@ public class AuditWhitelistManager
         }
     }
 
-    public Map<String, Set<IResource>> getRoleWhitelist(RoleResource role)
+    Map<String, Set<IResource>> getRoleWhitelist(RoleResource role)
     {
         Map<String, Set<IResource>> daoWhitelist = whitelistDataAccess.getWhitelist(role);
         Set<IResource> resources = daoWhitelist.get(OPERATION_ALL);
@@ -131,7 +129,7 @@ public class AuditWhitelistManager
         }
     }
 
-    public void dropRoleWhitelist(RoleResource role)
+    void dropRoleWhitelist(RoleResource role)
     {
         whitelistDataAccess.deleteWhitelist(role);
     }

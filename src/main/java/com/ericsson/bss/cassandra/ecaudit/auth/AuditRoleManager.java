@@ -75,8 +75,7 @@ public class AuditRoleManager extends CassandraRoleManager
     public void setup()
     {
         super.setup();
-
-        whitelistManager.setup();
+        WhitelistDataAccess.getInstance().setup();
     }
 
     @Override

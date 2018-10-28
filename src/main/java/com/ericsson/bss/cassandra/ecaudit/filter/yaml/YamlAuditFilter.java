@@ -40,12 +40,12 @@ public class YamlAuditFilter implements AuditFilter
     /**
      * Create a new instance of {@link YamlAuditFilter}.
      *
-     * @param config
+     * @param configurationLoader
      *            the configuration to load the whitelist from
      */
-    YamlAuditFilter(AuditConfigurationLoader configuratoinLoader)
+    YamlAuditFilter(AuditConfigurationLoader configurationLoader)
     {
-        AuditConfig config = configuratoinLoader.loadConfig();
+        AuditConfig config = configurationLoader.loadConfig();
         whitelist = new ArrayList<>(config.getWhitelist());
     }
 
@@ -62,4 +62,9 @@ public class YamlAuditFilter implements AuditFilter
         return whitelist.contains(user);
     }
 
+    @Override
+    public void setup()
+    {
+        // Intentionally empty
+    }
 }

@@ -26,16 +26,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.service.CassandraDaemon;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Cluster;
-import com.ericsson.bss.cassandra.ecaudit.AuditAdapterFactory;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
 import com.ericsson.bss.cassandra.ecaudit.handler.AuditQueryHandler;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.service.CassandraDaemon;
 
 /**
  * Singleton for creating a Cassandra Daemon for Test.
@@ -114,7 +113,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
         System.setProperty("cassandra.superuser_setup_delay_ms", "1");
 
         System.setProperty("cassandra.custom_query_handler_class", AuditQueryHandler.class.getCanonicalName());
-        System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_YAML_AND_ROLE);
+        System.setProperty("ecaudit.filter_type", "YAML_AND_ROLE");
 
         String auditYamlTempPath = moveResourceFileToTempDir("integration_audit.yaml");
         System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, auditYamlTempPath);

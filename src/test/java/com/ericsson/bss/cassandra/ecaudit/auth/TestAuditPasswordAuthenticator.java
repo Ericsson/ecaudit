@@ -18,6 +18,8 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Test;
@@ -25,15 +27,19 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IAuthenticator.SaslNegotiator;
+import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.exceptions.AuthenticationException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -58,6 +64,38 @@ public class TestAuditPasswordAuthenticator
     public void after()
     {
         verifyNoMoreInteractions(mockAdapter);
+    }
+
+    @Test
+    public void testRequireAuthDelegation()
+    {
+        when(mockAuthenticator.requireAuthentication()).thenReturn(true);
+        assertThat(authenticator.requireAuthentication()).isEqualTo(true);
+        verify(mockAuthenticator, times(1)).requireAuthentication();
+    }
+
+    @Test
+    public void testProtectedResourcesDelegation()
+    {
+        Set<IResource> expectedResources = Collections.singleton(DataResource.fromName("data"));
+        doReturn(expectedResources).when(mockAuthenticator).protectedResources();
+        assertThat(authenticator.protectedResources()).isEqualTo(expectedResources);
+        verify(mockAuthenticator, times(1)).protectedResources();
+    }
+
+    @Test
+    public void testValidateConfigurationDelegation()
+    {
+        authenticator.validateConfiguration();
+        verify(mockAuthenticator, times(1)).validateConfiguration();
+    }
+
+    @Test
+    public void testSetupDelegation()
+    {
+        authenticator.setup();
+        verify(mockAuthenticator, times(1)).setup();
+        verify(mockAdapter, times(1)).setup();
     }
 
     @Test(expected = RuntimeException.class)
@@ -114,11 +152,11 @@ public class TestAuditPasswordAuthenticator
 
         SaslNegotiator negotiator = authenticator.newSaslNegotiator(clientAddress);
 
-        byte[] clientResponse = createClientResponse("username", "secretpassword");
+        byte[] clientResponse = createClientResponse("user", "password");
         negotiator.evaluateResponse(clientResponse);
 
         negotiator.getAuthenticatedUser();
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT));
+        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(clientAddress), eq(Status.ATTEMPT));
     }
 
     @SuppressWarnings("unchecked")

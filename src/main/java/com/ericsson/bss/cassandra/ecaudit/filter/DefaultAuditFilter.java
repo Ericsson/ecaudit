@@ -27,4 +27,9 @@ public class DefaultAuditFilter implements AuditFilter {
         return false;
     }
 
+    @Override
+    public void setup()
+    {
+        // Intentionally left empty
+    }
 }

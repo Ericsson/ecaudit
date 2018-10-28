@@ -30,4 +30,11 @@ public interface AuditFilter {
      * @return true if the log entry is exempt from audit
      */
     boolean isFiltered(AuditEntry logEntry);
+
+    /**
+     * Setup is called once upon system startup to initialize the AuditFilter.
+     *
+     * For example, use this method to create any required keyspaces/tables.
+     */
+    void setup();
 }

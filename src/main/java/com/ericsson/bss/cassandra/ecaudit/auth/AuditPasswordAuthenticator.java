@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.AuditAdapterFactory;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
@@ -51,7 +50,7 @@ public class AuditPasswordAuthenticator implements IAuthenticator
      */
     public AuditPasswordAuthenticator()
     {
-        this(new PasswordAuthenticator(), createDefault());
+        this(new PasswordAuthenticator(), AuditAdapter.getInstance());
     }
 
     AuditPasswordAuthenticator(IAuthenticator authenticator, AuditAdapter adapter)
@@ -83,6 +82,7 @@ public class AuditPasswordAuthenticator implements IAuthenticator
     public void setup()
     {
         wrappedAuthenticator.setup();
+        auditAdapter.setup();
     }
 
     @Override
@@ -96,16 +96,6 @@ public class AuditPasswordAuthenticator implements IAuthenticator
     public AuthenticatedUser legacyAuthenticate(Map<String, String> credentials) throws AuthenticationException
     {
         return wrappedAuthenticator.legacyAuthenticate(credentials);
-    }
-
-    /**
-     * Construct an AuditAdapter instance by reading configuration from the system properties.
-     * @return an instance of {@link AuditAdapter}
-     */
-    private static AuditAdapter createDefault()
-    {
-        AuditAdapterFactory factory = new AuditAdapterFactory();
-        return factory.getInstance();
     }
 
     private class AuditPlainTextSaslAuthenticator implements SaslNegotiator

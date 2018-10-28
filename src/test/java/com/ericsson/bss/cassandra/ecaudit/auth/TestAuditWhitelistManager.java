@@ -265,7 +265,7 @@ public class TestAuditWhitelistManager
         Map<String, Set<IResource>> daoWhitelist = Collections.singletonMap("ALL", expectedResources);
 
         when(mockWhitelistDataAccess.getWhitelist(eq(role)))
-                .thenReturn(daoWhitelist);
+        .thenReturn(daoWhitelist);
 
         Map<String, Set<IResource>> whitelistOptions = whitelistManager.getRoleWhitelist(role);
 
@@ -275,17 +275,24 @@ public class TestAuditWhitelistManager
     }
 
     @Test
+    public void testGetEmptyWhitelist()
+    {
+        Map<String, Set<IResource>> daoWhitelist = Collections.emptyMap();
+
+        when(mockWhitelistDataAccess.getWhitelist(eq(role)))
+        .thenReturn(daoWhitelist);
+
+        Map<String, Set<IResource>> whitelistOptions = whitelistManager.getRoleWhitelist(role);
+
+        verify(mockWhitelistDataAccess, times(1)).getWhitelist(eq(role));
+        assertThat(whitelistOptions.keySet()).isEmpty();
+    }
+
+    @Test
     public void testDropWhitelist()
     {
         whitelistManager.dropRoleWhitelist(role);
         verify(mockWhitelistDataAccess, times(1)).deleteWhitelist(eq(role));
-    }
-
-    @Test
-    public void testSetup()
-    {
-        whitelistManager.setup();
-        verify(mockWhitelistDataAccess, times(1)).setup();
     }
 
     private RoleOptions createRoleOptions(Map<String, String> whitelistOptions)
