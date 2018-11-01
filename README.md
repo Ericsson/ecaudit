@@ -182,7 +182,7 @@ This behavior is observed with the Java driver.
 ## Contributing
 
 Want to contribute to ecAudit?
-Check out our [contribution guide](CONTRIBUTING.md)
+Check out our [contribution guide](CONTRIBUTING.md).
 
 
 ## Credits
