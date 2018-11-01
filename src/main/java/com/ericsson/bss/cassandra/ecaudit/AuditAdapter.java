@@ -30,11 +30,11 @@ import org.apache.cassandra.cql3.statements.BatchStatement;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.MD5Digest;
 
-import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 
 /**
@@ -166,13 +166,11 @@ public class AuditAdapter
      */
     public void auditAuth(String username, InetAddress clientIp, Status status)
     {
-        AuditEntry logEntry = AuditEntry.newBuilder()
+        AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                 .client(clientIp)
                 .user(username)
                 .status(status)
                 .operation(status == Status.ATTEMPT ? AUTHENTICATION_ATTEMPT : AUTHENTICATION_FAILED)
-                .permissions(AuditEntryBuilderFactory.EXECUTE_PERMISSIONS)
-                .resource(ConnectionResource.root())
                 .build();
 
         auditor.audit(logEntry);
