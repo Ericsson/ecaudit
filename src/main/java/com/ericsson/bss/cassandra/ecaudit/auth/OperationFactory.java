@@ -15,7 +15,27 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-public enum WhitelistOperation
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.cassandra.auth.Permission;
+
+class OperationFactory
 {
-    GRANT, REVOKE, DROP_LEGACY
+    static Set<Permission> toOperationSet(Set<String> permissionNames)
+    {
+        return permissionNames
+               .stream()
+               .map(String::trim)
+               .map(Permission::valueOf)
+               .collect(Collectors.toCollection(() -> EnumSet.noneOf(Permission.class)));
+    }
+
+    static String toOperationNameCsv(Set<Permission> operations)
+    {
+        return operations.stream()
+                         .map(Permission::name)
+                         .collect(Collectors.joining(","));
+    }
 }

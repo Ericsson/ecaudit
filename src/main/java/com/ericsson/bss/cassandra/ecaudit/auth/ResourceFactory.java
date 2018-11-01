@@ -115,8 +115,8 @@ class ResourceFactory
         }
     }
 
-    static String toNameCsv(Set<IResource> resources)
+    static String toPrintableName(IResource resource)
     {
-        return StringUtils.join(resources.stream().map(IResource::getName).collect(Collectors.toSet()), ',');
+        return "AUDIT WHITELIST ON " + resource.getName();
     }
 }

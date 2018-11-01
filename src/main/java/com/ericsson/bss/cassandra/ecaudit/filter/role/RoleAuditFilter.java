@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
@@ -122,27 +120,21 @@ public class RoleAuditFilter implements AuditFilter
 
     private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<IResource> operationResourceHierarchy, RoleResource role)
     {
-        Map<Permission, Set<IResource>> whitelist = whitelistCache.getWhitelist(role);
-        Set<IResource> whitelistedResources = whitelist.get(operation);
-        if (whitelistedResources == null)
+        Map<IResource, Set<Permission>> whitelist = whitelistCache.getWhitelist(role);
+        for (IResource resource : operationResourceHierarchy)
         {
-            return false;
-        }
-        return hasIntersection(whitelistedResources, operationResourceHierarchy);
-    }
-
-    private boolean hasIntersection(Set<IResource> whitelistedResources, List<IResource> operationResourceHierarchy)
-    {
-        for (IResource whitelistedResource : whitelistedResources)
-        {
-            for (IResource operationResource : operationResourceHierarchy)
+            Set<Permission> whitelistedOperations = whitelist.get(resource);
+            if (whitelistContains(operation, whitelistedOperations))
             {
-                if (whitelistedResource.equals(operationResource))
-                {
-                    return true;
-                }
+                return true;
             }
         }
+
         return false;
+    }
+
+    private boolean whitelistContains(Permission operation, Set<Permission> whitelistedOperations)
+    {
+        return whitelistedOperations != null && whitelistedOperations.contains(operation);
     }
 }

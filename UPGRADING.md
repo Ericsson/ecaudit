@@ -5,12 +5,19 @@
 Administrators should be aware of the following changes when upgrading from version 0.x.x or 1.x.x to 2.0.0 or later.
 ecAudit can be upgraded to 2.x.x from any previous major version as long as these and any intermediate upgrade instructions are observed.
 
-ecAudit now support whitelisting of specific operations on a resource.
-For example, a user can be whitelisted for `SELECT` operations on a table, but not `MODIFY` operations on the same table.
+As of version 2.0.0 ecAudit support whitelisting of specific operations on a resource.
+For example, it is possible to whitelisted a user for `SELECT` operations on a table, without whitelisting other operations such as the `MODIFY` operations on the same table.
 Example:
 
 ```SQL
 cassandra@cqlsh> ALTER ROLE bob WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/design/decisions' };
+```
+
+As of this version ecAudit will also support whitelist options with upper case letters and space characters instead of underscore.
+So, the previous example could just as well have been expressed as:
+
+```SQL
+cassandra@cqlsh> ALTER ROLE bob WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR SELECT' : 'data/design/decisions' };
 ```
 
 For a complete guide on new whitelisting options, refer to the [whitelist](doc/role_whitelist_management.md) guide.
@@ -18,6 +25,8 @@ For a complete guide on new whitelisting options, refer to the [whitelist](doc/r
 The following non-backwards compatible changes have been made:
 * It is no longer possible to configure whitelists in the `CREATE ROLE` statement - whitelists can only be configured with the `ALTER ROLE` statement
 * It is no longer possible to configure whitelists for several resources in one `ALTER ROLE` statement - to whitelist several resources, issue several statements
+* When using the `LIST ROLES` statement, the whitelist options are presented in a different format compared to previous versions of ecAudit
+* Whitelist representation on disk have been modified - manual steps are required to upgrade properly as described below
 
 ### Instructions
 Representation on disk for role based whitelists have been changed in order to support operation specific whitelists.
@@ -34,7 +43,7 @@ issue the following statement on one node in the cluster __after__ upgrading __a
 The super-user should perform the `ALTER ROLE` statement on itself. In this example the `cassandra` role is used.
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE cassandra WITH OPTIONS = { 'drop_v1_audit_whitelists' : 'now' };
+cassandra@cqlsh> ALTER ROLE cassandra WITH OPTIONS = { 'drop_legacy_audit_whitelist_table' : 'now' };
 ```
 
 

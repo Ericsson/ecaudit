@@ -53,6 +53,20 @@ public class TestWhitelistOptionParser
     }
 
     @Test
+    public void testParseWhitelistUppercaseAndSpace()
+    {
+        WhitelistOperation operation = parser.parseWhitelistOperation("REVOKE AUDIT WHITELIST FOR MODIFY");
+        assertThat(operation).isEqualTo(WhitelistOperation.REVOKE);
+    }
+
+    @Test
+    public void testParseDropLegacy()
+    {
+        WhitelistOperation operation = parser.parseWhitelistOperation("DROP LEGACY AUDIT WHITELIST TABLE");
+        assertThat(operation).isEqualTo(WhitelistOperation.DROP_LEGACY);
+    }
+
+    @Test
     public void testParseWhitelistOperationFoo()
     {
         assertThatExceptionOfType(InvalidRequestException.class)
@@ -77,6 +91,13 @@ public class TestWhitelistOptionParser
     public void testParseGrantModify()
     {
         Set<Permission> operations = parser.parseTargetOperation("grant_audit_whitelist_for_modify", DataResource.fromName("data"));
+        assertThat(operations).containsExactlyInAnyOrder(Permission.MODIFY);
+    }
+
+    @Test
+    public void testParseGrantModifyUppercaseAndSpace()
+    {
+        Set<Permission> operations = parser.parseTargetOperation("GRANT AUDIT WHITELIST FOR MODIFY", DataResource.fromName("data"));
         assertThat(operations).containsExactlyInAnyOrder(Permission.MODIFY);
     }
 
@@ -113,5 +134,18 @@ public class TestWhitelistOptionParser
     {
         assertThatExceptionOfType(InvalidRequestException.class)
         .isThrownBy(() -> parser.parseResource("guck/ks/tbl1"));
+    }
+
+    @Test
+    public void testParseDropLegacyValue()
+    {
+        parser.parseDropValue("NOW");
+    }
+
+    @Test
+    public void testParseDropLegacyValueInvalid()
+    {
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> parser.parseDropValue("NOT"));
     }
 }

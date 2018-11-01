@@ -3,6 +3,7 @@
 ## Version 2.0.0
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
 * Add support for whitelists based on specific operations
+* Make whitelist operations case insensitive
 
 ## Version 1.0.0
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)

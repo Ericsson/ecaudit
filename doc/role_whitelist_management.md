@@ -20,7 +20,7 @@ To __grant__ whitelisting on the existing user __jim__ on all his __select__ ope
 execute the following statement: 
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE jim WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/design/decisions' };
+cassandra@cqlsh> ALTER ROLE jim WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR SELECT' : 'data/design/decisions' };
 ```
 
 As you can see we're using the custom __OPTIONS__ parameter associated with all Cassandra roles to manage whitelists.
@@ -36,18 +36,18 @@ including all tables in all keyspaces,
 execute the following statements:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE bob WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data' };
-cassandra@cqlsh> ALTER ROLE bob WITH OPTIONS = { 'grant_audit_whitelist_for_modify' : 'data' };
+cassandra@cqlsh> ALTER ROLE bob WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR SELECT' : 'data' };
+cassandra@cqlsh> ALTER ROLE bob WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR MODIFY' : 'data' };
 ```
 
 Likewise, only one resource can be defined per operation in a statement.
 So to whitelist several specific tables you have to issue several statements.
-For instance, to __grant__ whitelisting on an existing user __helena__ on all her __select__ operations on the __system__ keyspace and the __myks.mytable__ table,
+For instance, to __grant__ whitelisting on an existing user __helena__ on all her __select__ operations on the __unit.teams__ table and the __unit.managers__ table,
 execute the following statements:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE helena WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system' };
-cassandra@cqlsh> ALTER ROLE helena WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/myks/mytable' };
+cassandra@cqlsh> ALTER ROLE helena WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR SELECT' : 'data/unit/teams' };
+cassandra@cqlsh> ALTER ROLE helena WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR SELECT' : 'data/unit/managers' };
 ```
 
 While the __OPTIONS__ entry is accessible in Cassandras __CREATE ROLE__ statements, this is not supported by ecAudit.
@@ -59,7 +59,7 @@ To revoke the whitelist from user __hans__ on all his __connection__ attempts,
 execute the following statement:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE hans WITH OPTIONS = { 'revoke_audit_whitelist_for_execute' : 'connections' };
+cassandra@cqlsh> ALTER ROLE hans WITH OPTIONS = { 'REVOKE AUDIT WHITELIST FOR EXECUTE' : 'connections' };
 ```
 
 Note that none of these operations have any impact on whether the roles can _access_ these resources,
@@ -70,15 +70,15 @@ To view current whitelists,
 execute the following statement:
 
 ```SQL
-cassandra@cqlsh> LIST ROLES ;
+cassandra@cqlsh> LIST ROLES;
 
  role      | super | login | options
------------+-------+-------+---------------------------------------------
-       bob |  True |  True |        {'MODIFY': 'data', 'SELECT': 'data'}
- cassandra |  True |  True |                                          {}
-      hans | False | False |                                          {}
-    helena | False |  True | {'SELECT': 'data/myks/mytable,data/system'}
-       jim | False |  True |         {'SELECT': 'data/design/decisions'}
+-----------+-------+-------+-----------------------------------------------------------------------------------------------------
+       bob |  True |  True |                                                        {'AUDIT WHITELIST ON data': 'SELECT,MODIFY'}
+ cassandra |  True |  True |                                                                                                  {}
+      hans | False | False |                                                                                                  {}
+    helena | False |  True | {'AUDIT WHITELIST ON data/unit/managers': 'SELECT', 'AUDIT WHITELIST ON data/unit/teams': 'SELECT'}
+       jim | False |  True |                                              {'AUDIT WHITELIST ON data/design/decisions': 'SELECT'}
 ```
 
 Note how the options map list all whitelists without the grant/revoke prefix.
@@ -93,7 +93,7 @@ and a user __ibbe__ which is currently not whitelisted:
 
 ```SQL
 cassandra@cqlsh> CREATE ROLE power WITH LOGIN = false;
-cassandra@cqlsh> ALTER ROLE power WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data' };
+cassandra@cqlsh> ALTER ROLE power WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR SELECT' : 'data' };
 cassandra@cqlsh> CREATE ROLE ibbe WITH PASSWORD = 'make_it_work' AND LOGIN = true;
 ```
 
@@ -109,7 +109,9 @@ cassandra@cqlsh> GRANT power TO ibbe;
 With ecAudit you can whitelist all operations supported by Cassandras native CQL.
 The operations are __ALTER, AUTHORIZE, CREATE, DESCRIBE, DROP, EXECUTE, MODIFY and SELECT__.
 
-The operation to whitelist should be prefixed with `grant_audit_whitelist_for_` phrase to the __ROLE__s __OPTION__ map.  
+The operation to whitelist should be prefixed with `GRANT AUDIT WHITELIST FOR ` phrase to the __ROLE__s __OPTION__ map.
+The prefix is case insensitive, and spaces may be replaced with underscores.
+Hence, the same prefix could be written as `grant_audit_whitelist_for_`.
 
 Some operations are not applicable on certain resources.
 For example, it doesn't make much sense to whitelist __EXECUTE__ operations on a __role__ resource.
@@ -119,12 +121,12 @@ In that case ecAudit will whitelist all applicable operations on that resource.
 Example:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/design' };
+cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' : 'data/design' };
 cassandra@cqlsh> LIST ROLES OF ibbe;
 
  role | super | login | options
-------+-------+-------+--------------------------------------------------------------------------------------------------------------------------------------------------------
- ibbe | False |  True | {'ALTER': 'data/design', 'AUTHORIZE': 'data/design', 'CREATE': 'data/design', 'DROP': 'data/design', 'MODIFY': 'data/design', 'SELECT': 'data/design'}
+------+-------+-------+---------------------------------------------------------------------------------
+ ibbe | False |  True | {'AUDIT WHITELIST ON data/design': 'CREATE,ALTER,DROP,SELECT,MODIFY,AUTHORIZE'}
 ```
 
 
@@ -148,7 +150,7 @@ If whitelisted, no audit record will be created when that user connects to the c
 For example:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'grant_audit_whitelist_for_execute' : 'connections' };
+cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR EXECUTE' : 'connections' };
 ```
 
 This resource can only be whitelisted at the root level which is referred to as __connections__.
@@ -167,7 +169,7 @@ This resource is also used to whitelist __CREATE__ or __DROP__ operations on key
 For example:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE bob WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'data' };
+cassandra@cqlsh> ALTER ROLE bob WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR CREATE' : 'data' };
 ```
 
 In general the whitelist model follows the built in permission model in Cassandra.
@@ -178,8 +180,8 @@ you must grant that user whitelisting for __ALTER__ operations on the _table_.
 Example:
 
 ```SQL
-cassandra@cqlsh> GRANT ALTER ON myks.mytable TO helena;
-cassandra@cqlsh> ALTER ROLE helena WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'data/myks/mytable' };
+cassandra@cqlsh> GRANT ALTER ON unit.teams TO helena;
+cassandra@cqlsh> ALTER ROLE helena WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALTER' : 'data/unit/teams' };
 ```
 
 Refer to the [Cassandra documentation](http://cassandra.apache.org/doc/latest/cql/security.html#cql-permissions)
@@ -196,13 +198,13 @@ where `<name>` can be a name of any function or aggregate.
 The following example illustrates how to whitelist creation of functions and aggregates in a keyspace:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'functions/myks' };
+cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR CREATE' : 'functions/architecture' };
 ```
 
 The following example illustrates how to whitelist the drop operations of a specific function or aggregate:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'grant_audit_whitelist_for_drop' : 'functions/myks/myfunc|DoubleType' };
+cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR DROP' : 'functions/architecture/score|DoubleType' };
 ```
 
 ### Role Resources
@@ -218,7 +220,7 @@ There is a range of operations that can be whitelisted on a role.
 For example, to whitelist the creation of new roles:
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'roles' };
+cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR CREATE' : 'roles' };
 ```
 
 It is possible to whitelist changes a role makes on other existing roles.
@@ -226,7 +228,7 @@ For instance, this change would allow __ibbe__ to perform any changes to __jims_
 without any record of that in the audit log.
 
 ```SQL
-cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'roles/jim' };
+cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALTER' : 'roles/jim' };
 ```
 
 
@@ -239,7 +241,7 @@ For instance, a role which have the __AUTHORIZE__ permission on __ALL__ __KEYSPA
 ```SQL
 cassandra@cqlsh> GRANT AUTHORIZE ON ALL KEYSPACES TO micke;
 
-micke@cqlsh> ALTER ROLE micke WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' };
+micke@cqlsh> ALTER ROLE micke WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' : 'data' };
 ```
 
 The __connections__ resource is specific to ecAudit an may only be whitelisted by super-users.

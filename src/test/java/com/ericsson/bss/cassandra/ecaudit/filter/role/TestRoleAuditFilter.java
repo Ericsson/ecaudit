@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,7 +49,7 @@ public class TestRoleAuditFilter
 {
     @Mock
     private AuditWhitelistCache auditWhitelistCacheMock;
-    private Map<RoleResource, Map<Permission, Set<IResource>>> whitelistMap;
+    private Map<RoleResource, Map<IResource, Set<Permission>>> whitelistMap;
 
     @Mock
     private WhitelistDataAccess whitelistDataAccessMock;
@@ -63,7 +64,7 @@ public class TestRoleAuditFilter
         whitelistMap = Maps.newHashMap();
         when(auditWhitelistCacheMock.getWhitelist(any(RoleResource.class)))
         .thenAnswer((invocation) -> {
-            Map<Permission, Set<IResource>> whitelist = whitelistMap.get(invocation.getArgument(0));
+            Map<IResource, Set<Permission>> whitelist = whitelistMap.get(invocation.getArgument(0));
             return whitelist != null ? whitelist : Collections.emptyMap();
         });
     }
@@ -175,17 +176,17 @@ public class TestRoleAuditFilter
         whitelistMap.compute(RoleResource.role(roleName), (name, operWl) -> createOrExtend(operWl, operation, resource));
     }
 
-    private Map<Permission, Set<IResource>> createOrExtend(Map<Permission, Set<IResource>> operWl, Permission operation, IResource resource)
+    private Map<IResource, Set<Permission>> createOrExtend(Map<IResource, Set<Permission>> operWl, Permission operation, IResource resource)
     {
-        Map<Permission, Set<IResource>> newOperaitonWhitelist = operWl != null ? operWl : Maps.newHashMap();
-        newOperaitonWhitelist.compute(operation, (oper, res) -> createOrExtend(res, resource));
-        return newOperaitonWhitelist;
+        Map<IResource, Set<Permission>> newPermissionWhitelist = operWl != null ? operWl : Maps.newHashMap();
+        newPermissionWhitelist.compute(resource, (res, oper) -> createOrExtend(oper, operation));
+        return newPermissionWhitelist;
     }
 
-    private Set<IResource> createOrExtend(Set<IResource> resources, IResource resource)
+    private Set<Permission> createOrExtend(Set<Permission> permissions, Permission permission)
     {
-        Set<IResource> newResourceSet = resources != null ? resources : Sets.newHashSet();
-        newResourceSet.add(resource);
-        return newResourceSet;
+        Set<Permission> newPermissionSet = permissions != null ? permissions : Sets.newHashSet();
+        newPermissionSet.add(permission);
+        return newPermissionSet;
     }
 }

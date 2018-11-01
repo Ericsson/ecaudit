@@ -188,9 +188,9 @@ public class TestResourceFactory
     }
 
     @Test
-    public void testResourceSetToStringCsv()
+    public void testResourceToString()
     {
-        String expectedCsv = "data/ks,connections";
-        assertThat(ResourceFactory.toNameCsv(ImmutableSet.of(ConnectionResource.fromName("connections"), DataResource.fromName("data/ks")))).isEqualTo(expectedCsv);
+        String expectedString = "AUDIT WHITELIST ON data/ks";
+        assertThat(ResourceFactory.toPrintableName(DataResource.fromName("data/ks"))).isEqualTo(expectedString);
     }
 }

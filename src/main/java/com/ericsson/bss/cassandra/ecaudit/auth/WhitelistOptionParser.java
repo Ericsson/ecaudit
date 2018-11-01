@@ -30,15 +30,24 @@ class WhitelistOptionParser
     private static final String REVOKE_PREFIX = "revoke_audit_whitelist_for_";
     private static final String VALID_PREFIX = "^" + GRANT_PREFIX + "|" + "^" + REVOKE_PREFIX;
 
+    private static final String DROP_LEGACY_KEY_PATTERN = "drop_legacy_audit_whitelist_table";
+    private static final String DROP_LEGACY_VALUE_PATTERN = "now";
+
     WhitelistOperation parseWhitelistOperation(String inputOption)
     {
-        if (inputOption.startsWith(GRANT_PREFIX))
+        String normalizedInput = normalizeUserInput(inputOption);
+
+        if (normalizedInput.startsWith(GRANT_PREFIX))
         {
             return WhitelistOperation.GRANT;
         }
-        else if (inputOption.startsWith(REVOKE_PREFIX))
+        else if (normalizedInput.startsWith(REVOKE_PREFIX))
         {
             return WhitelistOperation.REVOKE;
+        }
+        else if (normalizedInput.equals(DROP_LEGACY_KEY_PATTERN))
+        {
+            return WhitelistOperation.DROP_LEGACY;
         }
         else
         {
@@ -67,7 +76,12 @@ class WhitelistOptionParser
 
     private String stripOptionPrefix(String option)
     {
-        return option.replaceFirst(VALID_PREFIX, "");
+        return normalizeUserInput(option).replaceFirst(VALID_PREFIX, "");
+    }
+
+    private String normalizeUserInput(String option)
+    {
+        return option.trim().replaceAll("\\s+", "_").toLowerCase();
     }
 
     IResource parseResource(String resourceName)
@@ -79,6 +93,14 @@ class WhitelistOptionParser
         catch (IllegalArgumentException e)
         {
             throw new InvalidRequestException(String.format("Unable to parse whitelisted resource [%s]: %s", resourceName, e.getMessage()));
+        }
+    }
+
+    void parseDropValue(String value)
+    {
+        if (!DROP_LEGACY_VALUE_PATTERN.equals(value.toLowerCase()))
+        {
+            throw new InvalidRequestException(String.format("Legacy audit whitelist data will only be dropped if value is set to [%s]", DROP_LEGACY_KEY_PATTERN));
         }
     }
 }
