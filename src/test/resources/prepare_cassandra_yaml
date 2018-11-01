@@ -33,4 +33,5 @@ sed -i 's/^storage_port:.*/storage_port: ###storage_port###/' cassandra.yaml
 sed -i 's/^ssl_storage_port:.*/ssl_storage_port: ###ssl_storage_port###/' cassandra.yaml
 sed -i 's/^native_transport_port:.*/native_transport_port: ###native_transport_port###/' cassandra.yaml
 sed -i 's/^rpc_port:.*/rpc_port: ###rpc_port###/' cassandra.yaml
-
+sed -i 's/^num_tokens:.*/num_tokens: 1/' cassandra.yaml
+sed -i 's/^enable_user_defined_functions:.*/enable_user_defined_functions: true/' cassandra.yaml
