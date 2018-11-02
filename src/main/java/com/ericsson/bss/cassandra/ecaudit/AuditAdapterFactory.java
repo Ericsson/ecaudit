@@ -18,6 +18,7 @@ package com.ericsson.bss.cassandra.ecaudit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;

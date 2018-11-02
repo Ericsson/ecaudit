@@ -4,14 +4,14 @@
 [![coverage](https://coveralls.io/repos/github/Ericsson/ecaudit/badge.svg?branch=master)](https://coveralls.io/github/Ericsson/ecaudit?branch=master)
 [![maven central](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.11.svg?label=maven%20central)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.11%22)
 
-The ecAudit plug-in provides an audit logging feature for Cassandra to audit CQL statement execution and login attempt through native CQL protocol.
+The ecAudit plug-in provides an audit logging feature for Apache Cassandra to audit CQL statement execution and login attempt through native CQL protocol.
 
 If you are reading this on github.com, please be aware of that this is the documentation for the Cassandra 3.11 flavor of ecAudit.
 To get documentation for a specific flavor and version, refer to the corresponding tag.
 For example, you can read about ecAudit 0.21.0 for Cassandra 3.0 by viewing the [ecaudit_c3.0-0.21.0](https://github.com/Ericsson/ecaudit/tree/ecaudit_c3.0-0.21.0) tag.
 
 
-## Basic Functionality
+## Description
 
 Audit records are created locally on each Cassandra node covering all CQL requests.
 ecAudit is using the SLF4J logging framework which makes it possible to store and format audit logs in various ways.
@@ -23,9 +23,15 @@ If the operation fails, for one reason or another, a corresponding failure recor
 Passwords which appear in an audit record will be obfuscated.
 
 
-## Compatibility
+## Installation
 
-There are different flavors of the plug-in for different versions of Cassandra.
+To get started with ecAudit, please refer to the [setup guide](doc/setup.md).
+Make sure to consult the compatibility guide below to get a version of ecAudit that match your specific Cassandra version.
+
+
+### Compatibility
+
+There are different flavors of the plug-in for different versions of Apache Cassandra.
 The Cassandra version that was used during build and integration tests can be derived from the full name of the ecAudit plugin.
 For instance, ecaudit_c3.11 indicate that the ecAudit flavor was built with Cassandra 3.11.x.
 
@@ -33,11 +39,11 @@ The table below list the Cassandra versions used in the current and previous bui
 
 | Flavor          | Versions       | Compiled With    |
 | ----------------| -------------- | ---------------- |
-| ecaudit_c3.0    | 0.1  -> 0.10   | Cassandra 3.0.15 |
-| ecaudit_c3.0    | 0.11 -> 0.21   | Cassandra 3.0.16 |
-| ecaudit_c3.0    | 0.22 ->        | Cassandra 3.0.17 |
-| ecaudit_c3.11   | 0.1  -> 0.21   | Cassandra 3.11.2 |
 | ecaudit_c3.11   | 0.22 ->        | Cassandra 3.11.3 |
+| ecaudit_c3.11   | 0.1  -> 0.21   | Cassandra 3.11.2 |
+| ecaudit_c3.0    | 0.22 ->        | Cassandra 3.0.17 |
+| ecaudit_c3.0    | 0.11 -> 0.21   | Cassandra 3.0.16 |
+| ecaudit_c3.0    | 0.1  -> 0.10   | Cassandra 3.0.15 |
 
 The ecAudit plug-in is maintained for selected Cassandra versions only.
 It may be possible to use the ecAudit plug-in with related Cassandra versions as well.
@@ -51,9 +57,9 @@ As of version 0.21.0, ecAudit is available on Maven Central.
 Earlier versions are not published on any public repository.
 
 
-### Cassandra 4.0
+### Apache Cassandra 4.0
 
-As of [CASSANDRA-12151](https://issues.apache.org/jira/browse/CASSANDRA-12151) native support for audit logs are available in 4.0 Cassandra and later.
+As of [CASSANDRA-12151](https://issues.apache.org/jira/browse/CASSANDRA-12151) native support for audit logs are available in Apache Cassandra 4.0 and later.
 
 Since ecAudit was developed before CASSANDRA-12151, there are several differences to be aware of. The most notable being:
 
@@ -65,26 +71,6 @@ Since ecAudit was developed before CASSANDRA-12151, there are several difference
 * CASSANDRA-12151 uses settings in the ```cassandra.yaml``` to configure basic whitelists.
   ecAudit uses role options in CQL and/or settings in the audit.yaml file to manage whitelists.
   [CASSANDRA-14471](https://issues.apache.org/jira/browse/CASSANDRA-14471) is attempting to close this gap.
-
-
-## Known Limitations
-
-
-### Interfaces
-
-ecAudit does not provide auditing on the JMX interface.
-ecAudit does not provide auditing functionality for prepared statements on the legacy RPC (Thrift) interface in Cassandra.
-However, regular (un-prepared) statements on the RPC (Thrift) interface are audit logged.
-
-
-### The USE statement
-
-When a USE statement is used at the client side this will be visible in the audit log.
-However, behavior is somewhat inconsistent with other statements as each USE statement typically will be logged twice.
-The first log entry will appear at the time when the USE statement is sent.
-The second log entry will appear just before the next statement in order is logged.
-So order will be preserved, but timing on second USE log entry may get wrong timestamp.
-This behavior is observed with the Java driver.
 
 
 ## Audit Records
@@ -172,3 +158,57 @@ Further, it is not uncommon for a client to set up several connections to a serv
 
 Some clients will also make a few internal queries to the internal system tables in Cassandra.
 These queries will appear as any other audit record even though they were not generated by the actual application logic at the client.
+
+
+## Known Limitations
+
+
+### Interfaces
+
+ecAudit does not provide auditing on the JMX interface.
+ecAudit does not provide auditing functionality for prepared statements on the legacy RPC (Thrift) interface in Cassandra.
+However, regular (un-prepared) statements on the RPC (Thrift) interface are audit logged.
+
+
+### The USE statement
+
+When a USE statement is used at the client side this will be visible in the audit log.
+However, behavior is somewhat inconsistent with other statements as each USE statement typically will be logged twice.
+The first log entry will appear at the time when the USE statement is sent.
+The second log entry will appear just before the next statement in order is logged.
+So order will be preserved, but timing on second USE log entry may get wrong timestamp.
+This behavior is observed with the Java driver.
+
+
+## Contributing
+
+Want to contribute to ecAudit?
+Check out our [contribution guide](CONTRIBUTING.md).
+
+
+## Credits
+
+The following Ericsson developers contributed to the initial ecAudit project:
+
+*	Per Otterström <per.otterstrom@ericsson.com>
+*	Tobias Eriksson <tobias.a.eriksson@ericsson.com>
+*	Laxmikant Upadhyay <laxmikant.upadhyay@ericsson.com>
+*	Anuj Wadhera <anuj.wadhera@ericsson.com>
+*	Marcus Olsson <marcus.olsson@ericsson.com>
+
+
+## License
+
+Copyright 2018 Telefonaktiebolaget LM Ericsson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
