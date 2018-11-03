@@ -25,6 +25,8 @@ import org.apache.cassandra.auth.Permission;
 
 /**
  * The domain object which contains audit record information to be logged.
+ *
+ * Instances are immutable an may only be created using the {@link AuditEntry.Builder}.
  */
 public class AuditEntry
 {
@@ -50,10 +52,6 @@ public class AuditEntry
         this.status = builder.status;
     }
 
-    /**
-     * Gets the client address in this value object.
-     * @return the audited client address
-     */
     public InetAddress getClientAddress()
     {
         return clientAddress;
@@ -62,20 +60,15 @@ public class AuditEntry
     /**
      * Gets the permissions of this value object.
      *
-     * This getter provides access to the permission set of this value object.
-     * Don't change the content of the set.
+     * This getter provides access to the immutable permission Set of this value object.
      *
      * @return the permissions
      */
     public Set<Permission> getPermissions()
     {
-        return permissions; // NOSONAR
+        return permissions;
     }
 
-    /**
-     * Gets the resource of this value object.
-     * @return the resource
-     */
     public IResource getResource()
     {
         return resource;
@@ -83,6 +76,10 @@ public class AuditEntry
 
     /**
      * Gets the operation in this value object.
+     *
+     * As the operation string may be relatively expensive to produce it may be calculated lazily
+     * depending on the concrete implementation used.
+     *
      * @return the audit operation
      */
     public AuditOperation getOperation()
@@ -90,28 +87,21 @@ public class AuditEntry
         return operation;
     }
 
-    /**
-     * Gets the user in this value object.
-     * @return the user name
-     */
     public String getUser()
     {
         return user;
     }
 
     /**
-     * Gets the batch id in this value object.
-     * @return the batch id (optional)
+     * Gets the optional batch id in this value object.
+     *
+     * @return the batch id
      */
     public Optional<UUID> getBatchId()
     {
         return Optional.ofNullable(batchId);
     }
 
-    /**
-     * Gets the status of the operation in this value object.
-     * @return the status of the operation
-     */
     public Status getStatus()
     {
         return status;
@@ -119,6 +109,7 @@ public class AuditEntry
 
     /**
      * Create a new {@link Builder} instance.
+     *
      * @return a new instance of {@link Builder}.
      */
     public static AuditEntry.Builder newBuilder()
@@ -139,11 +130,6 @@ public class AuditEntry
         private UUID batchId;
         private Status status;
 
-        /**
-         * Set the client address to be logged
-         * @param address the address of the audited client
-         * @return this instance, for method chaining
-         */
         public Builder client(InetAddress address)
         {
             this.client = address;
@@ -151,25 +137,20 @@ public class AuditEntry
         }
 
         /**
-         * Set the list of permissions associated with the operation to be logged
+         * Set the list of permissions associated with the operation to be logged.
          *
          * The builder and its resulting value object will not make a deep copy of the permission set.
          * It is assumed that users always pass in immutable permission sets.
          *
          * @param permissions the permissions associated with the operation
-         * @return this instance, for method chaining
+         * @return this builder instance
          */
         public Builder permissions(Set<Permission> permissions)
         {
-            this.permissions = permissions; // NOSONAR
+            this.permissions = permissions;
             return this;
         }
 
-        /**
-         * Set the resource associated with the operation to be logged
-         * @param resource the resource of the operation
-         * @return this instance, for method chaining
-         */
         public Builder resource(IResource resource)
         {
             this.resource = resource;
@@ -177,9 +158,13 @@ public class AuditEntry
         }
 
         /**
-         * Set the auidt operation that is to be logged
+         * Set the audit operation that is to be logged.
+         *
+         * As the operation string may be relatively expensive to produce it may be calculated lazily
+         * depending on the concrete implementation used.
+         *
          * @param operation the audit operation
-         * @return this instance, for method chaining
+         * @return this builder instance
          */
         public Builder operation(AuditOperation operation)
         {
@@ -187,11 +172,6 @@ public class AuditEntry
             return this;
         }
 
-        /**
-         * Set the username that is to be logged
-         * @param user the user name
-         * @return this instance, for method chaining
-         */
         public Builder user(String user)
         {
             this.user = user;
@@ -199,9 +179,10 @@ public class AuditEntry
         }
 
         /**
-         * Set the batch identifer (optional)
+         * Set the optional batch identifier.
+         *
          * @param uuid the batch id to use
-         * @return this instance, for method chaining
+         * @return this builder instance
          */
         public Builder batch(UUID uuid)
         {
@@ -209,12 +190,6 @@ public class AuditEntry
             return this;
         }
 
-        /**
-         * Set the state of the operation
-         * @param status
-         *            the operation status
-         * @return this instance, for method chaining
-         */
         public Builder status(Status status)
         {
             this.status = status;
@@ -222,10 +197,10 @@ public class AuditEntry
         }
 
         /**
-         * Configure this builder from an existing {@link AuditEntry}
-         * instance.
+         * Configure this builder from an existing {@link AuditEntry} instance.
+         *
          * @param entry the instance to get values from
-         * @return this instance, for method chaining
+         * @return this builder instance
          */
         public Builder basedOn(AuditEntry entry)
         {
@@ -241,6 +216,7 @@ public class AuditEntry
 
         /**
          * Build a {@link AuditEntry} instance as configured by this builder.
+         *
          * @return an {@link AuditEntry} instance
          */
         public AuditEntry build()
