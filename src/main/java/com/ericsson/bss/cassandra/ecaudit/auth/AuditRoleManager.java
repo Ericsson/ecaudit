@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
@@ -109,7 +110,8 @@ public class AuditRoleManager extends CassandraRoleManager
     @Override
     public Map<String, String> getCustomOptions(RoleResource role)
     {
-        return whitelistManager.getRoleWhitelist(role.getRoleName());
+        return whitelistManager.getRoleWhitelist(role).entrySet().stream()
+                               .collect(Collectors.toMap(e -> e.getKey(), e -> ResourceFactory.toNameCsv(e.getValue())));
     }
 
     @Override
@@ -117,6 +119,6 @@ public class AuditRoleManager extends CassandraRoleManager
             throws RequestValidationException, RequestExecutionException
     {
         super.dropRole(performer, role);
-        whitelistManager.dropRoleWhitelist(role.getRoleName());
+        whitelistManager.dropRoleWhitelist(role);
     }
 }

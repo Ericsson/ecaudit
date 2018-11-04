@@ -1,11 +1,16 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.FunctionResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.RoleResource;
+import org.assertj.core.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -36,6 +41,14 @@ public class TestResourceFactory
         assertThat(resource).isInstanceOf(DataResource.class);
     }
 
+    @Ignore // For now
+    @Test
+    public void testDataInvalidKsTable()
+    {
+        assertThatIllegalArgumentException()
+        .isThrownBy(() ->  ResourceFactory.toResource("data/ks space/table"));
+    }
+
     @Test
     public void testDataFail()
     {
@@ -57,6 +70,14 @@ public class TestResourceFactory
         IResource resource = ResourceFactory.toResource("functions/ks");
         assertThat(resource.getName()).isEqualTo("functions/ks");
         assertThat(resource).isInstanceOf(FunctionResource.class);
+    }
+
+    @Ignore // For now
+    @Test
+    public void testFunctionInvalidKs()
+    {
+        assertThatIllegalArgumentException()
+        .isThrownBy(() -> ResourceFactory.toResource("functions/k%s"));
     }
 
     @Test
@@ -118,5 +139,26 @@ public class TestResourceFactory
     {
         assertThatIllegalArgumentException()
         .isThrownBy(() -> ResourceFactory.toResource("unknown"));
+    }
+
+    @Test
+    public void testStringArrayToResourceSet()
+    {
+        Set<IResource> expectedResourceSet = ImmutableSet.of(ConnectionResource.fromName("connections"), DataResource.fromName("data/ks"));
+        assertThat(ResourceFactory.toResourceSet(Arrays.array("connections", "data/ks"))).isEqualTo(expectedResourceSet);
+    }
+
+    @Test
+    public void testStringSetToResourceSet()
+    {
+        Set<IResource> expectedResourceSet = ImmutableSet.of(ConnectionResource.fromName("connections"), DataResource.fromName("data/ks"));
+        assertThat(ResourceFactory.toResourceSet(ImmutableSet.of("connections", "data/ks"))).isEqualTo(expectedResourceSet);
+    }
+
+    @Test
+    public void testResourceSetToStringCsv()
+    {
+        String expectedCsv = "data/ks,connections";
+        assertThat(ResourceFactory.toNameCsv(ImmutableSet.of(ConnectionResource.fromName("connections"), DataResource.fromName("data/ks")))).isEqualTo(expectedCsv);
     }
 }
