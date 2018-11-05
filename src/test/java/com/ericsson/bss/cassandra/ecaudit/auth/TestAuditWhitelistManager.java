@@ -133,7 +133,7 @@ public class TestAuditWhitelistManager
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testUnknownOptionAtCreate()
+    public void testUnknownOptionAtCreateIsRejected()
     {
         RoleOptions options = createRoleOptions(Collections.singletonMap("unknown_option", "guck"));
 
@@ -141,7 +141,7 @@ public class TestAuditWhitelistManager
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testUnsupportedOperationAtCreate()
+    public void testUnsupportedOperationAtCreateIsRejected()
     {
         RoleOptions options = createRoleOptions(Collections.singletonMap("grant_audit_whitelist_for_execute", "data"));
 
@@ -149,15 +149,7 @@ public class TestAuditWhitelistManager
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testRevokeAtCreateIsDenied()
-    {
-        RoleOptions options = createRoleOptions(Collections.singletonMap("revoke_audit_whitelist_for_select", "data"));
-
-        whitelistManager.createRoleWhitelist(performer, role, options);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testUnsupportedResourceAtCreate()
+    public void testUnsupportedResourceAtCreateIsRejected()
     {
         RoleOptions options = createRoleOptions(
                 Collections.singletonMap("grant_audit_whitelist_for_all", "mbean"));
@@ -233,7 +225,7 @@ public class TestAuditWhitelistManager
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testUnknownOptionAtAlter()
+    public void testUnknownOptionAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(
                 Collections.singletonMap("unknown_option", "guck"));
@@ -242,7 +234,7 @@ public class TestAuditWhitelistManager
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testUnsupportedOperationAtAlter()
+    public void testUnsupportedOperationAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(Collections.singletonMap("grant_audit_whitelist_for_execute", "data"));
 
@@ -250,7 +242,7 @@ public class TestAuditWhitelistManager
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testUnsupportedResourceAtAlter()
+    public void testUnsupportedResourceAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(
                 Collections.singletonMap("grant_audit_whitelist_for_all", "mbean"));
