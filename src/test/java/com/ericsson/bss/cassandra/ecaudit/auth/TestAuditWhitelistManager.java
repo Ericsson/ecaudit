@@ -136,6 +136,22 @@ public class TestAuditWhitelistManager
     }
 
     @Test(expected = InvalidRequestException.class)
+    public void testUnsupportedOperationAtCreate()
+    {
+        RoleOptions options = createRoleOptions(Collections.singletonMap("grant_audit_whitelist_for_execute", "data"));
+
+        whitelistManager.createRoleWhitelist(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testRevokeAtCreateIsDenied()
+    {
+        RoleOptions options = createRoleOptions(Collections.singletonMap("revoke_audit_whitelist_for_select", "data"));
+
+        whitelistManager.createRoleWhitelist(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
     public void testUnsupportedResourceAtCreate()
     {
         RoleOptions options = createRoleOptions(
@@ -216,6 +232,14 @@ public class TestAuditWhitelistManager
     {
         RoleOptions options = createRoleOptions(
                 Collections.singletonMap("unknown_option", "guck"));
+
+        whitelistManager.alterRoleWhitelist(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testUnsupportedOperationAtAlter()
+    {
+        RoleOptions options = createRoleOptions(Collections.singletonMap("grant_audit_whitelist_for_execute", "data"));
 
         whitelistManager.alterRoleWhitelist(performer, role, options);
     }
