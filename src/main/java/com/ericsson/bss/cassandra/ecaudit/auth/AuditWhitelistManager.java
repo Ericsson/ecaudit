@@ -73,7 +73,7 @@ public class AuditWhitelistManager
     {
         if (options.getCustomOptions().isPresent())
         {
-            Map<String, Set<String>> addStatements = new HashMap<>();
+            Map<String, Set<IResource>> addStatements = new HashMap<>();
             for (Map.Entry<String, String> optionEntry : options.getCustomOptions().get().entrySet())
             {
                 WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
@@ -83,12 +83,11 @@ public class AuditWhitelistManager
                 whitelistContract.verifyCreateRoleOption(whitelistOperation);
                 checkPermissionToWhitelist(performer, resources);
 
-                addStatements.put(operation,
-                        resources.stream().map(r -> r.getName()).collect(Collectors.toSet()));
+                addStatements.put(operation, resources);
             }
 
             addStatements.forEach(
-                    (o, r) -> whitelistDataAccess.addToWhitelist(role.getRoleName(), o, r));
+                    (o, r) -> whitelistDataAccess.addToWhitelist(role, o, r));
         }
     }
 
@@ -96,8 +95,8 @@ public class AuditWhitelistManager
     {
         if (options.getCustomOptions().isPresent())
         {
-            Map<String, Set<String>> addStatements = new HashMap<>();
-            Map<String, Set<String>> removeStatements = new HashMap<>();
+            Map<String, Set<IResource>> addStatements = new HashMap<>();
+            Map<String, Set<IResource>> removeStatements = new HashMap<>();
             for (Map.Entry<String, String> optionEntry : options.getCustomOptions().get().entrySet())
             {
                 WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
@@ -108,32 +107,30 @@ public class AuditWhitelistManager
 
                 if (whitelistOperation == WhitelistOperation.GRANT)
                 {
-                    addStatements.put(operation,
-                            resources.stream().map(IResource::getName).collect(Collectors.toSet()));
+                    addStatements.put(operation, resources);
                 }
                 else
                 {
-                    removeStatements.put(operation,
-                            resources.stream().map(IResource::getName).collect(Collectors.toSet()));
+                    removeStatements.put(operation, resources);
                 }
             }
 
             addStatements.forEach(
-                    (o, r) -> whitelistDataAccess.addToWhitelist(role.getRoleName(), o, r));
+                    (o, r) -> whitelistDataAccess.addToWhitelist(role, o, r));
             removeStatements.forEach(
-                    (o, r) -> whitelistDataAccess.removeFromWhitelist(role.getRoleName(), o, r));
+                    (o, r) -> whitelistDataAccess.removeFromWhitelist(role, o, r));
         }
     }
 
-    public Map<String, String> getRoleWhitelist(String roleName)
+    public Map<String, Set<IResource>> getRoleWhitelist(RoleResource role)
     {
-        Set<String> whitelistResources = whitelistDataAccess.getWhitelist(roleName, OPERATION_ALL);
-        return Collections.singletonMap(OPTION_AUDIT_WHITELIST_ALL, StringUtils.join(whitelistResources, ','));
+        Set<IResource> whitelistResources = whitelistDataAccess.getWhitelist(role, OPERATION_ALL);
+        return Collections.singletonMap(OPTION_AUDIT_WHITELIST_ALL, whitelistResources);
     }
 
-    public void dropRoleWhitelist(String roleName)
+    public void dropRoleWhitelist(RoleResource role)
     {
-        whitelistDataAccess.deleteWhitelist(roleName);
+        whitelistDataAccess.deleteWhitelist(role);
     }
 
     private static void checkPermissionToWhitelist(AuthenticatedUser performer, Set<IResource> resources)

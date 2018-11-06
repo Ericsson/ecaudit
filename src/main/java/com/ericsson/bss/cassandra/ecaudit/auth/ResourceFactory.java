@@ -35,6 +35,15 @@ public class ResourceFactory
                .collect(Collectors.toSet());
     }
 
+    public static Set<IResource> toResourceSet(Set<String> resourceNames)
+    {
+        return resourceNames
+               .stream()
+               .map(String::trim)
+               .map(ResourceFactory::toResource)
+               .collect(Collectors.toSet());
+    }
+
     public static IResource toResource(String resourceName)
     {
         String[] parts = StringUtils.split(resourceName, SEPARATOR, 2);
@@ -52,5 +61,10 @@ public class ResourceFactory
             default:
                 throw new IllegalArgumentException("Invalid resource type: " + resourceName);
         }
+    }
+
+    public static String toNameCsv(Set<IResource> resources)
+    {
+        return StringUtils.join(resources.stream().map(IResource::getName).collect(Collectors.toSet()), ',');
     }
 }
