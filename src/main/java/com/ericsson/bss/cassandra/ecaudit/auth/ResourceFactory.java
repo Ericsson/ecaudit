@@ -1,3 +1,18 @@
+//**********************************************************************
+// Copyright 2018 Telefonaktiebolaget LM Ericsson
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Arrays;
@@ -10,7 +25,6 @@ import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.FunctionResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.exceptions.InvalidRequestException;
 
 public class ResourceFactory
 {
@@ -51,15 +65,65 @@ public class ResourceFactory
         switch (parts[0])
         {
             case DATA_ROOT:
-                return DataResource.fromName(resourceName);
+                DataResource dataResource = DataResource.fromName(resourceName);
+                validateDataResourceName(dataResource);
+                return dataResource;
             case ROLES_ROOT:
-                return RoleResource.fromName(resourceName);
+                RoleResource roleResource = RoleResource.fromName(resourceName);
+                validateRoleResourceName(roleResource);
+                return roleResource;
             case CONNECTIONS_ROOT:
                 return ConnectionResource.fromName(resourceName);
             case FUNCTIONS_ROOT:
-                return FunctionResource.fromName(resourceName);
+                FunctionResource functionResource = FunctionResource.fromName(resourceName);
+                validateFunctionResourceName(functionResource);
+                return functionResource;
             default:
                 throw new IllegalArgumentException("Invalid resource type: " + resourceName);
+        }
+    }
+
+    private static void validateDataResourceName(DataResource dataResource)
+    {
+        if (dataResource.isKeyspaceLevel())
+        {
+            if (!dataResource.getKeyspace().matches("\\w+"))
+            {
+                throw new IllegalArgumentException(String.format("\"%s\" is not a valid keyspace name", dataResource.getKeyspace()));
+            }
+        } else if (dataResource.isTableLevel())
+        {
+            if (!dataResource.getKeyspace().matches("\\w+"))
+            {
+                throw new IllegalArgumentException(String.format("\"%s\" is not a valid keyspace name", dataResource.getKeyspace()));
+            }
+            if (!dataResource.getTable().matches("\\w+"))
+            {
+                throw new IllegalArgumentException(String.format("\"%s\" is not a valid table name", dataResource.getTable()));
+            }
+        }
+
+    }
+
+    private static void validateRoleResourceName(RoleResource roleResource)
+    {
+        if (roleResource.hasParent())
+        {
+            if (!roleResource.getRoleName().matches("\\w+"))
+            {
+                throw new IllegalArgumentException(String.format("\"%s\" is not a valid role name", roleResource.getRoleName()));
+            }
+        }
+    }
+
+    private static void validateFunctionResourceName(FunctionResource functionResource)
+    {
+        if (functionResource.hasParent())
+        {
+            if (!functionResource.getKeyspace().matches("\\w+"))
+            {
+                throw new IllegalArgumentException(String.format("\"%s\" is not a valid keyspace name", functionResource.getKeyspace()));
+            }
         }
     }
 

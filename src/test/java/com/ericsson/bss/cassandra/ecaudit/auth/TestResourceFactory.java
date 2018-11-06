@@ -1,9 +1,23 @@
+//**********************************************************************
+// Copyright 2018 Telefonaktiebolaget LM Ericsson
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.apache.cassandra.auth.DataResource;
@@ -34,6 +48,13 @@ public class TestResourceFactory
     }
 
     @Test
+    public void testDataInvalidKs()
+    {
+        assertThatIllegalArgumentException()
+        .isThrownBy(() -> ResourceFactory.toResource("data/ks,connections"));
+    }
+
+    @Test
     public void testDataTable()
     {
         IResource resource = ResourceFactory.toResource("data/ks/table");
@@ -41,12 +62,18 @@ public class TestResourceFactory
         assertThat(resource).isInstanceOf(DataResource.class);
     }
 
-    @Ignore // For now
     @Test
     public void testDataInvalidKsTable()
     {
         assertThatIllegalArgumentException()
         .isThrownBy(() ->  ResourceFactory.toResource("data/ks space/table"));
+    }
+
+    @Test
+    public void testDataInvalidTable()
+    {
+        assertThatIllegalArgumentException()
+        .isThrownBy(() -> ResourceFactory.toResource("data/ks/table,connections"));
     }
 
     @Test
@@ -72,12 +99,11 @@ public class TestResourceFactory
         assertThat(resource).isInstanceOf(FunctionResource.class);
     }
 
-    @Ignore // For now
     @Test
     public void testFunctionInvalidKs()
     {
         assertThatIllegalArgumentException()
-        .isThrownBy(() -> ResourceFactory.toResource("functions/k%s"));
+        .isThrownBy(() -> ResourceFactory.toResource("functions/k,s"));
     }
 
     @Test
@@ -114,9 +140,15 @@ public class TestResourceFactory
     @Test
     public void testRoleLongName()
     {
-        IResource resource = ResourceFactory.toResource("roles/bob/with/many/parts");
-        assertThat(resource.getName()).isEqualTo("roles/bob/with/many/parts");
-        assertThat(resource).isInstanceOf(RoleResource.class);
+        assertThatIllegalArgumentException()
+        .isThrownBy(() -> ResourceFactory.toResource("roles/bob/with/many/parts"));
+    }
+
+    @Test
+    public void testRoleInvalidName()
+    {
+        assertThatIllegalArgumentException()
+        .isThrownBy(() -> ResourceFactory.toResource("roles/bob%s"));
     }
 
     @Test
