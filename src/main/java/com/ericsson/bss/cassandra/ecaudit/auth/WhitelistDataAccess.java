@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.Schema;
 import org.apache.cassandra.config.SchemaConstants;
@@ -67,44 +69,44 @@ public class WhitelistDataAccess
                 AuditAuthKeyspace.WHITELIST_TABLE_NAME);
     }
 
-    public void addToWhitelist(String rolename, String whitelistOperation, Set<String> whitelistResources)
+    public void addToWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
     {
-        updateWhitelist(rolename, whitelistOperation, whitelistResources,
-                "UPDATE %s.%s SET resources = resources + {%s} WHERE role = '%s' AND operation = '%s'");
+        updateWhitelist(role, whitelistOperation, whitelistResources,
+                        "UPDATE %s.%s SET resources = resources + {%s} WHERE role = '%s' AND operation = '%s'");
     }
 
-    public void removeFromWhitelist(String rolename, String whitelistOperation, Set<String> whitelistResources)
+    public void removeFromWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
     {
-        updateWhitelist(rolename, whitelistOperation, whitelistResources,
-                "UPDATE %s.%s SET resources = resources - {%s} WHERE role = '%s' AND operation = '%s'");
+        updateWhitelist(role, whitelistOperation, whitelistResources,
+                        "UPDATE %s.%s SET resources = resources - {%s} WHERE role = '%s' AND operation = '%s'");
     }
 
-    private void updateWhitelist(String rolename, String whitelistOperation, Set<String> whitelistResources,
-            String statementTemplate)
+    private void updateWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources, String statementTemplate)
     {
         List<String> quotedWhitelistResources = whitelistResources
-                .stream()
-                .map(r -> "'" + r + "'")
-                .collect(Collectors.toList());
+                                                .stream()
+                                                .map(IResource::getName)
+                                                .map(r -> "'" + r + "'")
+                                                .collect(Collectors.toList());
 
         String statement = String.format(
-                statementTemplate,
-                SchemaConstants.AUTH_KEYSPACE_NAME,
-                AuditAuthKeyspace.WHITELIST_TABLE_NAME,
-                StringUtils.join(quotedWhitelistResources, ','),
-                escape(rolename),
-                whitelistOperation);
+        statementTemplate,
+        SchemaConstants.AUTH_KEYSPACE_NAME,
+        AuditAuthKeyspace.WHITELIST_TABLE_NAME,
+        StringUtils.join(quotedWhitelistResources, ','),
+        escape(role.getRoleName()),
+        whitelistOperation);
 
-        QueryProcessor.process(statement, consistencyForRole(rolename));
+        QueryProcessor.process(statement, consistencyForRole(role));
     }
 
-    public Set<String> getWhitelist(String rolename, String whitelistOperation)
+    public Set<IResource> getWhitelist(RoleResource role, String whitelistOperation)
     {
         ResultMessage.Rows rows = loadWhitelistStatement.execute(
                 QueryState.forInternalCalls(),
                 QueryOptions.forInternalCalls(
-                        consistencyForRole(rolename),
-                        Arrays.asList(ByteBufferUtil.bytes(rolename), ByteBufferUtil.bytes(whitelistOperation))),
+                        consistencyForRole(role),
+                        Arrays.asList(ByteBufferUtil.bytes(role.getRoleName()), ByteBufferUtil.bytes(whitelistOperation))),
                 System.nanoTime());
 
         if (rows.result.isEmpty())
@@ -112,22 +114,26 @@ public class WhitelistDataAccess
             return Collections.emptySet();
         }
 
-        UntypedResultSet.Row untypedRow = UntypedResultSet.create(rows.result).one();
-        return untypedRow.getSet("resources", UTF8Type.instance);
-
+        return extractResourceSet(UntypedResultSet.create(rows.result).one());
     }
 
-    public void deleteWhitelist(String rolename)
+    private Set<IResource> extractResourceSet(UntypedResultSet.Row untypedRow)
+    {
+        Set<String> resourceStrings = untypedRow.getSet("resources", UTF8Type.instance);
+        return ResourceFactory.toResourceSet(resourceStrings);
+    }
+
+    public void deleteWhitelist(RoleResource role)
     {
         deleteWhitelistStatement.execute(
                 QueryState.forInternalCalls(),
                 QueryOptions.forInternalCalls(
-                        consistencyForRole(rolename),
-                        Arrays.asList(ByteBufferUtil.bytes(rolename))),
+                        consistencyForRole(role),
+                        Collections.singletonList(ByteBufferUtil.bytes(role.getRoleName()))),
                 System.nanoTime());
     }
 
-    private static void maybeCreateTable()
+    private static synchronized void maybeCreateTable()
     {
         KeyspaceMetadata expected = AuditAuthKeyspace.metadata();
         KeyspaceMetadata defined = Schema.instance.getKSMetaData(expected.name);
@@ -162,9 +168,10 @@ public class WhitelistDataAccess
     }
 
     // Stolen from CassandraRoleManager
-    private static ConsistencyLevel consistencyForRole(String role)
+    private static ConsistencyLevel consistencyForRole(RoleResource role)
     {
-        if (role.equals(DEFAULT_SUPERUSER_NAME))
+        String roleName =  role.getRoleName();
+        if (roleName.equals(DEFAULT_SUPERUSER_NAME))
         {
             return ConsistencyLevel.QUORUM;
         }
