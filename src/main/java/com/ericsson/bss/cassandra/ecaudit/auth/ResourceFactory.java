@@ -85,24 +85,17 @@ public class ResourceFactory
 
     private static void validateDataResourceName(DataResource dataResource)
     {
-        if (dataResource.isKeyspaceLevel())
+        if (!dataResource.isRootLevel())
         {
             if (!dataResource.getKeyspace().matches("\\w+"))
             {
                 throw new IllegalArgumentException(String.format("\"%s\" is not a valid keyspace name", dataResource.getKeyspace()));
             }
-        } else if (dataResource.isTableLevel())
-        {
-            if (!dataResource.getKeyspace().matches("\\w+"))
-            {
-                throw new IllegalArgumentException(String.format("\"%s\" is not a valid keyspace name", dataResource.getKeyspace()));
-            }
-            if (!dataResource.getTable().matches("\\w+"))
+            if (dataResource.isTableLevel() && !dataResource.getTable().matches("\\w+"))
             {
                 throw new IllegalArgumentException(String.format("\"%s\" is not a valid table name", dataResource.getTable()));
             }
         }
-
     }
 
     private static void validateRoleResourceName(RoleResource roleResource)
