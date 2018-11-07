@@ -250,6 +250,17 @@ public class ITVerifyWhitelistManagement
         }
     }
 
+    @Test (expected = InvalidQueryException.class)
+    public void testSuperUserCanNotCreateWhitelistedOnInvalidKeyspace()
+    {
+        try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/unknownk%s' }"));
+        }
+    }
+
     @Test
     public void testSuperUserCanCreateWhitelistedOnNonexistingTable()
     {
@@ -261,6 +272,17 @@ public class ITVerifyWhitelistManagement
         }
     }
 
+    @Test (expected = InvalidQueryException.class)
+    public void testSuperUserCanNotCreateWhitelistedOnInvalidTable()
+    {
+        try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknown?tbl' }"));
+        }
+    }
+
     @Test
     public void testSuperUserCanCreateWhitelistedOnConnection()
     {
@@ -269,6 +291,17 @@ public class ITVerifyWhitelistManagement
         {
             privateSession.execute(new SimpleStatement(
                     "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections' }"));
+        }
+    }
+
+    @Test (expected = InvalidQueryException.class)
+    public void testSuperUserCanNotCreateWhitelistedOnConnectionWithName()
+    {
+        try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections/native' }"));
         }
     }
 
@@ -284,13 +317,24 @@ public class ITVerifyWhitelistManagement
     }
 
     @Test (expected = InvalidQueryException.class)
-    public void testSuperUserCannotCreateWhitelistedOnInvalidResource()
+    public void testSuperUserCanNotCreateWhitelistedOnInvalidDataResource()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
              Session privateSession = privateCluster.connect())
         {
             privateSession.execute(new SimpleStatement(
             "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl/invalid' }"));
+        }
+    }
+
+    @Test (expected = InvalidQueryException.class)
+    public void testSuperUserCanNotCreateWhitelistedOnInvalidRoleResource()
+    {
+        try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles/t%s' }"));
         }
     }
 
