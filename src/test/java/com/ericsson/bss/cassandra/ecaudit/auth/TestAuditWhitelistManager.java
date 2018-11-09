@@ -262,13 +262,14 @@ public class TestAuditWhitelistManager
     public void testGetWhitelist()
     {
         Set<IResource> expectedResources = ImmutableSet.of(DataResource.fromName("data/someks/sometable"), ConnectionResource.fromName("connections"));
+        Map<String, Set<IResource>> daoWhitelist = Collections.singletonMap("ALL", expectedResources);
 
-        when(mockWhitelistDataAccess.getWhitelist(eq(role), any(String.class)))
-                .thenReturn(expectedResources);
+        when(mockWhitelistDataAccess.getWhitelist(eq(role)))
+                .thenReturn(daoWhitelist);
 
         Map<String, Set<IResource>> whitelistOptions = whitelistManager.getRoleWhitelist(role);
 
-        verify(mockWhitelistDataAccess, times(1)).getWhitelist(eq(role), eq("ALL"));
+        verify(mockWhitelistDataAccess, times(1)).getWhitelist(eq(role));
         assertThat(whitelistOptions.keySet()).containsExactly("audit_whitelist_for_all");
         assertThat(whitelistOptions.get("audit_whitelist_for_all")).isEqualTo(expectedResources);
     }

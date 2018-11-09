@@ -18,8 +18,10 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -59,7 +61,7 @@ public class WhitelistDataAccess
         maybeCreateTable();
 
         loadWhitelistStatement = (SelectStatement) prepare(
-                "SELECT resources from %s.%s WHERE role = ? AND operation = ?",
+                "SELECT operation, resources from %s.%s WHERE role = ?",
                 AuthKeyspace.NAME,
                 AuditAuthKeyspace.WHITELIST_TABLE_NAME);
 
@@ -100,20 +102,28 @@ public class WhitelistDataAccess
         QueryProcessor.process(statement, consistencyForRole(role));
     }
 
-    public Set<IResource> getWhitelist(RoleResource role, String whitelistOperation)
+    public Map<String, Set<IResource>> getWhitelist(RoleResource role)
     {
         ResultMessage.Rows rows = loadWhitelistStatement.execute(
                 QueryState.forInternalCalls(),
                 QueryOptions.forInternalCalls(
                         consistencyForRole(role),
-                        Arrays.asList(ByteBufferUtil.bytes(role.getRoleName()), ByteBufferUtil.bytes(whitelistOperation))));
+                        Arrays.asList(ByteBufferUtil.bytes(role.getRoleName()))));
 
         if (rows.result.isEmpty())
         {
-            return Collections.emptySet();
+            return Collections.emptyMap();
         }
 
-        return extractResourceSet(UntypedResultSet.create(rows.result).one());
+        return StreamSupport
+               .stream(UntypedResultSet.create(rows.result).spliterator(), false)
+               .collect(Collectors.toMap(this::extractOperation,
+                                         this::extractResourceSet));
+    }
+
+    private String extractOperation(UntypedResultSet.Row untypedRow)
+    {
+        return untypedRow.getString("operation");
     }
 
     private Set<IResource> extractResourceSet(UntypedResultSet.Row untypedRow)

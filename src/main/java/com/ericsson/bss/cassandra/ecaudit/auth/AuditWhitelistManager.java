@@ -19,17 +19,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
@@ -124,8 +119,16 @@ public class AuditWhitelistManager
 
     public Map<String, Set<IResource>> getRoleWhitelist(RoleResource role)
     {
-        Set<IResource> whitelistResources = whitelistDataAccess.getWhitelist(role, OPERATION_ALL);
-        return Collections.singletonMap(OPTION_AUDIT_WHITELIST_ALL, whitelistResources);
+        Map<String, Set<IResource>> daoWhitelist = whitelistDataAccess.getWhitelist(role);
+        Set<IResource> resources = daoWhitelist.get(OPERATION_ALL);
+        if (resources != null)
+        {
+            return Collections.singletonMap(OPTION_AUDIT_WHITELIST_ALL, resources);
+        }
+        else
+        {
+            return Collections.emptyMap();
+        }
     }
 
     public void dropRoleWhitelist(RoleResource role)
