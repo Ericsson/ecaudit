@@ -42,7 +42,7 @@ public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Set
               DescriptorBridge::setRolesCacheMaxEntries,
               DatabaseDescriptor::getRolesCacheMaxEntries,
               whitelistDataAccess::getWhitelist,
-              () -> DatabaseDescriptor.getAuthenticator().requireAuthentication());
+              () -> true);
     }
 
     public static AuditWhitelistCache getInstance()
