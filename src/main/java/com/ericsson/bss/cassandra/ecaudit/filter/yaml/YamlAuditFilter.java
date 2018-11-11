@@ -18,6 +18,8 @@ package com.ericsson.bss.cassandra.ecaudit.filter.yaml;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
@@ -43,6 +45,7 @@ public class YamlAuditFilter implements AuditFilter
      * @param configurationLoader
      *            the configuration to load the whitelist from
      */
+    @VisibleForTesting
     YamlAuditFilter(AuditConfigurationLoader configurationLoader)
     {
         AuditConfig config = configurationLoader.loadConfig();
