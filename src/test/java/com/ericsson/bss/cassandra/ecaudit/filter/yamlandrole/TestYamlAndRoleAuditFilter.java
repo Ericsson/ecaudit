@@ -27,6 +27,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -47,6 +49,14 @@ public class TestYamlAndRoleAuditFilter
     public void before()
     {
         combinedFilter = new YamlAndRoleAuditFilter(yamlFilter, roleFilter);
+    }
+
+    @Test
+    public void testSetupDelegation()
+    {
+        combinedFilter.setup();
+        verify(yamlFilter, times(1)).setup();
+        verify(roleFilter, times(1)).setup();
     }
 
     @Test

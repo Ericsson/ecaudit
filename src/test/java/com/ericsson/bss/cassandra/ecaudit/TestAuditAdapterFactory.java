@@ -20,7 +20,8 @@ import java.net.URL;
 import java.util.Collections;
 
 import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,6 +38,7 @@ import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
+import org.apache.cassandra.config.Config;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -45,33 +47,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestAuditAdapterFactory
 {
-    private AuditAdapterFactory factory;
-
-    @Before
-    public void before()
+    @BeforeClass
+    public static void beforeAll()
     {
-        factory = new AuditAdapterFactory();
+        Config.setClientMode(true);
     }
 
     @After
     public void after()
     {
         System.clearProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME);
-
     }
 
-    @After
-    public void afterSingletonToNull() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException
+    @AfterClass
+    public static void afterAll()
     {
-        Field instanceField = AuditAdapterFactory.class.getDeclaredField("AUDIT_ADAPTER_INSTANCE");
-        instanceField.setAccessible(true);
-        instanceField.set(null, null);
+        Config.setClientMode(false);
     }
 
     @Test
     public void testLoadDefaultWithoutErrorHasExpectedTypes() throws Exception
     {
-        AuditAdapter adapter = factory.getInstance();
+        AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 
         Auditor auditor = auditorIn(adapter);
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
@@ -88,7 +85,7 @@ public class TestAuditAdapterFactory
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_YAML);
         System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile("mock_configuration.yaml"));
 
-        AuditAdapter adapter = factory.getInstance();
+        AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 
         Auditor auditor = auditorIn(adapter);
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
@@ -104,7 +101,7 @@ public class TestAuditAdapterFactory
     {
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_ROLE);
 
-        AuditAdapter adapter = factory.getInstance();
+        AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 
         Auditor auditor = auditorIn(adapter);
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
@@ -121,7 +118,7 @@ public class TestAuditAdapterFactory
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_YAML_AND_ROLE);
         System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile("mock_configuration.yaml"));
 
-        AuditAdapter adapter = factory.getInstance();
+        AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 
         Auditor auditor = auditorIn(adapter);
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
@@ -137,7 +134,7 @@ public class TestAuditAdapterFactory
     {
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_NONE);
 
-        AuditAdapter adapter = factory.getInstance();
+        AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 
         Auditor auditor = auditorIn(adapter);
         assertThat(auditor).isInstanceOf(DefaultAuditor.class);
@@ -156,7 +153,7 @@ public class TestAuditAdapterFactory
         AuditConfig config = new AuditConfig();
         config.setWhitelist(Collections.emptyList());
 
-        factory.getInstance();
+        AuditAdapterFactory.createAuditAdapter();
     }
 
     private static String getPathToTestResourceFile(String filename)

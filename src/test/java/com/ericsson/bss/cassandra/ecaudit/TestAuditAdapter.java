@@ -123,6 +123,13 @@ public class TestAuditAdapter
     }
 
     @Test
+    public void testSetupDelegation()
+    {
+        auditAdapter.setup();
+        verify(mockAuditor, times(1)).setup();
+    }
+
+    @Test
     public void testProcessRegular()
     {
         String expectedStatement = "select * from ks.tbl";

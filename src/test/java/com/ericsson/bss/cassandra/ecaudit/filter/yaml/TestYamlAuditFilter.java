@@ -39,14 +39,16 @@ public class TestYamlAuditFilter
     private AuditConfigurationLoader configLoaderMock;
 
     @Test
+    public void testSetupDoNotFail()
+    {
+        YamlAuditFilter filter = givenConfiguredFilter();
+        filter.setup();
+    }
+
+    @Test
     public void testWhitelistOnlyFiltersWhitelistedUsers()
     {
-        AuditConfig config = new AuditConfig();
-        config.setWhitelist(Arrays.asList("User1", "User2"));
-
-        when(configLoaderMock.loadConfig()).thenReturn(config);
-
-        YamlAuditFilter filter = new YamlAuditFilter(configLoaderMock);
+        YamlAuditFilter filter = givenConfiguredFilter();
 
         List<String> users = new ArrayList<>(Arrays.asList("foo", "User1", "bar", "User2", "fnord", "another"));
 
@@ -56,14 +58,9 @@ public class TestYamlAuditFilter
     }
 
     @Test
-    public void tesatWhitelistDoesntApplyToLoginAttempts()
+    public void testWhitelistDoesntApplyToLoginAttempts()
     {
-        AuditConfig config = new AuditConfig();
-        config.setWhitelist(Arrays.asList("User1", "User2"));
-
-        when(configLoaderMock.loadConfig()).thenReturn(config);
-
-        YamlAuditFilter filter = new YamlAuditFilter(configLoaderMock);
+        YamlAuditFilter filter = givenConfiguredFilter();
 
         List<String> users = new ArrayList<>(Arrays.asList("foo", "User1", "bar", "User2", "fnord", "another"));
 
@@ -81,6 +78,16 @@ public class TestYamlAuditFilter
         when(configLoaderMock.loadConfig()).thenThrow(new ConfigurationException("something failed"));
 
         new YamlAuditFilter(configLoaderMock);
+    }
+
+    private YamlAuditFilter givenConfiguredFilter()
+    {
+        AuditConfig config = new AuditConfig();
+        config.setWhitelist(Arrays.asList("User1", "User2"));
+
+        when(configLoaderMock.loadConfig()).thenReturn(config);
+
+        return new YamlAuditFilter(configLoaderMock);
     }
 
     private static AuditEntry toLogEntry(String user)

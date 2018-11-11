@@ -29,6 +29,7 @@ public class AuditAuthorizer extends CassandraAuthorizer
         LOG.info("Auditing enabled on authorizer");
     }
 
+    @Override
     public Set<Permission> authorize(AuthenticatedUser user, IResource resource)
     {
         Set<Permission> permissions = EnumSet.copyOf(super.authorize(user, resource));
@@ -40,7 +41,7 @@ public class AuditAuthorizer extends CassandraAuthorizer
         return permissions;
     }
 
-    public Set<Permission> realAuthorize(AuthenticatedUser user, IResource resource)
+    Set<Permission> realAuthorize(AuthenticatedUser user, IResource resource)
     {
         return super.authorize(user, resource);
     }

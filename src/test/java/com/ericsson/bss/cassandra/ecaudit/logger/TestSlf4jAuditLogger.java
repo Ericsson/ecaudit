@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -27,7 +28,6 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -43,8 +43,13 @@ public class TestSlf4jAuditLogger
     @Mock
     Logger mockLogger;
 
-    @InjectMocks
     Slf4jAuditLogger logger;
+
+    @Before
+    public void before()
+    {
+        logger = new Slf4jAuditLogger(mockLogger);
+    }
 
     @Test
     public void testAuditEntryNoBatch() throws Exception

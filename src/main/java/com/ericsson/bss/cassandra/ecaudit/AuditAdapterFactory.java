@@ -34,17 +34,15 @@ import org.apache.cassandra.exceptions.ConfigurationException;
 /**
  * Factory class for creating configured instances of {@link AuditAdapter}.
  */
-public class AuditAdapterFactory
+class AuditAdapterFactory
 {
     private final static Logger LOG = LoggerFactory.getLogger(AuditAdapterFactory.class);
 
-    public static final String FILTER_TYPE_PROPERTY_NAME = "ecaudit.filter_type";
-    public static final String FILTER_TYPE_YAML = "YAML";
-    public static final String FILTER_TYPE_ROLE = "ROLE";
-    public static final String FILTER_TYPE_YAML_AND_ROLE = "YAML_AND_ROLE";
-    public static final String FILTER_TYPE_NONE = "NONE";
-
-    private volatile static AuditAdapter AUDIT_ADAPTER_INSTANCE = null;
+    static final String FILTER_TYPE_PROPERTY_NAME = "ecaudit.filter_type";
+    static final String FILTER_TYPE_YAML = "YAML";
+    static final String FILTER_TYPE_ROLE = "ROLE";
+    static final String FILTER_TYPE_YAML_AND_ROLE = "YAML_AND_ROLE";
+    static final String FILTER_TYPE_NONE = "NONE";
 
     /**
      * Provide a reference to the {@link AuditAdapter} instance, creating it if necessary.
@@ -53,13 +51,8 @@ public class AuditAdapterFactory
      *
      * @return a configured instance of {@link AuditAdapter}.
      */
-    public synchronized AuditAdapter getInstance()
+    static AuditAdapter createAuditAdapter()
     {
-        if (AUDIT_ADAPTER_INSTANCE != null)
-        {
-            return AUDIT_ADAPTER_INSTANCE;
-        }
-
         AuditLogger logger = new Slf4jAuditLogger();
         PasswordObfuscator obfuscator = new PasswordObfuscator();
 
@@ -67,9 +60,7 @@ public class AuditAdapterFactory
 
         Auditor auditor = new DefaultAuditor(logger, filter, obfuscator);
         AuditEntryBuilderFactory entryBuilderFactory = new AuditEntryBuilderFactory();
-        AUDIT_ADAPTER_INSTANCE =  new AuditAdapter(auditor, entryBuilderFactory);
-
-        return AUDIT_ADAPTER_INSTANCE;
+        return new AuditAdapter(auditor, entryBuilderFactory);
     }
 
     /**
@@ -79,7 +70,7 @@ public class AuditAdapterFactory
      *
      * @return a new audit filter
      */
-    private AuditFilter createFilter()
+    private static AuditFilter createFilter()
     {
         String filterType = System.getProperty(FILTER_TYPE_PROPERTY_NAME, FILTER_TYPE_ROLE);
 

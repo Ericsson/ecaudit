@@ -40,6 +40,11 @@ public class DefaultAuditor implements Auditor
         this.obfuscator = obfuscator;
     }
 
+    public void setup()
+    {
+        filter.setup();
+    }
+
     @Override
     public void audit(AuditEntry logEntry)
     {
@@ -49,5 +54,4 @@ public class DefaultAuditor implements Auditor
             logger.log(obfuscatedEntry);
         }
     }
-
 }

@@ -15,6 +15,7 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,7 @@ public class Slf4jAuditLogger implements AuditLogger
      *
      * @param logger the logger backend to use for audit logs
      */
+    @VisibleForTesting
     Slf4jAuditLogger(Logger logger)
     {
         auditLogger = logger;

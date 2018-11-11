@@ -18,8 +18,10 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -49,17 +51,38 @@ import org.apache.cassandra.utils.ByteBufferUtil;
  */
 public class WhitelistDataAccess
 {
+    private boolean setupCompleted = false;
+
     private static final String DEFAULT_SUPERUSER_NAME = "cassandra";
 
     private DeleteStatement deleteWhitelistStatement;
     private SelectStatement loadWhitelistStatement;
 
-    public void setup()
+    private WhitelistDataAccess()
     {
+    }
+
+    public static WhitelistDataAccess getInstance()
+    {
+        return SingletonHolder.INSTANCE;
+    }
+
+    private static class SingletonHolder
+    {
+        private static final WhitelistDataAccess INSTANCE = new WhitelistDataAccess();
+    }
+
+    public synchronized void setup()
+    {
+        if (setupCompleted)
+        {
+            return;
+        }
+
         maybeCreateTable();
 
         loadWhitelistStatement = (SelectStatement) prepare(
-                "SELECT resources from %s.%s WHERE role = ? AND operation = ?",
+                "SELECT operation, resources from %s.%s WHERE role = ?",
                 AuthKeyspace.NAME,
                 AuditAuthKeyspace.WHITELIST_TABLE_NAME);
 
@@ -67,15 +90,17 @@ public class WhitelistDataAccess
                 "DELETE FROM %s.%s WHERE role = ?",
                 AuthKeyspace.NAME,
                 AuditAuthKeyspace.WHITELIST_TABLE_NAME);
+
+        setupCompleted = true;
     }
 
-    public void addToWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
+    void addToWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
     {
         updateWhitelist(role, whitelistOperation, whitelistResources,
                         "UPDATE %s.%s SET resources = resources + {%s} WHERE role = '%s' AND operation = '%s'");
     }
 
-    public void removeFromWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
+    void removeFromWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
     {
         updateWhitelist(role, whitelistOperation, whitelistResources,
                         "UPDATE %s.%s SET resources = resources - {%s} WHERE role = '%s' AND operation = '%s'");
@@ -100,20 +125,28 @@ public class WhitelistDataAccess
         QueryProcessor.process(statement, consistencyForRole(role));
     }
 
-    public Set<IResource> getWhitelist(RoleResource role, String whitelistOperation)
+    public Map<String, Set<IResource>> getWhitelist(RoleResource role)
     {
         ResultMessage.Rows rows = loadWhitelistStatement.execute(
                 QueryState.forInternalCalls(),
                 QueryOptions.forInternalCalls(
                         consistencyForRole(role),
-                        Arrays.asList(ByteBufferUtil.bytes(role.getRoleName()), ByteBufferUtil.bytes(whitelistOperation))));
+                        Arrays.asList(ByteBufferUtil.bytes(role.getRoleName()))));
 
         if (rows.result.isEmpty())
         {
-            return Collections.emptySet();
+            return Collections.emptyMap();
         }
 
-        return extractResourceSet(UntypedResultSet.create(rows.result).one());
+        return StreamSupport
+               .stream(UntypedResultSet.create(rows.result).spliterator(), false)
+               .collect(Collectors.toMap(this::extractOperation,
+                                         this::extractResourceSet));
+    }
+
+    private String extractOperation(UntypedResultSet.Row untypedRow)
+    {
+        return untypedRow.getString("operation");
     }
 
     private Set<IResource> extractResourceSet(UntypedResultSet.Row untypedRow)
@@ -122,7 +155,7 @@ public class WhitelistDataAccess
         return ResourceFactory.toResourceSet(resourceStrings);
     }
 
-    public void deleteWhitelist(RoleResource role)
+    void deleteWhitelist(RoleResource role)
     {
         deleteWhitelistStatement.execute(
                 QueryState.forInternalCalls(),
