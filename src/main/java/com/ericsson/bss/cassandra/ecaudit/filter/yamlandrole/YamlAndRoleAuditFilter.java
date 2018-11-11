@@ -47,4 +47,11 @@ public class YamlAndRoleAuditFilter implements AuditFilter
     {
         return yamlFilter.isFiltered(logEntry) || roleFilter.isFiltered(logEntry);
     }
+
+    @Override
+    public void setup()
+    {
+        yamlFilter.setup();
+        roleFilter.setup();
+    }
 }

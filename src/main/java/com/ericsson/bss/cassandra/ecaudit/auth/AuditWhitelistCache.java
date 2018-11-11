@@ -18,19 +18,20 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import org.apache.cassandra.auth.AuthCache;
 import org.apache.cassandra.auth.IResource;
-import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.DatabaseDescriptor;
 
 public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Set<IResource>>>
 {
-    private static final AuditWhitelistCache CACHE = new AuditWhitelistCache(DatabaseDescriptor.getRoleManager());
+    private AuditWhitelistCache()
+    {
+        this(WhitelistDataAccess.getInstance());
+    }
 
-    private AuditWhitelistCache(IRoleManager roleManager)
+    private AuditWhitelistCache(WhitelistDataAccess whitelistDataAccess)
     {
         super("AuditWhitelistCache",
               DatabaseDescriptor::setRolesValidity,
@@ -39,30 +40,32 @@ public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Set
               DatabaseDescriptor::getRolesUpdateInterval,
               DatabaseDescriptor::setRolesCacheMaxEntries,
               DatabaseDescriptor::getRolesCacheMaxEntries,
-              (r) -> splitCustomOptions(roleManager.getCustomOptions(r)),
-              () -> DatabaseDescriptor.getAuthenticator().requireAuthentication());
+              whitelistDataAccess::getWhitelist,
+              () -> true);
     }
 
-    private static Map<String, Set<IResource>> splitCustomOptions(Map<String, String> customOptions)
+    public static AuditWhitelistCache getInstance()
     {
-        return customOptions
-               .entrySet()
-               .stream()
-               .collect(Collectors.toMap(Map.Entry::getKey, p -> ResourceFactory.toResourceSet(p.getValue())));
+        return SingletonHolder.INSTANCE;
+    }
+
+    private static class SingletonHolder
+    {
+        private static final AuditWhitelistCache INSTANCE = new AuditWhitelistCache();
     }
 
     /**
-     * Get all custom options immediately associated with the supplied role. The returned options may be cached if
+     * Get all whitelisted operation/resource combinations associated with the supplied role. The returned whitelist may be cached if
      * roles_validity_in_ms has a value greater than zero.
      *
      * @param role the Role
-     * @return map of all custom options associated with the role
+     * @return map of all whitelisted operation/resource combinations associated with the role
      */
-    public static Map<String, Set<IResource>> getCustomOptions(RoleResource role)
+    public Map<String, Set<IResource>> getWhitelist(RoleResource role)
     {
         try
         {
-            return CACHE.get(role);
+            return get(role);
         }
         catch (ExecutionException e)
         {

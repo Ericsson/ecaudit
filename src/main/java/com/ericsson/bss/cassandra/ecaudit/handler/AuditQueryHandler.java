@@ -21,6 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
+import com.ericsson.bss.cassandra.ecaudit.entry.Status;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
@@ -35,12 +41,6 @@ import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.transport.messages.ResultMessage.Prepared;
 import org.apache.cassandra.utils.MD5Digest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.AuditAdapterFactory;
-import com.ericsson.bss.cassandra.ecaudit.entry.Status;
 
 /**
  * An implementation of {@link QueryHandler} that performs audit logging on queries.
@@ -49,7 +49,7 @@ import com.ericsson.bss.cassandra.ecaudit.entry.Status;
  */
 public class AuditQueryHandler implements QueryHandler
 {
-    public static final Logger LOG = LoggerFactory.getLogger(AuditQueryHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuditQueryHandler.class);
 
     private final QueryHandler wrappedQueryHandler;
     private final AuditAdapter auditAdapter;
@@ -64,24 +64,28 @@ public class AuditQueryHandler implements QueryHandler
      */
     public AuditQueryHandler()
     {
-        this(QueryProcessor.instance, createDefault());
+        this(QueryProcessor.instance);
     }
 
     /**
      * Creates an instance of {@link AuditQueryHandler} that uses the default audit logger configuration and wraps the
      * given query handler.
      *
+     * The signature of this constructor must remain unchanged as it is used by other frameworks to create layers of
+     * decorators on top of each other.
+     *
      * @param queryHandler
      *            the query handler to wrap.
      */
     public AuditQueryHandler(QueryHandler queryHandler)
     {
-        this(queryHandler, createDefault());
+        this(queryHandler, AuditAdapter.getInstance());
     }
 
     /**
      * Test constructor.
      */
+    @VisibleForTesting
     AuditQueryHandler(QueryHandler queryHandler, AuditAdapter auditAdapter)
     {
         LOG.info("Auditing enabled on queries");
@@ -214,16 +218,5 @@ public class AuditQueryHandler implements QueryHandler
         // Not possible to update preparedRawCqlStatements here as we don't have a usable id
         // Also no point in clearing preparedRawCqlStatements as it should already be empty.
         return wrappedQueryHandler.getPreparedForThrift(id);
-    }
-
-    /**
-     * Construct an AuditAdapter instance by reading configuration from the system properties.
-     *
-     * @return an instance of {@link AuditAdapter}
-     */
-    private static AuditAdapter createDefault()
-    {
-        AuditAdapterFactory factory = new AuditAdapterFactory();
-        return factory.getInstance();
     }
 }

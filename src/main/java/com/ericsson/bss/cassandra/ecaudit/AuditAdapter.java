@@ -21,19 +21,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.cassandra.cql3.BatchQueryOptions;
-import org.apache.cassandra.cql3.CQLStatement;
-import org.apache.cassandra.cql3.QueryOptions;
-import org.apache.cassandra.cql3.statements.BatchStatement;
-import org.apache.cassandra.service.ClientState;
-import org.apache.cassandra.utils.MD5Digest;
-
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
+import org.apache.cassandra.cql3.BatchQueryOptions;
+import org.apache.cassandra.cql3.CQLStatement;
+import org.apache.cassandra.cql3.QueryOptions;
+import org.apache.cassandra.cql3.statements.BatchStatement;
+import org.apache.cassandra.service.ClientState;
+import org.apache.cassandra.utils.MD5Digest;
 
 /**
  * This class will be responsible for populating {@link AuditEntry} instance and passing that to {@link Auditor} instance
@@ -51,9 +50,7 @@ public class AuditAdapter
     private final AuditEntryBuilderFactory entryBuilderFactory;
 
     /**
-     * Constructor, see {@link AuditAdapterFactory#getInstance()}
-     *
-     * Visible for testing.
+     * Constructor, see {@link AuditAdapterFactory#createAuditAdapter()}
      *
      * @param auditor
      *            the auditor to use
@@ -64,6 +61,21 @@ public class AuditAdapter
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
+    }
+
+    public static AuditAdapter getInstance()
+    {
+        return SingletonHolder.INSTANCE;
+    }
+
+    private static class SingletonHolder
+    {
+        private static final AuditAdapter INSTANCE = AuditAdapterFactory.createAuditAdapter();
+    }
+
+    public void setup()
+    {
+        auditor.setup();
     }
 
     /**

@@ -30,4 +30,10 @@ public interface Auditor
      */
     void audit(AuditEntry logEntry);
 
+    /**
+     * Setup is called once upon system startup to initialize the Auditor.
+     *
+     * For example, use this method to create any required keyspaces/tables.
+     */
+    void setup();
 }
