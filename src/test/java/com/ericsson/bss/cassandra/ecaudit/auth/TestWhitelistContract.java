@@ -36,19 +36,6 @@ public class TestWhitelistContract
     }
 
     @Test
-    public void testGrantOnCreate()
-    {
-        contract.verifyCreateRoleOption(WhitelistOperation.GRANT);
-    }
-
-    @Test
-    public void testRevokeOnCreate()
-    {
-        assertThatExceptionOfType(InvalidRequestException.class)
-        .isThrownBy(() -> contract.verifyCreateRoleOption(WhitelistOperation.REVOKE));
-    }
-
-    @Test
     public void testGrantSelectOnData()
     {
         contract.verify(ImmutableSet.of(Permission.SELECT), DataResource.fromName("data/ks/table"));

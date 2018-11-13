@@ -30,12 +30,4 @@ class WhitelistContract
             throw new InvalidRequestException(String.format("Operation(s) %s are not applicable on %s", operations, suppliedResource));
         }
     }
-
-    void verifyCreateRoleOption(WhitelistOperation whitelistOperation)
-    {
-        if (whitelistOperation != WhitelistOperation.GRANT)
-        {
-            throw new InvalidRequestException("Only possible to grant audit whitelist when creating a role");
-        }
-    }
 }
