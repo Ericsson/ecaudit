@@ -290,6 +290,18 @@ public class ITVerifyWhitelistManagement
         }
     }
 
+    @Test (expected = InvalidQueryException.class)
+    public void testSuperUserCanNotWhitelistTwoOperationsInOneStatement()
+    {
+        try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
+             Session privateSession = privateCluster.connect())
+        {
+            given_temporary_user(privateSession);
+            privateSession.execute(new SimpleStatement(
+            "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/ecks' ,'grant_audit_whitelist_for_modify' : 'data/ecks'}"));
+        }
+    }
+
     @Test
     public void testSuperUserCanWhitelistOnConnection()
     {

@@ -115,9 +115,7 @@ public class TestAuditWhitelistManager
         whitelistManager.alterRoleWhitelist(performer, role, options);
 
         verify(mockWhitelistDataAccess, times(1))
-        .addToWhitelist(eq(role), eq(ImmutableMap.of(Permission.SELECT, ImmutableSet.of(DataResource.fromName("data")))));
-        verify(mockWhitelistDataAccess, times(1))
-        .removeFromWhitelist(eq(role), eq(Collections.emptyMap()));
+        .addToWhitelist(eq(role), eq(DataResource.fromName("data")), eq(ImmutableSet.of(Permission.SELECT)));
     }
 
     @Test
@@ -130,9 +128,7 @@ public class TestAuditWhitelistManager
         whitelistManager.alterRoleWhitelist(performer, role, options);
 
         verify(mockWhitelistDataAccess, times(1))
-        .addToWhitelist(eq(role), eq(ImmutableMap.of(Permission.MODIFY, ImmutableSet.of(DataResource.fromName("data/myks")))));
-        verify(mockWhitelistDataAccess, times(1))
-        .removeFromWhitelist(eq(role), eq(Collections.emptyMap()));
+        .addToWhitelist(eq(role), eq(DataResource.fromName("data/myks")), eq(ImmutableSet.of(Permission.MODIFY)));
     }
 
     @Test(expected = UnauthorizedException.class)
@@ -140,8 +136,7 @@ public class TestAuditWhitelistManager
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.MODIFY, Permission.SELECT));
         RoleOptions options = createRoleOptions(
-                ImmutableMap.of("grant_audit_whitelist_for_select", "data",
-                                "grant_audit_whitelist_for_execute", "connections"));
+                ImmutableMap.of("grant_audit_whitelist_for_execute", "connections"));
 
         whitelistManager.alterRoleWhitelist(performer, role, options);
     }
@@ -156,9 +151,7 @@ public class TestAuditWhitelistManager
         whitelistManager.alterRoleWhitelist(performer, role, options);
 
         verify(mockWhitelistDataAccess, times(1))
-        .addToWhitelist(eq(role), eq(Collections.emptyMap()));
-        verify(mockWhitelistDataAccess, times(1))
-        .removeFromWhitelist(eq(role), eq(ImmutableMap.of(Permission.EXECUTE, ImmutableSet.of(ConnectionResource.fromName("connections")))));
+        .removeFromWhitelist(eq(role), eq(ConnectionResource.fromName("connections")), eq(ImmutableSet.of(Permission.EXECUTE)));
     }
 
     @Test(expected = UnauthorizedException.class)

@@ -15,12 +15,10 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IResource;
@@ -60,51 +58,39 @@ class AuditWhitelistManager
     {
         if (options.getCustomOptions().isPresent())
         {
-            throw new InvalidRequestException("Options are not supported when creating a new role");
+            throw new InvalidRequestException("Whitelist options are not supported in CREATE ROLE statements");
         }
     }
 
     void alterRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
     {
-        if (options.getCustomOptions().isPresent())
+        if (!options.getCustomOptions().isPresent())
         {
-            Map<Permission, Set<IResource>> whitelistToGrant = new HashMap<>();
-            Map<Permission, Set<IResource>> whitelistToRevoke = new HashMap<>();
-            for (Map.Entry<String, String> optionEntry : options.getCustomOptions().get().entrySet())
-            {
-                WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
-                IResource resource = whitelistOptionParser.parseResource(optionEntry.getValue());
-                Set<Permission> operations = whitelistOptionParser.parseTargetOperation(optionEntry.getKey(), resource);
-
-                whitelistContract.verify(operations, resource);
-                checkPermissionToWhitelist(performer, resource);
-
-                if (whitelistOperation == WhitelistOperation.GRANT)
-                {
-                    for (Permission operation : operations)
-                    {
-                        whitelistToGrant.compute(operation, (opr, res) -> createOrExtend(res, resource));
-                    }
-                }
-                else
-                {
-                    for (Permission operation : operations)
-                    {
-                        whitelistToRevoke.compute(operation, (opr, res) -> createOrExtend(res, resource));
-                    }
-                }
-            }
-
-            whitelistDataAccess.addToWhitelist(role, whitelistToGrant);
-            whitelistDataAccess.removeFromWhitelist(role, whitelistToRevoke);
+            return;
         }
-    }
 
-    private Set<IResource> createOrExtend(Set<IResource> resources, IResource resource)
-    {
-        Set<IResource> newSet = resources != null ? resources : Sets.newHashSet();
-        newSet.add(resource);
-        return newSet;
+        if (options.getCustomOptions().get().size() != 1)
+        {
+            throw new InvalidRequestException("Exactly one whitelist option is supported in ALTER ROLE statements");
+        }
+
+        Map.Entry<String, String> optionEntry = options.getCustomOptions().get().entrySet().iterator().next();
+
+        WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
+        IResource resource = whitelistOptionParser.parseResource(optionEntry.getValue());
+        Set<Permission> operations = whitelistOptionParser.parseTargetOperation(optionEntry.getKey(), resource);
+
+        whitelistContract.verify(operations, resource);
+        checkPermissionToWhitelist(performer, resource);
+
+        if (whitelistOperation == WhitelistOperation.GRANT)
+        {
+            whitelistDataAccess.addToWhitelist(role, resource, operations);
+        }
+        else
+        {
+            whitelistDataAccess.removeFromWhitelist(role, resource, operations);
+        }
     }
 
     Map<Permission, Set<IResource>> getRoleWhitelist(RoleResource role)

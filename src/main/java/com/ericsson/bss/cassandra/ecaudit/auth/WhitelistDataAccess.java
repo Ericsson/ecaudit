@@ -15,9 +15,7 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -95,36 +93,29 @@ public class WhitelistDataAccess
         setupCompleted = true;
     }
 
-    void addToWhitelist(RoleResource role, Map<Permission, Set<IResource>> whitelist)
+    void addToWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations)
     {
-        updateWhitelist(role, whitelist,
+        updateWhitelist(role, whitelistResource, whitelistOperations,
                         "UPDATE %s.%s SET resources = resources + {%s} WHERE role = '%s' AND operation = '%s'");
     }
 
-    void removeFromWhitelist(RoleResource role, Map<Permission, Set<IResource>> whitelist)
+    void removeFromWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations)
     {
-        updateWhitelist(role, whitelist,
+        updateWhitelist(role, whitelistResource, whitelistOperations,
                         "UPDATE %s.%s SET resources = resources - {%s} WHERE role = '%s' AND operation = '%s'");
     }
 
-    private void updateWhitelist(RoleResource role, Map<Permission, Set<IResource>> whitelist, String statementTemplate)
+    private void updateWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations, String statementTemplate)
     {
-        for (Map.Entry<Permission, Set<IResource>> whitelistEntry : whitelist.entrySet())
+        for (Permission whitelistOperation : whitelistOperations)
         {
-            Set<IResource> whitelistResources = whitelistEntry.getValue();
+            String quotedWhitelistResource = "'" + whitelistResource.getName() + "'";
 
-            List<String> quotedWhitelistResources = whitelistResources
-                                                    .stream()
-                                                    .map(IResource::getName)
-                                                    .map(r -> "'" + r + "'")
-                                                    .collect(Collectors.toList());
-
-            Permission whitelistOperation = whitelistEntry.getKey();
             String statement = String.format(
             statementTemplate,
             AuthKeyspace.NAME,
             AuditAuthKeyspace.WHITELIST_TABLE_NAME,
-            StringUtils.join(quotedWhitelistResources, ','),
+            quotedWhitelistResource,
             escape(role.getRoleName()),
             whitelistOperation.name());
 
@@ -138,7 +129,7 @@ public class WhitelistDataAccess
                 QueryState.forInternalCalls(),
                 QueryOptions.forInternalCalls(
                         consistencyForRole(role),
-                        Arrays.asList(ByteBufferUtil.bytes(role.getRoleName()))));
+                        Collections.singletonList(ByteBufferUtil.bytes(role.getRoleName()))));
 
         if (rows.result.isEmpty())
         {
