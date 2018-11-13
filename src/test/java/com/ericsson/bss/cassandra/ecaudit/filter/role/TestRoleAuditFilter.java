@@ -117,6 +117,15 @@ public class TestRoleAuditFilter
     }
 
     @Test
+    public void mixedRoleWithWhitelistedTableDoCAS()
+    {
+        givenRoleIsWhitelisted("primary", Permission.SELECT, DataResource.fromName("data/ks/tbl"));
+        givenRoleIsWhitelisted("inherited", Permission.MODIFY, DataResource.fromName("data/ks/tbl"));
+        Set<RoleResource> effectiveRoles = givenRolesOfRequest("primary", "inherited");
+        assertThat(filter.isFiltered(effectiveRoles, Sets.newHashSet(Permission.SELECT, Permission.MODIFY), DataResource.fromName("data/ks/tbl"))).isEqualTo(true);
+    }
+
+    @Test
     public void primaryRoleWithOtherWhitelistedTableDoSelect()
     {
         givenRoleIsWhitelisted("primary", Permission.SELECT, DataResource.fromName("data/ks/tbl"));

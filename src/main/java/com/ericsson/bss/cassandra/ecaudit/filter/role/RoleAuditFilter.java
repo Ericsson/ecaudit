@@ -15,10 +15,12 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.filter.role;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +63,12 @@ public class RoleAuditFilter implements AuditFilter
 
     /**
      * Returns true if the supplied log entry's role or any other role granted to it (directly or indirectly) is
-     * white-listed for the log entry's specified operation and resource.
+     * white-listed for the log entry's specified operations and resource.
+     *
+     * If several operations are specified by the log entry (which typically happens on CAS operations), then all of the
+     * operations must be whitelisted.
+     *
+     * A resource is considered to be whitelisted if it, or any of its parents are mentioned in a roles whitelist.
      *
      * @param logEntry
      *            the log entry specifying the primary role as well as operation and resource
@@ -74,55 +81,39 @@ public class RoleAuditFilter implements AuditFilter
         return isFiltered(Roles.getRoles(primaryRole), logEntry.getPermissions(), logEntry.getResource());
     }
 
+    @VisibleForTesting
     boolean isFiltered(Set<RoleResource> roles, Set<Permission> operations, IResource resource)
     {
-        for (RoleResource role : roles)
+        Set<IResource> operationResourceHierarchy = getResourceHierarchy(resource);
+        for (Permission operation : operations)
         {
-            Map<Permission, Set<IResource>> roleOptions = whitelistCache.getWhitelist(role);
-            if (isResourceOperationWhitelisted(roleOptions, operations, resource))
+            if(!isOperationWhitelistedOnResourceByRoles(operation, operationResourceHierarchy, roles))
             {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns true if the supplied option map is white-listing the specified resource.
-     *
-     * @param roleOptions
-     *            the role options as stored in Cassandra
-     * @param operationResource
-     *            the resource being accessed
-     * @return true if the resource is white-listed, false otherwise
-     */
-    boolean isResourceOperationWhitelisted(Map<Permission, Set<IResource>> roleOptions, Set<Permission> operationPermissions, IResource operationResource)
-    {
-        for (Permission operationPermission : operationPermissions)
-        {
-            if (!isOperationResourceWhitelisted(roleOptions, operationResource, operationPermission))
-            {
-                LOG.trace("Operation {} on {} is NOT whitelisted by {}", operationPermissions, operationResource, roleOptions);
                 return false;
             }
         }
 
-        LOG.trace("Operation {} on {} is whitelisted by {}", operationPermissions, operationResource, roleOptions);
         return true;
     }
 
-    private boolean isOperationResourceWhitelisted(Map<Permission, Set<IResource>> roleOptions, IResource operationResource, Permission operationPermission)
+    private Set<IResource> getResourceHierarchy(IResource primaryResource)
     {
-        Set<IResource> whitelistResources = roleOptions.get(operationPermission);
-        if (whitelistResources == null)
+        Set<IResource> resourceList = new HashSet<>(3);
+        resourceList.add(primaryResource);
+        IResource resource = primaryResource;
+        while (resource.hasParent())
         {
-            return false;
+            resource = resource.getParent();
+            resourceList.add(resource);
         }
+        return resourceList;
+    }
 
-        for (IResource whitelistResource : whitelistResources)
+    private boolean isOperationWhitelistedOnResourceByRoles(Permission operation, Set<IResource> operationResourceHierarchy, Set<RoleResource> roles)
+    {
+        for (RoleResource role : roles)
         {
-            if (isResourceAccepted(whitelistResource, operationResource))
+            if (isOperationWhitelistedOnResourceByRole(operation, operationResourceHierarchy, role))
             {
                 return true;
             }
@@ -131,18 +122,14 @@ public class RoleAuditFilter implements AuditFilter
         return false;
     }
 
-    private boolean isResourceAccepted(IResource whitelistResource, IResource operationResource)
+    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, Set<IResource> operationResourceHierarchy, RoleResource role)
     {
-        if (whitelistResource.equals(operationResource))
+        Map<Permission, Set<IResource>> whitelist = whitelistCache.getWhitelist(role);
+        Set<IResource> whitelistedResources = whitelist.get(operation);
+        if (whitelistedResources == null)
         {
-            return true;
+            return false;
         }
-
-        if (operationResource.hasParent())
-        {
-            return isResourceAccepted(whitelistResource, operationResource.getParent());
-        }
-
-        return false;
+        return !Sets.intersection(whitelistedResources, operationResourceHierarchy).isEmpty();
     }
 }
