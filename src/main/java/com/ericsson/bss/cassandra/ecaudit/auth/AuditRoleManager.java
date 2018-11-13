@@ -94,7 +94,7 @@ public class AuditRoleManager extends CassandraRoleManager
     public void createRole(AuthenticatedUser performer, RoleResource role, RoleOptions options)
             throws RequestValidationException, RequestExecutionException
     {
-        whitelistManager.createRoleWhitelist(performer, role, options);
+        whitelistManager.verifyCreateRoleOptions(options);
         super.createRole(performer, role, options);
     }
 

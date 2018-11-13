@@ -106,7 +106,9 @@ public class ITVerifyWhitelistManagement
         "CREATE ROLE super_user WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
 
         session.execute(new SimpleStatement(
-        "CREATE ROLE whitelist_role WITH LOGIN = false AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+        "CREATE ROLE whitelist_role WITH LOGIN = false"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE whitelist_role WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
         session.execute(new SimpleStatement(
         "CREATE ROLE trusted_user WITH PASSWORD = 'secret' AND LOGIN = true"));
         session.execute(new SimpleStatement(
@@ -160,24 +162,26 @@ public class ITVerifyWhitelistManagement
     }
 
     @Test(expected = UnauthorizedException.class)
-    public void testCreateUserCannotCreateWhitelistedUser()
+    public void testCreateUserCannotWhitelistUser()
     {
         try (Cluster privateCluster = cdt.createCluster("create_user", "secret");
                 Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+            "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
         }
     }
 
-    @Test
-    public void testAuthorizedUserCanCreateWhitelisted()
+    @Test(expected = InvalidQueryException.class)
+    public void testAuthorizedUserCannotWhitelistUserAtCreate()
     {
         try (Cluster privateCluster = cdt.createCluster("authorized_user", "secret");
                 Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
         }
     }
 
@@ -215,123 +219,134 @@ public class ITVerifyWhitelistManagement
     }
 
     @Test
-    public void testSuperUserCanCreateWhitelistedOnData()
+    public void testSuperUserCanWhitelistOnData()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
                 Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+                    "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
         }
     }
 
     @Test
-    public void testSuperUserCanCreateWhitelistedOnDataPartly()
+    public void testSuperUserCanWhitelistOnDataPartly()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
                 Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl' }"));
+            "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl' }"));
         }
     }
 
     @Test
-    public void testSuperUserCanCreateWhitelistedOnNonexistingKeyspace()
+    public void testSuperUserCanWhitelistOnNonexistingKeyspace()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
              Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/unknownks' }"));
+                    "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/unknownks' }"));
         }
     }
 
     @Test (expected = InvalidQueryException.class)
-    public void testSuperUserCanNotCreateWhitelistedOnInvalidKeyspace()
+    public void testSuperUserCanNotWhitelistOnInvalidKeyspace()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
              Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/unknownk%s' }"));
+            "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/unknownk%s' }"));
         }
     }
 
     @Test
-    public void testSuperUserCanCreateWhitelistedOnNonexistingTable()
+    public void testSuperUserCanWhitelistOnNonexistingTable()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
              Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl' }"));
+                    "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl' }"));
         }
     }
 
     @Test (expected = InvalidQueryException.class)
-    public void testSuperUserCanNotCreateWhitelistedOnInvalidTable()
+    public void testSuperUserCanNotWhitelistOnInvalidTable()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
              Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknown?tbl' }"));
+            "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknown?tbl' }"));
         }
     }
 
     @Test
-    public void testSuperUserCanCreateWhitelistedOnConnection()
+    public void testSuperUserCanWhitelistOnConnection()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
                 Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections' }"));
+                    "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections' }"));
         }
     }
 
     @Test (expected = InvalidQueryException.class)
-    public void testSuperUserCanNotCreateWhitelistedOnConnectionWithName()
+    public void testSuperUserCanNotWhitelistOnConnectionWithName()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
              Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections/native' }"));
+            "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections/native' }"));
         }
     }
 
     @Test
-    public void testSuperUserCanCreateWhitelistedOnRoles()
+    public void testSuperUserCanWhitelistOnRoles()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
                 Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles' }"));
+                    "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles' }"));
         }
     }
 
     @Test (expected = InvalidQueryException.class)
-    public void testSuperUserCanNotCreateWhitelistedOnInvalidDataResource()
+    public void testSuperUserCanNotWhitelistOnInvalidDataResource()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
              Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl/invalid' }"));
+            "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl/invalid' }"));
         }
     }
 
     @Test (expected = InvalidQueryException.class)
-    public void testSuperUserCanNotCreateWhitelistedOnInvalidRoleResource()
+    public void testSuperUserCanNotWhitelistOnInvalidRoleResource()
     {
         try (Cluster privateCluster = cdt.createCluster("super_user", "secret");
              Session privateSession = privateCluster.connect())
         {
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
-            "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true AND OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles/t%s' }"));
+            "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles/t%s' }"));
         }
     }
 
@@ -341,10 +356,15 @@ public class ITVerifyWhitelistManagement
         try (Cluster privateCluster = cdt.createCluster("trusted_user", "secret");
                 Session privateSession = privateCluster.connect())
         {
-            privateSession.execute(new SimpleStatement(
-                    "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true"));
+            given_temporary_user(privateSession);
             privateSession.execute(new SimpleStatement(
                     "GRANT whitelist_role TO temporary_user"));
         }
+    }
+
+    private void given_temporary_user(Session privateSession)
+    {
+        privateSession.execute(new SimpleStatement(
+        "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true"));
     }
 }

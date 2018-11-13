@@ -27,6 +27,7 @@ import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
+import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
@@ -55,6 +56,14 @@ public class AuditWhitelistManager
         this.whitelistDataAccess = whitelistDataAccess;
         this.whitelistOptionParser = new WhitelistOptionParser();
         this.whitelistContract = new WhitelistContract();
+    }
+
+    public void verifyCreateRoleOptions(RoleOptions options)
+    {
+        if (options.getCustomOptions().isPresent())
+        {
+            throw new InvalidRequestException("Options are not supported when creating a new role");
+        }
     }
 
     void createRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
