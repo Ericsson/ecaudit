@@ -20,7 +20,7 @@ The following non-backwards compatible changes have been made:
 * It is no longer possible to configure whitelists for several resources in one `ALTER ROLE` statement - to whitelist several resources, issue several statements
 
 ### Instructions
-Representation on disk for role based whitelists have been changed in order to support operation specific whitelists:.
+Representation on disk for role based whitelists have been changed in order to support operation specific whitelists.
 The new version of ecAudit can co-exist with older versions of ecAudit.
 The new version of ecAudit can be applied on one node at a time.
 Cassandra has to be restarted on a node for it to pick up the new version of ecAudit.

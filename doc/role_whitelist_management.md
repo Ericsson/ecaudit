@@ -62,8 +62,8 @@ execute the following statement:
 cassandra@cqlsh> ALTER ROLE hans WITH OPTIONS = { 'revoke_audit_whitelist_for_execute' : 'connections' };
 ```
 
-Note that none of these operations changes whether the roles can _access_ these resources,
-it only changes whether the operations will show in the audit log or not.
+Note that none of these operations have any impact on whether the roles can _access_ these resources,
+it only affect whether the operations will show in the audit log or not.
 Access is managed using standard mechanisms in Cassandra.
 
 To view current whitelists,
@@ -140,7 +140,7 @@ Four types of resources can be managed in whitelists:
 ### Connection Resources
 
 Connections are a special resource type introduced by ecAudit.
-Connections are only used to grant a user whitelisting on connections attempts on Cassandras native CQL interface.
+Connections are only used to grant a user whitelisting on connection attempts on the Cassandras native CQL interface.
 Since this resource type is specific to ecAudit, there is no corresponding permission in Cassandra.
 
 Connection resources can only be whitelisted on the __EXECUTE__ operation.
@@ -182,7 +182,8 @@ cassandra@cqlsh> GRANT ALTER ON myks.mytable TO helena;
 cassandra@cqlsh> ALTER ROLE helena WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'data/myks/mytable' };
 ```
 
-Refer to Cassandras documentation for a full listing of required permissions.
+Refer to the [Cassandra documentation](http://cassandra.apache.org/doc/latest/cql/security.html#cql-permissions)
+for a full listing of permissions and their impact.
 
 ### Function Resources
 

@@ -6,7 +6,7 @@
 
 ## Version 1.0.0
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
-* Fix ability to grant whitelist to all other roles as long as grantee has AUTHORIZE permission on the resource (Ericsson/ecaudit#31)
+* Fix ability to grant whitelist to all other roles as long as granter has AUTHORIZE permission on the resource (Ericsson/ecaudit#31)
 * Improve logger performance with micro benchmarks
 
 ## Version 0.22.0

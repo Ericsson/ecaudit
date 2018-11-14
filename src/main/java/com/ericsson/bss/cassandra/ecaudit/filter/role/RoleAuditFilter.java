@@ -38,8 +38,6 @@ import org.apache.cassandra.auth.Roles;
  */
 public class RoleAuditFilter implements AuditFilter
 {
-    private static final Logger LOG = LoggerFactory.getLogger(RoleAuditFilter.class);
-
     private final AuditWhitelistCache whitelistCache;
     private final WhitelistDataAccess whitelistDataAccess;
 
