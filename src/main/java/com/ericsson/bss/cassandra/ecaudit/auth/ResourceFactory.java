@@ -26,7 +26,7 @@ import org.apache.cassandra.auth.FunctionResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.RoleResource;
 
-public class ResourceFactory
+class ResourceFactory
 {
     private static final String DATA_ROOT = "data";
     private static final String ROLES_ROOT = "roles";
@@ -35,12 +35,7 @@ public class ResourceFactory
 
     private static final String SEPARATOR = "/";
 
-    public static Set<IResource> toResourceSet(String resourceCsv)
-    {
-        return toResourceSet(StringUtils.split(resourceCsv, ','));
-    }
-
-    public static Set<IResource> toResourceSet(String[] resourceNames)
+    static Set<IResource> toResourceSet(String[] resourceNames)
     {
         return Arrays
                .stream(resourceNames)
@@ -49,7 +44,7 @@ public class ResourceFactory
                .collect(Collectors.toSet());
     }
 
-    public static Set<IResource> toResourceSet(Set<String> resourceNames)
+    static Set<IResource> toResourceSet(Set<String> resourceNames)
     {
         return resourceNames
                .stream()
@@ -58,7 +53,7 @@ public class ResourceFactory
                .collect(Collectors.toSet());
     }
 
-    public static IResource toResource(String resourceName)
+    static IResource toResource(String resourceName)
     {
         String[] parts = StringUtils.split(resourceName, SEPARATOR, 2);
 
@@ -120,7 +115,7 @@ public class ResourceFactory
         }
     }
 
-    public static String toNameCsv(Set<IResource> resources)
+    static String toNameCsv(Set<IResource> resources)
     {
         return StringUtils.join(resources.stream().map(IResource::getName).collect(Collectors.toSet()), ',');
     }
