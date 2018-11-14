@@ -15,12 +15,12 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.filter.role;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +84,7 @@ public class RoleAuditFilter implements AuditFilter
     @VisibleForTesting
     boolean isFiltered(Set<RoleResource> roles, Set<Permission> operations, IResource resource)
     {
-        Set<IResource> operationResourceHierarchy = getResourceHierarchy(resource);
+        List<IResource> operationResourceHierarchy = getResourceHierarchy(resource);
         for (Permission operation : operations)
         {
             if(!isOperationWhitelistedOnResourceByRoles(operation, operationResourceHierarchy, roles))
@@ -96,9 +96,9 @@ public class RoleAuditFilter implements AuditFilter
         return true;
     }
 
-    private Set<IResource> getResourceHierarchy(IResource primaryResource)
+    private List<IResource> getResourceHierarchy(IResource primaryResource)
     {
-        Set<IResource> resourceList = new HashSet<>(3);
+        List<IResource> resourceList = new ArrayList<>(3);
         resourceList.add(primaryResource);
         IResource resource = primaryResource;
         while (resource.hasParent())
@@ -109,7 +109,7 @@ public class RoleAuditFilter implements AuditFilter
         return resourceList;
     }
 
-    private boolean isOperationWhitelistedOnResourceByRoles(Permission operation, Set<IResource> operationResourceHierarchy, Set<RoleResource> roles)
+    private boolean isOperationWhitelistedOnResourceByRoles(Permission operation, List<IResource> operationResourceHierarchy, Set<RoleResource> roles)
     {
         for (RoleResource role : roles)
         {
@@ -122,7 +122,7 @@ public class RoleAuditFilter implements AuditFilter
         return false;
     }
 
-    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, Set<IResource> operationResourceHierarchy, RoleResource role)
+    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<IResource> operationResourceHierarchy, RoleResource role)
     {
         Map<Permission, Set<IResource>> whitelist = whitelistCache.getWhitelist(role);
         Set<IResource> whitelistedResources = whitelist.get(operation);
@@ -130,6 +130,21 @@ public class RoleAuditFilter implements AuditFilter
         {
             return false;
         }
-        return !Sets.intersection(whitelistedResources, operationResourceHierarchy).isEmpty();
+        return hasIntersection(whitelistedResources, operationResourceHierarchy);
+    }
+
+    private boolean hasIntersection(Set<IResource> whitelistedResources, List<IResource> operationResourceHierarchy)
+    {
+        for (IResource whitelistedResource : whitelistedResources)
+        {
+            for (IResource operationResource : operationResourceHierarchy)
+            {
+                if (whitelistedResource.equals(operationResource))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
