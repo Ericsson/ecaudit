@@ -138,8 +138,32 @@ public class WhitelistDataAccess
 
         return StreamSupport
                .stream(UntypedResultSet.create(rows.result).spliterator(), false)
+               .filter(this::isValidEntry)
                .collect(Collectors.toMap(this::extractOperation,
                                          this::extractResourceSet));
+    }
+
+    private boolean isValidEntry(UntypedResultSet.Row untypedRow)
+    {
+        try
+        {
+            extractOperation(untypedRow);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return false;
+        }
+
+        try
+        {
+            extractResourceSet(untypedRow);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private Permission extractOperation(UntypedResultSet.Row untypedRow)
