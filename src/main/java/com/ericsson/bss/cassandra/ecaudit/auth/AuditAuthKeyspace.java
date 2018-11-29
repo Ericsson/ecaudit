@@ -25,12 +25,13 @@ import org.apache.cassandra.schema.Tables;
 
 final class AuditAuthKeyspace
 {
-    static final String WHITELIST_TABLE_NAME = "role_audit_whitelists";
-    private static final String WHITELIST_TABLE_SCHEMA = "CREATE TABLE " + WHITELIST_TABLE_NAME + " ("
+    static final String WHITELIST_TABLE_NAME_V1 = "role_audit_whitelists";
+    static final String WHITELIST_TABLE_NAME_V2 = "role_audit_whitelists_v2";
+    private static final String WHITELIST_TABLE_SCHEMA = "CREATE TABLE " + WHITELIST_TABLE_NAME_V2 + " ("
                                                          + "role text,"
-                                                         + "operation text,"
-                                                         + "resources set<text>,"
-                                                         + "PRIMARY KEY(role, operation))";
+                                                         + "resource text,"
+                                                         + "operations set<text>,"
+                                                         + "PRIMARY KEY(role, resource))";
     private static final String WHITELIST_TABLE_DESCRIPTION = "audit whitelist assigned to db roles";
     private static final int WHITELIST_TABLE_GC_GRACE_SECONDS = (int) TimeUnit.DAYS.toSeconds(90);
 

@@ -15,29 +15,27 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import java.util.EnumSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
-import org.apache.cassandra.exceptions.InvalidRequestException;
 
-class WhitelistContract
+class OperationFactory
 {
-    private static final String DROP_LEGACY_VALUE_PATTERN = "now";
-
-    void verify(Set<Permission> operations, IResource suppliedResource)
+    static Set<Permission> toOperationSet(Set<String> permissionNames)
     {
-        if (!suppliedResource.applicablePermissions().containsAll(operations))
-        {
-            throw new InvalidRequestException(String.format("Operation(s) %s are not applicable on %s", operations, suppliedResource));
-        }
+        return permissionNames
+               .stream()
+               .map(String::trim)
+               .map(Permission::valueOf)
+               .collect(Collectors.toCollection(() -> EnumSet.noneOf(Permission.class)));
     }
 
-    void verifyValidDropValue(String value)
+    static String toOperationNameCsv(Set<Permission> operations)
     {
-        if (!DROP_LEGACY_VALUE_PATTERN.equals(value.toLowerCase()))
-        {
-            throw new InvalidRequestException(String.format("Legacy audit whitelist data will only be dropped if value is set to [%s]", DROP_LEGACY_VALUE_PATTERN));
-        }
+        return operations.stream()
+                         .map(Permission::name)
+                         .collect(Collectors.joining(","));
     }
 }

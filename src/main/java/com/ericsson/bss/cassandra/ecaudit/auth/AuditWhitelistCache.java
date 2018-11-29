@@ -21,10 +21,11 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.auth.AuthCache;
 import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.DatabaseDescriptor;
 
-public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Set<IResource>>>
+public class AuditWhitelistCache extends AuthCache<RoleResource, Map<IResource, Set<Permission>>>
 {
     private AuditWhitelistCache()
     {
@@ -61,7 +62,7 @@ public class AuditWhitelistCache extends AuthCache<RoleResource, Map<String, Set
      * @param role the Role
      * @return map of all whitelisted operation/resource combinations associated with the role
      */
-    public Map<String, Set<IResource>> getWhitelist(RoleResource role)
+    public Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
     {
         try
         {

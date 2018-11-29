@@ -15,20 +15,19 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import com.ericsson.bss.cassandra.ecaudit.facade.CassandraAuditException;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.exceptions.RequestExecutionException;
-import org.apache.cassandra.exceptions.RequestValidationException;
+import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
 
 /**
@@ -38,12 +37,8 @@ import org.apache.cassandra.exceptions.UnauthorizedException;
  * Only users with permission can manage white-lists.
  * It is possible to white-list access to all data and to authentication attempts on connections.
  */
-public class AuditWhitelistManager
+class AuditWhitelistManager
 {
-    public static final String OPERATION_ALL = "ALL";
-
-    public static final String OPTION_AUDIT_WHITELIST_ALL = "audit_whitelist_for_all";
-
     private final WhitelistDataAccess whitelistDataAccess;
     private final WhitelistOptionParser whitelistOptionParser;
     private final WhitelistContract whitelistContract;
@@ -61,72 +56,88 @@ public class AuditWhitelistManager
         this.whitelistContract = new WhitelistContract();
     }
 
-    void createRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
-            throws RequestValidationException, RequestExecutionException
+    void createRoleOption(RoleOptions options)
     {
         if (options.getCustomOptions().isPresent())
         {
-            Map<String, Set<IResource>> addStatements = new HashMap<>();
-            for (Map.Entry<String, String> optionEntry : options.getCustomOptions().get().entrySet())
-            {
-                WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
-                Set<IResource> resources = whitelistOptionParser.parseResource(optionEntry.getValue());
-                String operation = whitelistOptionParser.parseTargetOperation(optionEntry.getKey());
-
-                whitelistContract.verifyCreateRoleOption(whitelistOperation);
-                checkPermissionToWhitelist(performer, resources);
-
-                addStatements.put(operation, resources);
-            }
-
-            addStatements.forEach(
-                    (o, r) -> whitelistDataAccess.addToWhitelist(role, o, r));
+            throw new InvalidRequestException("Whitelist options are not supported in CREATE ROLE statements");
         }
     }
 
-    void alterRoleWhitelist(AuthenticatedUser performer, RoleResource role, RoleOptions options)
+    void alterRoleOption(AuthenticatedUser performer, RoleResource role, RoleOptions options)
     {
-        if (options.getCustomOptions().isPresent())
+        if (!options.getCustomOptions().isPresent())
         {
-            Map<String, Set<IResource>> addStatements = new HashMap<>();
-            Map<String, Set<IResource>> removeStatements = new HashMap<>();
-            for (Map.Entry<String, String> optionEntry : options.getCustomOptions().get().entrySet())
-            {
-                WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
-                Set<IResource> resources = whitelistOptionParser.parseResource(optionEntry.getValue());
-                String operation = whitelistOptionParser.parseTargetOperation(optionEntry.getKey());
-
-                checkPermissionToWhitelist(performer, resources);
-
-                if (whitelistOperation == WhitelistOperation.GRANT)
-                {
-                    addStatements.put(operation, resources);
-                }
-                else
-                {
-                    removeStatements.put(operation, resources);
-                }
-            }
-
-            addStatements.forEach(
-                    (o, r) -> whitelistDataAccess.addToWhitelist(role, o, r));
-            removeStatements.forEach(
-                    (o, r) -> whitelistDataAccess.removeFromWhitelist(role, o, r));
+            return;
         }
+
+        if (options.getCustomOptions().get().size() != 1)
+        {
+            throw new InvalidRequestException("Exactly one whitelist option is supported in ALTER ROLE statements");
+        }
+
+        Map.Entry<String, String> optionEntry = options.getCustomOptions().get().entrySet().iterator().next();
+        WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
+
+        dispatchOperation(whitelistOperation, performer, role, optionEntry);
     }
 
-    Map<String, Set<IResource>> getRoleWhitelist(RoleResource role)
+    @VisibleForTesting
+    void dispatchOperation(WhitelistOperation whitelistOperation, AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
     {
-        Map<String, Set<IResource>> daoWhitelist = whitelistDataAccess.getWhitelist(role);
-        Set<IResource> resources = daoWhitelist.get(OPERATION_ALL);
-        if (resources != null)
+        if (whitelistOperation == WhitelistOperation.GRANT)
         {
-            return Collections.singletonMap(OPTION_AUDIT_WHITELIST_ALL, resources);
+            addToWhitelist(performer, role, optionEntry);
+        }
+        else if (whitelistOperation == WhitelistOperation.REVOKE)
+        {
+            removeFromWhitelist(performer, role, optionEntry);
+        }
+        else if (whitelistOperation == WhitelistOperation.DROP_LEGACY)
+        {
+            dropRoleOption(performer, role, optionEntry);
         }
         else
         {
-            return Collections.emptyMap();
+            throw new InvalidRequestException(String.format("Illegal whitelist option [%s]", whitelistOperation));
         }
+    }
+
+    private void addToWhitelist(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
+    {
+        IResource resource = whitelistOptionParser.parseResource(optionEntry.getValue());
+        Set<Permission> operations = whitelistOptionParser.parseTargetOperation(optionEntry.getKey(), resource);
+
+        whitelistContract.verify(operations, resource);
+        checkPermissionToWhitelist(performer, resource);
+
+        whitelistDataAccess.addToWhitelist(role, resource, operations);
+    }
+
+    private void removeFromWhitelist(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
+    {
+        IResource resource = whitelistOptionParser.parseResource(optionEntry.getValue());
+        Set<Permission> operations = whitelistOptionParser.parseTargetOperation(optionEntry.getKey(), resource);
+
+        whitelistContract.verify(operations, resource);
+        checkPermissionToWhitelist(performer, resource);
+
+        whitelistDataAccess.removeFromWhitelist(role, resource, operations);
+    }
+
+    private void dropRoleOption(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
+    {
+        whitelistContract.verifyValidDropValue(optionEntry.getValue());
+        checkPermissionToDropLegacyTable(performer, role);
+        whitelistDataAccess.dropLegacyWhitelistTable();
+    }
+
+    Map<String, String> getRoleWhitelist(RoleResource role)
+    {
+        Map<IResource, Set<Permission>> whitelist = whitelistDataAccess.getWhitelist(role);
+        return whitelist.entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(e -> ResourceFactory.toPrintableName(e.getKey()), e -> OperationFactory.toOperationNameCsv(e.getValue())));
     }
 
     void dropRoleWhitelist(RoleResource role)
@@ -134,16 +145,25 @@ public class AuditWhitelistManager
         whitelistDataAccess.deleteWhitelist(role);
     }
 
-    private static void checkPermissionToWhitelist(AuthenticatedUser performer, Set<IResource> resources)
+    private void checkPermissionToDropLegacyTable(AuthenticatedUser performer, RoleResource role)
     {
-        for (IResource resource : resources)
+        if (!performer.isSuper())
         {
-            Set<Permission> userPermissions = performer.getPermissions(resource);
-            if (!userPermissions.contains(Permission.AUTHORIZE))
-            {
-                throw new UnauthorizedException(String.format("User %s is not authorized to whitelist access to %s",
-                        performer.getName(), resource));
-            }
+            throw new UnauthorizedException("Only super-user can drop legacy audit whitelist data");
+        }
+        if (!performer.getName().equals(role.getRoleName()))
+        {
+            throw new UnauthorizedException("Drop of legacy audit whitelist options is only valid on your own user name");
+        }
+    }
+
+    private static void checkPermissionToWhitelist(AuthenticatedUser performer, IResource resource)
+    {
+        Set<Permission> userPermissions = performer.getPermissions(resource);
+        if (!userPermissions.contains(Permission.AUTHORIZE))
+        {
+            throw new UnauthorizedException(String.format("User %s is not authorized to whitelist access to %s",
+                                                          performer.getName(), resource));
         }
     }
 }

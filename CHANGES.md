@@ -1,8 +1,15 @@
 # Changes
 
+## Version 2.0.0
+* __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
+* Add support for whitelists based on specific operations
+* Make whitelist operations case insensitive
+* Remove support for whitelist management in CREATE ROLE statement
+* Limit whitelist management to one operation per statement
+
 ## Version 1.0.0
-* Fix ability to grant whitelist to all other roles as long as grantee has AUTHORIZE permission on the resource (Ericsson/ecaudit#31)
-  * __NOTE__: As of this version it is required to configure the AuditAuthorizer in the cassandra.yaml - refer to the [setup guide](doc/setup.md) for details
+* __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
+* Fix ability to grant whitelist to all other roles as long as granter has AUTHORIZE permission on the resource (Ericsson/ecaudit#31)
 * Improve logger performance with micro benchmarks
 
 ## Version 0.22.0
