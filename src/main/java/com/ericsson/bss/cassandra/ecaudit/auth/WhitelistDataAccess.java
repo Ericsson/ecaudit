@@ -15,19 +15,23 @@
 //**********************************************************************
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
+import org.apache.cassandra.concurrent.ScheduledExecutors;
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.Schema;
 import org.apache.cassandra.cql3.CQLStatement;
@@ -40,6 +44,8 @@ import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.schema.KeyspaceMetadata;
+import org.apache.cassandra.serializers.SetSerializer;
+import org.apache.cassandra.serializers.UTF8Serializer;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.MigrationManager;
 import org.apache.cassandra.service.QueryState;
@@ -51,6 +57,8 @@ import org.apache.cassandra.utils.ByteBufferUtil;
  */
 public class WhitelistDataAccess
 {
+    private static final Logger LOG = LoggerFactory.getLogger(WhitelistDataAccess.class);
+
     private boolean setupCompleted = false;
 
     private static final String DEFAULT_SUPERUSER_NAME = "cassandra";
@@ -82,56 +90,58 @@ public class WhitelistDataAccess
         maybeCreateTable();
 
         loadWhitelistStatement = (SelectStatement) prepare(
-                "SELECT operation, resources from %s.%s WHERE role = ?",
+                "SELECT resource, operations from %s.%s WHERE role = ?",
                 AuthKeyspace.NAME,
-                AuditAuthKeyspace.WHITELIST_TABLE_NAME);
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
 
         deleteWhitelistStatement = (DeleteStatement) prepare(
                 "DELETE FROM %s.%s WHERE role = ?",
                 AuthKeyspace.NAME,
-                AuditAuthKeyspace.WHITELIST_TABLE_NAME);
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
+
+        maybeMigrateTableData();
 
         setupCompleted = true;
     }
 
-    void addToWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
+    void addToWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations)
     {
-        updateWhitelist(role, whitelistOperation, whitelistResources,
-                        "UPDATE %s.%s SET resources = resources + {%s} WHERE role = '%s' AND operation = '%s'");
+        updateWhitelist(role, whitelistResource, whitelistOperations,
+                        "UPDATE %s.%s SET operations = operations + {%s} WHERE role = '%s' AND resource = '%s'");
     }
 
-    void removeFromWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources)
+    void removeFromWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations)
     {
-        updateWhitelist(role, whitelistOperation, whitelistResources,
-                        "UPDATE %s.%s SET resources = resources - {%s} WHERE role = '%s' AND operation = '%s'");
+        updateWhitelist(role, whitelistResource, whitelistOperations,
+                        "UPDATE %s.%s SET operations = operations - {%s} WHERE role = '%s' AND resource = '%s'");
     }
 
-    private void updateWhitelist(RoleResource role, String whitelistOperation, Set<IResource> whitelistResources, String statementTemplate)
+    private void updateWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations, String statementTemplate)
     {
-        List<String> quotedWhitelistResources = whitelistResources
-                                                .stream()
-                                                .map(IResource::getName)
-                                                .map(r -> "'" + r + "'")
-                                                .collect(Collectors.toList());
+        List<String> quotedWhitelistOperations = whitelistOperations
+                                                 .stream()
+                                                 .map(Enum::name)
+                                                 .map(p -> "'" + p + "'")
+                                                 .collect(Collectors.toList());
 
         String statement = String.format(
         statementTemplate,
         AuthKeyspace.NAME,
-        AuditAuthKeyspace.WHITELIST_TABLE_NAME,
-        StringUtils.join(quotedWhitelistResources, ','),
+        AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2,
+        StringUtils.join(quotedWhitelistOperations, ','),
         escape(role.getRoleName()),
-        whitelistOperation);
+        whitelistResource.getName());
 
         QueryProcessor.process(statement, consistencyForRole(role));
     }
 
-    public Map<String, Set<IResource>> getWhitelist(RoleResource role)
+    public Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
     {
         ResultMessage.Rows rows = loadWhitelistStatement.execute(
                 QueryState.forInternalCalls(),
                 QueryOptions.forInternalCalls(
                         consistencyForRole(role),
-                        Arrays.asList(ByteBufferUtil.bytes(role.getRoleName()))));
+                        Collections.singletonList(ByteBufferUtil.bytes(role.getRoleName()))));
 
         if (rows.result.isEmpty())
         {
@@ -140,19 +150,44 @@ public class WhitelistDataAccess
 
         return StreamSupport
                .stream(UntypedResultSet.create(rows.result).spliterator(), false)
-               .collect(Collectors.toMap(this::extractOperation,
-                                         this::extractResourceSet));
+               .filter(this::isValidEntry)
+               .collect(Collectors.toMap(this::extractResource,
+                                         this::extractOperationSet));
     }
 
-    private String extractOperation(UntypedResultSet.Row untypedRow)
+    private boolean isValidEntry(UntypedResultSet.Row untypedRow)
     {
-        return untypedRow.getString("operation");
+        try
+        {
+            extractResource(untypedRow);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return false;
+        }
+
+        try
+        {
+            extractOperationSet(untypedRow);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return false;
+        }
+
+        return true;
     }
 
-    private Set<IResource> extractResourceSet(UntypedResultSet.Row untypedRow)
+    private IResource extractResource(UntypedResultSet.Row untypedRow)
     {
-        Set<String> resourceStrings = untypedRow.getSet("resources", UTF8Type.instance);
-        return ResourceFactory.toResourceSet(resourceStrings);
+        String resourceName = untypedRow.getString("resource");
+        return ResourceFactory.toResource(resourceName);
+    }
+
+    private Set<Permission> extractOperationSet(UntypedResultSet.Row untypedRow)
+    {
+        Set<String> operationNames = untypedRow.getSet("operations", UTF8Type.instance);
+        return OperationFactory.toOperationSet(operationNames);
     }
 
     void deleteWhitelist(RoleResource role)
@@ -164,7 +199,7 @@ public class WhitelistDataAccess
                         Collections.singletonList(ByteBufferUtil.bytes(role.getRoleName()))));
     }
 
-    private static synchronized void maybeCreateTable()
+    private synchronized void maybeCreateTable()
     {
         KeyspaceMetadata expected = AuditAuthKeyspace.metadata();
         KeyspaceMetadata defined = Schema.instance.getKSMetaData(expected.name);
@@ -179,14 +214,60 @@ public class WhitelistDataAccess
         }
     }
 
-    // Stolen from CassandraRoleManager
-    private static String escape(String name)
+    private synchronized void maybeMigrateTableData()
+    {
+        // The delay is to give the node a chance to see its peers before attempting the conversion
+        if (Schema.instance.getCFMetaData(AuthKeyspace.NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1) != null)
+        {
+            ScheduledExecutors.optionalTasks.schedule(this::migrateTableData, AuthKeyspace.SUPERUSER_SETUP_DELAY, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void migrateTableData()
+    {
+        try
+        {
+            LOG.info("Converting legacy audit whitelist data");
+
+            UntypedResultSet whitelists = QueryProcessor.process(
+            String.format("SELECT role, resources FROM %s.%s",
+                          AuthKeyspace.NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1),
+            ConsistencyLevel.LOCAL_ONE);
+
+            for (UntypedResultSet.Row row : whitelists)
+            {
+                SetSerializer<String> serializer = SetSerializer.getInstance(UTF8Serializer.instance, UTF8Type.instance);
+                Set<String> resourceNames = serializer.deserialize(row.getBytes("resources"));
+                for (String resourceName : resourceNames)
+                {
+                    RoleResource role = RoleResource.role(row.getString("role"));
+                    IResource resource = ResourceFactory.toResource(resourceName);
+                    addToWhitelist(role, resource, resource.applicablePermissions());
+                }
+            }
+
+            LOG.info("Whitelist data conversion completed. To remove this message - " +
+                     "as a super user perform ALTER ROLE statement on yourself with OPTIONS set to { 'drop_legacy_audit_whitelist_table' : 'now' }");
+        }
+        catch (Exception e)
+        {
+            LOG.warn("Unable to complete conversion of legacy whitelist data (perhaps not enough nodes are upgraded yet). " +
+                     "Conversion should not be considered complete", e);
+        }
+    }
+
+    void dropLegacyWhitelistTable()
+    {
+        LOG.info("Dropping legacy (v1) audit whitelist data");
+        MigrationManager.announceColumnFamilyDrop(AuthKeyspace.NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1);
+    }
+
+    private String escape(String name)
     {
         return StringUtils.replace(name, "'", "''");
     }
 
-    // Stolen from CassandraRoleManager
-    private static CQLStatement prepare(String template, String keyspace, String table)
+    private CQLStatement prepare(String template, String keyspace, String table)
     {
         try
         {
@@ -194,12 +275,11 @@ public class WhitelistDataAccess
         }
         catch (RequestValidationException e)
         {
-            throw new AssertionError(e); // not supposed to happen
+            throw new AssertionError(e);
         }
     }
 
-    // Stolen from CassandraRoleManager
-    private static ConsistencyLevel consistencyForRole(RoleResource role)
+    private ConsistencyLevel consistencyForRole(RoleResource role)
     {
         String roleName =  role.getRoleName();
         if (roleName.equals(DEFAULT_SUPERUSER_NAME))

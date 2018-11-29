@@ -17,7 +17,10 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 
 class WhitelistOptionParser
@@ -27,15 +30,23 @@ class WhitelistOptionParser
     private static final String REVOKE_PREFIX = "revoke_audit_whitelist_for_";
     private static final String VALID_PREFIX = "^" + GRANT_PREFIX + "|" + "^" + REVOKE_PREFIX;
 
+    private static final String DROP_LEGACY_KEY_PATTERN = "drop_legacy_audit_whitelist_table";
+
     WhitelistOperation parseWhitelistOperation(String inputOption)
     {
-        if (inputOption.startsWith(GRANT_PREFIX))
+        String normalizedInput = normalizeUserInput(inputOption);
+
+        if (normalizedInput.startsWith(GRANT_PREFIX))
         {
             return WhitelistOperation.GRANT;
         }
-        else if (inputOption.startsWith(REVOKE_PREFIX))
+        else if (normalizedInput.startsWith(REVOKE_PREFIX))
         {
             return WhitelistOperation.REVOKE;
+        }
+        else if (normalizedInput.equals(DROP_LEGACY_KEY_PATTERN))
+        {
+            return WhitelistOperation.DROP_LEGACY;
         }
         else
         {
@@ -43,32 +54,44 @@ class WhitelistOptionParser
         }
     }
 
-    String parseTargetOperation(String inputOption)
+    Set<Permission> parseTargetOperation(String inputOption, IResource resource)
     {
         String operationString = stripOptionPrefix(inputOption).toUpperCase();
 
         if (ALL_OPERATIONS.equals(operationString))
         {
-            return ALL_OPERATIONS;
+            return resource.applicablePermissions();
         }
 
-        throw new InvalidRequestException("Invalid whitelist option: " + inputOption);
+        try
+        {
+            return ImmutableSet.of(Permission.valueOf(operationString));
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new InvalidRequestException("Invalid whitelist option: " + e.getMessage());
+        }
     }
 
     private String stripOptionPrefix(String option)
     {
-        return option.replaceFirst(VALID_PREFIX, "");
+        return normalizeUserInput(option).replaceFirst(VALID_PREFIX, "");
     }
 
-    Set<IResource> parseResource(String resourceNameCsv)
+    private String normalizeUserInput(String option)
+    {
+        return option.trim().replaceAll("\\s+", "_").toLowerCase();
+    }
+
+    IResource parseResource(String resourceName)
     {
         try
         {
-            return ResourceFactory.toResourceSet(resourceNameCsv);
+            return ResourceFactory.toResource(resourceName);
         }
         catch (IllegalArgumentException e)
         {
-            throw new InvalidRequestException(String.format("Unable to parse whitelisted resource(s) [%s]: %s", resourceNameCsv, e.getMessage()));
+            throw new InvalidRequestException(String.format("Unable to parse whitelisted resource [%s]: %s", resourceName, e.getMessage()));
         }
     }
 }

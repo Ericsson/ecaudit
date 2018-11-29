@@ -16,9 +16,11 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -38,6 +40,7 @@ import org.apache.cassandra.config.Config;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,74 +90,13 @@ public class TestAuditWhitelistManager
         Config.setClientMode(false);
     }
 
-    @Test
-    public void testGrantAtCreate()
-    {
-        when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.AUTHORIZE));
-        RoleOptions options = createRoleOptions(
-                Collections.singletonMap("grant_audit_whitelist_for_all", "data, connections"));
-
-        whitelistManager.createRoleWhitelist(performer, role, options);
-
-        verify(mockWhitelistDataAccess, times(1)).addToWhitelist(eq(role), eq("ALL"),
-                eq(ImmutableSet.of(DataResource.fromName("data"), ConnectionResource.fromName("connections"))));
-    }
-
-    @Test
-    public void testGrantLevelTwoResourceAtCreate()
-    {
-        when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.AUTHORIZE));
-        RoleOptions options = createRoleOptions(
-                Collections.singletonMap("grant_audit_whitelist_for_all", "data/myks"));
-
-        whitelistManager.createRoleWhitelist(performer, role, options);
-
-        verify(mockWhitelistDataAccess, times(1)).addToWhitelist(eq(role), eq("ALL"),
-                eq(ImmutableSet.of(DataResource.fromName("data/myks"))));
-    }
-
     @Test(expected = InvalidRequestException.class)
-    public void testRevokeAtCreateIsRejected()
+    public void testWhitelistAtCreateIsRejected()
     {
         RoleOptions options = createRoleOptions(
-        Collections.singletonMap("revoke_audit_whitelist_for_all", "data"));
+                Collections.singletonMap("grant_audit_whitelist_for_select", "data"));
 
-        whitelistManager.createRoleWhitelist(performer, role, options);
-    }
-
-    @Test(expected = UnauthorizedException.class)
-    public void testGrantAtCreateIsDenied()
-    {
-        when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.MODIFY, Permission.SELECT));
-        RoleOptions options = createRoleOptions(
-                Collections.singletonMap("grant_audit_whitelist_for_all", "data, connections"));
-
-        whitelistManager.createRoleWhitelist(performer, role, options);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testUnknownOptionAtCreateIsRejected()
-    {
-        RoleOptions options = createRoleOptions(Collections.singletonMap("unknown_option", "guck"));
-
-        whitelistManager.createRoleWhitelist(performer, role, options);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testUnsupportedOperationAtCreateIsRejected()
-    {
-        RoleOptions options = createRoleOptions(Collections.singletonMap("grant_audit_whitelist_for_execute", "data"));
-
-        whitelistManager.createRoleWhitelist(performer, role, options);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testUnsupportedResourceAtCreateIsRejected()
-    {
-        RoleOptions options = createRoleOptions(
-                Collections.singletonMap("grant_audit_whitelist_for_all", "mbean"));
-
-        whitelistManager.createRoleWhitelist(performer, role, options);
+        whitelistManager.createRoleOption(options);
     }
 
     @Test
@@ -162,7 +104,7 @@ public class TestAuditWhitelistManager
     {
         RoleOptions options = new RoleOptions();
 
-        whitelistManager.createRoleWhitelist(performer, role, options);
+        whitelistManager.createRoleOption(options);
     }
 
     @Test
@@ -170,12 +112,12 @@ public class TestAuditWhitelistManager
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.AUTHORIZE));
         RoleOptions options = createRoleOptions(
-                Collections.singletonMap("grant_audit_whitelist_for_all", "data"));
+                Collections.singletonMap("grant_audit_whitelist_for_select", "data"));
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
 
-        verify(mockWhitelistDataAccess, times(1)).addToWhitelist(eq(role), eq("ALL"),
-                eq(ImmutableSet.of(DataResource.fromName("data"))));
+        verify(mockWhitelistDataAccess, times(1))
+        .addToWhitelist(eq(role), eq(DataResource.fromName("data")), eq(ImmutableSet.of(Permission.SELECT)));
     }
 
     @Test
@@ -183,12 +125,12 @@ public class TestAuditWhitelistManager
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.AUTHORIZE));
         RoleOptions options = createRoleOptions(
-                Collections.singletonMap("grant_audit_whitelist_for_all", "data/myks"));
+                Collections.singletonMap("grant_audit_whitelist_for_modify", "data/myks"));
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
 
-        verify(mockWhitelistDataAccess, times(1)).addToWhitelist(eq(role), eq("ALL"),
-                eq(ImmutableSet.of(DataResource.fromName("data/myks"))));
+        verify(mockWhitelistDataAccess, times(1))
+        .addToWhitelist(eq(role), eq(DataResource.fromName("data/myks")), eq(ImmutableSet.of(Permission.MODIFY)));
     }
 
     @Test(expected = UnauthorizedException.class)
@@ -196,9 +138,9 @@ public class TestAuditWhitelistManager
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.MODIFY, Permission.SELECT));
         RoleOptions options = createRoleOptions(
-                Collections.singletonMap("grant_audit_whitelist_for_all", "data, connections"));
+                ImmutableMap.of("grant_audit_whitelist_for_execute", "connections"));
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
     }
 
     @Test
@@ -206,12 +148,12 @@ public class TestAuditWhitelistManager
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.AUTHORIZE));
         RoleOptions options = createRoleOptions(
-                Collections.singletonMap("revoke_audit_whitelist_for_all", "connections"));
+                Collections.singletonMap("revoke_audit_whitelist_for_execute", "connections"));
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
 
-        verify(mockWhitelistDataAccess, times(1)).removeFromWhitelist(eq(role), eq("ALL"),
-                eq(ImmutableSet.of(ConnectionResource.fromName("connections"))));
+        verify(mockWhitelistDataAccess, times(1))
+        .removeFromWhitelist(eq(role), eq(ConnectionResource.fromName("connections")), eq(ImmutableSet.of(Permission.EXECUTE)));
     }
 
     @Test(expected = UnauthorizedException.class)
@@ -219,9 +161,9 @@ public class TestAuditWhitelistManager
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.MODIFY, Permission.SELECT));
         RoleOptions options = createRoleOptions(
-                Collections.singletonMap("revoke_audit_whitelist_for_all", "data"));
+                Collections.singletonMap("revoke_audit_whitelist_for_modify", "data"));
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -230,24 +172,51 @@ public class TestAuditWhitelistManager
         RoleOptions options = createRoleOptions(
                 Collections.singletonMap("unknown_option", "guck"));
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testUnsupportedOperationAtAlterIsRejected()
+    public void testUnsupportedGrantOperationAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(Collections.singletonMap("grant_audit_whitelist_for_execute", "data"));
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testUnsupportedRevokeOperationAtAlterIsRejected()
+    {
+        RoleOptions options = createRoleOptions(Collections.singletonMap("revoke_audit_whitelist_for_execute", "data"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testUnsupportedResourceAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(
-                Collections.singletonMap("grant_audit_whitelist_for_all", "mbean"));
+        Collections.singletonMap("grant_audit_whitelist_for_all", "mbean"));
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testSeveralOperationsAtAlterIsRejected()
+    {
+        RoleOptions options = createRoleOptions(
+        ImmutableMap.of("grant_audit_whitelist_for_select", "data",
+                        "grant_audit_whitelist_for_modify", "data"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testSeveralResourcesAtAlterIsRejected()
+    {
+        RoleOptions options = createRoleOptions(
+        Collections.singletonMap("grant_audit_whitelist_for_select", "data/system,data/system_auth"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
     }
 
     @Test
@@ -255,34 +224,35 @@ public class TestAuditWhitelistManager
     {
         RoleOptions options = new RoleOptions();
 
-        whitelistManager.alterRoleWhitelist(performer, role, options);
+        whitelistManager.alterRoleOption(performer, role, options);
     }
 
     @Test
     public void testGetWhitelist()
     {
-        Set<IResource> expectedResources = ImmutableSet.of(DataResource.fromName("data/someks/sometable"), ConnectionResource.fromName("connections"));
-        Map<String, Set<IResource>> daoWhitelist = Collections.singletonMap("ALL", expectedResources);
+        Map<IResource, Set<Permission>> daoWhitelist = ImmutableMap.of(DataResource.fromName("data/someks/sometable"), EnumSet.of(Permission.SELECT),
+                                                                            ConnectionResource.fromName("connections"), EnumSet.of(Permission.EXECUTE));
 
         when(mockWhitelistDataAccess.getWhitelist(eq(role)))
-        .thenReturn(daoWhitelist);
+                .thenReturn(daoWhitelist);
 
-        Map<String, Set<IResource>> whitelistOptions = whitelistManager.getRoleWhitelist(role);
+        Map<String, String> whitelistOptions = whitelistManager.getRoleWhitelist(role);
 
         verify(mockWhitelistDataAccess, times(1)).getWhitelist(eq(role));
-        assertThat(whitelistOptions.keySet()).containsExactly("audit_whitelist_for_all");
-        assertThat(whitelistOptions.get("audit_whitelist_for_all")).isEqualTo(expectedResources);
+        assertThat(whitelistOptions.keySet()).containsExactlyInAnyOrder("AUDIT WHITELIST ON data/someks/sometable", "AUDIT WHITELIST ON connections");
+        assertThat(whitelistOptions.get("AUDIT WHITELIST ON data/someks/sometable")).isEqualTo(Permission.SELECT.name());
+        assertThat(whitelistOptions.get("AUDIT WHITELIST ON connections")).isEqualTo(Permission.EXECUTE.name());
     }
 
     @Test
     public void testGetEmptyWhitelist()
     {
-        Map<String, Set<IResource>> daoWhitelist = Collections.emptyMap();
+        Map<IResource, Set<Permission>> daoWhitelist = Collections.emptyMap();
 
         when(mockWhitelistDataAccess.getWhitelist(eq(role)))
         .thenReturn(daoWhitelist);
 
-        Map<String, Set<IResource>> whitelistOptions = whitelistManager.getRoleWhitelist(role);
+        Map<String, String> whitelistOptions = whitelistManager.getRoleWhitelist(role);
 
         verify(mockWhitelistDataAccess, times(1)).getWhitelist(eq(role));
         assertThat(whitelistOptions.keySet()).isEmpty();
@@ -293,6 +263,61 @@ public class TestAuditWhitelistManager
     {
         whitelistManager.dropRoleWhitelist(role);
         verify(mockWhitelistDataAccess, times(1)).deleteWhitelist(eq(role));
+    }
+
+    @Test
+    public void testDropLegacyTable()
+    {
+        when(performer.isSuper()).thenReturn(true);
+        when(role.getRoleName()).thenReturn("bob");
+
+        RoleOptions options = createRoleOptions(
+        Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
+
+        verify(mockWhitelistDataAccess, times(1))
+        .dropLegacyWhitelistTable();
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testDropLegacyTableWithWrongValueIsRejected()
+    {
+        RoleOptions options = createRoleOptions(
+        Collections.singletonMap("drop_legacy_audit_whitelist_table", "not"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
+
+        verify(mockWhitelistDataAccess, times(1))
+        .dropLegacyWhitelistTable();
+    }
+
+    @Test(expected = UnauthorizedException.class)
+    public void testDropLegacyTableWithOtherRoleIsRejected()
+    {
+        when(performer.isSuper()).thenReturn(true);
+        when(role.getRoleName()).thenReturn("hans");
+
+        RoleOptions options = createRoleOptions(
+        Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
+    }
+
+    @Test(expected = UnauthorizedException.class)
+    public void testDropLegacyTableWithNonSuperIsRejected()
+    {
+        RoleOptions options = createRoleOptions(
+        Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testUnknownOption()
+    {
+        WhitelistOperation invalidOperation = Mockito.mock(WhitelistOperation.class);
+        whitelistManager.dispatchOperation(invalidOperation, performer, role, null);
     }
 
     private RoleOptions createRoleOptions(Map<String, String> whitelistOptions)

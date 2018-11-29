@@ -74,29 +74,27 @@ public class ITVerifyThreadedAudit
         {
 
             session.execute(new SimpleStatement(
-                    "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
-            session.execute(
-                    new SimpleStatement("CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
+            "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+            session.execute(new SimpleStatement(
+            "CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
 
-            session.execute(
-                    new SimpleStatement(
-                            "CREATE ROLE test_role WITH LOGIN = false"));
-            session.execute(
-                    new SimpleStatement(
-                            "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system, data/system_schema, connections' }"));
-            session.execute(
-                    new SimpleStatement(
-                            "GRANT MODIFY ON ecks.ectbl TO test_role"));
-            session.execute(
-                    new SimpleStatement(
-                            "GRANT SELECT ON ecks.ectbl TO test_role"));
+            session.execute(new SimpleStatement(
+            "CREATE ROLE test_role WITH LOGIN = false"));
+            session.execute(new SimpleStatement(
+            "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system' }"));
+            session.execute(new SimpleStatement(
+            "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system_schema' }"));
+            session.execute(new SimpleStatement(
+            "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_execute' : 'connections' }"));
+            session.execute(new SimpleStatement(
+            "GRANT MODIFY ON ecks.ectbl TO test_role"));
+            session.execute(new SimpleStatement(
+            "GRANT SELECT ON ecks.ectbl TO test_role"));
 
             for (int i = 0; i < USER_COUNT; i++)
             {
-                session.execute(
-                        new SimpleStatement("CREATE ROLE user" + i + " WITH PASSWORD = 'secret' AND LOGIN = true"));
-                session.execute(
-                        new SimpleStatement("GRANT test_role TO user" + i));
+                session.execute(new SimpleStatement("CREATE ROLE user" + i + " WITH PASSWORD = 'secret' AND LOGIN = true"));
+                session.execute(new SimpleStatement("GRANT test_role TO user" + i));
             }
         }
     }

@@ -71,9 +71,21 @@ public class ITDataAudit
             cassandraSession.execute(new SimpleStatement(
             "CREATE ROLE superdata WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
             cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}"));
+            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'roles'}"));
             cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}"));
+            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'roles'}"));
+            cassandraSession.execute(new SimpleStatement(
+            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_drop' : 'roles'}"));
+            cassandraSession.execute(new SimpleStatement(
+            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'data'}"));
+            cassandraSession.execute(new SimpleStatement(
+            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'data'}"));
+            cassandraSession.execute(new SimpleStatement(
+            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_drop' : 'data'}"));
+            cassandraSession.execute(new SimpleStatement(
+            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data'}"));
+            cassandraSession.execute(new SimpleStatement(
+            "ALTER ROLE superdata WITH OPTIONS = { 'grant_audit_whitelist_for_modify' : 'data'}"));
         }
 
         superCluster = cdt.createCluster("superdata", "secret");
@@ -817,17 +829,17 @@ public class ITDataAudit
         superSession.execute(new SimpleStatement(
         "CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_all'  : 'connections' }"));
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }"));
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_all'  : 'data/system' }"));
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }"));
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_all'  : 'data/system_schema' }"));
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }"));
         return username;
     }
 
     private void whenRoleIsWhitelistedForOperationOnResource(String username, String operation, String resource)
     {
-        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = {'grant_audit_whitelist_for_all' : '" + resource + "'}");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = {'grant_audit_whitelist_for_" + operation + "' : '" + resource + "'}");
     }
 
     private void thenAuditLogContainNothingForUser()

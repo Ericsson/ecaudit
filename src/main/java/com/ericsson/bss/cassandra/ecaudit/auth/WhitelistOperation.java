@@ -17,5 +17,5 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 public enum WhitelistOperation
 {
-    GRANT, REVOKE
+    GRANT, REVOKE, DROP_LEGACY
 }
