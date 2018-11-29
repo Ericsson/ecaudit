@@ -31,7 +31,6 @@ class WhitelistOptionParser
     private static final String VALID_PREFIX = "^" + GRANT_PREFIX + "|" + "^" + REVOKE_PREFIX;
 
     private static final String DROP_LEGACY_KEY_PATTERN = "drop_legacy_audit_whitelist_table";
-    private static final String DROP_LEGACY_VALUE_PATTERN = "now";
 
     WhitelistOperation parseWhitelistOperation(String inputOption)
     {
@@ -93,14 +92,6 @@ class WhitelistOptionParser
         catch (IllegalArgumentException e)
         {
             throw new InvalidRequestException(String.format("Unable to parse whitelisted resource [%s]: %s", resourceName, e.getMessage()));
-        }
-    }
-
-    void parseDropValue(String value)
-    {
-        if (!DROP_LEGACY_VALUE_PATTERN.equals(value.toLowerCase()))
-        {
-            throw new InvalidRequestException(String.format("Legacy audit whitelist data will only be dropped if value is set to [%s]", DROP_LEGACY_KEY_PATTERN));
         }
     }
 }

@@ -36,6 +36,8 @@ import org.apache.cassandra.auth.Roles;
  */
 public class RoleAuditFilter implements AuditFilter
 {
+    public static final int MAX_RESOURCE_DEPTH = 3;
+
     private final AuditWhitelistCache whitelistCache;
     private final WhitelistDataAccess whitelistDataAccess;
 
@@ -94,7 +96,7 @@ public class RoleAuditFilter implements AuditFilter
 
     private List<IResource> getResourceHierarchy(IResource primaryResource)
     {
-        List<IResource> resourceList = new ArrayList<>(3);
+        List<IResource> resourceList = new ArrayList<>(MAX_RESOURCE_DEPTH);
         resourceList.add(primaryResource);
         IResource resource = primaryResource;
         while (resource.hasParent())

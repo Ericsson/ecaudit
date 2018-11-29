@@ -135,17 +135,4 @@ public class TestWhitelistOptionParser
         assertThatExceptionOfType(InvalidRequestException.class)
         .isThrownBy(() -> parser.parseResource("guck/ks/tbl1"));
     }
-
-    @Test
-    public void testParseDropLegacyValue()
-    {
-        parser.parseDropValue("NOW");
-    }
-
-    @Test
-    public void testParseDropLegacyValueInvalid()
-    {
-        assertThatExceptionOfType(InvalidRequestException.class)
-        .isThrownBy(() -> parser.parseDropValue("NOT"));
-    }
 }

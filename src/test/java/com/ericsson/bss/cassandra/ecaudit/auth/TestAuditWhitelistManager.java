@@ -40,6 +40,7 @@ import org.apache.cassandra.config.Config;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -175,9 +176,17 @@ public class TestAuditWhitelistManager
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testUnsupportedOperationAtAlterIsRejected()
+    public void testUnsupportedGrantOperationAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(Collections.singletonMap("grant_audit_whitelist_for_execute", "data"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testUnsupportedRevokeOperationAtAlterIsRejected()
+    {
+        RoleOptions options = createRoleOptions(Collections.singletonMap("revoke_audit_whitelist_for_execute", "data"));
 
         whitelistManager.alterRoleOption(performer, role, options);
     }
@@ -302,6 +311,13 @@ public class TestAuditWhitelistManager
         Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
 
         whitelistManager.alterRoleOption(performer, role, options);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testUnknownOption()
+    {
+        WhitelistOperation invalidOperation = Mockito.mock(WhitelistOperation.class);
+        whitelistManager.dispatchOperation(invalidOperation, performer, role, null);
     }
 
     private RoleOptions createRoleOptions(Map<String, String> whitelistOptions)

@@ -76,4 +76,17 @@ public class TestWhitelistContract
     {
         assertThatExceptionOfType(InvalidRequestException.class).isThrownBy(() -> contract.verify(ImmutableSet.of(Permission.SELECT), ConnectionResource.fromName("connections")));
     }
+
+    @Test
+    public void testParseDropLegacyValue()
+    {
+        contract.verifyValidDropValue("NOW");
+    }
+
+    @Test
+    public void testParseDropLegacyValueInvalid()
+    {
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> contract.verifyValidDropValue("NOT"));
+    }
 }

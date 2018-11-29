@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import com.ericsson.bss.cassandra.ecaudit.facade.CassandraAuditException;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
@@ -78,24 +79,31 @@ class AuditWhitelistManager
         Map.Entry<String, String> optionEntry = options.getCustomOptions().get().entrySet().iterator().next();
         WhitelistOperation whitelistOperation = whitelistOptionParser.parseWhitelistOperation(optionEntry.getKey());
 
-        if (whitelistOperation == WhitelistOperation.DROP_LEGACY)
+        dispatchOperation(whitelistOperation, performer, role, optionEntry);
+    }
+
+    @VisibleForTesting
+    void dispatchOperation(WhitelistOperation whitelistOperation, AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
+    {
+        if (whitelistOperation == WhitelistOperation.GRANT)
+        {
+            addToWhitelist(performer, role, optionEntry);
+        }
+        else if (whitelistOperation == WhitelistOperation.REVOKE)
+        {
+            removeFromWhitelist(performer, role, optionEntry);
+        }
+        else if (whitelistOperation == WhitelistOperation.DROP_LEGACY)
         {
             dropRoleOption(performer, role, optionEntry);
         }
         else
         {
-            alterWhitelistOption(performer, role, whitelistOperation, optionEntry);
+            throw new InvalidRequestException(String.format("Illegal whitelist option [%s]", whitelistOperation));
         }
     }
 
-    private void dropRoleOption(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
-    {
-        whitelistOptionParser.parseDropValue(optionEntry.getValue());
-        checkPermissionToDropLegacyTable(performer, role);
-        whitelistDataAccess.dropLegacyWhitelistTable();
-    }
-
-    private void alterWhitelistOption(AuthenticatedUser performer, RoleResource role, WhitelistOperation whitelistOperation, Map.Entry<String, String> optionEntry)
+    private void addToWhitelist(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
     {
         IResource resource = whitelistOptionParser.parseResource(optionEntry.getValue());
         Set<Permission> operations = whitelistOptionParser.parseTargetOperation(optionEntry.getKey(), resource);
@@ -103,14 +111,25 @@ class AuditWhitelistManager
         whitelistContract.verify(operations, resource);
         checkPermissionToWhitelist(performer, resource);
 
-        if (whitelistOperation == WhitelistOperation.GRANT)
-        {
-            whitelistDataAccess.addToWhitelist(role, resource, operations);
-        }
-        else
-        {
-            whitelistDataAccess.removeFromWhitelist(role, resource, operations);
-        }
+        whitelistDataAccess.addToWhitelist(role, resource, operations);
+    }
+
+    private void removeFromWhitelist(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
+    {
+        IResource resource = whitelistOptionParser.parseResource(optionEntry.getValue());
+        Set<Permission> operations = whitelistOptionParser.parseTargetOperation(optionEntry.getKey(), resource);
+
+        whitelistContract.verify(operations, resource);
+        checkPermissionToWhitelist(performer, resource);
+
+        whitelistDataAccess.removeFromWhitelist(role, resource, operations);
+    }
+
+    private void dropRoleOption(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
+    {
+        whitelistContract.verifyValidDropValue(optionEntry.getValue());
+        checkPermissionToDropLegacyTable(performer, role);
+        whitelistDataAccess.dropLegacyWhitelistTable();
     }
 
     Map<String, String> getRoleWhitelist(RoleResource role)
