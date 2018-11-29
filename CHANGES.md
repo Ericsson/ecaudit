@@ -4,6 +4,8 @@
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
 * Add support for whitelists based on specific operations
 * Make whitelist operations case insensitive
+* Remove support for whitelist management in CREATE ROLE statement
+* Limit whitelist management to one operation per statement
 
 ## Version 1.0.0
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
