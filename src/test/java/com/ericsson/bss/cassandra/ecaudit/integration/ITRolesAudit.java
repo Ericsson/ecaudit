@@ -50,9 +50,9 @@ public class ITRolesAudit
     private static Cluster superCluster;
     private static Session superSession;
 
-    private static String unmodifiedUsername;
-    private static Cluster unmodifiedCluster;
-    private static Session unmodifiedSession;
+    private static String testUsername;
+    private static Cluster testCluster;
+    private static Session testSession;
 
     private static AtomicInteger usernameNumber = new AtomicInteger();
 
@@ -92,9 +92,9 @@ public class ITRolesAudit
         superCluster = cdt.createCluster("superrole", "secret");
         superSession = superCluster.connect();
 
-        unmodifiedUsername = givenSuperuserWithMinimalWhitelist();
-        unmodifiedCluster = cdt.createCluster(unmodifiedUsername, "secret");
-        unmodifiedSession = unmodifiedCluster.connect();
+        testUsername = givenUniqueSuperuserWithMinimalWhitelist();
+        testCluster = cdt.createCluster(testUsername, "secret");
+        testSession = testCluster.connect();
     }
 
     @Before
@@ -110,13 +110,14 @@ public class ITRolesAudit
         verifyNoMoreInteractions(mockAuditAppender);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
+        resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @AfterClass
     public static void afterClass()
     {
-        unmodifiedSession.close();
-        unmodifiedCluster.close();
+        testSession.close();
+        testCluster.close();
 
         for (int i = 0; i < usernameNumber.get(); i++)
         {
@@ -135,10 +136,10 @@ public class ITRolesAudit
     @Test
     public void createRoleIsLogged()
     {
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
         String testRole = getUniqueUsername();
 
-        unmodifiedSession.execute(new SimpleStatement(
+        testSession.execute(new SimpleStatement(
         "CREATE ROLE " + testRole + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
 
         thenAuditLogContainEntryForUser("CREATE ROLE " + testRole + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true", username);
@@ -151,12 +152,8 @@ public class ITRolesAudit
         String testRole = getUniqueUsername();
         whenRoleIsWhitelistedForOperationOnResource(username, "create", "roles");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement(
-            "CREATE ROLE " + testRole + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
-        }
+        testSession.execute(new SimpleStatement(
+        "CREATE ROLE " + testRole + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -164,10 +161,10 @@ public class ITRolesAudit
     @Test
     public void alterRoleIsLogged()
     {
-        String username = unmodifiedUsername;
-        String testRole = givenSuperuserWithMinimalWhitelist();
+        String username = givenSuperuserWithMinimalWhitelist();
+        String testRole = givenUniqueSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement(
+        testSession.execute(new SimpleStatement(
         "ALTER ROLE " + testRole + " WITH LOGIN = false"));
 
         thenAuditLogContainEntryForUser("ALTER ROLE " + testRole + " WITH LOGIN = false", username);
@@ -177,15 +174,11 @@ public class ITRolesAudit
     public void alterRoleIsWhitelisted()
     {
         String username = givenSuperuserWithMinimalWhitelist();
-        String testRole = givenSuperuserWithMinimalWhitelist();
+        String testRole = givenUniqueSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "roles/" + testRole);
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement(
-            "ALTER ROLE " + testRole + " WITH LOGIN = false"));
-        }
+        testSession.execute(new SimpleStatement(
+        "ALTER ROLE " + testRole + " WITH LOGIN = false"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -193,10 +186,10 @@ public class ITRolesAudit
     @Test
     public void dropRoleIsLogged()
     {
-        String username = unmodifiedUsername;
-        String testRole = givenSuperuserWithMinimalWhitelist();
+        String username = givenSuperuserWithMinimalWhitelist();
+        String testRole = givenUniqueSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement(
+        testSession.execute(new SimpleStatement(
         "DROP ROLE " + testRole));
 
         thenAuditLogContainEntryForUser("DROP ROLE " + testRole, username);
@@ -206,15 +199,11 @@ public class ITRolesAudit
     public void dropRoleIsWhitelisted()
     {
         String username = givenSuperuserWithMinimalWhitelist();
-        String testRole = givenSuperuserWithMinimalWhitelist();
+        String testRole = givenUniqueSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "drop", "roles/" + testRole);
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement(
-            "DROP ROLE " + testRole));
-        }
+        testSession.execute(new SimpleStatement(
+        "DROP ROLE " + testRole));
 
         thenAuditLogContainNothingForUser();
     }
@@ -222,11 +211,11 @@ public class ITRolesAudit
     @Test
     public void grantRoleIsLogged()
     {
-        String username = unmodifiedUsername;
-        String testRole1 = givenSuperuserWithMinimalWhitelist();
-        String testRole2 = givenSuperuserWithMinimalWhitelist();
+        String username = givenSuperuserWithMinimalWhitelist();
+        String testRole1 = givenUniqueSuperuserWithMinimalWhitelist();
+        String testRole2 = givenUniqueSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement(
+        testSession.execute(new SimpleStatement(
         "GRANT " + testRole1 + " TO " + testRole2));
 
         thenAuditLogContainEntryForUser("GRANT " + testRole1 + " TO " + testRole2, username);
@@ -236,16 +225,12 @@ public class ITRolesAudit
     public void grantRoleIsWhitelisted()
     {
         String username = givenSuperuserWithMinimalWhitelist();
-        String testRole1 = givenSuperuserWithMinimalWhitelist();
-        String testRole2 = givenSuperuserWithMinimalWhitelist();
+        String testRole1 = givenUniqueSuperuserWithMinimalWhitelist();
+        String testRole2 = givenUniqueSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "authorize", "roles/" + testRole1);
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement(
-            "GRANT " + testRole1 + " TO " + testRole2));
-        }
+        testSession.execute(new SimpleStatement(
+        "GRANT " + testRole1 + " TO " + testRole2));
 
         thenAuditLogContainNothingForUser();
     }
@@ -253,12 +238,12 @@ public class ITRolesAudit
     @Test
     public void revokeRoleIsLogged()
     {
-        String username = unmodifiedUsername;
-        String testRole1 = givenSuperuserWithMinimalWhitelist();
-        String testRole2 = givenSuperuserWithMinimalWhitelist();
+        String username = givenSuperuserWithMinimalWhitelist();
+        String testRole1 = givenUniqueSuperuserWithMinimalWhitelist();
+        String testRole2 = givenUniqueSuperuserWithMinimalWhitelist();
         givenRoleGrantedTo(testRole1, testRole2);
 
-        unmodifiedSession.execute(new SimpleStatement(
+        testSession.execute(new SimpleStatement(
         "REVOKE " + testRole1 + " FROM " + testRole2));
 
         thenAuditLogContainEntryForUser("REVOKE " + testRole1 + " FROM " + testRole2, username);
@@ -268,8 +253,8 @@ public class ITRolesAudit
     public void revokeRoleIsWhitelisted()
     {
         String username = givenSuperuserWithMinimalWhitelist();
-        String testRole1 = givenSuperuserWithMinimalWhitelist();
-        String testRole2 = givenSuperuserWithMinimalWhitelist();
+        String testRole1 = givenUniqueSuperuserWithMinimalWhitelist();
+        String testRole2 = givenUniqueSuperuserWithMinimalWhitelist();
         givenRoleGrantedTo(testRole1, testRole2);
         whenRoleIsWhitelistedForOperationOnResource(username, "authorize", "roles/" + testRole1);
 
@@ -286,10 +271,10 @@ public class ITRolesAudit
     @Test
     public void listRolesIsLogged()
     {
-        String username = unmodifiedUsername;
-        String testRole = givenSuperuserWithMinimalWhitelist();
+        String username = givenSuperuserWithMinimalWhitelist();
+        String testRole = givenUniqueSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement(
+        testSession.execute(new SimpleStatement(
         "LIST ROLES OF " + testRole));
 
         thenAuditLogContainEntryForUser("LIST ROLES OF " + testRole, username);
@@ -299,7 +284,7 @@ public class ITRolesAudit
     public void listRolesIsWhitelisted()
     {
         String username = givenSuperuserWithMinimalWhitelist();
-        String testRole = givenSuperuserWithMinimalWhitelist();
+        String testRole = givenUniqueSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "describe", "roles");
 
         try (Cluster privateCluster = cdt.createCluster(username, "secret");
@@ -312,7 +297,7 @@ public class ITRolesAudit
         thenAuditLogContainNothingForUser();
     }
 
-    private static String givenSuperuserWithMinimalWhitelist()
+    private static String givenUniqueSuperuserWithMinimalWhitelist()
     {
         String username = getUniqueUsername();
         superSession.execute(new SimpleStatement(
@@ -329,6 +314,23 @@ public class ITRolesAudit
     private static String getUniqueUsername()
     {
         return "rolerole" + usernameNumber.getAndIncrement();
+    }
+
+    private static String givenSuperuserWithMinimalWhitelist()
+    {
+        return testUsername;
+    }
+
+    private void resetTestUserWithMinimalWhitelist(String username)
+    {
+        superSession.execute(new SimpleStatement(
+        "DELETE FROM system_auth.role_audit_whitelists_v2 WHERE role = '" + username + "'"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }"));
     }
 
     private void givenRoleGrantedTo(String role1, String grantee)

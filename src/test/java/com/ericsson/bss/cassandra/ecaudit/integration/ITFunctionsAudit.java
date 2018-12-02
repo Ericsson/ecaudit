@@ -50,9 +50,9 @@ public class ITFunctionsAudit
     private static Cluster superCluster;
     private static Session superSession;
 
-    private static String unmodifiedUsername;
-    private static Cluster unmodifiedCluster;
-    private static Session unmodifiedSession;
+    private static String testUsername;
+    private static Cluster testCluster;
+    private static Session testSession;
 
     private static AtomicInteger usernameNumber = new AtomicInteger();
 
@@ -96,9 +96,9 @@ public class ITFunctionsAudit
         superCluster = cdt.createCluster("superfunc", "secret");
         superSession = superCluster.connect();
 
-        unmodifiedUsername = givenSuperuserWithMinimalWhitelist();
-        unmodifiedCluster = cdt.createCluster(unmodifiedUsername, "secret");
-        unmodifiedSession = unmodifiedCluster.connect();
+        testUsername = givenUniqueSuperuserWithMinimalWhitelist();
+        testCluster = cdt.createCluster(testUsername, "secret");
+        testSession = testCluster.connect();
     }
 
     @Before
@@ -114,13 +114,14 @@ public class ITFunctionsAudit
         verifyNoMoreInteractions(mockAuditAppender);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
+        resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @AfterClass
     public static void afterClass()
     {
-        unmodifiedSession.close();
-        unmodifiedCluster.close();
+        testSession.close();
+        testCluster.close();
 
         for (int i = 0; i < usernameNumber.get(); i++)
         {
@@ -140,9 +141,9 @@ public class ITFunctionsAudit
     public void createFunctionIsLogged()
     {
         givenKeyspace("funcks");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement(
+        testSession.execute(new SimpleStatement(
         "CREATE FUNCTION IF NOT EXISTS funcks.flog1 (input double) " +
         "CALLED ON NULL INPUT " +
         "RETURNS double LANGUAGE java AS " +
@@ -161,15 +162,11 @@ public class ITFunctionsAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "create", "functions/funcks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement(
-            "CREATE FUNCTION IF NOT EXISTS funcks.flog2 (input double) " +
-            "CALLED ON NULL INPUT " +
-            "RETURNS double LANGUAGE java AS " +
-            "'return Double.valueOf(Math.log(input.doubleValue()));'"));
-        }
+        testSession.execute(new SimpleStatement(
+        "CREATE FUNCTION IF NOT EXISTS funcks.flog2 (input double) " +
+        "CALLED ON NULL INPUT " +
+        "RETURNS double LANGUAGE java AS " +
+        "'return Double.valueOf(Math.log(input.doubleValue()));'"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -178,9 +175,9 @@ public class ITFunctionsAudit
     public void dropFunctionIsLogged()
     {
         givenFunction("funcks", "flog3");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("DROP FUNCTION IF EXISTS funcks.flog3(double)"));
+        testSession.execute(new SimpleStatement("DROP FUNCTION IF EXISTS funcks.flog3(double)"));
 
         thenAuditLogContainEntryForUser("DROP FUNCTION IF EXISTS funcks.flog3(double)", username);
     }
@@ -192,11 +189,7 @@ public class ITFunctionsAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "drop", "functions/funcks/flog4|DoubleType");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("DROP FUNCTION IF EXISTS funcks.flog4(double)"));
-        }
+        testSession.execute(new SimpleStatement("DROP FUNCTION IF EXISTS funcks.flog4(double)"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -206,9 +199,9 @@ public class ITFunctionsAudit
     {
         givenStateFunction("aggks", "avgState1");
         givenFinalStateFunction("aggks", "avgFinal1");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement(
+        testSession.execute(new SimpleStatement(
         "CREATE AGGREGATE IF NOT EXISTS aggks.aaverage1 (int) " +
         "SFUNC avgState1 " +
         "STYPE tuple<int,bigint> " +
@@ -230,16 +223,12 @@ public class ITFunctionsAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "create", "functions/aggks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement(
-            "CREATE AGGREGATE IF NOT EXISTS aggks.aaverage2 (int) " +
-            "SFUNC avgState2 " +
-            "STYPE tuple<int,bigint> " +
-            "FINALFUNC avgFinal2 " +
-            "INITCOND (0,0)"));
-        }
+        testSession.execute(new SimpleStatement(
+        "CREATE AGGREGATE IF NOT EXISTS aggks.aaverage2 (int) " +
+        "SFUNC avgState2 " +
+        "STYPE tuple<int,bigint> " +
+        "FINALFUNC avgFinal2 " +
+        "INITCOND (0,0)"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -248,9 +237,9 @@ public class ITFunctionsAudit
     public void dropAggregateIsLogged()
     {
         givenAggregate("aggks", "aaverage3");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("DROP AGGREGATE IF EXISTS aggks.aaverage3(int)"));
+        testSession.execute(new SimpleStatement("DROP AGGREGATE IF EXISTS aggks.aaverage3(int)"));
 
         thenAuditLogContainEntryForUser("DROP AGGREGATE IF EXISTS aggks.aaverage3(int)", username);
     }
@@ -262,11 +251,7 @@ public class ITFunctionsAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "drop", "functions/aggks/aaverage4|Int32Type");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("DROP AGGREGATE IF EXISTS aggks.aaverage4(int)"));
-        }
+        testSession.execute(new SimpleStatement("DROP AGGREGATE IF EXISTS aggks.aaverage4(int)"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -337,7 +322,7 @@ public class ITFunctionsAudit
         "INITCOND (0,0)"));
     }
 
-    private static String givenSuperuserWithMinimalWhitelist()
+    private static String givenUniqueSuperuserWithMinimalWhitelist()
     {
         String username = getUniqueUsername();
         superSession.execute(new SimpleStatement(
@@ -354,6 +339,23 @@ public class ITFunctionsAudit
     private static String getUniqueUsername()
     {
         return "funcrole" + usernameNumber.getAndIncrement();
+    }
+
+    private static String givenSuperuserWithMinimalWhitelist()
+    {
+        return testUsername;
+    }
+
+    private void resetTestUserWithMinimalWhitelist(String username)
+    {
+        superSession.execute(new SimpleStatement(
+        "DELETE FROM system_auth.role_audit_whitelists_v2 WHERE role = '" + username + "'"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }"));
     }
 
     private void whenRoleIsWhitelistedForOperationOnResource(String username, String operation, String resource)
