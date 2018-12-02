@@ -51,9 +51,9 @@ public class ITDataAudit
     private static Cluster superCluster;
     private static Session superSession;
 
-    private static String unmodifiedUsername;
-    private static Cluster unmodifiedCluster;
-    private static Session unmodifiedSession;
+    private static String testUsername;
+    private static Cluster testCluster;
+    private static Session testSession;
 
     private static AtomicInteger usernameNumber = new AtomicInteger();
 
@@ -91,9 +91,9 @@ public class ITDataAudit
         superCluster = cdt.createCluster("superdata", "secret");
         superSession = superCluster.connect();
 
-        unmodifiedUsername = givenSuperuserWithMinimalWhitelist();
-        unmodifiedCluster = cdt.createCluster(unmodifiedUsername, "secret");
-        unmodifiedSession = unmodifiedCluster.connect();
+        testUsername = givenUniqueSuperuserWithMinimalWhitelist();
+        testCluster = cdt.createCluster(testUsername, "secret");
+        testSession = testCluster.connect();
     }
 
     @Before
@@ -109,13 +109,14 @@ public class ITDataAudit
         verifyNoMoreInteractions(mockAuditAppender);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
+        resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @AfterClass
     public static void afterClass()
     {
-        unmodifiedSession.close();
-        unmodifiedCluster.close();
+        testSession.close();
+        testCluster.close();
 
         for (int i = 0; i < usernameNumber.get(); i++)
         {
@@ -135,10 +136,10 @@ public class ITDataAudit
     public void preparedSelectIsLogged()
     {
         givenTable("dataks", "tbl");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        PreparedStatement preparedStatement = unmodifiedSession.prepare("SELECT * FROM dataks.tbl WHERE key = ?");
-        unmodifiedSession.execute(preparedStatement.bind(5));
+        PreparedStatement preparedStatement = testSession.prepare("SELECT * FROM dataks.tbl WHERE key = ?");
+        testSession.execute(preparedStatement.bind(5));
 
         thenAuditLogContainEntryForUser("SELECT * FROM dataks.tbl WHERE key = ?[5]", username);
     }
@@ -150,12 +151,8 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "select", "data/dataks/tbl");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            PreparedStatement preparedStatement = privateSession.prepare("SELECT * FROM dataks.tbl WHERE key = ?");
-            privateSession.execute(preparedStatement.bind(5));
-        }
+        PreparedStatement preparedStatement = testSession.prepare("SELECT * FROM dataks.tbl WHERE key = ?");
+        testSession.execute(preparedStatement.bind(5));
 
         thenAuditLogContainNothingForUser();
     }
@@ -164,9 +161,9 @@ public class ITDataAudit
     public void simpleSelectIsLogged()
     {
         givenTable("dataks", "tbl");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute("SELECT * FROM dataks.tbl WHERE key = 12");
+        testSession.execute("SELECT * FROM dataks.tbl WHERE key = 12");
 
         thenAuditLogContainEntryForUser("SELECT * FROM dataks.tbl WHERE key = 12", username);
     }
@@ -178,11 +175,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "select", "data/dataks/tbl");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute("SELECT * FROM dataks.tbl WHERE key = 12");
-        }
+        testSession.execute("SELECT * FROM dataks.tbl WHERE key = 12");
 
         thenAuditLogContainNothingForUser();
     }
@@ -191,10 +184,10 @@ public class ITDataAudit
     public void preparedInsertIsLogged()
     {
         givenTable("dataks", "tbl");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        PreparedStatement preparedStatement = unmodifiedSession.prepare("INSERT INTO dataks.tbl (key, value) VALUES (?, ?)");
-        unmodifiedSession.execute(preparedStatement.bind(5, "hepp"));
+        PreparedStatement preparedStatement = testSession.prepare("INSERT INTO dataks.tbl (key, value) VALUES (?, ?)");
+        testSession.execute(preparedStatement.bind(5, "hepp"));
 
         thenAuditLogContainEntryForUser("INSERT INTO dataks.tbl (key, value) VALUES (?, ?)[5, 'hepp']", username);
     }
@@ -206,12 +199,8 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "modify", "data/dataks/tbl");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            PreparedStatement preparedStatement = privateSession.prepare("INSERT INTO dataks.tbl (key, value) VALUES (?, ?)");
-            privateSession.execute(preparedStatement.bind(5, "hepp"));
-        }
+        PreparedStatement preparedStatement = testSession.prepare("INSERT INTO dataks.tbl (key, value) VALUES (?, ?)");
+        testSession.execute(preparedStatement.bind(5, "hepp"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -220,9 +209,9 @@ public class ITDataAudit
     public void simpleInsertIsLogged()
     {
         givenTable("dataks", "tbl");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute("INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')");
+        testSession.execute("INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')");
 
         thenAuditLogContainEntryForUser("INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')", username);
     }
@@ -234,11 +223,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "modify", "data/dataks/tbl");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute("INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')");
-        }
+        testSession.execute("INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')");
 
         thenAuditLogContainNothingForUser();
     }
@@ -247,10 +232,10 @@ public class ITDataAudit
     public void preparedUpdateIsLogged()
     {
         givenTable("dataks", "tbl");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        PreparedStatement preparedStatement = unmodifiedSession.prepare("UPDATE dataks.tbl SET value = ? WHERE key = ?");
-        unmodifiedSession.execute(preparedStatement.bind("hepp", 34));
+        PreparedStatement preparedStatement = testSession.prepare("UPDATE dataks.tbl SET value = ? WHERE key = ?");
+        testSession.execute(preparedStatement.bind("hepp", 34));
 
         thenAuditLogContainEntryForUser("UPDATE dataks.tbl SET value = ? WHERE key = ?['hepp', 34]", username);
     }
@@ -262,12 +247,8 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "modify", "data/dataks/tbl");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            PreparedStatement preparedStatement = privateSession.prepare("UPDATE dataks.tbl SET value = ? WHERE key = ?");
-            privateSession.execute(preparedStatement.bind("hepp", 565));
-        }
+        PreparedStatement preparedStatement = testSession.prepare("UPDATE dataks.tbl SET value = ? WHERE key = ?");
+        testSession.execute(preparedStatement.bind("hepp", 565));
 
         thenAuditLogContainNothingForUser();
     }
@@ -276,9 +257,9 @@ public class ITDataAudit
     public void simpleUpdateIsLogged()
     {
         givenTable("dataks", "tbl");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute("UPDATE dataks.tbl SET value = 'hepp' WHERE key = 88");
+        testSession.execute("UPDATE dataks.tbl SET value = 'hepp' WHERE key = 88");
 
         thenAuditLogContainEntryForUser("UPDATE dataks.tbl SET value = 'hepp' WHERE key = 88", username);
     }
@@ -290,11 +271,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "modify", "data/dataks/tbl");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute("UPDATE dataks.tbl SET value = 'hepp' WHERE key = 99");
-        }
+        testSession.execute("UPDATE dataks.tbl SET value = 'hepp' WHERE key = 99");
 
         thenAuditLogContainNothingForUser();
     }
@@ -303,10 +280,10 @@ public class ITDataAudit
     public void preparedDeleteIsLogged()
     {
         givenTable("dataks", "tbl");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        PreparedStatement preparedStatement = unmodifiedSession.prepare("DELETE value FROM dataks.tbl WHERE key = ?");
-        unmodifiedSession.execute(preparedStatement.bind(22));
+        PreparedStatement preparedStatement = testSession.prepare("DELETE value FROM dataks.tbl WHERE key = ?");
+        testSession.execute(preparedStatement.bind(22));
 
         thenAuditLogContainEntryForUser("DELETE value FROM dataks.tbl WHERE key = ?[22]", username);
     }
@@ -318,12 +295,8 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "modify", "data/dataks/tbl");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            PreparedStatement preparedStatement = privateSession.prepare("DELETE value FROM dataks.tbl WHERE key = ?");
-            privateSession.execute(preparedStatement.bind(222));
-        }
+        PreparedStatement preparedStatement = testSession.prepare("DELETE value FROM dataks.tbl WHERE key = ?");
+        testSession.execute(preparedStatement.bind(222));
 
         thenAuditLogContainNothingForUser();
     }
@@ -332,9 +305,9 @@ public class ITDataAudit
     public void simpleDeleteIsLogged()
     {
         givenTable("dataks", "tbl");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute("DELETE value FROM dataks.tbl WHERE key = 5654");
+        testSession.execute("DELETE value FROM dataks.tbl WHERE key = 5654");
 
         thenAuditLogContainEntryForUser("DELETE value FROM dataks.tbl WHERE key = 5654", username);
     }
@@ -346,11 +319,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "modify", "data/dataks/tbl");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute("DELETE value FROM dataks.tbl WHERE key = 5654");
-        }
+        testSession.execute("DELETE value FROM dataks.tbl WHERE key = 5654");
 
         thenAuditLogContainNothingForUser();
     }
@@ -358,9 +327,9 @@ public class ITDataAudit
     @Test
     public void simpleCreateKsIsLogged()
     {
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute("CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        testSession.execute("CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
 
         thenAuditLogContainEntryForUser("CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false", username);
     }
@@ -371,11 +340,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "create", "data/dataks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute("CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
-        }
+        testSession.execute("CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
 
         thenAuditLogContainNothingForUser();
     }
@@ -384,9 +349,9 @@ public class ITDataAudit
     public void simpleCreateTableIsLogged()
     {
         givenKeyspace("dataks");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("CREATE TABLE IF NOT EXISTS dataks.tbl1 (key int PRIMARY KEY, value text)"));
+        testSession.execute(new SimpleStatement("CREATE TABLE IF NOT EXISTS dataks.tbl1 (key int PRIMARY KEY, value text)"));
 
         thenAuditLogContainEntryForUser("CREATE TABLE IF NOT EXISTS dataks.tbl1 (key int PRIMARY KEY, value text)", username);
     }
@@ -398,11 +363,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "create", "data/dataks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("CREATE TABLE IF NOT EXISTS dataks.tbl1 (key int PRIMARY KEY, value text)"));
-        }
+        testSession.execute(new SimpleStatement("CREATE TABLE IF NOT EXISTS dataks.tbl1 (key int PRIMARY KEY, value text)"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -411,9 +372,9 @@ public class ITDataAudit
     public void simpleCreateIndexIsLogged()
     {
         givenTable("dataks", "tbl51");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("CREATE INDEX IF NOT EXISTS ON dataks.tbl51 (value)"));
+        testSession.execute(new SimpleStatement("CREATE INDEX IF NOT EXISTS ON dataks.tbl51 (value)"));
 
         thenAuditLogContainEntryForUser("CREATE INDEX IF NOT EXISTS ON dataks.tbl51 (value)", username);
     }
@@ -425,11 +386,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataks/tbl52");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("CREATE INDEX IF NOT EXISTS ON dataks.tbl52 (value)"));
-        }
+        testSession.execute(new SimpleStatement("CREATE INDEX IF NOT EXISTS ON dataks.tbl52 (value)"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -438,13 +395,13 @@ public class ITDataAudit
     public void simpleCreateViewIsLogged()
     {
         givenTable("dataks", "tbl53");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.view53 AS " +
-                                                      "SELECT value " +
-                                                      "FROM dataks.tbl53 " +
-                                                      "WHERE value IS NOT NULL AND key IS NOT NULL " +
-                                                      "PRIMARY KEY (value, key)"));
+        testSession.execute(new SimpleStatement("CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.view53 AS " +
+                                                "SELECT value " +
+                                                "FROM dataks.tbl53 " +
+                                                "WHERE value IS NOT NULL AND key IS NOT NULL " +
+                                                "PRIMARY KEY (value, key)"));
 
         thenAuditLogContainEntryForUser("CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.view53 AS " +
                                         "SELECT value " +
@@ -460,15 +417,11 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataks/tbl54");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.view54 AS " +
-                                                       "SELECT value " +
-                                                       "FROM dataks.tbl54 " +
-                                                       "WHERE value IS NOT NULL AND key IS NOT NULL " +
-                                                       "PRIMARY KEY (value, key)"));
-        }
+        testSession.execute(new SimpleStatement("CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.view54 AS " +
+                                                "SELECT value " +
+                                                "FROM dataks.tbl54 " +
+                                                "WHERE value IS NOT NULL AND key IS NOT NULL " +
+                                                "PRIMARY KEY (value, key)"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -477,9 +430,9 @@ public class ITDataAudit
     public void simpleDropKsIsLogged()
     {
         givenKeyspace("dataksdropks");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("DROP KEYSPACE IF EXISTS dataksdropks"));
+        testSession.execute(new SimpleStatement("DROP KEYSPACE IF EXISTS dataksdropks"));
 
         thenAuditLogContainEntryForUser("DROP KEYSPACE IF EXISTS dataksdropks", username);
     }
@@ -491,11 +444,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "drop", "data/dataksdropks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("DROP KEYSPACE IF EXISTS dataksdropks"));
-        }
+        testSession.execute(new SimpleStatement("DROP KEYSPACE IF EXISTS dataksdropks"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -504,9 +453,9 @@ public class ITDataAudit
     public void simpleDropTableIsLogged()
     {
         givenTable("dataksdroptable", "tbl2");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("DROP TABLE IF EXISTS dataksdroptable.tbl2"));
+        testSession.execute(new SimpleStatement("DROP TABLE IF EXISTS dataksdroptable.tbl2"));
 
         thenAuditLogContainEntryForUser("DROP TABLE IF EXISTS dataksdroptable.tbl2", username);
     }
@@ -518,11 +467,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "drop", "data/dataksdroptable/tbl2");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("DROP TABLE IF EXISTS dataksdroptable.tbl2"));
-        }
+        testSession.execute(new SimpleStatement("DROP TABLE IF EXISTS dataksdroptable.tbl2"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -531,9 +476,9 @@ public class ITDataAudit
     public void simpleDropIndexIsLogged()
     {
         givenIndex("dataks", "tbl234", "idx234");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("DROP INDEX IF EXISTS dataks.idx234"));
+        testSession.execute(new SimpleStatement("DROP INDEX IF EXISTS dataks.idx234"));
 
         thenAuditLogContainEntryForUser("DROP INDEX IF EXISTS dataks.idx234", username);
     }
@@ -545,11 +490,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataks/tbl234");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("DROP INDEX IF EXISTS dataks.idx234"));
-        }
+        testSession.execute(new SimpleStatement("DROP INDEX IF EXISTS dataks.idx234"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -558,9 +499,9 @@ public class ITDataAudit
     public void simpleDropViewIsLogged()
     {
         givenView("dataks", "tbl764", "view764");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("DROP MATERIALIZED VIEW IF EXISTS dataks.view764"));
+        testSession.execute(new SimpleStatement("DROP MATERIALIZED VIEW IF EXISTS dataks.view764"));
 
         thenAuditLogContainEntryForUser("DROP MATERIALIZED VIEW IF EXISTS dataks.view764", username);
     }
@@ -572,11 +513,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataks/tbl765");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("DROP MATERIALIZED VIEW IF EXISTS dataks.view765"));
-        }
+        testSession.execute(new SimpleStatement("DROP MATERIALIZED VIEW IF EXISTS dataks.view765"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -585,9 +522,9 @@ public class ITDataAudit
     public void simpleAlterKsIsLogged()
     {
         givenKeyspace("dataksalterks");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("ALTER KEYSPACE dataksalterks WITH DURABLE_WRITES = false"));
+        testSession.execute(new SimpleStatement("ALTER KEYSPACE dataksalterks WITH DURABLE_WRITES = false"));
 
         thenAuditLogContainEntryForUser("ALTER KEYSPACE dataksalterks WITH DURABLE_WRITES = false", username);
     }
@@ -599,11 +536,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataksalterks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("ALTER KEYSPACE dataksalterks WITH DURABLE_WRITES = false"));
-        }
+        testSession.execute(new SimpleStatement("ALTER KEYSPACE dataksalterks WITH DURABLE_WRITES = false"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -612,9 +545,9 @@ public class ITDataAudit
     public void simpleAlterTableIsLogged()
     {
         givenTable("dataksaltertable", "tbl2");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("ALTER TABLE dataksaltertable.tbl2 WITH gc_grace_seconds = 0"));
+        testSession.execute(new SimpleStatement("ALTER TABLE dataksaltertable.tbl2 WITH gc_grace_seconds = 0"));
 
         thenAuditLogContainEntryForUser("ALTER TABLE dataksaltertable.tbl2 WITH gc_grace_seconds = 0", username);
     }
@@ -626,11 +559,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataksaltertable/tbl2");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("ALTER TABLE dataksaltertable.tbl2 WITH gc_grace_seconds = 0"));
-        }
+        testSession.execute(new SimpleStatement("ALTER TABLE dataksaltertable.tbl2 WITH gc_grace_seconds = 0"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -639,9 +568,9 @@ public class ITDataAudit
     public void simpleAlterViewIsLogged()
     {
         givenView("dataksalterview", "tbl1", "view1");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("ALTER MATERIALIZED VIEW dataksalterview.view1 WITH gc_grace_seconds = 1"));
+        testSession.execute(new SimpleStatement("ALTER MATERIALIZED VIEW dataksalterview.view1 WITH gc_grace_seconds = 1"));
 
         thenAuditLogContainEntryForUser("ALTER MATERIALIZED VIEW dataksalterview.view1 WITH gc_grace_seconds = 1", username);
     }
@@ -653,11 +582,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataksalterview/tbl2");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("ALTER MATERIALIZED VIEW dataksalterview.view2 WITH gc_grace_seconds = 1"));
-        }
+        testSession.execute(new SimpleStatement("ALTER MATERIALIZED VIEW dataksalterview.view2 WITH gc_grace_seconds = 1"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -666,10 +591,10 @@ public class ITDataAudit
     public void simpleGrantIsLogged()
     {
         givenTable("dataks", "tbl5");
-        String username = unmodifiedUsername;
-        String grantee = givenSuperuserWithMinimalWhitelist();
+        String username = givenSuperuserWithMinimalWhitelist();
+        String grantee = givenUniqueSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("GRANT SELECT ON TABLE dataks.tbl5 TO " + grantee));
+        testSession.execute(new SimpleStatement("GRANT SELECT ON TABLE dataks.tbl5 TO " + grantee));
 
         thenAuditLogContainEntryForUser("GRANT SELECT ON TABLE dataks.tbl5 TO " + grantee, username);
     }
@@ -679,14 +604,10 @@ public class ITDataAudit
     {
         givenTable("dataks", "tbl5");
         String username = givenSuperuserWithMinimalWhitelist();
-        String grantee = givenSuperuserWithMinimalWhitelist();
+        String grantee = givenUniqueSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "authorize", "data/dataks/tbl5");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("GRANT SELECT ON TABLE dataks.tbl5 TO " + grantee));
-        }
+        testSession.execute(new SimpleStatement("GRANT SELECT ON TABLE dataks.tbl5 TO " + grantee));
 
         thenAuditLogContainNothingForUser();
     }
@@ -695,12 +616,12 @@ public class ITDataAudit
     public void simpleCreateTypeIsLogged()
     {
         givenKeyspace("dataks");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("CREATE TYPE dataks.week1 (" +
-                                                      "year int, " +
-                                                      "week int" +
-                                                      ")"));
+        testSession.execute(new SimpleStatement("CREATE TYPE dataks.week1 (" +
+                                                "year int, " +
+                                                "week int" +
+                                                ")"));
 
         thenAuditLogContainEntryForUser("CREATE TYPE dataks.week1 (" +
                                         "year int, " +
@@ -715,14 +636,10 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "create", "data/dataks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("CREATE TYPE dataks.week2 (" +
-                                                       "year int, " +
-                                                       "week int" +
-                                                       ")"));
-        }
+        testSession.execute(new SimpleStatement("CREATE TYPE dataks.week2 (" +
+                                                "year int, " +
+                                                "week int" +
+                                                ")"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -731,10 +648,10 @@ public class ITDataAudit
     public void simpleAlterTypeIsLogged()
     {
         givenType("dataks", "type1");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("ALTER TYPE dataks.type1 " +
-                                                      "ADD data3 int"));
+        testSession.execute(new SimpleStatement("ALTER TYPE dataks.type1 " +
+                                                "ADD data3 int"));
 
         thenAuditLogContainEntryForUser("ALTER TYPE dataks.type1 " +
                                         "ADD data3 int", username);
@@ -747,12 +664,8 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("ALTER TYPE dataks.type2 " +
-                                                       "ADD data3 int"));
-        }
+        testSession.execute(new SimpleStatement("ALTER TYPE dataks.type2 " +
+                                                "ADD data3 int"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -761,9 +674,9 @@ public class ITDataAudit
     public void simpleDropTypeIsLogged()
     {
         givenType("dataks", "type3");
-        String username = unmodifiedUsername;
+        String username = givenSuperuserWithMinimalWhitelist();
 
-        unmodifiedSession.execute(new SimpleStatement("DROP TYPE dataks.type3"));
+        testSession.execute(new SimpleStatement("DROP TYPE dataks.type3"));
 
         thenAuditLogContainEntryForUser("DROP TYPE dataks.type3", username);
     }
@@ -775,11 +688,7 @@ public class ITDataAudit
         String username = givenSuperuserWithMinimalWhitelist();
         whenRoleIsWhitelistedForOperationOnResource(username, "drop", "data/dataks");
 
-        try (Cluster privateCluster = cdt.createCluster(username, "secret");
-             Session privateSession = privateCluster.connect())
-        {
-            privateSession.execute(new SimpleStatement("DROP TYPE dataks.type4"));
-        }
+        testSession.execute(new SimpleStatement("DROP TYPE dataks.type4"));
 
         thenAuditLogContainNothingForUser();
     }
@@ -823,7 +732,7 @@ public class ITDataAudit
                                                  ")"));
     }
 
-    private static String givenSuperuserWithMinimalWhitelist()
+    private static String givenUniqueSuperuserWithMinimalWhitelist()
     {
         String username = "datarole" + usernameNumber.getAndIncrement();
         superSession.execute(new SimpleStatement(
@@ -835,6 +744,23 @@ public class ITDataAudit
         superSession.execute(new SimpleStatement(
         "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }"));
         return username;
+    }
+
+    private static String givenSuperuserWithMinimalWhitelist()
+    {
+        return testUsername;
+    }
+
+    private void resetTestUserWithMinimalWhitelist(String username)
+    {
+        superSession.execute(new SimpleStatement(
+        "DELETE FROM system_auth.role_audit_whitelists_v2 WHERE role = '" + username + "'"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }"));
     }
 
     private void whenRoleIsWhitelistedForOperationOnResource(String username, String operation, String resource)

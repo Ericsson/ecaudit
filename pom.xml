@@ -242,6 +242,9 @@
             </build>
         </profile>
         <profile>
+            <id>travis</id>
+        </profile>
+        <profile>
             <id>release</id>
             <build>
                 <plugins>

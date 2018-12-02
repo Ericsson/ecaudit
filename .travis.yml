@@ -3,7 +3,13 @@ jdk: oraclejdk8
 cache:
   directories:
   - $HOME/.m2
+matrix:
+  include:
+  - name: "Javadoc"
+    env: TEST_SUITE='javadoc:jar'
+  - name: "Unit tests"
+    env: TEST_SUITE='test jacoco:report coveralls:report'
+  - name: "Integration tests"
+    env: TEST_SUITE='test-compile failsafe:integration-test failsafe:verify'
 script:
-  - mvn test integration-test -B
-after_success:
-  - mvn test jacoco:report coveralls:report -B
+  - mvn -P travis $TEST_SUITE -B
