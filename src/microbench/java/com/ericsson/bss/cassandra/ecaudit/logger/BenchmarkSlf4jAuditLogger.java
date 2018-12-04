@@ -1,4 +1,4 @@
-package com.ericsson.bss.cassandra.ecaudit.microbench;
+package com.ericsson.bss.cassandra.ecaudit.logger;
 
 import java.net.InetAddress;
 import java.util.UUID;
@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
-import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
