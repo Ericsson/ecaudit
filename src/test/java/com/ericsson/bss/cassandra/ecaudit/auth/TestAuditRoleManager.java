@@ -86,11 +86,31 @@ public class TestAuditRoleManager
     }
 
     @Test
+    public void testStandAloneSupportedOptions()
+    {
+        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, false);
+
+        Set<IRoleManager.Option> options = standAloneAuditRoleManager.supportedOptions();
+
+        assertThat(options).containsExactlyElementsOf(ImmutableSet.of(IRoleManager.Option.LOGIN, IRoleManager.Option.SUPERUSER));
+    }
+
+    @Test
     public void testAlterableOptions()
     {
         Set<IRoleManager.Option> options = auditRoleManager.alterableOptions();
 
         assertThat(options).containsExactlyElementsOf(ImmutableSet.of(IRoleManager.Option.PASSWORD));
+    }
+
+    @Test
+    public void testStandAloneAlterableOptions()
+    {
+        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, false);
+
+        Set<IRoleManager.Option> options = standAloneAuditRoleManager.alterableOptions();
+
+        assertThat(options).isEmpty();
     }
 
     @Test
