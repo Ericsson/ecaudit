@@ -90,6 +90,13 @@ public class TestAuditWhitelistManager
         Config.setClientMode(false);
     }
 
+    @Test
+    public void testSetupDelegation()
+    {
+        whitelistManager.setup();
+        verify(mockWhitelistDataAccess, times(1)).setup();
+    }
+
     @Test(expected = InvalidRequestException.class)
     public void testWhitelistAtCreateIsRejected()
     {
