@@ -17,8 +17,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-    <artifactId>ecaudit_c3.0</artifactId>
-    <version>2.0.0</version>
+    <artifactId>ecaudit_c3.0.11</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Ericsson Cassandra Audit Plug-in</name>
@@ -40,7 +40,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <cassandra.version>3.0.17</cassandra.version>
+        <cassandra.version>3.0.11</cassandra.version>
 
         <assertj.version>3.11.1</assertj.version>
         <cassandra-driver.version>3.6.0</cassandra-driver.version>
@@ -205,7 +205,7 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${org.apache.maven.plugins.maven-release-plugin.version}</version>
                 <configuration>
-                    <tagNameFormat>ecaudit_c3.0-@{project.version}</tagNameFormat>
+                    <tagNameFormat>ecaudit_c3.0.11-@{project.version}</tagNameFormat>
                     <useReleaseProfile>false</useReleaseProfile>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
@@ -296,7 +296,7 @@
         <url>https://github.com/ericsson/ecaudit</url>
         <connection>scm:git:git@github.com:ericsson/ecaudit.git</connection>
         <developerConnection>scm:git:git@github.com:ericsson/ecaudit.git</developerConnection>
-        <tag>ecaudit_c3.0-2.0.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>

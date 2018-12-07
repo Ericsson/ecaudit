@@ -46,7 +46,6 @@ import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.serializers.SetSerializer;
 import org.apache.cassandra.serializers.UTF8Serializer;
-import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.MigrationManager;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.messages.ResultMessage;
@@ -271,7 +270,7 @@ public class WhitelistDataAccess
     {
         try
         {
-            return QueryProcessor.parseStatement(String.format(template, keyspace, table)).prepare(ClientState.forInternalCalls()).statement;
+            return QueryProcessor.parseStatement(String.format(template, keyspace, table)).prepare().statement;
         }
         catch (RequestValidationException e)
         {
