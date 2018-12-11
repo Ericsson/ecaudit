@@ -9,6 +9,7 @@
 * Make whitelist operations case insensitive
 * Remove support for whitelist management in CREATE ROLE statement
 * Limit whitelist management to one operation per statement
+* Backport ecAudit to Cassandra 3.0.11 (only in ecAudit for C* 3.0.11)
 
 ## Version 1.0.0
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
