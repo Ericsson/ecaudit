@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.ericsson.bss.cassandra.ecaudit.facade.CassandraAuditException;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
@@ -54,6 +53,11 @@ class AuditWhitelistManager
         this.whitelistDataAccess = whitelistDataAccess;
         this.whitelistOptionParser = new WhitelistOptionParser();
         this.whitelistContract = new WhitelistContract();
+    }
+
+    public void setup()
+    {
+        whitelistDataAccess.setup();
     }
 
     void createRoleOption(RoleOptions options)

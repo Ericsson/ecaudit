@@ -17,35 +17,41 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.CassandraRoleManager;
+import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
-import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.config.SchemaConstants;
+import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
 
 /**
- * Implements a {@link IRoleManager} that is meant to be paired with {@link AuditPasswordAuthenticator} and {@link AuditAuthorizer}.
+ * Implements a {@link IRoleManager} that is meant to be paired with {@link AuditPasswordAuthenticator} and
+ * {@link AuditAuthorizer}.
  *
- * It provides support for audit white-lists based on role options in Cassandra. This implementation inherits the
- * {@link CassandraRoleManager} for generic role management.
+ * It provides support for audit white-lists based on role options in Cassandra. This implementation is a decorator
+ * which wraps the {@link CassandraRoleManager} for generic role management.
  *
- * An explicit permission check is enforced on ALTER statements. This makes it possible to grant whitelists from one role to another.
+ * An explicit permission check is enforced on ALTER statements. This makes it possible to grant whitelists from one
+ * role to another.
  */
-public class AuditRoleManager extends CassandraRoleManager
+public class AuditRoleManager implements IRoleManager
 {
     private static final Logger LOG = LoggerFactory.getLogger(AuditRoleManager.class);
 
+    private final IRoleManager wrappedRoleManager;
     private final AuditWhitelistManager whitelistManager;
     private final PermissionChecker permissionChecker;
 
@@ -60,24 +66,48 @@ public class AuditRoleManager extends CassandraRoleManager
      */
     public AuditRoleManager()
     {
+        this(new CassandraRoleManager(),
+             new AuditWhitelistManager(),
+             DatabaseDescriptor.getAuthenticator() instanceof AuditPasswordAuthenticator);
+    }
+
+    @VisibleForTesting
+    AuditRoleManager(IRoleManager wrappedRoleManager, AuditWhitelistManager whitelistManager, boolean hasAuditPasswordAuthenticator)
+    {
         LOG.info("Auditing enabled on role manager");
 
-        whitelistManager = new AuditWhitelistManager();
+        this.wrappedRoleManager = wrappedRoleManager;
+        this.whitelistManager = whitelistManager;
         permissionChecker = new PermissionChecker();
 
-        supportedOptions = DatabaseDescriptor.getAuthenticator().getClass() == AuditPasswordAuthenticator.class
-                ? ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.PASSWORD, Option.OPTIONS)
-                : ImmutableSet.of(Option.LOGIN, Option.SUPERUSER);
-        alterableOptions = DatabaseDescriptor.getAuthenticator().getClass().equals(AuditPasswordAuthenticator.class)
-                ? ImmutableSet.of(Option.PASSWORD)
-                : ImmutableSet.of();
+        supportedOptions = hasAuditPasswordAuthenticator
+                           ? ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.PASSWORD, Option.OPTIONS)
+                           : ImmutableSet.of(Option.LOGIN, Option.SUPERUSER);
+        alterableOptions = hasAuditPasswordAuthenticator
+                           ? ImmutableSet.of(Option.PASSWORD)
+                           : ImmutableSet.of();
+    }
+
+    @Override
+    public void validateConfiguration() throws ConfigurationException
+    {
+        wrappedRoleManager.validateConfiguration();
     }
 
     @Override
     public void setup()
     {
-        super.setup();
-        WhitelistDataAccess.getInstance().setup();
+        wrappedRoleManager.setup();
+        whitelistManager.setup();
+    }
+
+    @Override
+    public Set<? extends IResource> protectedResources()
+    {
+        Set<IResource> combinedSet = Sets.newHashSet(wrappedRoleManager.protectedResources());
+        combinedSet.add(DataResource.table(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1));
+        combinedSet.add(DataResource.table(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2));
+        return ImmutableSet.copyOf(combinedSet);
     }
 
     @Override
@@ -94,10 +124,10 @@ public class AuditRoleManager extends CassandraRoleManager
 
     @Override
     public void createRole(AuthenticatedUser performer, RoleResource role, RoleOptions options)
-            throws RequestValidationException, RequestExecutionException
+    throws RequestValidationException, RequestExecutionException
     {
         whitelistManager.createRoleOption(options);
-        super.createRole(performer, role, options);
+        wrappedRoleManager.createRole(performer, role, options);
     }
 
     @Override
@@ -105,7 +135,7 @@ public class AuditRoleManager extends CassandraRoleManager
     {
         permissionChecker.checkAlterRoleAccess(performer, role, options);
         whitelistManager.alterRoleOption(performer, role, options);
-        super.alterRole(performer, role, options);
+        wrappedRoleManager.alterRole(performer, role, options);
     }
 
     @Override
@@ -115,10 +145,55 @@ public class AuditRoleManager extends CassandraRoleManager
     }
 
     @Override
-    public void dropRole(AuthenticatedUser performer, RoleResource role)
-            throws RequestValidationException, RequestExecutionException
+    public void grantRole(AuthenticatedUser performer, RoleResource role, RoleResource grantee)
+    throws RequestValidationException, RequestExecutionException
     {
-        super.dropRole(performer, role);
+        wrappedRoleManager.grantRole(performer, role, grantee);
+    }
+
+    @Override
+    public void revokeRole(AuthenticatedUser performer, RoleResource role, RoleResource revokee)
+    throws RequestValidationException, RequestExecutionException
+    {
+        wrappedRoleManager.revokeRole(performer, role, revokee);
+    }
+
+    @Override
+    public void dropRole(AuthenticatedUser performer, RoleResource role)
+    throws RequestValidationException, RequestExecutionException
+    {
+        wrappedRoleManager.dropRole(performer, role);
         whitelistManager.dropRoleWhitelist(role);
+    }
+
+    @Override
+    public Set<RoleResource> getRoles(RoleResource grantee, boolean includeInherited)
+    throws RequestValidationException, RequestExecutionException
+    {
+        return wrappedRoleManager.getRoles(grantee, includeInherited);
+    }
+
+    @Override
+    public Set<RoleResource> getAllRoles() throws RequestValidationException, RequestExecutionException
+    {
+        return wrappedRoleManager.getAllRoles();
+    }
+
+    @Override
+    public boolean isSuper(RoleResource role)
+    {
+        return wrappedRoleManager.isSuper(role);
+    }
+
+    @Override
+    public boolean canLogin(RoleResource role)
+    {
+        return wrappedRoleManager.canLogin(role);
+    }
+
+    @Override
+    public boolean isExistingRole(RoleResource role)
+    {
+        return wrappedRoleManager.isExistingRole(role);
     }
 }
