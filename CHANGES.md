@@ -17,6 +17,7 @@
 * Improve logger performance with micro benchmarks
 
 ## Version 0.22.0
+* Build with Cassandra 3.11.3 (only in ecAudit for C* 3.11.x)
 * Build with Cassandra 3.0.17 (only in ecAudit for C* 3.0.x)
 * Fix role based whitelist for non-existing ks/table (Ericsson/ecaudit#10)
 
@@ -29,6 +30,7 @@
 ## Version 0.10.0
 * Add support for combined YAML file and Role Based whitelists
 * Improve documentation and setup guide
+* Reduced memory footprint further for prepared statements (only in ecAudit for C* 3.11.x)
 
 ## Version 0.9.0
 * Explicitly ignoring RPC (Thrift) requests
