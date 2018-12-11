@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.1.0
+* Make the audit whitelist table a protected resource in Cassandra
+
 ## Version 2.0.0
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
 * Add support for whitelists based on specific operations
