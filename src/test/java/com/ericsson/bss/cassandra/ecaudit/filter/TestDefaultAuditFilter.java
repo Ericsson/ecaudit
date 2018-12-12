@@ -20,16 +20,13 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestDefaultAuditFilter
 {
     @Test
@@ -41,7 +38,7 @@ public class TestDefaultAuditFilter
     @Test
     public void testWhitelistNotFilteredWithDefaultFilter()
     {
-        Properties properties = getProperties("mock_configuration.yaml");
+        Properties properties = getProperties();
         AuditYamlConfigurationLoader loader = AuditYamlConfigurationLoader.withProperties(properties);
 
         AuditConfig loadedConfig = loader.loadConfig();
@@ -51,14 +48,14 @@ public class TestDefaultAuditFilter
 
         assertThat(loadedConfig.getWhitelist().stream()
                 .map(TestDefaultAuditFilter::toLogEntry)
-                .map(entry -> filter.isFiltered(entry))
+                .map(filter::isFiltered)
                 .collect(Collectors.toList()))
                         .containsExactly(false, false);
     }
 
-    private static Properties getProperties(String fileName)
+    private static Properties getProperties()
     {
-        URL url = TestDefaultAuditFilter.class.getResource("/" + fileName);
+        URL url = TestDefaultAuditFilter.class.getResource("/mock_configuration.yaml");
         Properties properties = new Properties();
         properties.put(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, url.getPath());
 

@@ -45,6 +45,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -103,13 +104,14 @@ public class TestAuditWhitelistManager
         verify(mockWhitelistDataAccess, times(1)).setup();
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testWhitelistAtCreateIsRejected()
     {
         RoleOptions options = createRoleOptions(
                 Collections.singletonMap("grant_audit_whitelist_for_select", "data"));
 
-        whitelistManager.createRoleOption(options);
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> whitelistManager.createRoleOption(options));
     }
 
     @Test
@@ -146,14 +148,15 @@ public class TestAuditWhitelistManager
         .addToWhitelist(eq(role), eq(DataResource.fromName("data/myks")), eq(ImmutableSet.of(Permission.MODIFY)));
     }
 
-    @Test(expected = UnauthorizedException.class)
+    @Test
     public void testGrantAtAlterIsDenied()
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.MODIFY, Permission.SELECT));
         RoleOptions options = createRoleOptions(
                 ImmutableMap.of("grant_audit_whitelist_for_execute", "connections"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(UnauthorizedException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
     @Test
@@ -169,67 +172,74 @@ public class TestAuditWhitelistManager
         .removeFromWhitelist(eq(role), eq(ConnectionResource.fromName("connections")), eq(ImmutableSet.of(Permission.EXECUTE)));
     }
 
-    @Test(expected = UnauthorizedException.class)
+    @Test
     public void testRevokeAtAlterIsDenied()
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.MODIFY, Permission.SELECT));
         RoleOptions options = createRoleOptions(
                 Collections.singletonMap("revoke_audit_whitelist_for_modify", "data"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(UnauthorizedException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testUnknownOptionAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(
                 Collections.singletonMap("unknown_option", "guck"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testUnsupportedGrantOperationAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(Collections.singletonMap("grant_audit_whitelist_for_execute", "data"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testUnsupportedRevokeOperationAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(Collections.singletonMap("revoke_audit_whitelist_for_execute", "data"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testUnsupportedResourceAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(
         Collections.singletonMap("grant_audit_whitelist_for_all", "mbean"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testSeveralOperationsAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(
         ImmutableMap.of("grant_audit_whitelist_for_select", "data",
                         "grant_audit_whitelist_for_modify", "data"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testSeveralResourcesAtAlterIsRejected()
     {
         RoleOptions options = createRoleOptions(
         Collections.singletonMap("grant_audit_whitelist_for_select", "data/system,data/system_auth"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
     @Test
@@ -293,19 +303,17 @@ public class TestAuditWhitelistManager
         .dropLegacyWhitelistTable();
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testDropLegacyTableWithWrongValueIsRejected()
     {
         RoleOptions options = createRoleOptions(
         Collections.singletonMap("drop_legacy_audit_whitelist_table", "not"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
-
-        verify(mockWhitelistDataAccess, times(1))
-        .dropLegacyWhitelistTable();
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = UnauthorizedException.class)
+    @Test
     public void testDropLegacyTableWithOtherRoleIsRejected()
     {
         when(performer.isSuper()).thenReturn(true);
@@ -314,23 +322,27 @@ public class TestAuditWhitelistManager
         RoleOptions options = createRoleOptions(
         Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(UnauthorizedException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = UnauthorizedException.class)
+    @Test
     public void testDropLegacyTableWithNonSuperIsRejected()
     {
         RoleOptions options = createRoleOptions(
         Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
 
-        whitelistManager.alterRoleOption(performer, role, options);
+        assertThatExceptionOfType(UnauthorizedException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
     }
 
-    @Test(expected = InvalidRequestException.class)
+    @Test
     public void testUnknownOption()
     {
         WhitelistOperation invalidOperation = Mockito.mock(WhitelistOperation.class);
-        whitelistManager.dispatchOperation(invalidOperation, performer, role, null);
+
+        assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() ->  whitelistManager.dispatchOperation(invalidOperation, performer, role, null));
     }
 
     private RoleOptions createRoleOptions(Map<String, String> whitelistOptions)

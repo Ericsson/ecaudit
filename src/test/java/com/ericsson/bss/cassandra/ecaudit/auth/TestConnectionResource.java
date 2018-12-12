@@ -16,14 +16,12 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.apache.cassandra.auth.Permission;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestConnectionResource
 {
     @Test
@@ -40,23 +38,27 @@ public class TestConnectionResource
         assertThat(root.getName()).isEqualTo("connections");
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testRootHasNoParent()
     {
         ConnectionResource root = ConnectionResource.root();
+
         assertThat(root.hasParent()).isEqualTo(false);
-        root.getParent();
+        assertThatExceptionOfType(IllegalStateException.class)
+        .isThrownBy(root::getParent);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testOnlyRootIsSupported()
     {
-        ConnectionResource.fromName("connections/native");
+        assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> ConnectionResource.fromName("connections/native"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testInvalidRoot()
     {
-        ConnectionResource.fromName("foo");
+        assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> ConnectionResource.fromName("foo"));
     }
 }

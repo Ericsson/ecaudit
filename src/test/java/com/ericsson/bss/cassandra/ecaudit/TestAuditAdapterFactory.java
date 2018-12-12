@@ -24,7 +24,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
@@ -40,18 +39,13 @@ import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
 import org.apache.cassandra.auth.IAuthenticator;
-import org.apache.cassandra.auth.IAuthorizer;
-import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestAuditAdapterFactory
 {
     @BeforeClass
@@ -92,7 +86,7 @@ public class TestAuditAdapterFactory
     public void testLoadYamlWithoutErrorHasExpectedTypes() throws Exception
     {
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_YAML);
-        System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile("mock_configuration.yaml"));
+        System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile());
 
         AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 
@@ -127,7 +121,7 @@ public class TestAuditAdapterFactory
     public void testLoadYamlAndRoleWithoutErrorHasExpectedTypes() throws Exception
     {
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_YAML_AND_ROLE);
-        System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile("mock_configuration.yaml"));
+        System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile());
 
         AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 
@@ -156,20 +150,21 @@ public class TestAuditAdapterFactory
         assertThat(obfuscatorIn(defaultAuditor)).isInstanceOf(PasswordObfuscator.class);
     }
 
-    @Test(expected = ConfigurationException.class)
-    public void testLoadUnknownFails() throws Exception
+    @Test
+    public void testLoadUnknownFails()
     {
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, "UNKNOWN");
 
         AuditConfig config = new AuditConfig();
         config.setWhitelist(Collections.emptyList());
 
-        AuditAdapterFactory.createAuditAdapter();
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(AuditAdapterFactory::createAuditAdapter);
     }
 
-    private static String getPathToTestResourceFile(String filename)
+    private static String getPathToTestResourceFile()
     {
-        URL url = TestAuditAdapterFactory.class.getResource("/" + filename);
+        URL url = TestAuditAdapterFactory.class.getResource("/mock_configuration.yaml");
         return url.getPath();
     }
 

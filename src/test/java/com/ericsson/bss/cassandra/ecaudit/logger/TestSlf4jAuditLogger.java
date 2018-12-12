@@ -43,7 +43,7 @@ public class TestSlf4jAuditLogger
     @Mock
     Logger mockLogger;
 
-    Slf4jAuditLogger logger;
+    private Slf4jAuditLogger logger;
 
     @Before
     public void before()
@@ -52,7 +52,7 @@ public class TestSlf4jAuditLogger
     }
 
     @Test
-    public void testAuditEntryNoBatch() throws Exception
+    public void testAuditEntryNoBatch()
     {
         String expectedStatement = "select * from ks.tbl";
         InetAddress expectedAddress = mock(InetAddress.class);
@@ -86,7 +86,7 @@ public class TestSlf4jAuditLogger
     }
 
     @Test
-    public void testAuditEntryWithBatch() throws Exception
+    public void testAuditEntryWithBatch()
     {
         String expectedStatement = "select * from ks.tbl";
         InetAddress expectedAddress = mock(InetAddress.class);
