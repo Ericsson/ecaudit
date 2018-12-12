@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -391,8 +392,8 @@ public class TestAuditAdapter
         when(mockOptions.getColumnSpecifications()).thenReturn(columns);
         when(mockOptions.hasColumnSpecifications()).thenReturn(true);
 
-        when(mockBatchStatement.getStatements()).thenReturn(Arrays.asList(mockModifyStatement));
-        when(mockBatchOptions.getQueryOrIdList()).thenReturn(Arrays.asList(id));
+        when(mockBatchStatement.getStatements()).thenReturn(Collections.singletonList(mockModifyStatement));
+        when(mockBatchOptions.getQueryOrIdList()).thenReturn(Collections.singletonList(id));
         when(mockUser.getName()).thenReturn(expectedUser);
         when(mockState.getUser()).thenReturn(mockUser);
         when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);

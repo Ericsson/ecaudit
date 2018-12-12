@@ -30,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -52,7 +53,7 @@ public class TestYamlAuditFilter
 
         List<String> users = new ArrayList<>(Arrays.asList("foo", "User1", "bar", "User2", "fnord", "another"));
 
-        assertThat(users.stream().map(TestYamlAuditFilter::toLogEntry).map(entry -> filter.isFiltered(entry))
+        assertThat(users.stream().map(TestYamlAuditFilter::toLogEntry).map(filter::isFiltered)
                 .collect(Collectors.toList()))
                         .containsExactly(false, true, false, true, false, false);
     }
@@ -67,17 +68,18 @@ public class TestYamlAuditFilter
         assertThat(users.stream()
                 .map(TestYamlAuditFilter::toLogEntry)
                 .map(TestYamlAuditFilter::asLoginEntry)
-                .map(entry -> filter.isFiltered(entry))
+                .map(filter::isFiltered)
                 .collect(Collectors.toList()))
                 .containsOnly(false);
     }
 
-    @Test(expected = ConfigurationException.class)
+    @Test
     public void testExceptionOnConfigError()
     {
         when(configLoaderMock.loadConfig()).thenThrow(new ConfigurationException("something failed"));
 
-        new YamlAuditFilter(configLoaderMock);
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(() -> new YamlAuditFilter(configLoaderMock));
     }
 
     private YamlAuditFilter givenConfiguredFilter()

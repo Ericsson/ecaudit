@@ -26,21 +26,18 @@ import java.util.UUID;
 import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestPasswordObfuscator
 {
-    PasswordObfuscator myObfuscator;
+    private PasswordObfuscator myObfuscator;
 
     @Before
     public void before()

@@ -34,6 +34,7 @@ import org.apache.cassandra.exceptions.UnauthorizedException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -71,6 +72,7 @@ public class TestPermissionChecker
         AuthenticatedUser performer = givenSuperUser();
         RoleResource grantee = givenNormalRole();
         RoleOptions options = givenAllOptions();
+
         permissionChecker.checkAlterRoleAccess(performer, grantee, options);
     }
 
@@ -80,6 +82,7 @@ public class TestPermissionChecker
         AuthenticatedUser performer = givenNormalUser();
         RoleResource grantee = givenNormalRole();
         RoleOptions options = givenPasswordOptions();
+
         permissionChecker.checkAlterRoleAccess(performer, grantee, options);
     }
 
@@ -89,16 +92,19 @@ public class TestPermissionChecker
         AuthenticatedUser performer = givenNormalUser();
         RoleResource grantee = givenOtherRole();
         RoleOptions options = givenOptionsOptions();
+
         permissionChecker.checkAlterRoleAccess(performer, grantee, options);
     }
 
-    @Test (expected = UnauthorizedException.class)
+    @Test
     public void normalUserCanNotAlterOtherAllAttributes()
     {
         AuthenticatedUser performer = givenNormalUser();
         RoleResource grantee = givenOtherRole();
         RoleOptions options = givenAllOptions();
-        permissionChecker.checkAlterRoleAccess(performer, grantee, options);
+
+        assertThatExceptionOfType(UnauthorizedException.class)
+        .isThrownBy(() -> permissionChecker.checkAlterRoleAccess(performer, grantee, options));
     }
 
     @Test
@@ -107,6 +113,7 @@ public class TestPermissionChecker
         AuthenticatedUser performer = givenTrustedUser();
         RoleResource grantee = givenOtherRole();
         RoleOptions options = givenAllOptions();
+
         permissionChecker.checkAlterRoleAccess(performer, grantee, options);
     }
 

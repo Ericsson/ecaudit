@@ -19,43 +19,45 @@ import java.net.URL;
 import java.util.Properties;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestAuditYamlConfigurationLoader
 {
-    @Test(expected = ConfigurationException.class)
+    @Test
     public void testMissingPropertyThrowsConfigurationException()
     {
         Properties properties = new Properties();
         AuditYamlConfigurationLoader loader = AuditYamlConfigurationLoader.withProperties(properties);
 
-        loader.loadConfig();
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(loader::loadConfig);
     }
 
-    @Test(expected = ConfigurationException.class)
+    @Test
     public void testEmptyPropertyThrowsConfigurationException()
     {
         Properties properties = new Properties();
         properties.put(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, "");
         AuditYamlConfigurationLoader loader = AuditYamlConfigurationLoader.withProperties(properties);
 
-        loader.loadConfig();
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(loader::loadConfig);
     }
 
-    @Test(expected = ConfigurationException.class)
+    @Test
     public void testInvalidPathPropertyThrowsConfigurationException()
     {
         Properties properties = new Properties();
         properties.put(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, "does_not_exist.yaml");
 
         AuditYamlConfigurationLoader loader = AuditYamlConfigurationLoader.withProperties(properties);
-        loader.loadConfig();
+
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(loader::loadConfig);
     }
 
     @Test
