@@ -86,9 +86,9 @@ public class TestAuditQueryHandler
     @Mock
     AuditAdapter mockAdapter;
 
-    AuditQueryHandler queryHandler;
+    private AuditQueryHandler queryHandler;
 
-    static IPartitioner oldPartitionerToRestore;
+    private static IPartitioner oldPartitionerToRestore;
 
     @BeforeClass
     public static void beforeAll()

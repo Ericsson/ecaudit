@@ -37,6 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -98,7 +99,7 @@ public class TestAuditPasswordAuthenticator
         verify(mockAdapter, times(1)).setup();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testLogOnRuntimeException() throws Exception
     {
         InetAddress clientAddress = InetAddress.getLocalHost();
@@ -110,18 +111,14 @@ public class TestAuditPasswordAuthenticator
         byte[] clientResponse = createClientResponse("username", "secretpassword");
         negotiator.evaluateResponse(clientResponse);
 
-        try
-        {
-            negotiator.getAuthenticatedUser();
-        }
-        finally
-        {
-            verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT));
-            verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED));
-        }
+        assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(negotiator::getAuthenticatedUser);
+
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED));
     }
 
-    @Test(expected = AuthenticationException.class)
+    @Test
     public void testLogOnFailure() throws Exception
     {
         InetAddress clientAddress = InetAddress.getLocalHost();
@@ -133,15 +130,11 @@ public class TestAuditPasswordAuthenticator
         byte[] clientResponse = createClientResponse("username", "secretpassword");
         negotiator.evaluateResponse(clientResponse);
 
-        try
-        {
-            negotiator.getAuthenticatedUser();
-        }
-        finally
-        {
-            verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT));
-            verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED));
-        }
+        assertThatExceptionOfType(AuthenticationException.class)
+        .isThrownBy(negotiator::getAuthenticatedUser);
+
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED));
     }
 
     @Test
