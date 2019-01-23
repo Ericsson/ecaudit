@@ -64,12 +64,6 @@ public class PreparedAuditOperation implements AuditOperation
         return effectiveStatement;
     }
 
-    @Override
-    public String toString()
-    {
-        return "Prepared audit operation: "  + getOperationString();
-    }
-
     /**
      * Bind marked values in the given prepared statement.
      *
