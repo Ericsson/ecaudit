@@ -36,7 +36,7 @@ import org.apache.cassandra.exceptions.RequestValidationException;
 
 /**
  * A decorator of the standard {@link CassandraAuthorizer} which always allow ALTER permission on {@link RoleResource}s.
- * <p>
+ *
  * This will allow one role to grant whitelist permission to another role by changing the OPTIONS attribute of the other role.
  * Other attributes such as PASSWORD may only be ALTERed if the permission actually have been assigned.
  * This is enforced in {@link AuditRoleManager#alterRole(AuthenticatedUser, RoleResource, RoleOptions)}
