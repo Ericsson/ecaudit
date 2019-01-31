@@ -18,8 +18,8 @@
 shopt -s extglob
 
 SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-
 CCM_CONFIG=${CCM_CONFIG_DIR:=~/.ccm}
+
 if [ ! -f ${CCM_CONFIG}/CURRENT ]; then
  echo "Unable to find an active ccm cluster"
  exit 2
