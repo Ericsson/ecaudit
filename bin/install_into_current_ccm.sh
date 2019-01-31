@@ -19,7 +19,8 @@ shopt -s extglob
 
 SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
-if [ ! -f ~/.ccm/CURRENT ]; then
+CCM_CONFIG=${CCM_CONFIG_DIR:=~/.ccm}
+if [ ! -f ${CCM_CONFIG}/CURRENT ]; then
  echo "Unable to find an active ccm cluster"
  exit 2
 fi
@@ -29,10 +30,10 @@ if [ ! -f ${SCRIPT_PATH}/../target/ecaudit*.jar ]; then
  exit 3
 fi
 
-CCM_CLUSTER_NAME=`cat ~/.ccm/CURRENT`
+CCM_CLUSTER_NAME=`cat ${CCM_CONFIG}/CURRENT`
 echo "Installing ecAudit into ${CCM_CLUSTER_NAME}"
 
-CLUSTER_PATH=~/.ccm/${CCM_CLUSTER_NAME}
+CLUSTER_PATH=${CCM_CONFIG}/${CCM_CLUSTER_NAME}
 
 mkdir -p ${CLUSTER_PATH}/lib
 rm -f ${CLUSTER_PATH}/lib/ecaudit.jar
