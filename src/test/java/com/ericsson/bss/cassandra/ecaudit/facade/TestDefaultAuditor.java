@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.facade;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,21 +38,34 @@ import static org.mockito.Mockito.when;
 public class TestDefaultAuditor
 {
     @Mock
-    AuditLogger mockLogger;
+    private AuditLogger mockLogger;
 
     @Mock
-    AuditFilter mockFilter;
+    private AuditFilter mockFilter;
 
     @Mock
-    AuditObfuscator mockObfuscator;
+    private AuditObfuscator mockObfuscator;
 
-    @InjectMocks
-    DefaultAuditor auditor;
+    private DefaultAuditor auditor;
+
+    @Before
+    public void before()
+    {
+        auditor = new DefaultAuditor(mockLogger, mockFilter, mockObfuscator);
+    }
 
     @After
     public void after()
     {
         verifyNoMoreInteractions(mockLogger, mockFilter, mockObfuscator);
+    }
+
+    @Test
+    public void testSetupDelegation()
+    {
+        auditor.setup();
+
+        verify(mockFilter).setup();
     }
 
     @Test

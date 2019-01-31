@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,7 @@ import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 /**
- * A proxy for {@link PasswordAuthenticator} with audit logging.
+ * A decorator of {@link PasswordAuthenticator} with added audit logging.
  */
 public class AuditPasswordAuthenticator implements IAuthenticator
 {
@@ -53,6 +54,7 @@ public class AuditPasswordAuthenticator implements IAuthenticator
         this(new PasswordAuthenticator(), AuditAdapter.getInstance());
     }
 
+    @VisibleForTesting
     AuditPasswordAuthenticator(IAuthenticator authenticator, AuditAdapter adapter)
     {
         LOG.info("Auditing enabled on authenticator");
