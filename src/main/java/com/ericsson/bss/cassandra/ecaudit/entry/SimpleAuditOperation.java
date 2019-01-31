@@ -36,10 +36,4 @@ public class SimpleAuditOperation implements AuditOperation
     {
         return operationString;
     }
-
-    @Override
-    public String toString()
-    {
-        return "Simple audit operation: "  + operationString;
-    }
 }
