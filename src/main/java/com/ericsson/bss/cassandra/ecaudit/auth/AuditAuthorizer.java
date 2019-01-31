@@ -18,46 +18,112 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.util.EnumSet;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.CassandraAuthorizer;
+import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
+import org.apache.cassandra.auth.PermissionDetails;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
+import org.apache.cassandra.exceptions.ConfigurationException;
+import org.apache.cassandra.exceptions.RequestExecutionException;
+import org.apache.cassandra.exceptions.RequestValidationException;
 
 /**
- * Extend standard {@link CassandraAuthorizer} to always allow ALTER permission on {@link RoleResource}s.
+ * A decorator of the standard {@link CassandraAuthorizer} which always allow ALTER permission on {@link RoleResource}s.
  *
  * This will allow one role to grant whitelist permission to another role by changing the OPTIONS attribute of the other role.
  * Other attributes such as PASSWORD may only be ALTERed if the permission actually have been assigned.
  * This is enforced in {@link AuditRoleManager#alterRole(AuthenticatedUser, RoleResource, RoleOptions)}
  */
-public class AuditAuthorizer extends CassandraAuthorizer
+public class AuditAuthorizer implements IAuthorizer
 {
     private static final Logger LOG = LoggerFactory.getLogger(AuditAuthorizer.class);
 
+    private final IAuthorizer wrappedAuthorizer;
+
     public AuditAuthorizer()
     {
+        this(new CassandraAuthorizer());
+    }
+
+    @VisibleForTesting
+    AuditAuthorizer(IAuthorizer wrappedAuthorizer)
+    {
         LOG.info("Auditing enabled on authorizer");
+        this.wrappedAuthorizer = wrappedAuthorizer;
     }
 
     @Override
     public Set<Permission> authorize(AuthenticatedUser user, IResource resource)
     {
-        Set<Permission> permissions = EnumSet.copyOf(super.authorize(user, resource));
         if (resource.hasParent() && resource instanceof RoleResource)
         {
+            Set<Permission> permissions = EnumSet.copyOf(wrappedAuthorizer.authorize(user, resource));
             permissions.add(Permission.ALTER);
+            return permissions;
         }
-
-        return permissions;
+        else
+        {
+            return wrappedAuthorizer.authorize(user, resource);
+        }
     }
 
     Set<Permission> realAuthorize(AuthenticatedUser user, IResource resource)
     {
-        return super.authorize(user, resource);
+        return wrappedAuthorizer.authorize(user, resource);
+    }
+
+    @Override
+    public void grant(AuthenticatedUser performer, Set<Permission> permissions, IResource resource, RoleResource grantee) throws RequestValidationException, RequestExecutionException
+    {
+        wrappedAuthorizer.grant(performer, permissions, resource, grantee);
+    }
+
+    @Override
+    public void revoke(AuthenticatedUser performer, Set<Permission> permissions, IResource resource, RoleResource revokee) throws RequestValidationException, RequestExecutionException
+    {
+        wrappedAuthorizer.revoke(performer, permissions, resource, revokee);
+    }
+
+    @Override
+    public Set<PermissionDetails> list(AuthenticatedUser performer, Set<Permission> permissionFilter, IResource resourceFilter, RoleResource roleFilter) throws RequestValidationException, RequestExecutionException
+    {
+        return wrappedAuthorizer.list(performer, permissionFilter, resourceFilter, roleFilter);
+    }
+
+    @Override
+    public void revokeAllFrom(RoleResource revokee)
+    {
+        wrappedAuthorizer.revokeAllFrom(revokee);
+    }
+
+    @Override
+    public void revokeAllOn(IResource droppedResource)
+    {
+        wrappedAuthorizer.revokeAllOn(droppedResource);
+    }
+
+    @Override
+    public Set<? extends IResource> protectedResources()
+    {
+        return wrappedAuthorizer.protectedResources();
+    }
+
+    @Override
+    public void validateConfiguration() throws ConfigurationException
+    {
+        wrappedAuthorizer.validateConfiguration();
+    }
+
+    @Override
+    public void setup()
+    {
+        wrappedAuthorizer.setup();
     }
 }

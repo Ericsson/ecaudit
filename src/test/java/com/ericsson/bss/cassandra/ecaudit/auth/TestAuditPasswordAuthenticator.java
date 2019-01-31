@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,7 +33,6 @@ import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IAuthenticator.SaslNegotiator;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.exceptions.AuthenticationException;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -50,16 +50,21 @@ import static org.mockito.Mockito.when;
 public class TestAuditPasswordAuthenticator
 {
     @Mock
-    IAuthenticator mockAuthenticator;
+    private IAuthenticator mockAuthenticator;
 
     @Mock
-    AuditAdapter mockAdapter;
+    private AuditAdapter mockAdapter;
 
     @Mock
-    SaslNegotiator mockNegotiator;
+    private SaslNegotiator mockNegotiator;
 
-    @InjectMocks
-    AuditPasswordAuthenticator authenticator;
+    private AuditPasswordAuthenticator authenticator;
+
+    @Before
+    public void before()
+    {
+        authenticator = new AuditPasswordAuthenticator(mockAuthenticator, mockAdapter);
+    }
 
     @After
     public void after()
@@ -153,12 +158,14 @@ public class TestAuditPasswordAuthenticator
     }
 
     @SuppressWarnings("unchecked")
-    private void whenGetAuthUserThrowRuntimeException() {
+    private void whenGetAuthUserThrowRuntimeException()
+    {
         when(mockNegotiator.getAuthenticatedUser()).thenThrow(RuntimeException.class);
     }
 
     @SuppressWarnings("unchecked")
-    private void whenGetAuthUserThrowAuthException() {
+    private void whenGetAuthUserThrowAuthException()
+    {
         when(mockNegotiator.getAuthenticatedUser()).thenThrow(AuthenticationException.class);
     }
 
