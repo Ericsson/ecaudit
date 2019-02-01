@@ -18,16 +18,17 @@
 shopt -s extglob
 
 SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+CCM_CONFIG=${CCM_CONFIG_DIR:=~/.ccm}
 
-if [[ ! -f ~/.ccm/CURRENT ]]; then
+if [[ ! -f ${CCM_CONFIG}/CURRENT ]]; then
  echo "Unable to find an active ccm cluster"
  exit 2
 fi
 
-CCM_CLUSTER_NAME=`cat ~/.ccm/CURRENT`
+CCM_CLUSTER_NAME=`cat ${CCM_CONFIG}/CURRENT`
 echo "Preparing ${CCM_CLUSTER_NAME} for performance smoke test"
 
-CLUSTER_PATH=~/.ccm/${CCM_CLUSTER_NAME}
+CLUSTER_PATH=${CCM_CONFIG}/${CCM_CLUSTER_NAME}
 
 for NODE_PATH in ${CLUSTER_PATH}/node*;
 do
