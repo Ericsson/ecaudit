@@ -176,7 +176,6 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>src/microbench/java</source>
                                 <source>src/integration-test/java</source>
                             </sources>
                         </configuration>
