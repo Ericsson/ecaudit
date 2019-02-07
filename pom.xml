@@ -278,9 +278,7 @@ limitations under the License.
                         </headerSection>
                     </headerSections>
                     <mapping>
-                        <pom.xml>XML_STYLE</pom.xml>
                         <java>SLASHSTAR_STYLE</java>
-                        <cfg>SCRIPT_STYLE</cfg>
                     </mapping>
                     <strictCheck>true</strictCheck>
                     <failIfUnknown>true</failIfUnknown>
