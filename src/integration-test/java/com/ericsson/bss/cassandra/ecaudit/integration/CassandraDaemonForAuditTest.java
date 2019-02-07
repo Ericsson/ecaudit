@@ -61,7 +61,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
         {
             if (cdtSingleton == null)
             {
-                cdtSingleton = new CassandraDaemonForAuditTest();
+                cdtSingleton = new CassandraDaemonForAuditTest("integration_audit.yaml");
             }
 
             cdtSingleton.activate();
@@ -70,13 +70,13 @@ public class CassandraDaemonForAuditTest // NOSONAR
         return cdtSingleton;
     }
 
-    private CassandraDaemonForAuditTest() throws IOException
+    protected CassandraDaemonForAuditTest(String configFile) throws IOException
     {
         synchronized (CassandraDaemonForAuditTest.class)
         {
             if (cassandraDaemon == null)
             {
-                setupConfiguration();
+                setupConfiguration(configFile);
                 cassandraDaemon = new CassandraDaemon(true);
             }
         }
@@ -85,7 +85,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
     /**
      * Setup the Cassandra configuration for this instance.
      */
-    private void setupConfiguration() throws IOException
+    private void setupConfiguration(String configFile) throws IOException
     {
         randomizePorts();
 
@@ -115,13 +115,14 @@ public class CassandraDaemonForAuditTest // NOSONAR
         System.setProperty("cassandra.custom_query_handler_class", AuditQueryHandler.class.getCanonicalName());
         System.setProperty("ecaudit.filter_type", "YAML_AND_ROLE");
 
-        String auditYamlTempPath = moveResourceFileToTempDir("integration_audit.yaml");
+        String auditYamlTempPath = moveResourceFileToTempDir(configFile);
         System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, auditYamlTempPath);
 
         LOG.info("Using temporary cassandra directory: " + tempDir);
     }
 
-    private void activate()
+
+    protected void activate()
     {
         if (!cassandraDaemon.setupCompleted() && !cassandraDaemon.isNativeTransportRunning())
         {

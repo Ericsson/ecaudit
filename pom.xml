@@ -201,8 +201,8 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>${org.apache.maven.plugins.maven-failsafe-plugin.version}</version>
                 <configuration>
-                    <forkCount>2</forkCount>
-                    <reuseForks>true</reuseForks>
+                    <forkCount>3</forkCount>
+                    <reuseForks>false</reuseForks>
                 </configuration>
                 <executions>
                     <execution>
