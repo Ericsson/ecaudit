@@ -24,6 +24,7 @@ import java.util.List;
 public final class AuditConfig
 {
     private List<String> whitelist;
+    private String logFormat;
 
     /**
      * Get the user whitelist in this configuration
@@ -31,7 +32,7 @@ public final class AuditConfig
      */
     public List<String> getWhitelist()
     {
-        return Collections.unmodifiableList(whitelist);
+        return whitelist != null ? Collections.unmodifiableList(whitelist) : Collections.emptyList();
     }
 
     /**
@@ -41,6 +42,24 @@ public final class AuditConfig
      */
     public void setWhitelist(List<String> whitelist)
     {
-        this.whitelist = whitelist != null ? whitelist : Collections.<String> emptyList();
+        this.whitelist = whitelist;
+    }
+
+    /**
+     * @return the log format in this configuration
+     */
+    public String getLogFormat()
+    {
+        return logFormat;
+    }
+
+    /**
+     * Set the log format in this configuration
+     * @param logFormat
+     *          the log format string
+     */
+    public void setLogFormat(String logFormat)
+    {
+        this.logFormat = logFormat;
     }
 }

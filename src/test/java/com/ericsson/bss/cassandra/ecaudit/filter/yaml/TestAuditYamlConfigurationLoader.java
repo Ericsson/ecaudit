@@ -81,6 +81,21 @@ public class TestAuditYamlConfigurationLoader
         assertThat(loadedConfig.getWhitelist()).containsOnly("User1", "User2");
     }
 
+    @Test
+    public void testDefaultLogFileFormat()
+    {
+        assertThat(new AuditConfig().getLogFormat()).isNull();
+    }
+
+    @Test
+    public void testLoadingLogFileFormatFromConfiguration()
+    {
+        Properties properties = getProperties("mock_log_format.yaml");
+        AuditYamlConfigurationLoader loader = AuditYamlConfigurationLoader.withProperties(properties);
+        AuditConfig loadedConfig = loader.loadConfig();
+        assertThat(loadedConfig.getLogFormat()).isEqualTo("user:{USER}, client:{CLIENT}");
+    }
+
     private static Properties getProperties(String fileName)
     {
         URL url = TestAuditYamlConfigurationLoader.class.getResource("/" + fileName);
