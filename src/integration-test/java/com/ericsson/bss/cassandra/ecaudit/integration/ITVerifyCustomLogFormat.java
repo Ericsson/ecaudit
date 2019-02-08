@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.integration;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -29,7 +30,9 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
@@ -39,6 +42,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static com.ericsson.bss.cassandra.ecaudit.integration.ITVerifyAudit.UUID_REGEX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
@@ -104,13 +108,31 @@ public class ITVerifyCustomLogFormat
     @Test
     public void testCustomLogFormat()
     {
+        // Given
+        String createKeyspace = "CREATE KEYSPACE school WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false";
+        String createTable = "CREATE TABLE school.students (name text PRIMARY KEY, grade text)";
+        String insert = "INSERT INTO school.students (name, grade) VALUES ('Kalle', 'B')";
+        String update = "UPDATE school.students SET grade = 'A' WHERE name = 'Kalle'";
+
         // When
-        session.execute(new SimpleStatement("LIST ALL PERMISSIONS"));
+        session.execute(new SimpleStatement(createKeyspace));
+        session.execute(new SimpleStatement(createTable));
+
+        BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
+        batch.add(new SimpleStatement(insert));
+        batch.add(new SimpleStatement(update));
+        ResultSet execute = session.execute(batch);
+
         // Then
         verify(mockAuditAppender, atLeast(1)).doAppend(loggingEventCaptor.capture());
         List<String> logEntries = loggingEventCaptor.getAllValues().stream()
-                                         .map(ILoggingEvent::getFormattedMessage)
-                                         .collect(Collectors.toList());
-        assertThat(logEntries).contains("client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='LIST ALL PERMISSIONS'");
+                                                    .map(ILoggingEvent::getFormattedMessage)
+                                                    .flatMap(s -> Stream.of(s.split(UUID_REGEX)))
+                                                    .collect(Collectors.toList());
+        assertThat(logEntries)
+        .contains(String.format("client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='%s'", createKeyspace))
+        .contains(String.format("client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='%s'", createTable))
+        .contains("client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=", /*Batch-ID*/ String.format(", operation='%s'", insert))
+        .contains("client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=", /*Batch-ID*/ String.format(", operation='%s'", update));
     }
 }

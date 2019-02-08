@@ -15,4 +15,4 @@
 #
 
 ---
-logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
+logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
