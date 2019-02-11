@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
+import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfigurationLoader;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
@@ -55,11 +56,10 @@ public class Slf4jAuditLogger implements AuditLogger
 {
     public static final String AUDIT_LOGGER_NAME = "ECAUDIT";
 
-    private static final String PARAMETER_EXP = "\\$\\{(.*?)\\}"; // Non-greedy matching of parameter
-    private static final String OPTIONAL_PARAMETER_EXP = "\\{\\?(.*?)\\$\\{(.*?)\\}(.*?)\\?\\}";
-    private static final String COMBINED_PARAMETERS_EXP = PARAMETER_EXP + "|" + OPTIONAL_PARAMETER_EXP;
+    private static final String PARAMETER_EXP = "\\$\\{(.*?)}"; // Non-greedy matching of parameter
+    private static final String OPTIONAL_PARAMETER_EXP = "\\{\\?(.*?)\\$\\{(.*?)}(.*?)\\?}";
+    private static final String COMBINED_PARAMETERS_EXP = PARAMETER_EXP + '|' + OPTIONAL_PARAMETER_EXP;
     private static final Pattern PARAMETER_PATTERN = Pattern.compile(COMBINED_PARAMETERS_EXP);
-    private static final String DEFAULT_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
 
     static final ImmutableMap<String, Function<AuditEntry, Object>> AVAILABLE_PARAMETER_FUNCTIONS =
     ImmutableMap.<String, Function<AuditEntry, Object>>builder().put("CLIENT", entry -> entry.getClientAddress().getHostAddress())
@@ -78,36 +78,37 @@ public class Slf4jAuditLogger implements AuditLogger
      */
     public Slf4jAuditLogger()
     {
-        this(LoggerFactory.getLogger(AUDIT_LOGGER_NAME), getLogFormatConfiguration());
-    }
-
-    private static String getLogFormatConfiguration()
-    {
-        AuditConfig auditConfig = AuditYamlConfigurationLoader.withSystemProperties().loadConfig();
-        return auditConfig.getLogFormat();
+        this(LoggerFactory.getLogger(AUDIT_LOGGER_NAME), AuditYamlConfigurationLoader.withSystemProperties());
     }
 
     /**
      * Test constructor.
      *
-     * @param logger the logger backend to use for audit logs
-     * @param customFormat the log custom format to use when writing audit logs
+     * @param logger              the logger backend to use for audit logs
+     * @param configurationLoader the configuration to load the log format from
      */
     @VisibleForTesting
-    Slf4jAuditLogger(Logger logger, String customFormat)
+    Slf4jAuditLogger(Logger logger, AuditConfigurationLoader configurationLoader)
     {
         auditLogger = logger;
-        String logFormat = customFormat != null ? customFormat : DEFAULT_FORMAT;
+        String logFormat = getLogFormatConfiguration(configurationLoader);
         logTemplate = getTemplateFromFormatString(logFormat);
         parameterFunctions = getParameterFunctions(logFormat);
     }
 
-    private static final String getTemplateFromFormatString(String logFormat)
+    static String getLogFormatConfiguration(AuditConfigurationLoader configurationLoader)
+    {
+        return configurationLoader.configExist()
+               ? configurationLoader.loadConfig().getLogFormat()
+               : AuditConfig.DEFAULT_FORMAT;
+    }
+
+    private static String getTemplateFromFormatString(String logFormat)
     {
         return logFormat.replaceAll(OPTIONAL_PARAMETER_EXP, "{}{}{}").replaceAll(PARAMETER_EXP, "{}");
     }
 
-    static final List<Function<AuditEntry, Object>> getParameterFunctions(String logFormat)
+    static List<Function<AuditEntry, Object>> getParameterFunctions(String logFormat)
     {
         List<Function<AuditEntry, Object>> parameterFunctions = new ArrayList<>();
         Matcher matcher = PARAMETER_PATTERN.matcher(logFormat);
@@ -133,19 +134,19 @@ public class Slf4jAuditLogger implements AuditLogger
         return parameterFunctions;
     }
 
-    protected static final Function<String, Function<AuditEntry, Object>> throwConfigurationException()
+    private static Function<String, Function<AuditEntry, Object>> throwConfigurationException()
     {
         return key -> {
             throw new ConfigurationException("Unknown log format parameter: " + key);
         };
     }
 
-    protected static final Function<Object, String> getDescriptionIfValuePresent(String description)
+    static Function<Object, String> getDescriptionIfValuePresent(String description)
     {
         return value -> value != null ? description : "";
     }
 
-    protected static final Object getValueOrEmptyString(Object value)
+    static Object getValueOrEmptyString(Object value)
     {
         return value != null ? value : "";
     }
@@ -154,7 +155,7 @@ public class Slf4jAuditLogger implements AuditLogger
     public void log(AuditEntry logEntry)
     {
         List<ToStringer> parameters = parameterFunctions.stream()
-                                                        .map(valueSupplier -> new ToStringer(logEntry, valueSupplier))
+                                                        .map(valueSupplier -> new ToStringer<>(logEntry, valueSupplier))
                                                         .collect(toList());
         auditLogger.info(logTemplate, parameters.toArray());
     }

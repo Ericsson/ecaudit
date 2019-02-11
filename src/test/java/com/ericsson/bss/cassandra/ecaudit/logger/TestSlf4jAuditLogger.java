@@ -27,6 +27,8 @@ import org.slf4j.Logger;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
+import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfigurationLoader;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -55,21 +57,21 @@ public class TestSlf4jAuditLogger
     private static AuditEntry logEntryWithoutBatch;
 
     @Mock
-    Logger mockLogger;
+    private Logger loggerMock;
     @Captor
-    ArgumentCaptor arg1;
+    private ArgumentCaptor arg1;
     @Captor
-    ArgumentCaptor arg2;
+    private ArgumentCaptor arg2;
     @Captor
-    ArgumentCaptor arg3;
+    private ArgumentCaptor arg3;
     @Captor
-    ArgumentCaptor arg4;
+    private ArgumentCaptor arg4;
     @Captor
-    ArgumentCaptor arg5;
+    private ArgumentCaptor arg5;
     @Captor
-    ArgumentCaptor arg6;
+    private ArgumentCaptor arg6;
     @Captor
-    ArgumentCaptor arg7;
+    private ArgumentCaptor arg7;
 
 
     @BeforeClass
@@ -93,11 +95,11 @@ public class TestSlf4jAuditLogger
     @Test
     public void testDefaultFormatAuditEntryNoBatch()
     {
-        Slf4jAuditLogger logger = new Slf4jAuditLogger(mockLogger, null);
+        Slf4jAuditLogger logger = loggerWithConfig(AuditConfig.DEFAULT_FORMAT);
         logger.log(logEntryWithoutBatch);
 
         // Capture and perform validation
-        verify(mockLogger, times(1)).info(eq(DEFAULT_LOG_TEMPLATE),
+        verify(loggerMock, times(1)).info(eq(DEFAULT_LOG_TEMPLATE),
                                           arg1.capture(),
                                           arg2.capture(),
                                           arg3.capture(),
@@ -118,11 +120,11 @@ public class TestSlf4jAuditLogger
     @Test
     public void testDefaultFormatAuditEntryWithBatch()
     {
-        Slf4jAuditLogger logger = new Slf4jAuditLogger(mockLogger, null);
+        Slf4jAuditLogger logger = loggerWithConfig(AuditConfig.DEFAULT_FORMAT);
         logger.log(logEntryWithBatch);
 
         // Capture and perform validation
-        verify(mockLogger, times(1)).info(eq(DEFAULT_LOG_TEMPLATE),
+        verify(loggerMock, times(1)).info(eq(DEFAULT_LOG_TEMPLATE),
                                           arg1.capture(),
                                           arg2.capture(),
                                           arg3.capture(),
@@ -143,16 +145,16 @@ public class TestSlf4jAuditLogger
     @Test
     public void testCustomLogFormat()
     {
-        Slf4jAuditLogger logger = new Slf4jAuditLogger(mockLogger, "User = ${USER}, Status = {${STATUS}}, Query = ${OPERATION}");
+        Slf4jAuditLogger logger = loggerWithConfig("User = ${USER}, Status = {${STATUS}}, Query = ${OPERATION}");
         logger.log(logEntryWithoutBatch);
 
         // Capture and perform validation
-        verify(mockLogger, times(1)).info(eq("User = {}, Status = {{}}, Query = {}"),
+        verify(loggerMock, times(1)).info(eq("User = {}, Status = {{}}, Query = {}"),
                                           arg1.capture(),
                                           arg2.capture(),
                                           arg3.capture());
 
-        assertThat(arg1.getValue().toString()).isEqualTo(EXPECTED_USER.toString());
+        assertThat(arg1.getValue().toString()).isEqualTo(EXPECTED_USER);
         assertThat(arg2.getValue().toString()).isEqualTo(EXPECTED_STATUS.toString());
         assertThat(arg3.getValue().toString()).isEqualTo(EXPECTED_STATEMENT);
     }
@@ -218,5 +220,35 @@ public class TestSlf4jAuditLogger
     {
         assertThatThrownBy(() -> Slf4jAuditLogger.getParameterFunctions("{? optional ${NON_EXISTING2} ?}"))
         .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format parameter: NON_EXISTING2");
+    }
+
+    @Test
+    public void testGetLogFormatConfigurationWhenNoConfigExists()
+    {
+        AuditConfigurationLoader loaderWithoutConfig = mock(AuditConfigurationLoader.class);
+        assertThat(Slf4jAuditLogger.getLogFormatConfiguration(loaderWithoutConfig)).isEqualTo(AuditConfig.DEFAULT_FORMAT);
+    }
+
+    @Test
+    public void testGetLogFormatConfiguration()
+    {
+        AuditConfigurationLoader loaderWithConfig = mockConfigLoader("a config");
+        assertThat(Slf4jAuditLogger.getLogFormatConfiguration(loaderWithConfig)).isEqualTo("a config");
+    }
+
+    private Slf4jAuditLogger loggerWithConfig(String format)
+    {
+        AuditConfigurationLoader loaderMock = mockConfigLoader(format);
+        return new Slf4jAuditLogger(loggerMock, loaderMock);
+    }
+
+    private AuditConfigurationLoader mockConfigLoader(String format)
+    {
+        AuditConfig config = new AuditConfig();
+        config.setLogFormat(format);
+        AuditConfigurationLoader loaderMock = mock(AuditConfigurationLoader.class);
+        when(loaderMock.configExist()).thenReturn(true);
+        when(loaderMock.loadConfig()).thenReturn(config);
+        return loaderMock;
     }
 }

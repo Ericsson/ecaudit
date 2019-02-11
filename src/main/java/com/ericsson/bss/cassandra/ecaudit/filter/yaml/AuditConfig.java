@@ -23,11 +23,14 @@ import java.util.List;
  */
 public final class AuditConfig
 {
+    public static final String DEFAULT_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+
     private List<String> whitelist;
     private String logFormat;
 
     /**
      * Get the user whitelist in this configuration
+     *
      * @return the list of whitelisted users
      */
     public List<String> getWhitelist()
@@ -37,8 +40,8 @@ public final class AuditConfig
 
     /**
      * Set the whitelist in this configuration
-     * @param whitelist
-     *            a list of whitelisted users
+     *
+     * @param whitelist a list of whitelisted users
      */
     public void setWhitelist(List<String> whitelist)
     {
@@ -50,13 +53,13 @@ public final class AuditConfig
      */
     public String getLogFormat()
     {
-        return logFormat;
+        return logFormat != null ? logFormat : DEFAULT_FORMAT;
     }
 
     /**
      * Set the log format in this configuration
-     * @param logFormat
-     *          the log format string
+     *
+     * @param logFormat the log format string
      */
     public void setLogFormat(String logFormat)
     {

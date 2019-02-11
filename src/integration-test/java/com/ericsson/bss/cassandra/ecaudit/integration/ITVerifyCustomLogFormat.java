@@ -49,22 +49,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
- * This test class provides a functional integration test with Cassandra itself.
+ * This test class provides a functional integration test for custom log format with Cassandra itself.
  * <p>
- * This is achieved by starting an embedded Cassandra server where the audit plug-in is used. Then each test case send
- * different requests and capture and verify that expected audit entries are produced.
+ * The format configuration is read when the plugin is started and has to be setup before the embedded Cassandra
+ * is started. Therefor this test class cannot be run in the same process as the other integration tests (having
+ * legacy log formatting).
  * <p>
- * This class also works as a safe guard to changes on the public API of the plug-in. The plug-in has three different
- * interfaces that together make out its public API. It is Cassandra itself, the configuration, and the audit messages
- * sent to the supported log back ends. When a change is necessary here it indicates that the major or minor version
- * should be bumped as well. This class is mostly focused to verify that a correct audit logs are created based on a
- * specific configuration.
+ * The parameterized audit log format configured by this test looks like this:
+ * {@code client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'}
+ * <br>
+ * Containing the mandatory parameters CLIENT/USER/STATUS/OPERATION and the optional parameter BATCH_ID.
  */
 @NotThreadSafe
 @RunWith(MockitoJUnitRunner.class)
 public class ITVerifyCustomLogFormat
 {
-    private static CassandraDaemonForAuditTest cdt;
     private static Cluster cluster;
     private static Session session;
 
@@ -77,7 +76,7 @@ public class ITVerifyCustomLogFormat
     @BeforeClass
     public static void beforeClass() throws Exception
     {
-        cdt = new CassandraDaemonForAuditTest("integration_audit_custom_format.yaml");
+        CassandraDaemonForAuditTest cdt = new CassandraDaemonForAuditTest("integration_audit_custom_format.yaml");
         cdt.activate();
         cluster = cdt.createCluster();
         session = cluster.connect();
@@ -121,7 +120,7 @@ public class ITVerifyCustomLogFormat
         BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
         batch.add(new SimpleStatement(insert));
         batch.add(new SimpleStatement(update));
-        ResultSet execute = session.execute(batch);
+        session.execute(batch);
 
         // Then
         verify(mockAuditAppender, atLeast(1)).doAppend(loggingEventCaptor.capture());

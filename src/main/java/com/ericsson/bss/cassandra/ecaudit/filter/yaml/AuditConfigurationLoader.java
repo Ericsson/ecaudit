@@ -31,4 +31,9 @@ public interface AuditConfigurationLoader
      *             if the configuration cannot be properly loaded.
      */
     AuditConfig loadConfig() throws ConfigurationException;
+
+    /**
+     * @return returns {@code true} if a configuration exists, {@code false} otherwise.
+     */
+    boolean configExist();
 }

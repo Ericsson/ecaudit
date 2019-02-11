@@ -20,6 +20,7 @@ import java.util.function.Function;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,11 +33,13 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestToStringer
 {
+    @Mock
+    private Function<Integer, Object> function;
+
     @Test
     public void testThatFunctionIsCalled()
     {
         // Given
-        Function function = mock(Function.class);
         when(function.apply(any())).thenReturn("The string");
         ToStringer toStringer = new ToStringer<>(42, function);
         // When
@@ -50,7 +53,6 @@ public class TestToStringer
     public void testThatFunctionNotCalled()
     {
         // Given
-        Function function = mock(Function.class);
         new ToStringer<>(42, function);
         // Then
         verify(function, never()).apply(any());
