@@ -23,24 +23,46 @@ import java.util.List;
  */
 public final class AuditConfig
 {
+    public static final String DEFAULT_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+
     private List<String> whitelist;
+    private String logFormat;
 
     /**
      * Get the user whitelist in this configuration
+     *
      * @return the list of whitelisted users
      */
     public List<String> getWhitelist()
     {
-        return Collections.unmodifiableList(whitelist);
+        return whitelist != null ? Collections.unmodifiableList(whitelist) : Collections.emptyList();
     }
 
     /**
      * Set the whitelist in this configuration
-     * @param whitelist
-     *            a list of whitelisted users
+     *
+     * @param whitelist a list of whitelisted users
      */
     public void setWhitelist(List<String> whitelist)
     {
-        this.whitelist = whitelist != null ? whitelist : Collections.<String> emptyList();
+        this.whitelist = whitelist;
+    }
+
+    /**
+     * @return the log format in this configuration
+     */
+    public String getLogFormat()
+    {
+        return logFormat != null ? logFormat : DEFAULT_FORMAT;
+    }
+
+    /**
+     * Set the log format in this configuration
+     *
+     * @param logFormat the log format string
+     */
+    public void setLogFormat(String logFormat)
+    {
+        this.logFormat = logFormat;
     }
 }

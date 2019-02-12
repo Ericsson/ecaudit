@@ -81,6 +81,38 @@ public class TestAuditYamlConfigurationLoader
         assertThat(loadedConfig.getWhitelist()).containsOnly("User1", "User2");
     }
 
+    @Test
+    public void testDefaultLogFileFormat()
+    {
+        assertThat(new AuditConfig().getLogFormat()).isEqualTo("client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'");
+    }
+
+    @Test
+    public void testLoadingLogFileFormatFromConfiguration()
+    {
+        Properties properties = getProperties("mock_log_format.yaml");
+        AuditYamlConfigurationLoader loader = AuditYamlConfigurationLoader.withProperties(properties);
+        AuditConfig loadedConfig = loader.loadConfig();
+        assertThat(loadedConfig.getLogFormat()).isEqualTo("user:{USER}, client:{CLIENT}");
+    }
+
+    @Test
+    public void testConfigExist()
+    {
+        Properties properties = getProperties("mock_log_format.yaml");
+        AuditYamlConfigurationLoader loader = AuditYamlConfigurationLoader.withProperties(properties);
+        assertThat(loader.configExist()).isTrue();
+    }
+
+    @Test
+    public void testConfigDoesNotExist()
+    {
+        Properties properties = new Properties();
+        properties.put(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, "non-existing-file.txt");
+        AuditYamlConfigurationLoader loader = AuditYamlConfigurationLoader.withProperties(properties);
+        assertThat(loader.configExist()).isFalse();
+    }
+
     private static Properties getProperties(String fileName)
     {
         URL url = TestAuditYamlConfigurationLoader.class.getResource("/" + fileName);

@@ -75,6 +75,53 @@ There are many ways to configure appenders with LOGBack.
 Refere to the [official documentation](https://logback.qos.ch/manual/appenders.html) for details.
 
 
+## Custom Log Message Format
+
+It is possible to configure a parameterized log message by providing a formatting string.
+The following parameters are available:
+
+| Parameter   | Field Value                                                       | Mandatory Field |
+| ----------- | ----------------------------------------------------------------- | --------------- |
+| CLIENT      | Client IP address                                                 | yes             |
+| USER        | Username of the authenticated user                                | yes             |
+| BATCH_ID    | Internal identifier shared by all statements in a batch operation | no              |
+| STATUS      | Value is either ATTEMPT or FAILED                                 | yes             |
+| OPERATION   | The CQL statement or a textual description of the operation       | yes             |
+
+
+Create/Update ```audit.yaml``` configuration file in the Cassandra configuration directory.
+Parameter name goes between ```${``` and ```}``` (*bash*-style parameter substitution).
+Use the example below as a template to define the log message format.
+
+```YAML
+logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
+```
+
+Which will generate logs entries like this:
+
+```
+15:18:14.089 - client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='SELECT * FROM students'
+```
+
+*Conditional formatting* of parameters is also available, which makes it possible to only log the parameter value and
+its descriptive text only if a value exists, which can be useful for optional fields like BATCH_ID.
+Conditional parameters and its associated text goes between ```{?``` and ```?}```.
+The example below use conditional formatting for the batch id to get different log messges depending on if the operation
+was part of a batch or not.
+
+```YAML
+logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+```
+
+Which will generate logs entries like this:
+
+```
+15:18:14.089 - client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='SELECT * FROM students'
+15:18:14.090 - client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=6f3cae9b-f1f1-4a4c-baa2-ed168ee79f9d, operation='INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']'
+15:18:14.091 - client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=6f3cae9b-f1f1-4a4c-baa2-ed168ee79f9d, operation='INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[2, '2', 'valid']'
+```
+
+
 ## Configure Whitelists
 
 ecAudit support two different ways to define whitelists; Role Based Whitelists and/or YAML Whitelists.
@@ -113,7 +160,7 @@ To use this whitelist method, add the following option near the end of your ```c
 JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Decaudit.filter_type=YAML"
 ```
 
-Create a ```audit.yaml``` configuraiton file in the Cassandra configuration directory.
+Create/Update ```audit.yaml``` configuration file in the Cassandra configuration directory.
 
 Use the example below as a template and define the usernames to be whitelisted.
 
