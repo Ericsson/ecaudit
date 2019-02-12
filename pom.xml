@@ -176,7 +176,6 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>src/microbench/java</source>
                                 <source>src/integration-test/java</source>
                             </sources>
                         </configuration>
@@ -203,7 +202,7 @@
                 <version>${org.apache.maven.plugins.maven-failsafe-plugin.version}</version>
                 <configuration>
                     <forkCount>2</forkCount>
-                    <reuseForks>true</reuseForks>
+                    <reuseForks>false</reuseForks>
                 </configuration>
                 <executions>
                     <execution>
@@ -255,7 +254,7 @@
                 </executions>
                 <configuration>
                     <inlineHeader><![CDATA[
-Copyright 2018 Telefonaktiebolaget LM Ericsson
+Copyright YEAR Telefonaktiebolaget LM Ericsson
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -270,10 +269,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ]]>
                     </inlineHeader>
+                    <headerSections>
+                        <headerSection>
+                            <key>YEAR</key>
+                            <defaultValue>2019</defaultValue>
+                            <ensureMatch>[0-9-]+</ensureMatch>
+                        </headerSection>
+                    </headerSections>
                     <mapping>
-                        <pom.xml>XML_STYLE</pom.xml>
                         <java>SLASHSTAR_STYLE</java>
-                        <cfg>SCRIPT_STYLE</cfg>
                     </mapping>
                     <strictCheck>true</strictCheck>
                     <failIfUnknown>true</failIfUnknown>

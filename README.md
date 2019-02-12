@@ -106,6 +106,8 @@ In the examples below the audit record is prepended with a timestamp which is cr
 15:42:41.655 - client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'DELETE FROM ecks.ectbl WHERE partk = ?[2]'
 ```
 
+***Note*** - It is possible to customize the audit records by providing a parameterized log message format, see [setup guide](doc/setup.md).
+
 ## Audit Logs
 
 Cassandra is a distributed system and so the generated audit logs will be created on different nodes.

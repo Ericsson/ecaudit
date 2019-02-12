@@ -21,6 +21,7 @@ import java.util.Collections;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -55,10 +56,17 @@ public class TestAuditAdapterFactory
         DatabaseDescriptor.setAuthenticator(authenticator);
     }
 
+    @Before
+    public void before()
+    {
+        System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile());
+    }
+
     @After
     public void after()
     {
         System.clearProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME);
+        System.clearProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE);
     }
 
     @AfterClass
@@ -86,7 +94,6 @@ public class TestAuditAdapterFactory
     public void testLoadYamlWithoutErrorHasExpectedTypes() throws Exception
     {
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_YAML);
-        System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile());
 
         AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 
@@ -121,7 +128,6 @@ public class TestAuditAdapterFactory
     public void testLoadYamlAndRoleWithoutErrorHasExpectedTypes() throws Exception
     {
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, AuditAdapterFactory.FILTER_TYPE_YAML_AND_ROLE);
-        System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, getPathToTestResourceFile());
 
         AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter();
 

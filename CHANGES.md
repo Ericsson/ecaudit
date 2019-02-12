@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.1.0
+* Introduce configurable log message format
 * Make the audit whitelist table a protected resource in Cassandra
 
 ## Version 2.0.0
