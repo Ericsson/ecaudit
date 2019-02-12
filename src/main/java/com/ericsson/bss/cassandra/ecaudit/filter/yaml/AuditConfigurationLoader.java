@@ -33,7 +33,7 @@ public interface AuditConfigurationLoader
     AuditConfig loadConfig() throws ConfigurationException;
 
     /**
-     * @return returns {@code true} if a configuration exists, {@code false} otherwise.
+     * @return {@code true} if a configuration exists, {@code false} otherwise.
      */
     boolean configExist();
 }

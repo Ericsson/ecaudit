@@ -70,7 +70,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
         return cdtSingleton;
     }
 
-    protected CassandraDaemonForAuditTest(String configFile) throws IOException
+    CassandraDaemonForAuditTest(String configFile) throws IOException
     {
         synchronized (CassandraDaemonForAuditTest.class)
         {
@@ -122,7 +122,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
     }
 
 
-    protected void activate()
+    void activate()
     {
         if (!cassandraDaemon.setupCompleted() && !cassandraDaemon.isNativeTransportRunning())
         {
