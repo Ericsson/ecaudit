@@ -176,7 +176,6 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>src/microbench/java</source>
                                 <source>src/integration-test/java</source>
                             </sources>
                         </configuration>
@@ -203,7 +202,7 @@
                 <version>${org.apache.maven.plugins.maven-failsafe-plugin.version}</version>
                 <configuration>
                     <forkCount>2</forkCount>
-                    <reuseForks>true</reuseForks>
+                    <reuseForks>false</reuseForks>
                 </configuration>
                 <executions>
                     <execution>
