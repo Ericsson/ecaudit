@@ -202,7 +202,10 @@
                 <version>${org.apache.maven.plugins.maven-failsafe-plugin.version}</version>
                 <configuration>
                     <forkCount>2</forkCount>
-                    <reuseForks>false</reuseForks>
+                    <reuseForks>true</reuseForks>
+                    <excludes>
+                        <exclude>**/ITVerifyCustomLogFormat.java</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>
