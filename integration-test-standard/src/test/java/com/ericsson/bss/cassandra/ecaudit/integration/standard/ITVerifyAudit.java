@@ -44,6 +44,7 @@ import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
+import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;

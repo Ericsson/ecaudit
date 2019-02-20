@@ -1,6 +1,6 @@
 <!--
 
-    Copyright 2018 Telefonaktiebolaget LM Ericsson
+    Copyright 2019 Telefonaktiebolaget LM Ericsson
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,6 +31,13 @@
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
             <artifactId>ecaudit_c3.0.11</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
+            <artifactId>test-utils_c3.0.11</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
@@ -40,11 +47,6 @@
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -22,47 +22,24 @@
         <artifactId>parent_3.0.11</artifactId>
         <version>2.1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>integration-test-standard_c3.0.11</artifactId>
+    <artifactId>test-utils_c3.0.11</artifactId>
+    <packaging>jar</packaging>
 
-    <name>Ericsson Cassandra Audit - Standard IT</name>
+    <name>Ericsson Cassandra Audit - Test Utils</name>
 
     <dependencies>
         <dependency>
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
             <artifactId>ecaudit_c3.0.11</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-            <artifactId>test-utils_c3.0.11</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>net.jcip</groupId>
-            <artifactId>jcip-annotations</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
         </dependency>
     </dependencies>
 

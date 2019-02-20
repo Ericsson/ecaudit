@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.integration.standard;
+package com.ericsson.bss.cassandra.ecaudit.test.daemon;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

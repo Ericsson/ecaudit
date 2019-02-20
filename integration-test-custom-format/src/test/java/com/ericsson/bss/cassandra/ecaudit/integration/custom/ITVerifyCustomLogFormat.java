@@ -34,6 +34,7 @@ import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
+import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import net.jcip.annotations.NotThreadSafe;
 import org.mockito.ArgumentCaptor;

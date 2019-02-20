@@ -38,6 +38,7 @@
 
     <modules>
         <module>ecaudit</module>
+        <module>test-utils</module>
         <module>integration-test-standard</module>
         <module>integration-test-custom-format</module>
     </modules>
@@ -89,13 +90,11 @@
                 <groupId>com.datastax.cassandra</groupId>
                 <artifactId>cassandra-driver-core</artifactId>
                 <version>${cassandra-driver.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>net.jcip</groupId>
