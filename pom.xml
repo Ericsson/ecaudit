@@ -39,6 +39,7 @@
     <modules>
         <module>ecaudit</module>
         <module>integration-test-standard</module>
+        <module>integration-test-custom-format</module>
     </modules>
 
     <properties>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.integration;
+package com.ericsson.bss.cassandra.ecaudit.integration.standard;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -61,7 +61,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
         {
             if (cdtSingleton == null)
             {
-                cdtSingleton = new CassandraDaemonForAuditTest("integration_audit.yaml");
+                cdtSingleton = new CassandraDaemonForAuditTest();
             }
 
             cdtSingleton.activate();
@@ -70,13 +70,13 @@ public class CassandraDaemonForAuditTest // NOSONAR
         return cdtSingleton;
     }
 
-    CassandraDaemonForAuditTest(String configFile) throws IOException
+    private CassandraDaemonForAuditTest() throws IOException
     {
         synchronized (CassandraDaemonForAuditTest.class)
         {
             if (cassandraDaemon == null)
             {
-                setupConfiguration(configFile);
+                setupConfiguration();
                 cassandraDaemon = new CassandraDaemon(true);
             }
         }
@@ -85,7 +85,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
     /**
      * Setup the Cassandra configuration for this instance.
      */
-    private void setupConfiguration(String configFile) throws IOException
+    private void setupConfiguration() throws IOException
     {
         randomizePorts();
 
@@ -115,14 +115,14 @@ public class CassandraDaemonForAuditTest // NOSONAR
         System.setProperty("cassandra.custom_query_handler_class", AuditQueryHandler.class.getCanonicalName());
         System.setProperty("ecaudit.filter_type", "YAML_AND_ROLE");
 
-        String auditYamlTempPath = moveResourceFileToTempDir(configFile);
+        String auditYamlTempPath = moveResourceFileToTempDir("integration_audit.yaml");
         System.setProperty(AuditYamlConfigurationLoader.PROPERTY_CONFIG_FILE, auditYamlTempPath);
 
         LOG.info("Using temporary cassandra directory: " + tempDir);
     }
 
 
-    void activate()
+    private void activate()
     {
         if (!cassandraDaemon.setupCompleted() && !cassandraDaemon.isNativeTransportRunning())
         {

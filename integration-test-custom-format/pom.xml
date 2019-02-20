@@ -22,9 +22,9 @@
         <artifactId>parent_3.0.11</artifactId>
         <version>2.1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>integration-test-standard_c3.0.11</artifactId>
+    <artifactId>integration-test-custom-format_c3.0.11</artifactId>
 
-    <name>Ericsson Cassandra Audit - Standard IT</name>
+    <name>Ericsson Cassandra Audit - Custom Format IT</name>
 
     <dependencies>
         <dependency>

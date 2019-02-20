@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.integration;
+package com.ericsson.bss.cassandra.ecaudit.integration.standard;
 
 import org.junit.After;
 import org.junit.AfterClass;

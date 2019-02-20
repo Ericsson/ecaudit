@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.integration;
+package com.ericsson.bss.cassandra.ecaudit.integration.custom;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +32,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
@@ -42,7 +41,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static com.ericsson.bss.cassandra.ecaudit.integration.ITVerifyAudit.UUID_REGEX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
@@ -64,6 +62,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @RunWith(MockitoJUnitRunner.class)
 public class ITVerifyCustomLogFormat
 {
+    private static final String UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+
     private static Cluster cluster;
     private static Session session;
 
@@ -76,8 +76,7 @@ public class ITVerifyCustomLogFormat
     @BeforeClass
     public static void beforeClass() throws Exception
     {
-        CassandraDaemonForAuditTest cdt = new CassandraDaemonForAuditTest("integration_audit_custom_format.yaml");
-        cdt.activate();
+        CassandraDaemonForAuditTest cdt = CassandraDaemonForAuditTest.getInstance();
         cluster = cdt.createCluster();
         session = cluster.connect();
     }
