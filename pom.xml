@@ -38,6 +38,7 @@
 
     <modules>
         <module>ecaudit</module>
+        <module>integration-test-standard</module>
     </modules>
 
     <properties>
@@ -204,8 +205,8 @@ limitations under the License.
                             <exclude>NOTICE</exclude>
                             <exclude>doc/ecaudit-performance.html</exclude>
                             <exclude>src/main/java/com/ericsson/bss/cassandra/ecaudit/auth/cache/**.java</exclude>
-                            <exclude>src/integration-test/resources/cassandra.yaml</exclude>
-                            <exclude>src/integration-test/resources/cassandra-rackdc.properties</exclude>
+                            <exclude>src/test/resources/cassandra.yaml</exclude>
+                            <exclude>src/test/resources/cassandra-rackdc.properties</exclude>
                             <exclude>src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker</exclude>
                             <exclude>**/pom.xml.tag</exclude>
                             <exclude>**/pom.xml.releaseBackup</exclude>
