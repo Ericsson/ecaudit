@@ -42,26 +42,4 @@
             <artifactId>commons-io</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${org.apache.maven.plugins.maven-failsafe-plugin.version}</version>
-                <configuration>
-                    <forkCount>2</forkCount>
-                    <reuseForks>true</reuseForks>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>
