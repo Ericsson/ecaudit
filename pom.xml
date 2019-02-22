@@ -410,5 +410,11 @@ limitations under the License.
             <organization>Ericsson AB</organization>
             <organizationUrl>http://www.ericsson.com</organizationUrl>
         </developer>
+        <developer>
+            <name>Ted Petersson</name>
+            <email>Ted Petersson@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
     </developers>
 </project>
