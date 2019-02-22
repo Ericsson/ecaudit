@@ -29,13 +29,13 @@
     <dependencies>
         <dependency>
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-            <artifactId>ecaudit_c3.11</artifactId>
+            <artifactId>ecaudit_${artifact.flavor.version}</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-            <artifactId>test-utils_c3.11</artifactId>
+            <artifactId>test-utils_${artifact.flavor.version}</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

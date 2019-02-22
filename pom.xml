@@ -49,6 +49,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <cassandra.version>3.11.3</cassandra.version>
+        <artifact.flavor.version>c3.11</artifact.flavor.version>
 
         <assertj.version>3.11.1</assertj.version>
         <cassandra-driver.version>3.6.0</cassandra-driver.version>
@@ -235,7 +236,7 @@ limitations under the License.
                     <artifactId>maven-release-plugin</artifactId>
                     <version>${org.apache.maven.plugins.maven-release-plugin.version}</version>
                     <configuration>
-                        <tagNameFormat>ecaudit_c3.11-@{project.version}</tagNameFormat>
+                        <tagNameFormat>ecaudit_${artifact.flavor.version}-@{project.version}</tagNameFormat>
                         <useReleaseProfile>false</useReleaseProfile>
                         <releaseProfiles>release</releaseProfiles>
                         <goals>deploy</goals>
