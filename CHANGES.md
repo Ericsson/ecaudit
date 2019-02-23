@@ -1,6 +1,8 @@
 # Changes
 
 ## Version 2.1.0
+* Build with Cassandra 3.11.4 (only flavor ecaudit_c3.11)
+* Build with Cassandra 3.0.18 (only flavor ecaudit_c3.0)
 * Introduce configurable log message format
 * Make the audit whitelist table a protected resource in Cassandra
 
@@ -10,7 +12,7 @@
 * Make whitelist operations case insensitive
 * Remove support for whitelist management in CREATE ROLE statement
 * Limit whitelist management to one operation per statement
-* Backport ecAudit to Cassandra 3.0.11 (only in ecAudit for C* 3.0.11)
+* Backport ecAudit to Cassandra 3.0.11 (only flavor ecaudit_c3.0.11)
 
 ## Version 1.0.0
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)
@@ -18,20 +20,20 @@
 * Improve logger performance with micro benchmarks
 
 ## Version 0.22.0
-* Build with Cassandra 3.11.3 (only in ecAudit for C* 3.11.x)
-* Build with Cassandra 3.0.17 (only in ecAudit for C* 3.0.x)
+* Build with Cassandra 3.11.3 (only flavor ecaudit_c3.11)
+* Build with Cassandra 3.0.17 (only flavor ecaudit_c3.0)
 * Fix role based whitelist for non-existing ks/table (Ericsson/ecaudit#10)
 
 ## Version 0.21.0
 * Public release on Maven Central
 
 ## Version 0.11.0
-* Build with Cassandra 3.0.16 (only in ecAudit for C* 3.0.x)
+* Build with Cassandra 3.0.16 (only flavor ecaudit_c3.0)
 
 ## Version 0.10.0
 * Add support for combined YAML file and Role Based whitelists
 * Improve documentation and setup guide
-* Reduced memory footprint further for prepared statements (only in ecAudit for C* 3.11.x)
+* Reduced memory footprint further for prepared statements (only flavor ecaudit_c3.11)
 
 ## Version 0.9.0
 * Explicitly ignoring RPC (Thrift) requests
