@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Cluster;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
+import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
 import com.ericsson.bss.cassandra.ecaudit.handler.AuditQueryHandler;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.service.CassandraDaemon;

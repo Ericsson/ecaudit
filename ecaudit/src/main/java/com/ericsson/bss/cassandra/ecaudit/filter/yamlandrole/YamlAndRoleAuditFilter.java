@@ -15,6 +15,9 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.filter.yamlandrole;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.role.RoleAuditFilter;
@@ -30,12 +33,12 @@ public class YamlAndRoleAuditFilter implements AuditFilter
     private final YamlAuditFilter yamlFilter;
     private final RoleAuditFilter roleFilter;
 
-    public YamlAndRoleAuditFilter()
+    public YamlAndRoleAuditFilter(AuditConfig auditConfig)
     {
-        this(new YamlAuditFilter(), new RoleAuditFilter());
+        this(new YamlAuditFilter(auditConfig), new RoleAuditFilter());
     }
 
-    // Visible for testing
+    @VisibleForTesting
     YamlAndRoleAuditFilter(YamlAuditFilter yamlFilter, RoleAuditFilter roleFilter)
     {
         this.yamlFilter = yamlFilter;

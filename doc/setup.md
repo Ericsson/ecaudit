@@ -72,7 +72,15 @@ Run performance tests on your workload to find out what settings works best for 
 ```
 
 There are many ways to configure appenders with LOGBack.
-Refere to the [official documentation](https://logback.qos.ch/manual/appenders.html) for details.
+Refer to the [official documentation](https://logback.qos.ch/manual/appenders.html) for details.
+
+
+## The audit.yaml Configuration File
+
+By default ecAudit will look for the ```audit.yaml``` file in the Cassandra configuration directory.
+The path to the configuration file can be overrided with the ```com.ericsson.bss.cassandra.ecaudit.config``` Java property.
+
+The ecAudit configuration file allow you to define a custom log format and manage simple whitelists as described below.
 
 
 ## Custom Log Message Format
@@ -89,7 +97,7 @@ The following parameters are available:
 | OPERATION   | The CQL statement or a textual description of the operation       | yes             |
 
 
-Create/Update ```audit.yaml``` configuration file in the Cassandra configuration directory.
+Modify the ```audit.yaml``` configuration file.
 Parameter name goes between ```${``` and ```}``` (*bash*-style parameter substitution).
 Use the example below as a template to define the log message format.
 
@@ -131,7 +139,7 @@ Finally, it is also possible to disable whitelists completely in which case all 
 
 ### Role Based Whitelists
 
-The role based whitelist is configured usign custom role options in Cassandra.
+The role based whitelist is configured using custom role options in Cassandra.
 This is the default whitelist method.
 
 * Whitelists are configured per role in Cassandra.
@@ -140,7 +148,7 @@ This is the default whitelist method.
 * Only roles with SUPERUSER flag have permission to whitelist another role for connections.
 
 This whitelist type is enabled by default.
-To set it explisitly, add the following option near the end of your ```cassandra-env.sh```
+To set it explicitly, add the following option near the end of your ```cassandra-env.sh```
 
 ```
 JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Decaudit.filter_type=ROLE"
@@ -160,7 +168,7 @@ To use this whitelist method, add the following option near the end of your ```c
 JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Decaudit.filter_type=YAML"
 ```
 
-Create/Update ```audit.yaml``` configuration file in the Cassandra configuration directory.
+Modify the ```audit.yaml``` configuration file.
 
 Use the example below as a template and define the usernames to be whitelisted.
 

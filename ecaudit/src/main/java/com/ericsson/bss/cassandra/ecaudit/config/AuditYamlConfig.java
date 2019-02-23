@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.filter.yaml;
+package com.ericsson.bss.cassandra.ecaudit.config;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,12 +21,25 @@ import java.util.List;
 /**
  * Data class for configuration
  */
-public final class AuditConfig
+public final class AuditYamlConfig
 {
-    public static final String DEFAULT_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+    private static final String DEFAULT_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
 
+    private boolean fromFile = true;
     private List<String> whitelist;
     private String logFormat;
+
+    static AuditYamlConfig createWithoutFile()
+    {
+        AuditYamlConfig auditYamlConfig = new AuditYamlConfig();
+        auditYamlConfig.fromFile = false;
+        return auditYamlConfig;
+    }
+
+    boolean isFromFile()
+    {
+        return fromFile;
+    }
 
     /**
      * Get the user whitelist in this configuration
