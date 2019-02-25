@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfig;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static java.util.stream.Collectors.toList;
@@ -36,7 +35,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Implements an {@link AuditLogger} that writes {@link AuditEntry} instance into file using {@link Logger}.
  * <br>
- * It is possible to configure a parameterized log message by providing a formatting string {@link AuditYamlConfig#getLogFormat()}.
+ * It is possible to configure a parameterized log message by providing a formatting string {@link AuditConfig#getLogFormat()}.
  * The format for a parameter is {@code ${<Parameter Name>}}. With a formatting string like this: {@code "${USER} executed '${OPERATION}' from ${CLIENT}"},
  * the logged string could look like this:
  * <ul>

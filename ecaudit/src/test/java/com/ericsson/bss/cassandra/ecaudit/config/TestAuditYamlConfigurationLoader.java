@@ -37,6 +37,8 @@ public class TestAuditYamlConfigurationLoader
 
         assertThatExceptionOfType(ConfigurationException.class)
         .isThrownBy(config::getYamlWhitelist);
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(config::getLogFormat);
     }
 
     @Test
@@ -65,7 +67,7 @@ public class TestAuditYamlConfigurationLoader
     }
 
     @Test
-    public void testMissingWhitelistIsStillValid()
+    public void testMissingWhitelistIsDefault()
     {
         Properties properties = getProperties("empty.yaml");
 

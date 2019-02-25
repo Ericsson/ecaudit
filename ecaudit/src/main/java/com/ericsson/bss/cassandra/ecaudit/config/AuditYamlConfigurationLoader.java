@@ -70,6 +70,7 @@ public final class AuditYamlConfigurationLoader
 
         if (url == null)
         {
+            // No config file specified with property and no file at default location
             return AuditYamlConfig.createWithoutFile();
         }
 
@@ -93,6 +94,7 @@ public final class AuditYamlConfigurationLoader
             AuditYamlConfig auditYamlConfig = (AuditYamlConfig) yaml.load(input);
 
             if (auditYamlConfig == null) {
+                // We found a file but it was empty
                 return new AuditYamlConfig();
             }
 
