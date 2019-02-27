@@ -20,6 +20,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 
@@ -37,6 +39,7 @@ public class AuditEntry
     private final String user;
     private final UUID batchId;
     private final Status status;
+    private final long timestamp;
 
     /**
      * @see #newBuilder()
@@ -50,6 +53,7 @@ public class AuditEntry
         this.user = builder.user;
         this.batchId = builder.batchId;
         this.status = builder.status;
+        this.timestamp = builder.timestamp;
     }
 
     public InetAddress getClientAddress()
@@ -108,13 +112,21 @@ public class AuditEntry
     }
 
     /**
+     * @return the timestamp when this entry was created. Represented by the number of milliseconds since Epoch.
+     */
+    public long getTimestamp()
+    {
+        return timestamp;
+    }
+
+    /**
      * Create a new {@link Builder} instance.
      *
      * @return a new instance of {@link Builder}.
      */
     public static AuditEntry.Builder newBuilder()
     {
-        return new Builder();
+        return new Builder(System.currentTimeMillis());
     }
 
     /**
@@ -129,6 +141,13 @@ public class AuditEntry
         private String user;
         private UUID batchId;
         private Status status;
+        private long timestamp;
+
+        @VisibleForTesting
+        Builder(long timestamp)
+        {
+            this.timestamp = timestamp;
+        }
 
         public Builder client(InetAddress address)
         {
@@ -211,6 +230,7 @@ public class AuditEntry
             this.user = entry.getUser();
             this.batchId = entry.getBatchId().orElse(null);
             this.status = entry.getStatus();
+            this.timestamp = entry.getTimestamp();
             return this;
         }
 

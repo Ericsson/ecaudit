@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.1.0
+* Add support for system timestamp in log message - #27
 * Fix typo of java property for custom audit.yaml path - #59
 * Build with Cassandra 3.11.4 (only flavor ecaudit_c3.11)
 * Build with Cassandra 3.0.18 (only flavor ecaudit_c3.0)

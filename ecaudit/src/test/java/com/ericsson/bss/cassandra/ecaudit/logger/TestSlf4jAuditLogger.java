@@ -16,6 +16,9 @@
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
 import java.net.InetAddress;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -25,10 +28,10 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
-import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.TestAuditEntry;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -53,6 +56,8 @@ public class TestSlf4jAuditLogger
     private static final String EXPECTED_USER = "user";
     private static final Status EXPECTED_STATUS = Status.ATTEMPT;
     private static final UUID EXPECTED_BATCH_ID = UUID.randomUUID();
+    private static final Long EXPECTED_TIMESTAMP = 42L;
+
 
     private static AuditEntry logEntryWithBatch;
     private static AuditEntry logEntryWithoutBatch;
@@ -80,12 +85,12 @@ public class TestSlf4jAuditLogger
     {
         InetAddress expectedAddress = mock(InetAddress.class);
         when(expectedAddress.getHostAddress()).thenReturn(EXPECTED_HOST_ADDRESS);
-        logEntryWithoutBatch = AuditEntry.newBuilder()
-                                         .user(EXPECTED_USER)
-                                         .client(expectedAddress)
-                                         .operation(new SimpleAuditOperation(EXPECTED_STATEMENT))
-                                         .status(EXPECTED_STATUS)
-                                         .build();
+        logEntryWithoutBatch = TestAuditEntry.newAuditEntryBuilderWithTimestamp(EXPECTED_TIMESTAMP)
+                                                        .user(EXPECTED_USER)
+                                                        .client(expectedAddress)
+                                                        .operation(new SimpleAuditOperation(EXPECTED_STATEMENT))
+                                                        .status(EXPECTED_STATUS)
+                                                        .build();
 
         logEntryWithBatch = AuditEntry.newBuilder()
                                       .basedOn(logEntryWithoutBatch)
@@ -190,37 +195,54 @@ public class TestSlf4jAuditLogger
     @Test
     public void testAvailableParameterFunctions()
     {
-        assertThat(Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS).containsOnlyKeys("CLIENT", "USER", "BATCH_ID", "STATUS", "OPERATION");
+        AuditConfig configMock = mock(AuditConfig.class);
+        Map<String, Function<AuditEntry, Object>> availableParameterFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
+        assertThat(availableParameterFunctions).containsOnlyKeys("CLIENT", "USER", "BATCH_ID", "STATUS", "OPERATION", "TIMESTAMP");
 
-        Function<AuditEntry, Object> clientFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("CLIENT");
+        Function<AuditEntry, Object> clientFunction = availableParameterFunctions.get("CLIENT");
         assertThat(clientFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_HOST_ADDRESS);
 
-        Function<AuditEntry, Object> userFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("USER");
+        Function<AuditEntry, Object> userFunction = availableParameterFunctions.get("USER");
         assertThat(userFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_USER);
 
-        Function<AuditEntry, Object> batchIdFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("BATCH_ID");
+        Function<AuditEntry, Object> batchIdFunction = availableParameterFunctions.get("BATCH_ID");
         assertThat(batchIdFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_BATCH_ID);
         assertThat(batchIdFunction.apply(logEntryWithoutBatch)).isEqualTo(null); // Batch ID is not guaranteed to be in the log entry
 
-        Function<AuditEntry, Object> statusFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("STATUS");
+        Function<AuditEntry, Object> statusFunction = availableParameterFunctions.get("STATUS");
         assertThat(statusFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_STATUS);
 
-        Function<AuditEntry, Object> operationFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("OPERATION");
+        Function<AuditEntry, Object> operationFunction = availableParameterFunctions.get("OPERATION");
         assertThat(operationFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_STATEMENT);
+
+        Function<AuditEntry, Object> timestampFunction = availableParameterFunctions.get("TIMESTAMP");
+        assertThat(timestampFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_TIMESTAMP);
+    }
+
+    @Test
+    public void testTimestampParameterFunctionWithTimeFormatConfigured()
+    {
+        AuditConfig configMock = mock(AuditConfig.class);
+        when(configMock.getTimeFormatter()).thenReturn(Optional.of(DateTimeFormatter.ISO_INSTANT));
+
+        Function<AuditEntry, Object> timestampFunction = Slf4jAuditLogger.getTimeFunction(configMock);
+        assertThat(timestampFunction.apply(logEntryWithBatch)).isEqualTo("1970-01-01T00:00:00.042Z"); // 42 millis after EPOCH
     }
 
     @Test
     public void testThatConfigurationExceptionIsThrownWhenParameterIsMissing()
     {
-        assertThatThrownBy(() -> Slf4jAuditLogger.getParameterFunctions("Value = ${NON_EXISTING}"))
-        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format parameter: NON_EXISTING");
+        Slf4jAuditLogger slf4jAuditLogger = loggerWithConfig("");
+        assertThatThrownBy(() -> slf4jAuditLogger.getFieldFunctions("Value = ${NON_EXISTING}"))
+        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format field: NON_EXISTING");
     }
 
     @Test
     public void testThatConfigurationExceptionIsThrownWhenOptionalParameterIsMissing()
     {
-        assertThatThrownBy(() -> Slf4jAuditLogger.getParameterFunctions("{? optional ${NON_EXISTING2} ?}"))
-        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format parameter: NON_EXISTING2");
+        Slf4jAuditLogger slf4jAuditLogger = loggerWithConfig("");
+        assertThatThrownBy(() -> slf4jAuditLogger.getFieldFunctions("{? optional ${NON_EXISTING2} ?}"))
+        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format field: NON_EXISTING2");
     }
 
     private Slf4jAuditLogger loggerWithConfig(String format)
