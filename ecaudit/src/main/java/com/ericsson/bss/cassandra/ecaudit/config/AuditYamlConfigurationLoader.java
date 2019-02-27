@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.apache.cassandra.io.util.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -40,14 +39,14 @@ public final class AuditYamlConfigurationLoader
     private static final String DEFAULT_CONFIG_FILE = "audit.yaml";
 
     /**
-     * Property for the path to a {@link AuditYamlConfig} file that configures audit logging.
+     * Property for the path to a file that is matching {@link AuditYamlConfig}.
      */
     public static final String PROPERTY_CONFIG_FILE = "com.ericsson.bss.cassandra.ecaudit.config";
 
     private final Properties properties;
 
     /**
-     * Construct a new {@link AuditYamlConfigurationLoader} instance that loads configuration from the provided
+     * Construct a new AuditYamlConfigurationLoader instance that loads configuration from the provided
      * properties
      *
      * @param properties where to get the property file url from
@@ -58,89 +57,102 @@ public final class AuditYamlConfigurationLoader
     }
 
     /**
-     * Loads a {@link AuditYamlConfig} object.
+     * Loads a AuditYamlConfig object.
      *
-     * @return the {@link AuditYamlConfig}.
+     * @return the yaml configuration object.
      * @throws ConfigurationException
-     *             if the configuration cannot be properly loaded.
+     *             if the configuration cannot be properly loaded
      */
     AuditYamlConfig loadConfig() throws ConfigurationException
     {
-        URL url = getConfigURL();
-
-        if (url == null)
+        if (hasCustomConfigPath())
         {
-            // No config file specified with property and no file at default location
+            return loadConfigAtCustomPath();
+        }
+        else if (hasConfigAtDefaultPath())
+        {
+            return loadConfigAtDefaultPath();
+        }
+        else
+        {
             return AuditYamlConfig.createWithoutFile();
         }
+    }
 
-        InputStream input = null;
+    private boolean hasCustomConfigPath()
+    {
+        return properties.getProperty(PROPERTY_CONFIG_FILE) != null;
+    }
+
+    private boolean hasConfigAtDefaultPath()
+    {
+        return getDefaultConfigURL() != null;
+    }
+
+    private AuditYamlConfig loadConfigAtCustomPath()
+    {
+        URL url = getCustomConfigURL();
+        return loadConfigFromUrl(url);
+    }
+
+    private AuditYamlConfig loadConfigAtDefaultPath()
+    {
+        URL url = getDefaultConfigURL();
+        return loadConfigFromUrl(url);
+    }
+
+    private URL getCustomConfigURL()
+    {
+        String customConfigPath = properties.getProperty(PROPERTY_CONFIG_FILE);
         try
         {
-            LOG.info("Loading audit settings from {}", url);
-            try
-            {
-                input = url.openStream();
-            }
-            catch (IOException e)
-            {
-                // Shouldn't happen if getConfigURL() is used
-                throw new AssertionError(e);
-            }
+            URL url = new File(customConfigPath).toURI().toURL();
+            url.openStream().close();
+            return url;
+        }
+        catch (IOException e)
+        {
+            throw new ConfigurationException("No audit configuration file found at: " + customConfigPath, e);
+        }
+    }
 
-            final Constructor constructor = new Constructor(AuditYamlConfig.class);
-            final Yaml yaml = new Yaml(constructor);
+    private URL getDefaultConfigURL()
+    {
+        return AuditYamlConfigurationLoader.class.getClassLoader().getResource(DEFAULT_CONFIG_FILE);
+    }
+
+    private AuditYamlConfig loadConfigFromUrl(URL url)
+    {
+        LOG.info("Loading audit settings from {}", url);
+
+        try (InputStream input = url.openStream())
+        {
+            Constructor constructor = new Constructor(AuditYamlConfig.class);
+            Yaml yaml = new Yaml(constructor);
 
             AuditYamlConfig auditYamlConfig = (AuditYamlConfig) yaml.load(input);
 
             if (auditYamlConfig == null) {
-                // We found a file but it was empty
+                // File is valid but empty
                 return new AuditYamlConfig();
             }
 
             return auditYamlConfig;
         }
+        catch (IOException e)
+        {
+            throw new AssertionError(e);
+        }
         catch (YAMLException e)
         {
             throw new ConfigurationException("Invalid configuration file", e);
         }
-        finally
-        {
-            FileUtils.closeQuietly(input);
-        }
-    }
-
-    private URL getConfigURL()
-    {
-        String customConfigPath = properties.getProperty(PROPERTY_CONFIG_FILE);
-
-        URL url;
-        if (customConfigPath != null)
-        {
-            LOG.debug("Looking for audit config at " + customConfigPath);
-            try
-            {
-                url = new File(customConfigPath).toURI().toURL();
-                url.openStream().close();
-            }
-            catch (IOException e)
-            {
-                throw new ConfigurationException("Failed to load configuration from " + customConfigPath, e);
-            }
-        }
-        else
-        {
-            LOG.debug("Looking for audit config in Cassandra config directory");
-            url = AuditYamlConfigurationLoader.class.getClassLoader().getResource(DEFAULT_CONFIG_FILE);
-        }
-
-        return url;
     }
 
     /**
      * Loads a configuration from the path defined in the system properties.
      *
-     * @return an instance of {@link AuditYamlConfig}.
+     * @return an instance of AuditYamlConfig
      */
     static AuditYamlConfigurationLoader withSystemProperties()
     {
@@ -151,7 +163,7 @@ public final class AuditYamlConfigurationLoader
      * Loads a configuration from the path defined in the given properties.
      *
      * @param properties the properties containing the property url
-     * @return an instance of {@link AuditYamlConfigurationLoader}.
+     * @return an instance of AuditYamlConfigurationLoader
      * @see AuditYamlConfigurationLoader#PROPERTY_CONFIG_FILE
      */
     static AuditYamlConfigurationLoader withProperties(Properties properties)

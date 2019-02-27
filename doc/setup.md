@@ -78,7 +78,7 @@ Refer to the [official documentation](https://logback.qos.ch/manual/appenders.ht
 ## The audit.yaml Configuration File
 
 By default ecAudit will look for the ```audit.yaml``` file in the Cassandra configuration directory.
-The path to the configuration file can be overrided with the ```com.ericsson.bss.cassandra.ecaudit.config``` Java property.
+The path to the configuration file can be overridden with the ```com.ericsson.bss.cassandra.ecaudit.config``` Java property.
 
 The ecAudit configuration file allow you to define a custom log format and manage simple whitelists as described below.
 

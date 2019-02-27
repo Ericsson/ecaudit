@@ -8,7 +8,7 @@ ecAudit can be upgraded to 2.1.x from any previous major version as long as thes
 As of version 2.1.0 ecAudit will read and use the configuration in the audit.yaml file stored in the Cassandra configuration directory.
 This directory is typically ```/etc/cassandra/conf/``` but may be different depending on your deployment.
 
-The path can be overrided with the ```com.ericsson.bss.cassandra.ecaudit.config``` Java property.
+The path can be overridden with the ```com.ericsson.bss.cassandra.ecaudit.config``` Java property.
 In previous versions of ecAudit there was a typo which caused ecAudit to evaluate the `com.ericsson.bss.cassandra.eaudit.config` Java property instead.
 Users who used this previously undocumented property should fix typo in their config when upgrading to 2.1.0 or later.
 
