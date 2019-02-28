@@ -15,4 +15,4 @@
 #
 
 ---
-logFormat: user:{USER}, client:{CLIENT}
+log_format: user:{USER}, client:{CLIENT}

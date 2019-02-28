@@ -23,11 +23,14 @@ import java.util.List;
  */
 public final class AuditYamlConfig
 {
-    private static final String DEFAULT_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+    private static final List<String> DEFAULT_WHITELIST = Collections.emptyList();
+    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
 
     private boolean fromFile = true;
-    private List<String> whitelist;
-    private String logFormat;
+
+    // Configuration parameters
+    public List<String> whitelist;
+    public String log_format;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -48,17 +51,7 @@ public final class AuditYamlConfig
      */
     public List<String> getWhitelist()
     {
-        return whitelist != null ? Collections.unmodifiableList(whitelist) : Collections.emptyList();
-    }
-
-    /**
-     * Set the whitelist in this configuration
-     *
-     * @param whitelist a list of whitelisted users
-     */
-    public void setWhitelist(List<String> whitelist)
-    {
-        this.whitelist = whitelist;
+        return whitelist != null ? Collections.unmodifiableList(whitelist) : DEFAULT_WHITELIST;
     }
 
     /**
@@ -66,16 +59,6 @@ public final class AuditYamlConfig
      */
     public String getLogFormat()
     {
-        return logFormat != null ? logFormat : DEFAULT_FORMAT;
-    }
-
-    /**
-     * Set the log format in this configuration
-     *
-     * @param logFormat the log format string
-     */
-    public void setLogFormat(String logFormat)
-    {
-        this.logFormat = logFormat;
+        return log_format != null ? log_format : DEFAULT_LOG_FORMAT;
     }
 }

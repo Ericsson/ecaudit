@@ -102,7 +102,7 @@ Parameter name goes between ```${``` and ```}``` (*bash*-style parameter substit
 Use the example below as a template to define the log message format.
 
 ```YAML
-logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
+log_format: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
 ```
 
 Which will generate logs entries like this:
@@ -118,7 +118,7 @@ The example below use conditional formatting for the batch id to get different l
 was part of a batch or not.
 
 ```YAML
-logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+log_format: "client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
 ```
 
 Which will generate logs entries like this:
