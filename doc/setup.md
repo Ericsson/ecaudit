@@ -106,7 +106,7 @@ The following fields are available:
 | TIMESTAMP   | The system timestamp of the request (\*) (**)                     | yes             |
 
 (*) - This timestamp is more accurate than the LOGBack time (since that is written asynchronously).
-If this timestamp is used, than the LOGBack timestamp can be removed by reconfiguring the encoder pattern in logback.xml.
+If this timestamp is used, then the LOGBack timestamp can be removed by reconfiguring the encoder pattern in logback.xml.
 
 (**) - It is possible to configure a custom display format.
 

@@ -42,7 +42,7 @@ import org.apache.cassandra.utils.MD5Digest;
 
 /**
  * An implementation of {@link QueryHandler} that performs audit logging on queries.
- *
+ * <p>
  * It can be used as a stand-alone query handler, or wrapped inside another query handler if configuration is needed.
  */
 public class AuditQueryHandler implements QueryHandler
@@ -66,12 +66,11 @@ public class AuditQueryHandler implements QueryHandler
     /**
      * Creates an instance of {@link AuditQueryHandler} that uses the default audit logger configuration and wraps the
      * given query handler.
-     *
+     * <p>
      * The signature of this constructor must remain unchanged as it is used by other frameworks to create layers of
      * decorators on top of each other.
      *
-     * @param queryHandler
-     *            the query handler to wrap.
+     * @param queryHandler the query handler to wrap.
      */
     public AuditQueryHandler(QueryHandler queryHandler)
     {
@@ -88,7 +87,7 @@ public class AuditQueryHandler implements QueryHandler
         if (DatabaseDescriptor.startRpc())
         {
             LOG.warn("Auditing will not be performed on prepared requests on the RPC (Thrift) interface. "
-                    + "Disable the RPC server to remove this message.");
+                     + "Disable the RPC server to remove this message.");
         }
 
         this.wrappedQueryHandler = queryHandler;
@@ -97,23 +96,24 @@ public class AuditQueryHandler implements QueryHandler
 
     @Override
     public ResultMessage process(String query, QueryState state, QueryOptions options,
-            Map<String, ByteBuffer> customPayload) throws RequestExecutionException, RequestValidationException
+                                 Map<String, ByteBuffer> customPayload) throws RequestExecutionException, RequestValidationException
     {
-        auditAdapter.auditRegular(query, state.getClientState(), Status.ATTEMPT);
+        long timestamp = System.currentTimeMillis();
+        auditAdapter.auditRegular(query, state.getClientState(), Status.ATTEMPT, timestamp);
         try
         {
             return wrappedQueryHandler.process(query, state, options, customPayload);
         }
         catch (RuntimeException e)
         {
-            auditAdapter.auditRegular(query, state.getClientState(), Status.FAILED);
+            auditAdapter.auditRegular(query, state.getClientState(), Status.FAILED, timestamp);
             throw e;
         }
     }
 
     @Override
     public ResultMessage processPrepared(CQLStatement statement, QueryState state, QueryOptions options,
-            Map<String, ByteBuffer> customPayload) throws RequestExecutionException, RequestValidationException
+                                         Map<String, ByteBuffer> customPayload) throws RequestExecutionException, RequestValidationException
     {
         MD5Digest id = preparedId.get();
         if (id == null)
@@ -126,41 +126,43 @@ public class AuditQueryHandler implements QueryHandler
     }
 
     private ResultMessage processPreparedWithAudit(CQLStatement statement, MD5Digest id, QueryState state,
-            QueryOptions options, Map<String, ByteBuffer> customPayload)
-            throws RequestExecutionException, RequestValidationException
+                                                   QueryOptions options, Map<String, ByteBuffer> customPayload)
+    throws RequestExecutionException, RequestValidationException
     {
-        auditAdapter.auditPrepared(id, statement, state.getClientState(), options, Status.ATTEMPT);
+        long timestamp = System.currentTimeMillis();
+        auditAdapter.auditPrepared(id, statement, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try
         {
             return wrappedQueryHandler.processPrepared(statement, state, options, customPayload);
         }
         catch (RuntimeException e)
         {
-            auditAdapter.auditPrepared(id, statement, state.getClientState(), options, Status.FAILED);
+            auditAdapter.auditPrepared(id, statement, state.getClientState(), options, Status.FAILED, timestamp);
             throw e;
         }
     }
 
     @Override
     public ResultMessage processBatch(BatchStatement statement, QueryState state, BatchQueryOptions options,
-            Map<String, ByteBuffer> customPayload) throws RequestExecutionException, RequestValidationException
+                                      Map<String, ByteBuffer> customPayload) throws RequestExecutionException, RequestValidationException
     {
         UUID uuid = UUID.randomUUID();
-        auditAdapter.auditBatch(statement, uuid, state.getClientState(), options, Status.ATTEMPT);
+        long timestamp = System.currentTimeMillis();
+        auditAdapter.auditBatch(statement, uuid, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try
         {
             return wrappedQueryHandler.processBatch(statement, state, options, customPayload);
         }
         catch (RuntimeException e)
         {
-            auditAdapter.auditBatch(statement, uuid, state.getClientState(), options, Status.FAILED);
+            auditAdapter.auditBatch(statement, uuid, state.getClientState(), options, Status.FAILED, timestamp);
             throw e;
         }
     }
 
     @Override
     public Prepared prepare(String query, QueryState state, Map<String, ByteBuffer> customPayload)
-            throws RequestValidationException
+    throws RequestValidationException
     {
         Prepared prepared = wrappedQueryHandler.prepare(query, state, customPayload);
         auditAdapter.mapIdToQuery(prepared.statementId, query);

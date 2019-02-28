@@ -39,7 +39,7 @@ public class AuditEntry
     private final String user;
     private final UUID batchId;
     private final Status status;
-    private final long timestamp;
+    private final Long timestamp;
 
     /**
      * @see #newBuilder()
@@ -114,7 +114,7 @@ public class AuditEntry
     /**
      * @return the timestamp when this entry was created. Represented by the number of milliseconds since Epoch.
      */
-    public long getTimestamp()
+    public Long getTimestamp()
     {
         return timestamp;
     }
@@ -126,7 +126,7 @@ public class AuditEntry
      */
     public static AuditEntry.Builder newBuilder()
     {
-        return new Builder(System.currentTimeMillis());
+        return new Builder();
     }
 
     /**
@@ -141,13 +141,7 @@ public class AuditEntry
         private String user;
         private UUID batchId;
         private Status status;
-        private long timestamp;
-
-        @VisibleForTesting
-        Builder(long timestamp)
-        {
-            this.timestamp = timestamp;
-        }
+        private Long timestamp;
 
         public Builder client(InetAddress address)
         {
@@ -212,6 +206,12 @@ public class AuditEntry
         public Builder status(Status status)
         {
             this.status = status;
+            return this;
+        }
+
+        public Builder timestamp(Long timestamp)
+        {
+            this.timestamp = timestamp;
             return this;
         }
 

@@ -49,7 +49,7 @@ public class AuditConfig
         private static final AuditConfig INSTANCE = new AuditConfig(AuditYamlConfigurationLoader.withSystemProperties());
     }
 
-    public synchronized List<String> getYamlWhitelist() throws ConfigurationException
+    public List<String> getYamlWhitelist() throws ConfigurationException
     {
         loadConfigIfNeeded();
 
@@ -61,7 +61,7 @@ public class AuditConfig
         return yamlConfig.getWhitelist();
     }
 
-    public synchronized String getLogFormat() throws ConfigurationException
+    public String getLogFormat() throws ConfigurationException
     {
         loadConfigIfNeeded();
 
@@ -70,7 +70,7 @@ public class AuditConfig
                        .orElse(DEFAULT_FORMAT);
     }
 
-    public synchronized Optional<DateTimeFormatter> getTimeFormatter() throws ConfigurationException
+    public Optional<DateTimeFormatter> getTimeFormatter() throws ConfigurationException
     {
         loadConfigIfNeeded();
         try
@@ -102,7 +102,7 @@ public class AuditConfig
                     .map(formatter -> formatter.withZone(timeZoneId));
     }
 
-    private void loadConfigIfNeeded()
+    private synchronized void loadConfigIfNeeded()
     {
         if (yamlConfig == null)
         {
