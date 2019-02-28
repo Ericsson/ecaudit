@@ -89,9 +89,9 @@ To configure a custom log message format the following parameters can be configu
 
 | Parameter   | Description                                                       | Default |
 | ----------- | ----------------------------------------------------------------- | --------------- |
-| logFormat   | Parameterized log message formatting string, see examples below  | the "legacy" format, see [README](../README.md) |
-| timeFormat  | time formatter pattern, see examples below or [DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#patterns) | number of millis since EPOCH |
-| timeZone    | the time zone id, see examples below or [ZoneId](https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html#of-java.lang.String-) | system default |
+| log_format  | Parameterized log message formatting string, see examples below  | the "legacy" format, see [README](../README.md) |
+| time_format | time formatter pattern, see examples below or [DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#patterns) | number of millis since EPOCH |
+| time_zone   | the time zone id, see examples below or [ZoneId](https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html#of-java.lang.String-) | system default |
 
 It is possible to configure a parameterized log message by providing a formatting string.
 The following fields are available:
@@ -116,7 +116,7 @@ Use the example below as a template to define the log message format.
 
 ```YAML
 slf4j:
-  logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
+  log_format: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
 ```
 
 Which will generate logs entries like this:
@@ -133,9 +133,9 @@ was part of a batch or not. Also the TIMESTAMP field have a custom time format c
 
 ```YAML
 slf4j:
-  logFormat: "${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
-  timeFormat: "yyyy-MM-dd HH:mm:ss.SSS"
-  timeZone: "UTC"
+  log_format: "${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+  time_format: "yyyy-MM-dd HH:mm:ss.SSS"
+  time_zone: "UTC"
 ```
 
 Which will generate logs entries like this (assuming LOGBack pattern does not contain timestamp as well):

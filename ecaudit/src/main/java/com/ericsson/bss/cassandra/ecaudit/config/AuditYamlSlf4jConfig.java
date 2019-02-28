@@ -20,26 +20,17 @@ package com.ericsson.bss.cassandra.ecaudit.config;
  */
 public final class AuditYamlSlf4jConfig
 {
-    private String logFormat;
-    private String timeFormat;
-    private String timeZone;
+    // Configuration parameters
+    public String log_format;
+    public String time_format;
+    public String time_zone;
 
     /**
      * @return the log format in this configuration
      */
     public String getLogFormat()
     {
-        return logFormat;
-    }
-
-    /**
-     * Set the log format in this configuration
-     *
-     * @param logFormat the log format string
-     */
-    public void setLogFormat(String logFormat)
-    {
-        this.logFormat = logFormat;
+        return log_format;
     }
 
     /**
@@ -47,17 +38,7 @@ public final class AuditYamlSlf4jConfig
      */
     public String getTimeFormat()
     {
-        return timeFormat;
-    }
-
-    /**
-     * Set the time format in this configuration
-     *
-     * @param timeFormat the time format string
-     */
-    public void setTimeFormat(String timeFormat)
-    {
-        this.timeFormat = timeFormat;
+        return time_format;
     }
 
     /**
@@ -65,16 +46,6 @@ public final class AuditYamlSlf4jConfig
      */
     public String getTimeZone()
     {
-        return timeZone;
-    }
-
-    /**
-     * Set the time zone in this configuration
-     *
-     * @param timeZone the time zone string
-     */
-    public void setTimeZone(String timeZone)
-    {
-        this.timeZone = timeZone;
+        return time_zone;
     }
 }

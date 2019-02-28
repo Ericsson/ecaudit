@@ -23,9 +23,13 @@ import java.util.List;
  */
 public final class AuditYamlConfig
 {
+    private static final List<String> DEFAULT_WHITELIST = Collections.emptyList();
+
     private boolean fromFile = true;
-    private List<String> whitelist;
-    private AuditYamlSlf4jConfig slf4j;
+
+    // Configuration parameters
+    public List<String> whitelist;
+    public AuditYamlSlf4jConfig slf4j;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -46,17 +50,7 @@ public final class AuditYamlConfig
      */
     public List<String> getWhitelist()
     {
-        return whitelist != null ? Collections.unmodifiableList(whitelist) : Collections.emptyList();
-    }
-
-    /**
-     * Set the whitelist in this configuration
-     *
-     * @param whitelist a list of whitelisted users
-     */
-    public void setWhitelist(List<String> whitelist)
-    {
-        this.whitelist = whitelist;
+        return whitelist != null ? Collections.unmodifiableList(whitelist) : DEFAULT_WHITELIST;
     }
 
     /**
@@ -65,10 +59,5 @@ public final class AuditYamlConfig
     public AuditYamlSlf4jConfig getSlf4j()
     {
         return slf4j;
-    }
-
-    public void setSlf4j(AuditYamlSlf4jConfig slf4j)
-    {
-        this.slf4j = slf4j;
     }
 }
