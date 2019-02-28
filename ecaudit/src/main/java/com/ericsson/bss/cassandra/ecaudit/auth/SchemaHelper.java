@@ -24,60 +24,73 @@ import org.slf4j.LoggerFactory;
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
-import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.utils.FBUtilities;
 
 class SchemaHelper
 {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaHelper.class);
 
+    private static final long RETRY_INTERVAL_MS = 1000;
+
     private final InetAddress localAddress;
     private final Gossiper gossiper;
+    private final long retryIntervalMillis;
 
     SchemaHelper()
     {
-        this(FBUtilities.getBroadcastAddress(), Gossiper.instance);
+        this(FBUtilities.getBroadcastAddress(), Gossiper.instance, RETRY_INTERVAL_MS);
     }
 
     @VisibleForTesting
-    SchemaHelper(InetAddress localAddress, Gossiper gossiper)
+    SchemaHelper(InetAddress localAddress, Gossiper gossiper, long retryIntervalMillis)
     {
         this.localAddress = localAddress;
         this.gossiper = gossiper;
+        this.retryIntervalMillis = retryIntervalMillis;
     }
 
-    void waitForSchemaAlignment(int maxTimeToWaitInSeconds)
+    boolean areSchemasAligned(long schemaAlignmentDelayMillis)
     {
         LOG.info("Waiting for schema to align in cluster");
-        int timeToWaitInSeconds = maxTimeToWaitInSeconds;
 
-        while(areLiveNodesWaitingOnSchemaUpdate() && timeToWaitInSeconds-- > 0)
+        int delayMillis = 0;
+        while (areLiveNodesWaitingOnSchemaUpdate())
         {
+            if (delayMillis >= schemaAlignmentDelayMillis)
+            {
+                return false;
+            }
+            delayMillis += retryIntervalMillis;
+
             try
             {
-                Thread.sleep(1000);
+                Thread.sleep(retryIntervalMillis);
             }
             catch (InterruptedException e)
             {
                 Thread.currentThread().interrupt();
-                return;
+                return false;
             }
         }
+
+        return true;
     }
 
     private boolean areLiveNodesWaitingOnSchemaUpdate()
     {
-        EndpointState localEndpointState = gossiper.getEndpointStateForEndpoint(localAddress);
-        String localSchemaId = localEndpointState.getApplicationState(ApplicationState.SCHEMA).value;
+        String localSchemaId = tryGetSchemaId(localAddress);
+        if (localSchemaId == null)
+        {
+            return true;
+        }
 
         for (InetAddress memberAddress : gossiper.getLiveMembers())
         {
             if (isRemoteEndpoint(memberAddress))
             {
-                EndpointState memberEndpointState = gossiper.getEndpointStateForEndpoint(memberAddress);
-                VersionedValue memberVersionedSchema = memberEndpointState.getApplicationState(ApplicationState.SCHEMA);
-                if (isDifferentSchema(localSchemaId, memberVersionedSchema)) {
-                    LOG.debug("Endpoint {} is not aligned yet", memberAddress);
+                if (isDifferentSchema(localSchemaId, memberAddress))
+                {
+                    LOG.debug("Waiting for schema alignment at endpoint {}", memberAddress);
                     return true;
                 }
             }
@@ -86,13 +99,27 @@ class SchemaHelper
         return false;
     }
 
+    private String tryGetSchemaId(InetAddress address)
+    {
+        EndpointState endpointState = gossiper.getEndpointStateForEndpoint(address);
+        if (endpointState != null)
+        {
+            return endpointState.getApplicationState(ApplicationState.SCHEMA).value;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
     private boolean isRemoteEndpoint(InetAddress memberAddress)
     {
         return !memberAddress.equals(localAddress);
     }
 
-    private boolean isDifferentSchema(String localSchema, VersionedValue versionedValue)
+    private boolean isDifferentSchema(String localSchemaId, InetAddress memberAddress)
     {
-        return versionedValue != null && !localSchema.equals(versionedValue.value);
+        String remoteSchemaId = tryGetSchemaId(memberAddress);
+        return !localSchemaId.equals(remoteSchemaId);
     }
 }

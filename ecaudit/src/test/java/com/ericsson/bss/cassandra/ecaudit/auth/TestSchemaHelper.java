@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.UUID;
 
 import com.google.common.collect.ImmutableSet;
@@ -41,15 +42,15 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestSchemaHelper
 {
+    private static final long RETRY_INTERVAL_MILLIS = 100;
+
     @Mock
     private Gossiper mockGossiper;
 
     private SchemaHelper schemaHelper;
 
-    private EndpointState localEndpointState;
-    private EndpointState anotherEndpointState;
-
-    private InetAddress remoteEndpoint;
+    private EndpointState currentEndpointState;
+    private EndpointState previousEndpointState;
 
     @BeforeClass
     public static void beforeClass()
@@ -60,17 +61,14 @@ public class TestSchemaHelper
     @Before
     public void before() throws Exception
     {
+        currentEndpointState = createEndpointStateWithSchema();
+        previousEndpointState = createEndpointStateWithSchema();
+
         InetAddress localEndpoint = InetAddress.getLoopbackAddress();
-        localEndpointState = createEndpointStateWithSchema();
-        when(mockGossiper.getEndpointStateForEndpoint(eq(localEndpoint))).thenReturn(localEndpointState);
-
-        remoteEndpoint = InetAddress.getByName("127.0.0.2");
-
-        anotherEndpointState = createEndpointStateWithSchema();
-
+        InetAddress remoteEndpoint = InetAddress.getByName("127.0.0.2");
         when(mockGossiper.getLiveMembers()).thenReturn(ImmutableSet.of(localEndpoint, remoteEndpoint));
 
-        schemaHelper = new SchemaHelper(localEndpoint, mockGossiper);
+        schemaHelper = new SchemaHelper(localEndpoint, mockGossiper, RETRY_INTERVAL_MILLIS);
     }
 
     @AfterClass
@@ -79,40 +77,66 @@ public class TestSchemaHelper
         Config.setClientMode(false);
     }
 
-    @Test(timeout = 999)
-    public void testSyncedFromStart()
+    @Test(timeout = (RETRY_INTERVAL_MILLIS) - 1)
+    public void testSyncedFromStart() throws UnknownHostException
     {
-        when(mockGossiper.getEndpointStateForEndpoint(eq(remoteEndpoint)))
-        .thenReturn(localEndpointState);
+        givenLocalStateOrder(currentEndpointState);
+        givenRemoteStateOrder(currentEndpointState);
 
-        schemaHelper.waitForSchemaAlignment(10);
+        assertThat(schemaHelper.areSchemasAligned(10 * RETRY_INTERVAL_MILLIS)).isTrue();
     }
 
-    @Test(timeout = 1999)
-    public void testSyncedAfterOneSecond()
+    @Test(timeout = (3 * RETRY_INTERVAL_MILLIS) - 1)
+    public void testRemoveSyncedAfterTwoTries() throws UnknownHostException
     {
-        when(mockGossiper.getEndpointStateForEndpoint(eq(remoteEndpoint)))
-        .thenReturn(anotherEndpointState)
-        .thenReturn(localEndpointState);
+        givenLocalStateOrder(currentEndpointState);
+        givenRemoteStateOrder(null, previousEndpointState, currentEndpointState);
 
         long startTime = System.currentTimeMillis();
 
-        schemaHelper.waitForSchemaAlignment(10);
+        assertThat(schemaHelper.areSchemasAligned(10 * RETRY_INTERVAL_MILLIS)).isTrue();
 
-        assertWaitTimeInMillis(startTime, 1000L);
+        assertWaitTimeInMillis(startTime, 2 * RETRY_INTERVAL_MILLIS);
     }
 
-    @Test(timeout = 1999)
-    public void testSyncTimeout()
+    @Test(timeout = (2 * RETRY_INTERVAL_MILLIS) - 1)
+    public void testSyncTimeout() throws UnknownHostException
     {
-        when(mockGossiper.getEndpointStateForEndpoint(eq(remoteEndpoint)))
-        .thenReturn(anotherEndpointState);
+        givenLocalStateOrder(currentEndpointState);
+        givenRemoteStateOrder(previousEndpointState);
 
         long startTime = System.currentTimeMillis();
 
-        schemaHelper.waitForSchemaAlignment(1);
+        assertThat(schemaHelper.areSchemasAligned(RETRY_INTERVAL_MILLIS)).isFalse();
 
-        assertWaitTimeInMillis(startTime, 1000L);
+        assertWaitTimeInMillis(startTime, RETRY_INTERVAL_MILLIS);
+    }
+
+    @Test(timeout = (2 * RETRY_INTERVAL_MILLIS) - 1)
+    public void testNoLocalSchemaInFirstTry() throws UnknownHostException
+    {
+        givenLocalStateOrder(null, currentEndpointState);
+        givenRemoteStateOrder(currentEndpointState);
+
+        long startTime = System.currentTimeMillis();
+
+        assertThat(schemaHelper.areSchemasAligned(10 * RETRY_INTERVAL_MILLIS)).isTrue();
+
+        assertWaitTimeInMillis(startTime, RETRY_INTERVAL_MILLIS);
+    }
+
+    private void givenLocalStateOrder(EndpointState endpointState, EndpointState... endpointStates)
+    {
+        InetAddress localEndpoint = InetAddress.getLoopbackAddress();
+        when(mockGossiper.getEndpointStateForEndpoint(eq(localEndpoint)))
+        .thenReturn(endpointState, endpointStates);
+    }
+
+    private void givenRemoteStateOrder(EndpointState endpointState, EndpointState... endpointStates) throws UnknownHostException
+    {
+        InetAddress remoteEndpoint = InetAddress.getByName("127.0.0.2");
+        when(mockGossiper.getEndpointStateForEndpoint(eq(remoteEndpoint)))
+        .thenReturn(endpointState, endpointStates);
     }
 
     private EndpointState createEndpointStateWithSchema()
@@ -125,9 +149,9 @@ public class TestSchemaHelper
         return endpointState;
     }
 
-    private void assertWaitTimeInMillis(long startTime, long delay)
+    private void assertWaitTimeInMillis(long startTime, long millis)
     {
         long now = System.currentTimeMillis();
-        assertThat(now - startTime).isGreaterThan(delay);
+        assertThat(now - startTime).isGreaterThanOrEqualTo(millis);
     }
 }
