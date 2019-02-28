@@ -21,8 +21,10 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
+import com.ericsson.bss.cassandra.ecaudit.auth.Exceptions;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
@@ -30,13 +32,14 @@ import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.auth.Roles;
+import org.apache.cassandra.exceptions.CassandraException;
 
 /**
  * A role based white-list filter that exempts users based on custom options on roles in Cassandra.
  */
 public class RoleAuditFilter implements AuditFilter
 {
-    public static final int MAX_RESOURCE_DEPTH = 3;
+    private static final int MAX_RESOURCE_DEPTH = 3;
 
     private final AuditWhitelistCache whitelistCache;
     private final WhitelistDataAccess whitelistDataAccess;
@@ -76,7 +79,14 @@ public class RoleAuditFilter implements AuditFilter
     public boolean isFiltered(AuditEntry logEntry)
     {
         RoleResource primaryRole = RoleResource.role(logEntry.getUser());
-        return isFiltered(Roles.getRoles(primaryRole), logEntry.getPermissions(), logEntry.getResource());
+        try
+        {
+            return isFiltered(Roles.getRoles(primaryRole), logEntry.getPermissions(), logEntry.getResource());
+        }
+        catch (UncheckedExecutionException e)
+        {
+            throw Exceptions.tryGetCassandraExceptionCause(e);
+        }
     }
 
     @VisibleForTesting

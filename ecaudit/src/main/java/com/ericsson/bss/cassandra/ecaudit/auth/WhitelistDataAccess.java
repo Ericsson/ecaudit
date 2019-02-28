@@ -58,6 +58,7 @@ public class WhitelistDataAccess
 {
     private static final Logger LOG = LoggerFactory.getLogger(WhitelistDataAccess.class);
 
+    private static final int MAX_WAIT_TIME_FOR_SCHEMA_ALIGNMENT_IN_SECONDS = 120;
     private boolean setupCompleted = false;
 
     private static final String DEFAULT_SUPERUSER_NAME = "cassandra";
@@ -203,13 +204,21 @@ public class WhitelistDataAccess
         KeyspaceMetadata expected = AuditAuthKeyspace.metadata();
         KeyspaceMetadata defined = Schema.instance.getKSMetaData(expected.name);
 
+        boolean changesAnnounced = false;
         for (CFMetaData expectedTable : expected.tables)
         {
             CFMetaData definedTable = defined.tables.get(expectedTable.cfName).orElse(null);
             if (definedTable == null || !definedTable.equals(expectedTable))
             {
                 MigrationManager.forceAnnounceNewColumnFamily(expectedTable);
+                changesAnnounced = true;
             }
+        }
+
+        if (changesAnnounced)
+        {
+            SchemaHelper schemaHelper = new SchemaHelper();
+            schemaHelper.waitForSchemaAlignment(MAX_WAIT_TIME_FOR_SCHEMA_ALIGNMENT_IN_SECONDS);
         }
     }
 
