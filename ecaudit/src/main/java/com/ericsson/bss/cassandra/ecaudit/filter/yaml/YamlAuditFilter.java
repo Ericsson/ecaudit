@@ -15,12 +15,10 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.filter.yaml;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 
@@ -29,27 +27,12 @@ import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
  */
 public class YamlAuditFilter implements AuditFilter
 {
-    private final List<String> whitelist;
+    private final AuditConfig auditConfig;
+    private List<String> whitelist;
 
-    /**
-     * Create a new instance of {@link YamlAuditFilter}.
-     */
-    public YamlAuditFilter()
+    public YamlAuditFilter(AuditConfig auditConfig)
     {
-        this(AuditYamlConfigurationLoader.withSystemProperties());
-    }
-
-    /**
-     * Create a new instance of {@link YamlAuditFilter}.
-     *
-     * @param configurationLoader
-     *            the configuration to load the whitelist from
-     */
-    @VisibleForTesting
-    YamlAuditFilter(AuditConfigurationLoader configurationLoader)
-    {
-        AuditConfig config = configurationLoader.loadConfig();
-        whitelist = new ArrayList<>(config.getWhitelist());
+        this.auditConfig = auditConfig;
     }
 
     @Override
@@ -68,6 +51,6 @@ public class YamlAuditFilter implements AuditFilter
     @Override
     public void setup()
     {
-        // Intentionally empty
+        whitelist = auditConfig.getYamlWhitelist();
     }
 }

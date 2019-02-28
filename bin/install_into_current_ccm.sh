@@ -25,7 +25,7 @@ if [ ! -f ${CCM_CONFIG}/CURRENT ]; then
  exit 2
 fi
 
-if [ ! -f ${SCRIPT_PATH}/../target/ecaudit*.jar ]; then
+if [ ! -f ${SCRIPT_PATH}/../ecaudit/target/ecaudit*.jar ]; then
  echo "No jar file found. Build project and try again."
  exit 3
 fi
@@ -37,7 +37,7 @@ CLUSTER_PATH=${CCM_CONFIG}/${CCM_CLUSTER_NAME}
 
 mkdir -p ${CLUSTER_PATH}/lib
 rm -f ${CLUSTER_PATH}/lib/ecaudit.jar
-ln -s ${SCRIPT_PATH}/../target/ecaudit*.jar ${CLUSTER_PATH}/lib/ecaudit.jar
+ln -s ${SCRIPT_PATH}/../ecaudit/target/ecaudit*.jar ${CLUSTER_PATH}/lib/ecaudit.jar
 
 grep -sq ecaudit.jar ${CLUSTER_PATH}/cassandra.in.sh
 if [ $? -ne 0 ]; then

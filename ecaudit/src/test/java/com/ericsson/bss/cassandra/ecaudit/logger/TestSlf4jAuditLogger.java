@@ -24,11 +24,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
+import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfigurationLoader;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -46,6 +46,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestSlf4jAuditLogger
 {
+    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
     private static final String DEFAULT_LOG_TEMPLATE = "client:'{}'|user:'{}'{}{}{}|status:'{}'|operation:'{}'";
     private static final String EXPECTED_STATEMENT = "select * from ks.tbl";
     private static final String EXPECTED_HOST_ADDRESS = "127.0.0.1";
@@ -95,7 +96,7 @@ public class TestSlf4jAuditLogger
     @Test
     public void testDefaultFormatAuditEntryNoBatch()
     {
-        Slf4jAuditLogger logger = loggerWithConfig(AuditConfig.DEFAULT_FORMAT);
+        Slf4jAuditLogger logger = loggerWithConfig(DEFAULT_LOG_FORMAT);
         logger.log(logEntryWithoutBatch);
 
         // Capture and perform validation
@@ -120,7 +121,7 @@ public class TestSlf4jAuditLogger
     @Test
     public void testDefaultFormatAuditEntryWithBatch()
     {
-        Slf4jAuditLogger logger = loggerWithConfig(AuditConfig.DEFAULT_FORMAT);
+        Slf4jAuditLogger logger = loggerWithConfig(DEFAULT_LOG_FORMAT);
         logger.log(logEntryWithBatch);
 
         // Capture and perform validation
@@ -222,33 +223,16 @@ public class TestSlf4jAuditLogger
         .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format parameter: NON_EXISTING2");
     }
 
-    @Test
-    public void testGetLogFormatConfigurationWhenNoConfigExists()
-    {
-        AuditConfigurationLoader loaderWithoutConfig = mock(AuditConfigurationLoader.class);
-        assertThat(Slf4jAuditLogger.getLogFormatConfiguration(loaderWithoutConfig)).isEqualTo(AuditConfig.DEFAULT_FORMAT);
-    }
-
-    @Test
-    public void testGetLogFormatConfiguration()
-    {
-        AuditConfigurationLoader loaderWithConfig = mockConfigLoader("a config");
-        assertThat(Slf4jAuditLogger.getLogFormatConfiguration(loaderWithConfig)).isEqualTo("a config");
-    }
-
     private Slf4jAuditLogger loggerWithConfig(String format)
     {
-        AuditConfigurationLoader loaderMock = mockConfigLoader(format);
-        return new Slf4jAuditLogger(loggerMock, loaderMock);
+        AuditConfig mockConfig = mockAuditConfig(format);
+        return new Slf4jAuditLogger(mockConfig, loggerMock);
     }
 
-    private AuditConfigurationLoader mockConfigLoader(String format)
+    private AuditConfig mockAuditConfig(String logFormat)
     {
-        AuditConfig config = new AuditConfig();
-        config.setLogFormat(format);
-        AuditConfigurationLoader loaderMock = mock(AuditConfigurationLoader.class);
-        when(loaderMock.configExist()).thenReturn(true);
-        when(loaderMock.loadConfig()).thenReturn(config);
-        return loaderMock;
+        AuditConfig mockConfig = mock(AuditConfig.class);
+        when(mockConfig.getLogFormat()).thenReturn(logFormat);
+        return mockConfig;
     }
 }

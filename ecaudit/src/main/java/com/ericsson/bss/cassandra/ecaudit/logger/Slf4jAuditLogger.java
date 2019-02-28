@@ -26,10 +26,8 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfigurationLoader;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static java.util.stream.Collectors.toList;
@@ -74,33 +72,28 @@ public class Slf4jAuditLogger implements AuditLogger
     private final List<Function<AuditEntry, Object>> parameterFunctions;
 
     /**
-     * Default constructor, injects logger from {@link LoggerFactory}.
+     * Constructor, injects logger from {@link LoggerFactory}.
+     *
+     * @param auditConfig the audit configuration which provide the log format
      */
-    public Slf4jAuditLogger()
+    public Slf4jAuditLogger(AuditConfig auditConfig)
     {
-        this(LoggerFactory.getLogger(AUDIT_LOGGER_NAME), AuditYamlConfigurationLoader.withSystemProperties());
+        this(auditConfig, LoggerFactory.getLogger(AUDIT_LOGGER_NAME));
     }
 
     /**
      * Test constructor.
      *
-     * @param logger              the logger backend to use for audit logs
-     * @param configurationLoader the configuration to load the log format from
+     * @param auditConfig the audit configuration which provide the log format
+     * @param logger      the logger backend to use for audit logs
      */
     @VisibleForTesting
-    Slf4jAuditLogger(Logger logger, AuditConfigurationLoader configurationLoader)
+    Slf4jAuditLogger(AuditConfig auditConfig, Logger logger)
     {
         auditLogger = logger;
-        String logFormat = getLogFormatConfiguration(configurationLoader);
+        String logFormat = auditConfig.getLogFormat();
         logTemplate = getTemplateFromFormatString(logFormat);
         parameterFunctions = getParameterFunctions(logFormat);
-    }
-
-    static String getLogFormatConfiguration(AuditConfigurationLoader configurationLoader)
-    {
-        return configurationLoader.configExist()
-               ? configurationLoader.loadConfig().getLogFormat()
-               : AuditConfig.DEFAULT_FORMAT;
     }
 
     private static String getTemplateFromFormatString(String logFormat)
