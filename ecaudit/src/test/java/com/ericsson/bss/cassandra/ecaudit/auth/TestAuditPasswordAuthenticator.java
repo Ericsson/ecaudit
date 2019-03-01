@@ -36,10 +36,12 @@ import org.apache.cassandra.exceptions.AuthenticationException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static com.ericsson.bss.cassandra.ecaudit.handler.TestAuditQueryHandler.isCloseToNow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -119,8 +121,8 @@ public class TestAuditPasswordAuthenticator
         assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(negotiator::getAuthenticatedUser);
 
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT));
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
     @Test
@@ -138,8 +140,8 @@ public class TestAuditPasswordAuthenticator
         assertThatExceptionOfType(AuthenticationException.class)
         .isThrownBy(negotiator::getAuthenticatedUser);
 
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT));
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
     @Test
@@ -154,7 +156,7 @@ public class TestAuditPasswordAuthenticator
         negotiator.evaluateResponse(clientResponse);
 
         negotiator.getAuthenticatedUser();
-        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(clientAddress), eq(Status.ATTEMPT));
+        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(clientAddress), eq(Status.ATTEMPT), longThat(isCloseToNow()));
     }
 
     @SuppressWarnings("unchecked")

@@ -72,29 +72,51 @@ Run performance tests on your workload to find out what settings works best for 
 ```
 
 There are many ways to configure appenders with LOGBack.
-Refere to the [official documentation](https://logback.qos.ch/manual/appenders.html) for details.
+Refer to the [official documentation](https://logback.qos.ch/manual/appenders.html) for details.
+
+
+## The audit.yaml Configuration File
+
+By default ecAudit will look for the ```audit.yaml``` file in the Cassandra configuration directory.
+The path to the configuration file can be overridden with the ```com.ericsson.bss.cassandra.ecaudit.config``` Java property.
+
+The ecAudit configuration file allow you to define a custom log format and manage simple whitelists as described below.
 
 
 ## Custom Log Message Format
 
-It is possible to configure a parameterized log message by providing a formatting string.
-The following parameters are available:
+To configure a custom log message format the following parameters can be configured in the ```audit.yaml``` file:
 
-| Parameter   | Field Value                                                       | Mandatory Field |
+| Parameter   | Description                                                       | Default |
+| ----------- | ----------------------------------------------------------------- | --------------- |
+| log_format  | Parameterized log message formatting string, see examples below  | the "legacy" format, see [README](../README.md) |
+| time_format | time formatter pattern, see examples below or [DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#patterns) | number of millis since EPOCH |
+| time_zone   | the time zone id, see examples below or [ZoneId](https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html#of-java.lang.String-) | system default |
+
+It is possible to configure a parameterized log message by providing a formatting string.
+The following fields are available:
+
+| Field       | Field Value                                                       | Mandatory Field |
 | ----------- | ----------------------------------------------------------------- | --------------- |
 | CLIENT      | Client IP address                                                 | yes             |
 | USER        | Username of the authenticated user                                | yes             |
 | BATCH_ID    | Internal identifier shared by all statements in a batch operation | no              |
 | STATUS      | Value is either ATTEMPT or FAILED                                 | yes             |
 | OPERATION   | The CQL statement or a textual description of the operation       | yes             |
+| TIMESTAMP   | The system timestamp of the request (\*) (**)                     | yes             |
 
+(*) - This timestamp is more accurate than the LOGBack time (since that is written asynchronously).
+If this timestamp is used, then the LOGBack timestamp can be removed by reconfiguring the encoder pattern in logback.xml.
 
-Create/Update ```audit.yaml``` configuration file in the Cassandra configuration directory.
-Parameter name goes between ```${``` and ```}``` (*bash*-style parameter substitution).
+(**) - It is possible to configure a custom display format.
+
+Modify the ```audit.yaml``` configuration file.
+Field name goes between ```${``` and ```}``` (*bash*-style parameter substitution).
 Use the example below as a template to define the log message format.
 
 ```YAML
-logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
+slf4j:
+  log_format: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
 ```
 
 Which will generate logs entries like this:
@@ -103,22 +125,25 @@ Which will generate logs entries like this:
 15:18:14.089 - client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='SELECT * FROM students'
 ```
 
-*Conditional formatting* of parameters is also available, which makes it possible to only log the parameter value and
+*Conditional formatting* of fields is also available, which makes it possible to only log the field value and
 its descriptive text only if a value exists, which can be useful for optional fields like BATCH_ID.
-Conditional parameters and its associated text goes between ```{?``` and ```?}```.
+Conditional fields and its associated text goes between ```{?``` and ```?}```.
 The example below use conditional formatting for the batch id to get different log messges depending on if the operation
-was part of a batch or not.
+was part of a batch or not. Also the TIMESTAMP field have a custom time format configured.
 
 ```YAML
-logFormat: "client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+slf4j:
+  log_format: "${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+  time_format: "yyyy-MM-dd HH:mm:ss.SSS"
+  time_zone: "UTC"
 ```
 
-Which will generate logs entries like this:
+Which will generate logs entries like this (assuming LOGBack pattern does not contain timestamp as well):
 
 ```
-15:18:14.089 - client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='SELECT * FROM students'
-15:18:14.090 - client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=6f3cae9b-f1f1-4a4c-baa2-ed168ee79f9d, operation='INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']'
-15:18:14.091 - client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=6f3cae9b-f1f1-4a4c-baa2-ed168ee79f9d, operation='INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[2, '2', 'valid']'
+2019-02-28 15:18:14.089-> client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='SELECT * FROM students'
+2019-02-28 15:18:14.090-> client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=6f3cae9b-f1f1-4a4c-baa2-ed168ee79f9d, operation='INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']'
+2019-02-28 15:18:14.091-> client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=6f3cae9b-f1f1-4a4c-baa2-ed168ee79f9d, operation='INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[2, '2', 'valid']'
 ```
 
 
@@ -131,7 +156,7 @@ Finally, it is also possible to disable whitelists completely in which case all 
 
 ### Role Based Whitelists
 
-The role based whitelist is configured usign custom role options in Cassandra.
+The role based whitelist is configured using custom role options in Cassandra.
 This is the default whitelist method.
 
 * Whitelists are configured per role in Cassandra.
@@ -140,7 +165,7 @@ This is the default whitelist method.
 * Only roles with SUPERUSER flag have permission to whitelist another role for connections.
 
 This whitelist type is enabled by default.
-To set it explisitly, add the following option near the end of your ```cassandra-env.sh```
+To set it explicitly, add the following option near the end of your ```cassandra-env.sh```
 
 ```
 JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Decaudit.filter_type=ROLE"
@@ -160,7 +185,7 @@ To use this whitelist method, add the following option near the end of your ```c
 JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Decaudit.filter_type=YAML"
 ```
 
-Create/Update ```audit.yaml``` configuration file in the Cassandra configuration directory.
+Modify the ```audit.yaml``` configuration file.
 
 Use the example below as a template and define the usernames to be whitelisted.
 

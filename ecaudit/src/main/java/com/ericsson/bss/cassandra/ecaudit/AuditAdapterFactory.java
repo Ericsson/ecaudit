@@ -18,6 +18,7 @@ package com.ericsson.bss.cassandra.ecaudit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
@@ -53,7 +54,7 @@ class AuditAdapterFactory
      */
     static AuditAdapter createAuditAdapter()
     {
-        AuditLogger logger = new Slf4jAuditLogger();
+        AuditLogger logger = new Slf4jAuditLogger(AuditConfig.getInstance());
         PasswordObfuscator obfuscator = new PasswordObfuscator();
 
         AuditFilter filter = createFilter();
@@ -78,13 +79,13 @@ class AuditAdapterFactory
         {
         case FILTER_TYPE_YAML:
             LOG.info("Audit whitelist from YAML file");
-            return new YamlAuditFilter();
+            return new YamlAuditFilter(AuditConfig.getInstance());
         case FILTER_TYPE_ROLE:
             LOG.info("Audit whitelist from ROLE options");
             return new RoleAuditFilter();
         case FILTER_TYPE_YAML_AND_ROLE:
             LOG.info("Audit whitelist from YAML file and ROLE options");
-            return new YamlAndRoleAuditFilter();
+            return new YamlAndRoleAuditFilter(AuditConfig.getInstance());
         case FILTER_TYPE_NONE:
             LOG.info("No audit whitelist");
             return new DefaultAuditFilter();

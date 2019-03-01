@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.Mock;
@@ -37,7 +38,7 @@ import static org.mockito.Mockito.when;
 public class TestYamlAuditFilter
 {
     @Mock
-    private AuditConfigurationLoader configLoaderMock;
+    private AuditConfig configMock;
 
     @Test
     public void testSetupDoNotFail()
@@ -76,20 +77,20 @@ public class TestYamlAuditFilter
     @Test
     public void testExceptionOnConfigError()
     {
-        when(configLoaderMock.loadConfig()).thenThrow(new ConfigurationException("something failed"));
+        when(configMock.getYamlWhitelist()).thenThrow(new ConfigurationException("something failed"));
+        YamlAuditFilter filter = new YamlAuditFilter(configMock);
 
         assertThatExceptionOfType(ConfigurationException.class)
-        .isThrownBy(() -> new YamlAuditFilter(configLoaderMock));
+        .isThrownBy(filter::setup);
     }
 
     private YamlAuditFilter givenConfiguredFilter()
     {
-        AuditConfig config = new AuditConfig();
-        config.setWhitelist(Arrays.asList("User1", "User2"));
+        when(configMock.getYamlWhitelist()).thenReturn(Arrays.asList("User1", "User2"));
 
-        when(configLoaderMock.loadConfig()).thenReturn(config);
-
-        return new YamlAuditFilter(configLoaderMock);
+        YamlAuditFilter filter = new YamlAuditFilter(configMock);
+        filter.setup();
+        return filter;
     }
 
     private static AuditEntry toLogEntry(String user)

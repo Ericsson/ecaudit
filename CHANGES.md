@@ -1,9 +1,11 @@
 # Changes
 
 ## Version 2.1.0
+* Add support for system timestamp in log message - #27
+* Fix typo of java property for custom audit.yaml path - #59
 * Build with Cassandra 3.11.4 (only flavor ecaudit_c3.11)
 * Build with Cassandra 3.0.18 (only flavor ecaudit_c3.0)
-* Introduce configurable log message format
+* Introduce configurable log message format - #55
 * Make the audit whitelist table a protected resource in Cassandra
 
 ## Version 2.0.0

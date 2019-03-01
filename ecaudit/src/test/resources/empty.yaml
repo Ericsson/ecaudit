@@ -14,7 +14,3 @@
 # limitations under the License.
 #
 
----
-slf4j:
-  log_format: "user:{USER}, client:{CLIENT}"
-  time_format: "yyyy-MM-dd HH:mm:ss.SSS"
