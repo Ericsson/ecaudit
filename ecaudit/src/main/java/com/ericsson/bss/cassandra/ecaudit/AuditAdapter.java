@@ -56,10 +56,8 @@ public class AuditAdapter
     /**
      * Constructor, see {@link AuditAdapterFactory#createAuditAdapter()}
      *
-     * @param auditor
-     *            the auditor to use
-     * @param entryBuilderFactory
-     *            the audit entry builder factory to use
+     * @param auditor             the auditor to use
+     * @param entryBuilderFactory the audit entry builder factory to use
      */
     AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory)
     {
@@ -85,21 +83,20 @@ public class AuditAdapter
     /**
      * Audit a regular CQL statement.
      *
-     * @param operation
-     *            the CQL statement to audit
-     * @param state
-     *            the client state accompanying the statement
-     * @param status
-     *            the statement operation status
+     * @param operation the CQL statement to audit
+     * @param state     the client state accompanying the statement
+     * @param status    the statement operation status
+     * @param timestamp the system timestamp for the request
      */
-    public void auditRegular(String operation, ClientState state, Status status)
+    public void auditRegular(String operation, ClientState state, Status status, long timestamp)
     {
         AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
-                .client(state.getRemoteAddress().getAddress())
-                .user(state.getUser().getName())
-                .operation(new SimpleAuditOperation(operation))
-                .status(status)
-                .build();
+                                                 .client(state.getRemoteAddress().getAddress())
+                                                 .user(state.getUser().getName())
+                                                 .operation(new SimpleAuditOperation(operation))
+                                                 .status(status)
+                                                 .timestamp(timestamp)
+                                                 .build();
 
         auditor.audit(logEntry);
     }
@@ -107,25 +104,22 @@ public class AuditAdapter
     /**
      * Audit a prepared statement.
      *
-     * @param id
-     *            the statement id
-     * @param statement
-     *            the statement to audit
-     * @param state
-     *            the client state accompanying the statement
-     * @param options
-     *            the options accompanying the statement
-     * @param status
-     *            the statement operation status
+     * @param id        the statement id
+     * @param statement the statement to audit
+     * @param state     the client state accompanying the statement
+     * @param options   the options accompanying the statement
+     * @param status    the status of the operation
+     * @param timestamp the system timestamp for the request
      */
-    public void auditPrepared(MD5Digest id, CQLStatement statement, ClientState state, QueryOptions options, Status status)
+    public void auditPrepared(MD5Digest id, CQLStatement statement, ClientState state, QueryOptions options, Status status, long timestamp)
     {
         AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
-                .client(state.getRemoteAddress().getAddress())
-                .user(state.getUser().getName())
-                .operation(new PreparedAuditOperation(idQueryCache.get(id), options))
-                .status(status)
-                .build();
+                                                 .client(state.getRemoteAddress().getAddress())
+                                                 .user(state.getUser().getName())
+                                                 .operation(new PreparedAuditOperation(idQueryCache.get(id), options))
+                                                 .status(status)
+                                                 .timestamp(timestamp)
+                                                 .build();
 
         auditor.audit(logEntry);
     }
@@ -133,24 +127,21 @@ public class AuditAdapter
     /**
      * Audit a batch statement.
      *
-     * @param statement
-     *            the batch statement to audit
-     * @param uuid
-     *            to identify the batch
-     * @param state
-     *            the client state accompanying the statement
-     * @param options
-     *            the batch options accompanying the statement
-     * @param status
-     *            the status of the operation
+     * @param statement the batch statement to audit
+     * @param uuid      to identify the batch
+     * @param state     the client state accompanying the statement
+     * @param options   the batch options accompanying the statement
+     * @param status    the status of the operation
+     * @param timestamp the system timestamp for the request
      */
-    public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status)
+    public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status, long timestamp)
     {
         AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
-                .client(state.getRemoteAddress().getAddress())
-                .user(state.getUser().getName())
-                .batch(uuid)
-                .status(status);
+                                                        .client(state.getRemoteAddress().getAddress())
+                                                        .user(state.getUser().getName())
+                                                        .batch(uuid)
+                                                        .status(status)
+                                                        .timestamp(timestamp);
 
         if (status == Status.FAILED)
         {
@@ -169,21 +160,20 @@ public class AuditAdapter
     /**
      * Audit an authentication attempt.
      *
-     * @param username
-     *            the user to authenticate
-     * @param clientIp
-     *            the address of the client that tries to authenticate
-     * @param status
-     *            the status of the operation
+     * @param username the user to authenticate
+     * @param clientIp the address of the client that tries to authenticate
+     * @param status   the status of the operation
+     * @param timestamp the system timestamp for the request
      */
-    public void auditAuth(String username, InetAddress clientIp, Status status)
+    public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp)
     {
         AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
-                .client(clientIp)
-                .user(username)
-                .status(status)
-                .operation(status == Status.ATTEMPT ? AUTHENTICATION_ATTEMPT : AUTHENTICATION_FAILED)
-                .build();
+                                                 .client(clientIp)
+                                                 .user(username)
+                                                 .status(status)
+                                                 .operation(status == Status.ATTEMPT ? AUTHENTICATION_ATTEMPT : AUTHENTICATION_FAILED)
+                                                 .timestamp(timestamp)
+                                                 .build();
 
         auditor.audit(logEntry);
     }
@@ -191,10 +181,8 @@ public class AuditAdapter
     /**
      * Map a prepared statement id to a raw query string.
      *
-     * @param id
-     *            the id of the prepared statement
-     * @param query
-     *            the query string
+     * @param id    the id of the prepared statement
+     * @param query the query string
      */
     public void mapIdToQuery(MD5Digest id, String query)
     {
@@ -204,14 +192,10 @@ public class AuditAdapter
     /**
      * Get all the audit entries for a batch
      *
-     * @param builder
-     *            the prepared audit entry builder
-     * @param batchStatement
-     *            the batch statement
-     * @param state
-     *            the client state accompanying the statement
-     * @param options
-     *            the options to get the operations from
+     * @param builder        the prepared audit entry builder
+     * @param batchStatement the batch statement
+     * @param state          the client state accompanying the statement
+     * @param options        the options to get the operations from
      * @return a collection of operations, as strings
      */
     private Collection<AuditEntry> getBatchOperations(AuditEntry.Builder builder, BatchStatement batchStatement, ClientState state, BatchQueryOptions options)
@@ -221,7 +205,7 @@ public class AuditAdapter
         int statementIndex = 0;
         for (Object queryOrId : options.getQueryOrIdList())
         {
-            if(queryOrId instanceof MD5Digest)
+            if (queryOrId instanceof MD5Digest)
             {
                 builder = entryBuilderFactory.updateBatchEntryBuilder(builder, batchStatement.getStatements().get(statementIndex));
                 builder = builder.operation(new PreparedAuditOperation(idQueryCache.get(queryOrId), options.forStatement(statementIndex)));

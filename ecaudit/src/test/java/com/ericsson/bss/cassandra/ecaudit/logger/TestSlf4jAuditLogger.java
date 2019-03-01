@@ -16,6 +16,9 @@
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
 import java.net.InetAddress;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -25,7 +28,6 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
-import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.Status;
@@ -53,6 +55,8 @@ public class TestSlf4jAuditLogger
     private static final String EXPECTED_USER = "user";
     private static final Status EXPECTED_STATUS = Status.ATTEMPT;
     private static final UUID EXPECTED_BATCH_ID = UUID.randomUUID();
+    private static final Long EXPECTED_TIMESTAMP = 42L;
+
 
     private static AuditEntry logEntryWithBatch;
     private static AuditEntry logEntryWithoutBatch;
@@ -85,6 +89,7 @@ public class TestSlf4jAuditLogger
                                          .client(expectedAddress)
                                          .operation(new SimpleAuditOperation(EXPECTED_STATEMENT))
                                          .status(EXPECTED_STATUS)
+                                         .timestamp(EXPECTED_TIMESTAMP)
                                          .build();
 
         logEntryWithBatch = AuditEntry.newBuilder()
@@ -111,9 +116,9 @@ public class TestSlf4jAuditLogger
 
         assertThat(arg1.getValue().toString()).isEqualTo(EXPECTED_HOST_ADDRESS);
         assertThat(arg2.getValue().toString()).isEqualTo(EXPECTED_USER);
-        assertThat(arg3.getValue().toString()).isEqualTo(""); // Optional parameter - left part - empty
-        assertThat(arg4.getValue().toString()).isEqualTo(""); // Optional parameter - value - empty
-        assertThat(arg5.getValue().toString()).isEqualTo(""); // Optional parameter - right part - empty
+        assertThat(arg3.getValue().toString()).isEqualTo(""); // Optional field - left part - empty
+        assertThat(arg4.getValue().toString()).isEqualTo(""); // Optional field - value - empty
+        assertThat(arg5.getValue().toString()).isEqualTo(""); // Optional field - right part - empty
         assertThat(arg6.getValue().toString()).isEqualTo(EXPECTED_STATUS.toString());
         assertThat(arg7.getValue().toString()).isEqualTo(EXPECTED_STATEMENT);
     }
@@ -136,9 +141,9 @@ public class TestSlf4jAuditLogger
 
         assertThat(arg1.getValue().toString()).isEqualTo(EXPECTED_HOST_ADDRESS);
         assertThat(arg2.getValue().toString()).isEqualTo(EXPECTED_USER);
-        assertThat(arg3.getValue().toString()).isEqualTo("|batchId:'");                 // Optional parameter - left part
-        assertThat(arg4.getValue().toString()).isEqualTo(EXPECTED_BATCH_ID.toString()); // Optional parameter - value
-        assertThat(arg5.getValue().toString()).isEqualTo("'");                          // Optional parameter - right part
+        assertThat(arg3.getValue().toString()).isEqualTo("|batchId:'");                 // Optional field - left part
+        assertThat(arg4.getValue().toString()).isEqualTo(EXPECTED_BATCH_ID.toString()); // Optional field - value
+        assertThat(arg5.getValue().toString()).isEqualTo("'");                          // Optional field - right part
         assertThat(arg6.getValue().toString()).isEqualTo(EXPECTED_STATUS.toString());
         assertThat(arg7.getValue().toString()).isEqualTo(EXPECTED_STATEMENT);
     }
@@ -188,39 +193,56 @@ public class TestSlf4jAuditLogger
     }
 
     @Test
-    public void testAvailableParameterFunctions()
+    public void testAvailableFieldFunctions()
     {
-        assertThat(Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS).containsOnlyKeys("CLIENT", "USER", "BATCH_ID", "STATUS", "OPERATION");
+        AuditConfig configMock = mock(AuditConfig.class);
+        Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
+        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT", "USER", "BATCH_ID", "STATUS", "OPERATION", "TIMESTAMP");
 
-        Function<AuditEntry, Object> clientFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("CLIENT");
+        Function<AuditEntry, Object> clientFunction = availableFieldFunctions.get("CLIENT");
         assertThat(clientFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_HOST_ADDRESS);
 
-        Function<AuditEntry, Object> userFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("USER");
+        Function<AuditEntry, Object> userFunction = availableFieldFunctions.get("USER");
         assertThat(userFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_USER);
 
-        Function<AuditEntry, Object> batchIdFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("BATCH_ID");
+        Function<AuditEntry, Object> batchIdFunction = availableFieldFunctions.get("BATCH_ID");
         assertThat(batchIdFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_BATCH_ID);
         assertThat(batchIdFunction.apply(logEntryWithoutBatch)).isEqualTo(null); // Batch ID is not guaranteed to be in the log entry
 
-        Function<AuditEntry, Object> statusFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("STATUS");
+        Function<AuditEntry, Object> statusFunction = availableFieldFunctions.get("STATUS");
         assertThat(statusFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_STATUS);
 
-        Function<AuditEntry, Object> operationFunction = Slf4jAuditLogger.AVAILABLE_PARAMETER_FUNCTIONS.get("OPERATION");
+        Function<AuditEntry, Object> operationFunction = availableFieldFunctions.get("OPERATION");
         assertThat(operationFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_STATEMENT);
+
+        Function<AuditEntry, Object> timestampFunction = availableFieldFunctions.get("TIMESTAMP");
+        assertThat(timestampFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_TIMESTAMP);
     }
 
     @Test
-    public void testThatConfigurationExceptionIsThrownWhenParameterIsMissing()
+    public void testTimestampFieldFunctionWithTimeFormatConfigured()
     {
-        assertThatThrownBy(() -> Slf4jAuditLogger.getParameterFunctions("Value = ${NON_EXISTING}"))
-        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format parameter: NON_EXISTING");
+        AuditConfig configMock = mock(AuditConfig.class);
+        when(configMock.getTimeFormatter()).thenReturn(Optional.of(DateTimeFormatter.ISO_INSTANT));
+
+        Function<AuditEntry, Object> timestampFunction = Slf4jAuditLogger.getTimeFunction(configMock);
+        assertThat(timestampFunction.apply(logEntryWithBatch)).isEqualTo("1970-01-01T00:00:00.042Z"); // 42 millis after EPOCH
     }
 
     @Test
-    public void testThatConfigurationExceptionIsThrownWhenOptionalParameterIsMissing()
+    public void testThatConfigurationExceptionIsThrownWhenFieldIsMissing()
     {
-        assertThatThrownBy(() -> Slf4jAuditLogger.getParameterFunctions("{? optional ${NON_EXISTING2} ?}"))
-        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format parameter: NON_EXISTING2");
+        Slf4jAuditLogger slf4jAuditLogger = loggerWithConfig("");
+        assertThatThrownBy(() -> slf4jAuditLogger.getFieldFunctions("Value = ${NON_EXISTING}"))
+        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format field: NON_EXISTING");
+    }
+
+    @Test
+    public void testThatConfigurationExceptionIsThrownWhenOptionalFieldIsMissing()
+    {
+        Slf4jAuditLogger slf4jAuditLogger = loggerWithConfig("");
+        assertThatThrownBy(() -> slf4jAuditLogger.getFieldFunctions("{? optional ${NON_EXISTING2} ?}"))
+        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format field: NON_EXISTING2");
     }
 
     private Slf4jAuditLogger loggerWithConfig(String format)

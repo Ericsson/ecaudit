@@ -23,11 +23,9 @@ import java.util.List;
  */
 public final class AuditYamlConfig
 {
-    private static final String DEFAULT_FORMAT = "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
-
     private boolean fromFile = true;
     private List<String> whitelist;
-    private String logFormat;
+    private AuditYamlSlf4jConfig slf4j;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -62,20 +60,15 @@ public final class AuditYamlConfig
     }
 
     /**
-     * @return the log format in this configuration
+     * @return the SLF4J configuration or {@code null} if not configured.
      */
-    public String getLogFormat()
+    public AuditYamlSlf4jConfig getSlf4j()
     {
-        return logFormat != null ? logFormat : DEFAULT_FORMAT;
+        return slf4j;
     }
 
-    /**
-     * Set the log format in this configuration
-     *
-     * @param logFormat the log format string
-     */
-    public void setLogFormat(String logFormat)
+    public void setSlf4j(AuditYamlSlf4jConfig slf4j)
     {
-        this.logFormat = logFormat;
+        this.slf4j = slf4j;
     }
 }
