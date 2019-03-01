@@ -15,9 +15,12 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.integration.custom;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -34,8 +37,8 @@ import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
-import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
+import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -55,21 +58,26 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  * legacy log formatting).
  * <p>
  * The parameterized audit log format configured by this test looks like this:
- * {@code client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'}
+ * {@code ${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'}
  * <br>
- * Containing the mandatory parameters CLIENT/USER/STATUS/OPERATION and the optional parameter BATCH_ID.
+ * The time format configured by this test looks like this:
+ * {@code "yyyy-MM-dd HH:mm:ss.SSS"}
+ * <br>
+ * Containing the mandatory parameters TIMESTAMP/CLIENT/USER/STATUS/OPERATION and the optional parameter BATCH_ID.
  */
 @NotThreadSafe
 @RunWith(MockitoJUnitRunner.class)
 public class ITVerifyCustomLogFormat
 {
+    private static final String TIMESTAMP_REGEX = "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}";  // correnspons to "yyyy-MM-dd HH:mm:ss.SSS" timestamp
     private static final String UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+
 
     private static Cluster cluster;
     private static Session session;
 
     @Captor
-    ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
+    private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
@@ -116,6 +124,7 @@ public class ITVerifyCustomLogFormat
         // When
         session.execute(new SimpleStatement(createKeyspace));
         session.execute(new SimpleStatement(createTable));
+        Instant now = Instant.now();
 
         BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
         batch.add(new SimpleStatement(insert));
@@ -126,12 +135,22 @@ public class ITVerifyCustomLogFormat
         verify(mockAuditAppender, atLeast(1)).doAppend(loggingEventCaptor.capture());
         List<String> logEntries = loggingEventCaptor.getAllValues().stream()
                                                     .map(ILoggingEvent::getFormattedMessage)
-                                                    .flatMap(s -> Stream.of(s.split(UUID_REGEX)))
                                                     .collect(Collectors.toList());
-        assertThat(logEntries)
-        .contains(String.format("client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='%s'", createKeyspace))
-        .contains(String.format("client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='%s'", createTable))
-        .contains("client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=", /*Batch-ID*/ String.format(", operation='%s'", insert))
-        .contains("client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=", /*Batch-ID*/ String.format(", operation='%s'", update));
+
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(createKeyspace));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(createTable));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=" + UUID_REGEX + ", operation='" + Pattern.quote(insert));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=" + UUID_REGEX + ", operation='" + Pattern.quote(update));
+
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);// With second resolution...
+        String expectedTimestampString = dateTimeFormatter.format(now);
+        assertListContainsPattern(logEntries, expectedTimestampString);
+    }
+
+    private void assertListContainsPattern(List<String> list, String pattern)
+    {
+        Pattern p = Pattern.compile(pattern);
+        assertThat(list).as("Pattern: %s", p)
+                        .anyMatch(entry -> p.matcher(entry).find());
     }
 }

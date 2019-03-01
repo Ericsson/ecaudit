@@ -17,7 +17,6 @@ package com.ericsson.bss.cassandra.ecaudit;
 
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.Collections;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -26,13 +25,12 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.DefaultAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.role.RoleAuditFilter;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
 import com.ericsson.bss.cassandra.ecaudit.filter.yaml.YamlAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.yamlandrole.YamlAndRoleAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
@@ -160,9 +158,6 @@ public class TestAuditAdapterFactory
     public void testLoadUnknownFails()
     {
         System.setProperty(AuditAdapterFactory.FILTER_TYPE_PROPERTY_NAME, "UNKNOWN");
-
-        AuditConfig config = new AuditConfig();
-        config.setWhitelist(Collections.emptyList());
 
         assertThatExceptionOfType(ConfigurationException.class)
         .isThrownBy(AuditAdapterFactory::createAuditAdapter);

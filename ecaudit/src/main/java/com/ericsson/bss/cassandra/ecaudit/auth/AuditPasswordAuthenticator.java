@@ -129,14 +129,15 @@ public class AuditPasswordAuthenticator implements IAuthenticator
         @Override
         public AuthenticatedUser getAuthenticatedUser() throws AuthenticationException
         {
-            auditAdapter.auditAuth(decodedUsername, clientAddress, Status.ATTEMPT);
+            long timestamp = System.currentTimeMillis();
+            auditAdapter.auditAuth(decodedUsername, clientAddress, Status.ATTEMPT, timestamp);
             try
             {
                 return saslNegotiator.getAuthenticatedUser();
             }
             catch (RuntimeException e)
             {
-                auditAdapter.auditAuth(decodedUsername, clientAddress, Status.FAILED);
+                auditAdapter.auditAuth(decodedUsername, clientAddress, Status.FAILED, timestamp);
                 throw e;
             }
         }

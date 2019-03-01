@@ -75,6 +75,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestAuditAdapter
 {
+    private static final long TIMESTAMP = 42L;
     @Mock
     private AuthenticatedUser mockUser;
 
@@ -151,7 +152,7 @@ public class TestAuditAdapter
                               .permissions(ImmutableSet.of(Permission.SELECT))
                               .resource(DataResource.table("ks", "tbl")));
 
-        auditAdapter.auditRegular(expectedStatement, mockState, expectedStatus);
+        auditAdapter.auditRegular(expectedStatement, mockState, expectedStatus, TIMESTAMP);
 
         // Capture and perform validation
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -164,6 +165,7 @@ public class TestAuditAdapter
         assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
         assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
         assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "tbl"));
+        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @Test
@@ -183,7 +185,7 @@ public class TestAuditAdapter
                               .permissions(ImmutableSet.of(Permission.SELECT))
                               .resource(DataResource.table("ks", "tbl")));
 
-        auditAdapter.auditRegular(expectedStatement, mockState, expectedStatus);
+        auditAdapter.auditRegular(expectedStatement, mockState, expectedStatus, TIMESTAMP);
 
         // Capture and perform validation
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -197,6 +199,7 @@ public class TestAuditAdapter
         assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
         assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.SELECT));
         assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "tbl"));
+        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @Test
@@ -224,7 +227,7 @@ public class TestAuditAdapter
                               .permissions(ImmutableSet.of(Permission.SELECT))
                               .resource(DataResource.table("ks", "cf")));
 
-        auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus);
+        auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus, TIMESTAMP);
 
         // Capture and perform validation
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -239,6 +242,7 @@ public class TestAuditAdapter
         assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
         assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.SELECT));
         assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "cf"));
+        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @Test
@@ -266,7 +270,7 @@ public class TestAuditAdapter
                               .permissions(ImmutableSet.of(Permission.SELECT))
                               .resource(DataResource.table("ks", "cf")));
 
-        auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus);
+        auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus, TIMESTAMP);
 
         // Capture and perform validation
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -281,6 +285,7 @@ public class TestAuditAdapter
         assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
         assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.SELECT));
         assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "cf"));
+        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @SuppressWarnings("unchecked")
@@ -307,7 +312,7 @@ public class TestAuditAdapter
                     .permissions(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT))
                     .resource(DataResource.root()));
 
-        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus);
+        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus, TIMESTAMP);
 
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
         verify(mockAuditor, times(1)).audit(captor.capture());
@@ -321,6 +326,7 @@ public class TestAuditAdapter
         assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsOnly(expectedQuery);
         assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT));
         assertThat(entries).extracting(AuditEntry::getResource).containsOnly(DataResource.root());
+        assertThat(entries).extracting(AuditEntry::getTimestamp).containsOnly(TIMESTAMP);
     }
 
     @SuppressWarnings("unchecked")
@@ -350,7 +356,7 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(String.class), any(ClientState.class)))
         .thenAnswer(a -> a.getArgument(0));
 
-        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus);
+        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus, TIMESTAMP);
 
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
         verify(mockAuditor, times(3)).audit(captor.capture());
@@ -364,6 +370,7 @@ public class TestAuditAdapter
         assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsExactly("query1", "query2", "query3");
         assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY));
         assertThat(entries).extracting(AuditEntry::getResource).containsOnly(DataResource.root());
+        assertThat(entries).extracting(AuditEntry::getTimestamp).containsOnly(TIMESTAMP);
     }
 
     @SuppressWarnings("unchecked")
@@ -406,7 +413,7 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(ModificationStatement.class)))
         .thenAnswer(a -> a.getArgument(0));
 
-        auditAdapter.auditBatch(mockBatchStatement, Arrays.asList(preparedQuery), expectedBatchId, mockState, mockBatchOptions, expectedStatus);
+        auditAdapter.auditBatch(mockBatchStatement, Arrays.asList(preparedQuery), expectedBatchId, mockState, mockBatchOptions, expectedStatus, TIMESTAMP);
 
         // Begin, prepared statement, end
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -422,6 +429,7 @@ public class TestAuditAdapter
         assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsExactly(expectedQuery);
         assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY));
         assertThat(entries).extracting(AuditEntry::getResource).containsOnly(DataResource.root());
+        assertThat(entries).extracting(AuditEntry::getTimestamp).containsOnly(TIMESTAMP);
     }
 
     @Test
@@ -437,7 +445,7 @@ public class TestAuditAdapter
                               .permissions(ImmutableSet.of(Permission.EXECUTE))
                               .resource(ConnectionResource.root()));
 
-        auditAdapter.auditAuth(expectedUser, expectedAddress, expectedStatus);
+        auditAdapter.auditAuth(expectedUser, expectedAddress, expectedStatus, TIMESTAMP);
 
         // Capture and perform validation
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -451,6 +459,7 @@ public class TestAuditAdapter
         assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
         assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.EXECUTE));
         assertThat(captured.getResource()).isEqualTo(ConnectionResource.root());
+        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @Test
@@ -466,7 +475,7 @@ public class TestAuditAdapter
                               .permissions(ImmutableSet.of(Permission.EXECUTE))
                               .resource(ConnectionResource.root()));
 
-        auditAdapter.auditAuth(expectedUser, expectedAddress, expectedStatus);
+        auditAdapter.auditAuth(expectedUser, expectedAddress, expectedStatus, TIMESTAMP);
 
         // Capture and perform validation
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
@@ -480,6 +489,7 @@ public class TestAuditAdapter
         assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
         assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.EXECUTE));
         assertThat(captured.getResource()).isEqualTo(ConnectionResource.root());
+        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     private ImmutableList<ColumnSpecification> createTextColumns(String... columns)

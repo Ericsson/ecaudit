@@ -15,8 +15,11 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,10 +29,8 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfig;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditConfigurationLoader;
-import com.ericsson.bss.cassandra.ecaudit.filter.yaml.AuditYamlConfigurationLoader;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static java.util.stream.Collectors.toList;
@@ -38,13 +39,13 @@ import static java.util.stream.Collectors.toList;
  * Implements an {@link AuditLogger} that writes {@link AuditEntry} instance into file using {@link Logger}.
  * <br>
  * It is possible to configure a parameterized log message by providing a formatting string {@link AuditConfig#getLogFormat()}.
- * The format for a parameter is {@code ${<Parameter Name>}}. With a formatting string like this: {@code "${USER} executed '${OPERATION}' from ${CLIENT}"},
+ * The format for a field is {@code ${<Field Name>}}. With a formatting string like this: {@code "${USER} executed '${OPERATION}' from ${CLIENT}"},
  * the logged string could look like this:
  * <ul>
  * <li>"Duke executed 'select * from students;' from 1.2.3.4"</li>
  * </ul>
  * <p>
- * Conditional formatting of parameters is also available, which makes it possible to only log the parameter value and
+ * Conditional formatting of fields is also available, which makes it possible to only log the field value and
  * its descriptive text if a value exists. The formatting string {@code "user:${USER}, client:${CLIENT}{?, executed from batch:${BATCH_ID}?}"}
  * will log different things depending on if there is a BATCH_ID or not:
  * <ul>
@@ -56,88 +57,101 @@ public class Slf4jAuditLogger implements AuditLogger
 {
     public static final String AUDIT_LOGGER_NAME = "ECAUDIT";
 
-    private static final String PARAMETER_EXP = "\\$\\{(.*?)}"; // Non-greedy matching of parameter
-    private static final String OPTIONAL_PARAMETER_EXP = "\\{\\?(.*?)\\$\\{(.*?)}(.*?)\\?}";
-    private static final String COMBINED_PARAMETERS_EXP = PARAMETER_EXP + '|' + OPTIONAL_PARAMETER_EXP;
-    private static final Pattern PARAMETER_PATTERN = Pattern.compile(COMBINED_PARAMETERS_EXP);
+    private static final String FIELD_EXP = "\\$\\{(.*?)}"; // Non-greedy matching of field
+    private static final String OPTIONAL_FIELD_EXP = "\\{\\?(.*?)\\$\\{(.*?)}(.*?)\\?}";
+    private static final String COMBINED_FIELDS_EXP = FIELD_EXP + '|' + OPTIONAL_FIELD_EXP;
+    private static final Pattern FIELD_PATTERN = Pattern.compile(COMBINED_FIELDS_EXP);
 
-    static final ImmutableMap<String, Function<AuditEntry, Object>> AVAILABLE_PARAMETER_FUNCTIONS =
-    ImmutableMap.<String, Function<AuditEntry, Object>>builder().put("CLIENT", entry -> entry.getClientAddress().getHostAddress())
-                                                                .put("USER", AuditEntry::getUser)
-                                                                .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
-                                                                .put("STATUS", AuditEntry::getStatus)
-                                                                .put("OPERATION", entry -> entry.getOperation().getOperationString())
-                                                                .build();
-
+    private final Map<String, Function<AuditEntry, Object>> availableFieldFunctionMap;
     private final Logger auditLogger; // NOSONAR
     private final String logTemplate;
-    private final List<Function<AuditEntry, Object>> parameterFunctions;
+    private final List<Function<AuditEntry, Object>> fieldFunctions;
 
     /**
-     * Default constructor, injects logger from {@link LoggerFactory}.
+     * Constructor, injects logger from {@link LoggerFactory}.
+     *
+     * @param auditConfig the audit configuration which provide the log format
      */
-    public Slf4jAuditLogger()
+    public Slf4jAuditLogger(AuditConfig auditConfig)
     {
-        this(LoggerFactory.getLogger(AUDIT_LOGGER_NAME), AuditYamlConfigurationLoader.withSystemProperties());
+        this(auditConfig, LoggerFactory.getLogger(AUDIT_LOGGER_NAME));
     }
 
     /**
      * Test constructor.
      *
-     * @param logger              the logger backend to use for audit logs
-     * @param configurationLoader the configuration to load the log format from
+     * @param auditConfig the audit configuration which provide the log format
+     * @param logger      the logger backend to use for audit logs
      */
     @VisibleForTesting
-    Slf4jAuditLogger(Logger logger, AuditConfigurationLoader configurationLoader)
+    Slf4jAuditLogger(AuditConfig auditConfig, Logger logger)
     {
         auditLogger = logger;
-        String logFormat = getLogFormatConfiguration(configurationLoader);
+        availableFieldFunctionMap = getAvailableFieldFunctionMap(auditConfig);
+        String logFormat = auditConfig.getLogFormat();
         logTemplate = getTemplateFromFormatString(logFormat);
-        parameterFunctions = getParameterFunctions(logFormat);
+        fieldFunctions = getFieldFunctions(logFormat);
     }
 
-    static String getLogFormatConfiguration(AuditConfigurationLoader configurationLoader)
+    static Map<String, Function<AuditEntry, Object>> getAvailableFieldFunctionMap(AuditConfig auditConfig)
     {
-        return configurationLoader.configExist()
-               ? configurationLoader.loadConfig().getLogFormat()
-               : AuditConfig.DEFAULT_FORMAT;
+        return ImmutableMap.<String, Function<AuditEntry, Object>>builder()
+               .put("CLIENT", entry -> entry.getClientAddress().getHostAddress())
+               .put("USER", AuditEntry::getUser)
+               .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
+               .put("STATUS", AuditEntry::getStatus)
+               .put("OPERATION", entry -> entry.getOperation().getOperationString())
+               .put("TIMESTAMP", getTimeFunction(auditConfig))
+               .build();
+    }
+
+    static Function<AuditEntry, Object> getTimeFunction(AuditConfig auditConfig)
+    {
+        return auditConfig.getTimeFormatter()
+                          .map(Slf4jAuditLogger::getFormattedTimestamp)
+                          .orElse(AuditEntry::getTimestamp);
+    }
+
+    private static Function<AuditEntry, Object> getFormattedTimestamp(DateTimeFormatter formatter)
+    {
+        return auditEntry -> formatter.format(Instant.ofEpochMilli(auditEntry.getTimestamp()));
     }
 
     private static String getTemplateFromFormatString(String logFormat)
     {
-        return logFormat.replaceAll(OPTIONAL_PARAMETER_EXP, "{}{}{}").replaceAll(PARAMETER_EXP, "{}");
+        return logFormat.replaceAll(OPTIONAL_FIELD_EXP, "{}{}{}").replaceAll(FIELD_EXP, "{}");
     }
 
-    static List<Function<AuditEntry, Object>> getParameterFunctions(String logFormat)
+    List<Function<AuditEntry, Object>> getFieldFunctions(String logFormat)
     {
-        List<Function<AuditEntry, Object>> parameterFunctions = new ArrayList<>();
-        Matcher matcher = PARAMETER_PATTERN.matcher(logFormat);
+        List<Function<AuditEntry, Object>> fieldFunctions = new ArrayList<>();
+        Matcher matcher = FIELD_PATTERN.matcher(logFormat);
         while (matcher.find())
         {
-            String normalParameter = matcher.group(1);
-            if (normalParameter != null)
+            String normalField = matcher.group(1);
+            if (normalField != null)
             {
-                Function<AuditEntry, Object> valueSupplier = AVAILABLE_PARAMETER_FUNCTIONS.computeIfAbsent(normalParameter, throwConfigurationException());
-                parameterFunctions.add(valueSupplier);
+                Function<AuditEntry, Object> valueSupplier = availableFieldFunctionMap.computeIfAbsent(normalField, throwConfigurationException());
+                fieldFunctions.add(valueSupplier);
             }
-            else // Optional parameter
+            else // Optional field
             {
                 String descriptionLeft = matcher.group(2);
-                String innerParameter = matcher.group(3);
+                String innerField = matcher.group(3);
                 String descriptionRight = matcher.group(4);
-                Function<AuditEntry, Object> valueSupplier = AVAILABLE_PARAMETER_FUNCTIONS.computeIfAbsent(innerParameter, throwConfigurationException());
-                parameterFunctions.add(valueSupplier.andThen(getDescriptionIfValuePresent(descriptionLeft)));
-                parameterFunctions.add(valueSupplier.andThen(Slf4jAuditLogger::getValueOrEmptyString));
-                parameterFunctions.add(valueSupplier.andThen(getDescriptionIfValuePresent(descriptionRight)));
+                Function<AuditEntry, Object> valueSupplier = availableFieldFunctionMap.computeIfAbsent(innerField, throwConfigurationException());
+                fieldFunctions.add(valueSupplier.andThen(getDescriptionIfValuePresent(descriptionLeft)));
+                fieldFunctions.add(valueSupplier.andThen(Slf4jAuditLogger::getValueOrEmptyString));
+                fieldFunctions.add(valueSupplier.andThen(getDescriptionIfValuePresent(descriptionRight)));
             }
         }
-        return parameterFunctions;
+        return fieldFunctions;
     }
 
     private static Function<String, Function<AuditEntry, Object>> throwConfigurationException()
     {
         return key -> {
-            throw new ConfigurationException("Unknown log format parameter: " + key);
+            throw new ConfigurationException("Unknown log format field: " + key);
         };
     }
 
@@ -154,9 +168,9 @@ public class Slf4jAuditLogger implements AuditLogger
     @Override
     public void log(AuditEntry logEntry)
     {
-        List<ToStringer> parameters = parameterFunctions.stream()
-                                                        .map(valueSupplier -> new ToStringer<>(logEntry, valueSupplier))
-                                                        .collect(toList());
-        auditLogger.info(logTemplate, parameters.toArray());
+        List<ToStringer> fields = fieldFunctions.stream()
+                                                    .map(valueSupplier -> new ToStringer<>(logEntry, valueSupplier))
+                                                    .collect(toList());
+        auditLogger.info(logTemplate, fields.toArray());
     }
 }
