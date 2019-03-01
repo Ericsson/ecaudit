@@ -16,5 +16,5 @@
 
 ---
 slf4j:
-  logFormat: "user:{USER}, client:{CLIENT}"
-  timeFormat: "yyyy-MM-dd HH:mm:ss.SSS"
+  log_format: "user:{USER}, client:{CLIENT}"
+  time_format: "yyyy-MM-dd HH:mm:ss.SSS"

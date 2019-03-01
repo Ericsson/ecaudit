@@ -16,6 +16,6 @@
 
 ---
 slf4j:
-  logFormat: "${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
-  timeFormat: "yyyy-MM-dd HH:mm:ss.SSS"
-  timeZone: "UTC"
+  log_format: "${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+  time_format: "yyyy-MM-dd HH:mm:ss.SSS"
+  time_zone: "UTC"
