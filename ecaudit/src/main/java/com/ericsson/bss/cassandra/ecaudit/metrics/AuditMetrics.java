@@ -28,9 +28,8 @@ public class AuditMetrics
 {
     private static final String GROUP_NAME = "com.ericsson.bss.cassandra.ecaudit";
     private static final String METRIC_TYPE = "Audit";
-    private static final String METRIC_SCOPE = "ClientRequests";
-    private static final String METRIC_NAME_FILTER = "AuditFilter";
-    private static final String METRIC_NAME_AUDIT = "Audit";
+    private static final String METRIC_NAME_FILTER = "Filter";
+    private static final String METRIC_NAME_LOG = "Log";
 
     private final Timer auditFilterTimer;
     private final Timer auditTimer;
@@ -42,8 +41,8 @@ public class AuditMetrics
 
     AuditMetrics(Function<CassandraMetricsRegistry.MetricName, Timer> timerFunction)
     {
-        auditFilterTimer = timerFunction.apply(createMetricName(METRIC_TYPE, METRIC_NAME_FILTER, METRIC_SCOPE));
-        auditTimer = timerFunction.apply(createMetricName(METRIC_TYPE, METRIC_NAME_AUDIT, METRIC_SCOPE));
+        auditFilterTimer = timerFunction.apply(createMetricName(METRIC_NAME_FILTER));
+        auditTimer = timerFunction.apply(createMetricName(METRIC_NAME_LOG));
     }
 
     /**
@@ -63,7 +62,7 @@ public class AuditMetrics
      * @param time the time spent logging
      * @param timeUnit the time unit of the provided time
      */
-    public void auditRequest(long time, TimeUnit timeUnit)
+    public void logAuditRequest(long time, TimeUnit timeUnit)
     {
         auditTimer.update(time, timeUnit);
     }
@@ -72,31 +71,21 @@ public class AuditMetrics
      * Copied from org.apache.cassandra.metrics.DefaultNameFactory but with tailored group name.
      * @return a Cassandra metric name
      */
-    private static CassandraMetricsRegistry.MetricName createMetricName(String type, String metricName, String scope)
+    static CassandraMetricsRegistry.MetricName createMetricName(String metricName)
     {
-        return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, scope, createMBeanName(type, metricName, scope));
+        return new CassandraMetricsRegistry.MetricName(GROUP_NAME, METRIC_TYPE, metricName, null, createMBeanName(metricName));
     }
 
     /**
-     * Copied from org.apache.cassandra.metrics.DefaultNameFactory but with tailored group name.
+     * Copied from org.apache.cassandra.metrics.DefaultNameFactory but with tailored group name and slightly reduced.
      * @return the name of the mBean.
      */
-    private static String createMBeanName(String type, String name, String scope)
+    private static String createMBeanName(String name)
     {
-        final StringBuilder nameBuilder = new StringBuilder();
-        nameBuilder.append(GROUP_NAME);
-        nameBuilder.append(":type=");
-        nameBuilder.append(type);
-        if (scope != null)
-        {
-            nameBuilder.append(",scope=");
-            nameBuilder.append(scope);
-        }
-        if (name.length() > 0)
-        {
-            nameBuilder.append(",name=");
-            nameBuilder.append(name);
-        }
-        return nameBuilder.toString();
+        return new StringBuilder()
+               .append(GROUP_NAME)
+               .append(":type=").append(METRIC_TYPE)
+               .append(",name=").append(name)
+               .toString();
     }
 }

@@ -38,7 +38,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -92,8 +91,8 @@ public class TestDefaultAuditor
 
         long timeTaken = timedOperation(() -> auditor.audit(logEntry));
 
-        verify(mockFilter, times(1)).isFiltered(logEntry);
-        verify(mockAuditMetrics, times(1)).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
+        verify(mockFilter).isFiltered(logEntry);
+        verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
         verifyNoMoreInteractions(mockAuditMetrics);
         verifyZeroInteractions(mockLogger, mockObfuscator);
 
@@ -109,7 +108,7 @@ public class TestDefaultAuditor
 
         long timeTaken = timedOperation(() -> auditor.audit(logEntry), CassandraException.class);
 
-        verify(mockAuditMetrics, times(1)).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
+        verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
         verifyNoMoreInteractions(mockAuditMetrics);
         verifyZeroInteractions(mockLogger, mockObfuscator);
 
@@ -126,11 +125,11 @@ public class TestDefaultAuditor
 
         long timeTaken = timedOperation(() -> auditor.audit(logEntry));
 
-        verify(mockFilter, times(1)).isFiltered(logEntry);
-        verify(mockObfuscator, times(1)).obfuscate(logEntry);
-        verify(mockLogger, times(1)).log(logEntry);
-        verify(mockAuditMetrics, times(1)).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
-        verify(mockAuditMetrics, times(1)).auditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
+        verify(mockFilter).isFiltered(logEntry);
+        verify(mockObfuscator).obfuscate(logEntry);
+        verify(mockLogger).log(logEntry);
+        verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
+        verify(mockAuditMetrics).logAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
 
         long timeMeasured = timingCaptor.getAllValues().stream().mapToLong(l -> l).sum();
         assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);

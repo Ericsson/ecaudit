@@ -60,7 +60,8 @@ public class DefaultAuditor implements Auditor
     {
         if (shouldAudit(logEntry))
         {
-            performAudit(logEntry);
+            AuditEntry obfuscatedEntry = obfuscator.obfuscate(logEntry);
+            performAudit(obfuscatedEntry);
         }
     }
 
@@ -83,13 +84,12 @@ public class DefaultAuditor implements Auditor
         long start = System.nanoTime();
         try
         {
-            AuditEntry obfuscatedEntry = obfuscator.obfuscate(logEntry);
-            logger.log(obfuscatedEntry);
+            logger.log(logEntry);
         }
         finally
         {
             long end = System.nanoTime();
-            auditMetrics.auditRequest(end - start, TimeUnit.NANOSECONDS);
+            auditMetrics.logAuditRequest(end - start, TimeUnit.NANOSECONDS);
         }
     }
 }

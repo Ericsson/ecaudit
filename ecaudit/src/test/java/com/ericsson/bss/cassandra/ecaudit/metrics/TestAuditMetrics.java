@@ -27,21 +27,18 @@ import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestAuditMetrics
 {
-    private static final String GROUP_NAME = "com.ericsson.bss.cassandra.ecaudit";
-    private static final String METRIC_TYPE = "Audit";
-    private static final String METRIC_SCOPE = "ClientRequests";
-    private static final String METRIC_NAME_FILTER = "AuditFilter";
-    private static final String METRIC_NAME_AUDIT = "Audit";
+    private static final String METRIC_NAME_FILTER = "Filter";
+    private static final String METRIC_NAME_LOG = "Log";
 
     @Mock
     private Function<CassandraMetricsRegistry.MetricName, Timer> mockTimerFunction;
@@ -56,61 +53,47 @@ public class TestAuditMetrics
     public void testFilterRequestTiming()
     {
         Timer mockTimer = mock(Timer.class);
-        CassandraMetricsRegistry.MetricName metric = createMetricName(METRIC_TYPE, METRIC_NAME_FILTER, METRIC_SCOPE);
+        CassandraMetricsRegistry.MetricName metric = AuditMetrics.createMetricName(METRIC_NAME_FILTER);
 
         when(mockTimerFunction.apply(eq(metric))).thenReturn(mockTimer);
 
         AuditMetrics auditMetrics = new AuditMetrics(mockTimerFunction);
-        verify(mockTimerFunction, times(1)).apply(eq(metric));
+        verify(mockTimerFunction).apply(eq(metric));
 
         auditMetrics.filterAuditRequest(999L, TimeUnit.NANOSECONDS);
-        verify(mockTimer, times(1)).update(eq(999L), eq(TimeUnit.NANOSECONDS));
+        verify(mockTimer).update(eq(999L), eq(TimeUnit.NANOSECONDS));
     }
 
     @Test
     public void testAuditRequestTiming()
     {
         Timer mockTimer = mock(Timer.class);
-        CassandraMetricsRegistry.MetricName metric = createMetricName(METRIC_TYPE, METRIC_NAME_AUDIT, METRIC_SCOPE);
+        CassandraMetricsRegistry.MetricName metric = AuditMetrics.createMetricName(METRIC_NAME_LOG);
 
         when(mockTimerFunction.apply(eq(metric))).thenReturn(mockTimer);
 
         AuditMetrics auditMetrics = new AuditMetrics(mockTimerFunction);
-        verify(mockTimerFunction, times(1)).apply(eq(metric));
+        verify(mockTimerFunction).apply(eq(metric));
 
-        auditMetrics.auditRequest(999L, TimeUnit.NANOSECONDS);
-        verify(mockTimer, times(1)).update(eq(999L), eq(TimeUnit.NANOSECONDS));
+        auditMetrics.logAuditRequest(999L, TimeUnit.NANOSECONDS);
+        verify(mockTimer).update(eq(999L), eq(TimeUnit.NANOSECONDS));
     }
 
-    /**
-     * Borrowed from org.apache.cassandra.metrics.DefaultNameFactory but with tailored group name.
-     * @return a Cassandra metric name
-     */
-    private static CassandraMetricsRegistry.MetricName createMetricName(String type, String metricName, String scope)
+    @Test
+    public void testCreateMetricName()
     {
-        return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, scope, createMBeanName(type, metricName, scope));
-    }
+        String groupName = "com.ericsson.bss.cassandra.ecaudit";
+        String typeName = "Audit";
+        String metricName = "test";
+        String scopeName = null;
+        String mbeanName = "com.ericsson.bss.cassandra.ecaudit:type=Audit,name=test";
+        CassandraMetricsRegistry.MetricName expectedMetricName = new CassandraMetricsRegistry.MetricName(groupName,
+                                                                                                         typeName,
+                                                                                                         metricName,
+                                                                                                         scopeName,
+                                                                                                         mbeanName);
 
-    /**
-     * Borrowed from org.apache.cassandra.metrics.DefaultNameFactory but with tailored group name.
-     * @return the name of the mBean.
-     */
-    private static String createMBeanName(String type, String name, String scope)
-    {
-        final StringBuilder nameBuilder = new StringBuilder();
-        nameBuilder.append(GROUP_NAME);
-        nameBuilder.append(":type=");
-        nameBuilder.append(type);
-        if (scope != null)
-        {
-            nameBuilder.append(",scope=");
-            nameBuilder.append(scope);
-        }
-        if (name.length() > 0)
-        {
-            nameBuilder.append(",name=");
-            nameBuilder.append(name);
-        }
-        return nameBuilder.toString();
+        CassandraMetricsRegistry.MetricName actualMetricName = AuditMetrics.createMetricName("test");
+        assertThat(actualMetricName).isEqualToComparingFieldByField(expectedMetricName);
     }
 }
