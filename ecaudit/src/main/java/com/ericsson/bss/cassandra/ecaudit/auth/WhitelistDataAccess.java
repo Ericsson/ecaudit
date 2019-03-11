@@ -58,6 +58,8 @@ public class WhitelistDataAccess
 {
     private static final Logger LOG = LoggerFactory.getLogger(WhitelistDataAccess.class);
 
+    private static final long SCHEMA_ALIGNMENT_DELAY_MS = Long.getLong("ecaudit.schema_alignment_delay_ms", 120_000L);
+
     private boolean setupCompleted = false;
 
     private static final String DEFAULT_SUPERUSER_NAME = "cassandra";
@@ -134,7 +136,7 @@ public class WhitelistDataAccess
         QueryProcessor.process(statement, consistencyForRole(role));
     }
 
-    public Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
+    Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
     {
         ResultMessage.Rows rows = loadWhitelistStatement.execute(
                 QueryState.forInternalCalls(),
@@ -203,12 +205,23 @@ public class WhitelistDataAccess
         KeyspaceMetadata expected = AuditAuthKeyspace.metadata();
         KeyspaceMetadata defined = Schema.instance.getKSMetaData(expected.name);
 
+        boolean changesAnnounced = false;
         for (CFMetaData expectedTable : expected.tables)
         {
             CFMetaData definedTable = defined.tables.get(expectedTable.cfName).orElse(null);
             if (definedTable == null || !definedTable.equals(expectedTable))
             {
                 MigrationManager.forceAnnounceNewColumnFamily(expectedTable);
+                changesAnnounced = true;
+            }
+        }
+
+        if (changesAnnounced)
+        {
+            SchemaHelper schemaHelper = new SchemaHelper();
+            if (!schemaHelper.areSchemasAligned(SCHEMA_ALIGNMENT_DELAY_MS))
+            {
+                LOG.warn("Schema alignment timeout - continuing startup");
             }
         }
     }
