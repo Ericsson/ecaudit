@@ -31,6 +31,8 @@ import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.statements.BatchStatement;
+import org.apache.cassandra.exceptions.AuthenticationException;
+import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.MD5Digest;
 
@@ -161,8 +163,9 @@ public class AuditAdapter
      * @param clientIp  the address of the client that tries to authenticate
      * @param status    the status of the operation
      * @param timestamp the system timestamp for the request
+     * @throws AuthenticationException if the audit operation could not be performed
      */
-    public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp)
+    public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp) throws AuthenticationException
     {
         AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                                                  .client(clientIp)
@@ -172,7 +175,14 @@ public class AuditAdapter
                                                  .timestamp(timestamp)
                                                  .build();
 
-        auditor.audit(logEntry);
+        try
+        {
+            auditor.audit(logEntry);
+        }
+        catch (RequestExecutionException e)
+        {
+            throw new AuthenticationException(e.toString());
+        }
     }
 
     /**

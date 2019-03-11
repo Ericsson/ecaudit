@@ -19,10 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
+import com.ericsson.bss.cassandra.ecaudit.auth.Exceptions;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
@@ -36,19 +39,21 @@ import org.apache.cassandra.auth.Roles;
  */
 public class RoleAuditFilter implements AuditFilter
 {
-    public static final int MAX_RESOURCE_DEPTH = 3;
+    private static final int MAX_RESOURCE_DEPTH = 3;
 
+    private final Function<RoleResource, Set<RoleResource>> getRolesFunction;
     private final AuditWhitelistCache whitelistCache;
     private final WhitelistDataAccess whitelistDataAccess;
 
     public RoleAuditFilter()
     {
-        this(AuditWhitelistCache.getInstance(), WhitelistDataAccess.getInstance());
+        this(Roles::getRoles, AuditWhitelistCache.getInstance(), WhitelistDataAccess.getInstance());
     }
 
     @VisibleForTesting
-    RoleAuditFilter(AuditWhitelistCache whitelistCache, WhitelistDataAccess whitelistDataAccess)
+    RoleAuditFilter(Function<RoleResource, Set<RoleResource>> getRolesFunction, AuditWhitelistCache whitelistCache, WhitelistDataAccess whitelistDataAccess)
     {
+        this.getRolesFunction = getRolesFunction;
         this.whitelistCache = whitelistCache;
         this.whitelistDataAccess = whitelistDataAccess;
     }
@@ -75,15 +80,21 @@ public class RoleAuditFilter implements AuditFilter
     @Override
     public boolean isFiltered(AuditEntry logEntry)
     {
-        RoleResource primaryRole = RoleResource.role(logEntry.getUser());
-        return isFiltered(Roles.getRoles(primaryRole), logEntry.getPermissions(), logEntry.getResource());
+        try
+        {
+            return isFilteredUnchecked(logEntry);
+        }
+        catch (UncheckedExecutionException e)
+        {
+            throw Exceptions.tryGetCassandraExceptionCause(e);
+        }
     }
 
-    @VisibleForTesting
-    boolean isFiltered(Set<RoleResource> roles, Set<Permission> operations, IResource resource)
+    private boolean isFilteredUnchecked(AuditEntry logEntry)
     {
-        List<IResource> operationResourceHierarchy = getResourceHierarchy(resource);
-        for (Permission operation : operations)
+        Set<RoleResource> roles = getRoles(logEntry.getUser());
+        List<IResource> operationResourceHierarchy = getResourceHierarchy(logEntry.getResource());
+        for (Permission operation : logEntry.getPermissions())
         {
             if(!isOperationWhitelistedOnResourceByRoles(operation, operationResourceHierarchy, roles))
             {
@@ -92,6 +103,12 @@ public class RoleAuditFilter implements AuditFilter
         }
 
         return true;
+    }
+
+    private Set<RoleResource> getRoles(String username)
+    {
+        RoleResource primaryRole = RoleResource.role(username);
+        return getRolesFunction.apply(primaryRole);
     }
 
     private List<IResource> getResourceHierarchy(IResource primaryResource)

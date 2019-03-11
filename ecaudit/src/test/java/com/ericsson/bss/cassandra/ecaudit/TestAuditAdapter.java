@@ -53,8 +53,11 @@ import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.statements.BatchStatement;
 import org.apache.cassandra.cql3.statements.ModificationStatement;
+import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.dht.IPartitioner;
+import org.apache.cassandra.exceptions.AuthenticationException;
+import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.MD5Digest;
 import org.mockito.ArgumentCaptor;
@@ -63,8 +66,10 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -490,6 +495,24 @@ public class TestAuditAdapter
         assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.EXECUTE));
         assertThat(captured.getResource()).isEqualTo(ConnectionResource.root());
         assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
+    }
+
+    @Test
+    public void testProcessAuthException()
+    {
+        InetAddress expectedAddress = mock(InetAddress.class);
+        String expectedUser = "user";
+        Status expectedStatus = Status.ATTEMPT;
+
+        when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder())
+        .thenReturn(AuditEntry.newBuilder()
+                              .permissions(ImmutableSet.of(Permission.EXECUTE))
+                              .resource(ConnectionResource.root()));
+
+        doThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 3, 4, true)).when(mockAuditor).audit(any(AuditEntry.class));
+
+        assertThatExceptionOfType(AuthenticationException.class)
+        .isThrownBy(() -> auditAdapter.auditAuth(expectedUser, expectedAddress, expectedStatus, TIMESTAMP));
     }
 
     private ImmutableList<ColumnSpecification> createTextColumns(String... columns)
