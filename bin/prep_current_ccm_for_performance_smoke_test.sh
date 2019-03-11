@@ -30,13 +30,20 @@ echo "Preparing ${CCM_CLUSTER_NAME} for performance smoke test"
 
 CLUSTER_PATH=${CCM_CONFIG}/${CCM_CLUSTER_NAME}
 
+update_cache_times() {
+ sed -i "s/^$1_validity_in_ms:.*/$1_validity_in_ms: 10000/" $2
+ sed -i "/^$1_validity_in_ms:.*/a\
+$1_update_interval_in_ms: 2000" $2
+}
+
 for NODE_PATH in ${CLUSTER_PATH}/node*;
 do
  sed -i 's/^authenticator:.*/authenticator: PasswordAuthenticator/' ${NODE_PATH}/conf/cassandra.yaml
  sed -i 's/^authorizer:.*/authorizer: CassandraAuthorizer/' ${NODE_PATH}/conf/cassandra.yaml
  sed -i 's/^role_manager:.*/role_manager: CassandraRoleManager/' ${NODE_PATH}/conf/cassandra.yaml
- sed -i 's/^roles_update_interval_in_ms:.*/roles_update_interval_in_ms: 2000/' ${NODE_PATH}/conf/cassandra.yaml
- sed -i 's/^roles_validity_in_ms:.*/roles_validity_in_ms: 10000/' ${NODE_PATH}/conf/cassandra.yaml
+ update_cache_times roles ${NODE_PATH}/conf/cassandra.yaml
+ update_cache_times permissions ${NODE_PATH}/conf/cassandra.yaml
+ #update_cache_times credentials ${NODE_PATH}/conf/cassandra.yaml
 
  sed -i '/<\/configuration>/i\
 <!--audit log-->\
