@@ -30,11 +30,13 @@ import org.junit.runner.RunWith;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
+import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.Config;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -61,7 +63,10 @@ public class TestAuditRoleManager
     @BeforeClass
     public static void beforeClass()
     {
-        Config.setClientMode(true);
+        DatabaseDescriptor.clientInitialization(true);
+
+        IAuthorizer authorizer = mock(IAuthorizer.class);
+        DatabaseDescriptor.setAuthorizer(authorizer);
     }
 
     @Before
@@ -80,7 +85,8 @@ public class TestAuditRoleManager
     @AfterClass
     public static void afterClass()
     {
-        Config.setClientMode(false);
+        DatabaseDescriptor.setAuthenticator(null);
+        DatabaseDescriptor.clientInitialization(false);
     }
 
     @Test
