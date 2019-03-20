@@ -15,9 +15,12 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.facade;
 
+import java.util.concurrent.TimeUnit;
+
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
+import com.ericsson.bss.cassandra.ecaudit.metrics.AuditMetrics;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 
 /**
@@ -29,15 +32,22 @@ import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
  */
 public class DefaultAuditor implements Auditor
 {
-    private AuditLogger logger;
-    private AuditFilter filter;
-    private AuditObfuscator obfuscator;
+    private final AuditLogger logger;
+    private final AuditFilter filter;
+    private final AuditObfuscator obfuscator;
+    private final AuditMetrics auditMetrics;
 
     public DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator)
+    {
+        this(logger, filter, obfuscator, new AuditMetrics());
+    }
+
+    DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, AuditMetrics auditMetrics)
     {
         this.logger = logger;
         this.filter = filter;
         this.obfuscator = obfuscator;
+        this.auditMetrics = auditMetrics;
     }
 
     public void setup()
@@ -48,10 +58,38 @@ public class DefaultAuditor implements Auditor
     @Override
     public void audit(AuditEntry logEntry)
     {
-        if (!filter.isFiltered(logEntry))
+        if (shouldAudit(logEntry))
         {
             AuditEntry obfuscatedEntry = obfuscator.obfuscate(logEntry);
-            logger.log(obfuscatedEntry);
+            performAudit(obfuscatedEntry);
+        }
+    }
+
+    private boolean shouldAudit(AuditEntry logEntry)
+    {
+        long start = System.nanoTime();
+        try
+        {
+            return !filter.isFiltered(logEntry);
+        }
+        finally
+        {
+            long end = System.nanoTime();
+            auditMetrics.filterAuditRequest(end - start, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    private void performAudit(AuditEntry logEntry)
+    {
+        long start = System.nanoTime();
+        try
+        {
+            logger.log(logEntry);
+        }
+        finally
+        {
+            long end = System.nanoTime();
+            auditMetrics.logAuditRequest(end - start, TimeUnit.NANOSECONDS);
         }
     }
 }
