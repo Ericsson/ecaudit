@@ -18,6 +18,7 @@ package com.ericsson.bss.cassandra.ecaudit.config;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
@@ -62,14 +63,28 @@ public final class AuditYamlConfig
 
     ParameterizedClass getLoggerBackendParameters()
     {
+        // We hand out a deep copy since:
+        // - ParameterizedClass is mutable
+        // - The original map of options may contain a mix of Integers and Strings
+        //   Converting it all to Strings makes life easier for plug-ins when parsing options
         return logger_backend != null ? deepToStringCopy(logger_backend) : deepToStringCopy(DEFAULT_LOGGER_BACKEND);
     }
 
     private ParameterizedClass deepToStringCopy(ParameterizedClass original)
     {
-        Map<String, String> allStringParameters = original.parameters.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, e -> ((Object)e.getValue()).toString()));
+        Map<String, String> parameters;
+        if (original.parameters == null)
+        {
+            parameters = Collections.emptyMap();
+        }
+        else
+        {
+            parameters = original.parameters
+                         .entrySet()
+                         .stream()
+                         .collect(Collectors.toMap(Map.Entry::getKey, e -> String.valueOf(e.getValue())));
+        }
 
-        return new ParameterizedClass(original.class_name, allStringParameters);
+        return new ParameterizedClass(original.class_name, parameters);
     }
 }

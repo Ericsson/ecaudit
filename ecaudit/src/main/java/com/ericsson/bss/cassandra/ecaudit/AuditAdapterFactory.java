@@ -38,7 +38,7 @@ import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 /**
- * Factory class for creating configured instances of {@link AuditAdapter}.
+ * Factory class for creating configured instances of AuditAdapter.
  */
 class AuditAdapterFactory
 {
@@ -55,7 +55,7 @@ class AuditAdapterFactory
      *
      * The instance will be configured based on different system properties and the audit.yaml file.
      *
-     * @return a new configured instance of {@link AuditAdapter}.
+     * @return a new configured instance of AuditAdapter.
      */
     static AuditAdapter createAuditAdapter()
     {

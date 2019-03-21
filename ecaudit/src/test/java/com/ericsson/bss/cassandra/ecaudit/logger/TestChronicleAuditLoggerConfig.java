@@ -88,7 +88,19 @@ public class TestChronicleAuditLoggerConfig
     }
 
     @Test
-    public void testInvalidMaxLogSize()
+    public void testInvalidMaxLogSizeType()
+    {
+        Map<String, String> options = ImmutableMap.of("log_dir", "/tmp",
+                                                      "max_log_size", "zero");
+
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(() -> new ChronicleAuditLoggerConfig(options))
+        .withMessageContaining("Invalid chronicle logger max log size")
+        .withMessageContaining("zero");
+    }
+
+    @Test
+    public void testInvalidMaxLogSizeValue()
     {
         Map<String, String> options = ImmutableMap.of("log_dir", "/tmp",
                                                       "max_log_size", "0");

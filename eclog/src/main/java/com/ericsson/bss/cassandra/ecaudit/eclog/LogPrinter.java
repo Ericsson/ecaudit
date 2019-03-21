@@ -57,7 +57,7 @@ class LogPrinter
                 builder.append(auditEntry.getStatus())
                        .append('|');
                 auditEntry.getBatchId()
-                          .map(bid -> builder.append(bid).append('|'));
+                          .ifPresent(bid -> builder.append(bid).append('|'));
 
                 builder.append(auditEntry.getOperation());
                 out.println(builder.toString());
@@ -94,6 +94,6 @@ class LogPrinter
 
     private boolean isLimitReached(long printedRecords)
     {
-        return toolOptions.limit().isPresent() && printedRecords >= toolOptions.limit().get();
+        return toolOptions.limit().filter(limit -> printedRecords >= limit).isPresent();
     }
 }

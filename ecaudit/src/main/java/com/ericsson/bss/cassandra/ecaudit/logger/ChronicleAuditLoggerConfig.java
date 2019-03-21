@@ -31,7 +31,7 @@ class ChronicleAuditLoggerConfig
     private static final String CONFIG_LOG_DIR = "log_dir";
     private static final String CONFIG_ROLL_CYCLE = "roll_cycle";
     private static final String CONFIG_MAX_LOG_SIZE = "max_log_size";
-    private static final long DEFAULT_MAX_LOG_SIZE = 16L * 1024L * 1024L * 1024L;
+    private static final long DEFAULT_MAX_LOG_SIZE = 16L * 1024L * 1024L * 1024L; // 16 GB
 
     private final Path logPath;
     private final RollCycle rollCycle;
@@ -63,7 +63,7 @@ class ChronicleAuditLoggerConfig
         {
             return Optional.ofNullable(parameters.get(CONFIG_ROLL_CYCLE))
                            .map(RollCycles::valueOf)
-                           .orElse(RollCycles.valueOf(RollCycles.HOURLY.name()));
+                           .orElse(RollCycles.HOURLY);
         }
         catch (IllegalArgumentException e)
         {
@@ -73,9 +73,17 @@ class ChronicleAuditLoggerConfig
 
     private long resolveMaxLogSize(Map<String, String> parameters)
     {
-        long size = Optional.ofNullable(parameters.get(CONFIG_MAX_LOG_SIZE))
-                            .map(Long::valueOf)
-                            .orElse(DEFAULT_MAX_LOG_SIZE);
+        long size;
+        try
+        {
+            size = Optional.ofNullable(parameters.get(CONFIG_MAX_LOG_SIZE))
+                           .map(Long::valueOf)
+                           .orElse(DEFAULT_MAX_LOG_SIZE);
+        }
+        catch (NumberFormatException e)
+        {
+            throw new ConfigurationException("Invalid chronicle logger max log size: " + parameters.get(CONFIG_MAX_LOG_SIZE));
+        }
 
         if (size <= 0)
         {
@@ -103,7 +111,7 @@ class ChronicleAuditLoggerConfig
         return rollCycle;
     }
 
-    public long getMaxLogSize()
+    long getMaxLogSize()
     {
         return maxLogSize;
     }

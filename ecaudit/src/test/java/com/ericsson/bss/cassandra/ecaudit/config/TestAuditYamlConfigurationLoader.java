@@ -25,6 +25,7 @@ import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.entry;
 
 public class TestAuditYamlConfigurationLoader
 {
@@ -113,9 +114,9 @@ public class TestAuditYamlConfigurationLoader
         AuditConfig config = givenLoadedConfig(properties);
 
         assertThat(config.getLoggerBackendParameters().class_name).isEqualTo("com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger");
-        assertThat(config.getLoggerBackendParameters().parameters).containsAllEntriesOf(ImmutableMap.of("log_dir", "/tmp",
-                                                                                                        "roll_cycle", "MINUTELY",
-                                                                                                        "max_log_size", "1000000"));
+        assertThat(config.getLoggerBackendParameters().parameters).containsOnly(entry("log_dir", "/tmp"),
+                                                                                entry("roll_cycle", "MINUTELY"),
+                                                                                entry("max_log_size", "1000000"));
     }
 
     private AuditConfig givenLoadedConfig(Properties properties)

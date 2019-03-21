@@ -207,11 +207,11 @@ public class TestQueueReader
         assertThat(auditRecord.getUser()).isEqualTo(user);
         if (batchId != null)
         {
-            assertThat(auditRecord.getBatchId().get()).isEqualTo(batchId);
+            assertThat(auditRecord.getBatchId()).contains(batchId);
         }
         else
         {
-            assertThat(auditRecord.getBatchId().isPresent()).isFalse();
+            assertThat(auditRecord.getBatchId()).isEmpty();
         }
         assertThat(auditRecord.getStatus()).isEqualTo(status);
         assertThat(auditRecord.getOperation()).isEqualTo(operation);

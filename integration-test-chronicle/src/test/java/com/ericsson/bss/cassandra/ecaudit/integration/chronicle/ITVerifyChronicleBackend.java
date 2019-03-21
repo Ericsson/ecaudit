@@ -169,7 +169,8 @@ public class ITVerifyChronicleBackend
         assertThat(record.getUser()).isEqualTo(username);
         assertThat(record.getStatus()).isEqualTo("ATTEMPT");
         assertThat(record.getClient()).isEqualTo(InetAddress.getLoopbackAddress());
-        assertThat(record.getTimestamp()).isLessThan(System.currentTimeMillis());
+        assertThat(record.getTimestamp()).isLessThanOrEqualTo(System.currentTimeMillis());
+        assertThat(record.getTimestamp()).isGreaterThan(System.currentTimeMillis() - 30_000);
     }
 
     private List<AuditRecord> getRecords()

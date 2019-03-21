@@ -50,101 +50,137 @@ public class TestSizeRotatingStoreFileListener
     @Test
     public void testManySmallAreRotated() throws IOException
     {
-        givenStoreFileListener();
+        givenStoreFileListener(49);
         List<File> firstFiles = givenRotatedFiles(10, 10);
         List<File> lastFiles = givenRotatedFiles(10, 4);
 
-        firstFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        lastFiles.forEach(file -> assertThat(file.exists()).isTrue());
+        firstFiles.forEach(file -> assertThat(file).doesNotExist());
+        lastFiles.forEach(file -> assertThat(file).exists());
     }
 
     @Test
     public void testOneBigFileIsDeleted() throws IOException
     {
-        givenStoreFileListener();
+        givenStoreFileListener(49);
         List<File> files = givenRotatedFiles(50, 1);
 
-        assertThat(files.get(0).exists()).isFalse();
+        assertThat(files.get(0)).doesNotExist();
     }
 
     @Test
     public void testLargeFilePushOutManySmall() throws IOException
     {
-        givenStoreFileListener();
+        givenStoreFileListener(49);
         List<File> smallFiles = givenRotatedFiles(10, 4);
         List<File> largeFiles = givenRotatedFiles(40, 1);
 
-        smallFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        largeFiles.forEach(file -> assertThat(file.exists()).isTrue());
+        smallFiles.forEach(file -> assertThat(file).doesNotExist());
+        largeFiles.forEach(file -> assertThat(file).exists());
     }
 
     @Test
     public void testManySmallPushOutOneBig() throws IOException
     {
-        givenStoreFileListener();
+        givenStoreFileListener(49);
         List<File> largeFiles = givenRotatedFiles(40, 1);
         List<File> smallFiles = givenRotatedFiles(10, 4);
 
-        largeFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        smallFiles.forEach(file -> assertThat(file.exists()).isTrue());
+        largeFiles.forEach(file -> assertThat(file).doesNotExist());
+        smallFiles.forEach(file -> assertThat(file).exists());
     }
 
     @Test
     public void testExistingFilesAreRotated() throws IOException
     {
         List<File> existingFiles = givenExistingFiles(10, 5);
-        givenStoreFileListener();
+        givenStoreFileListener(39);
         List<File> firstFiles = givenRotatedFiles(10, 10);
-        List<File> lastFiles = givenRotatedFiles(10, 4);
+        List<File> lastFiles = givenRotatedFiles(10, 3);
 
-        existingFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        firstFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        lastFiles.forEach(file -> assertThat(file.exists()).isTrue());
+        existingFiles.forEach(file -> assertThat(file).doesNotExist());
+        firstFiles.forEach(file -> assertThat(file).doesNotExist());
+        lastFiles.forEach(file -> assertThat(file).exists());
     }
 
     @Test
     public void testExistingFilesAreRotatedWithReuse() throws IOException
     {
         List<File> existingFiles = givenExistingFiles(10, 5);
-        givenStoreFileListener();
+        givenStoreFileListener(49);
         fileCycle--;
         List<File> firstFiles = givenRotatedFiles(10, 10);
         List<File> lastFiles = givenRotatedFiles(10, 4);
 
-        existingFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        firstFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        lastFiles.forEach(file -> assertThat(file.exists()).isTrue());
+        existingFiles.forEach(file -> assertThat(file).doesNotExist());
+        firstFiles.forEach(file -> assertThat(file).doesNotExist());
+        lastFiles.forEach(file -> assertThat(file).exists());
+    }
+
+    @Test
+    public void testExistingFilesAreRotatedAndUnknownIsIgnored() throws IOException
+    {
+        List<File> existingFiles = givenExistingFiles(10, 5);
+        Path fileToIgnorePath = Paths.get(tempDir.getPath(), "guck.txt");
+        Files.write(fileToIgnorePath, new byte[10]);
+
+        givenStoreFileListener(49);
+        List<File> firstFiles = givenRotatedFiles(10, 10);
+        List<File> lastFiles = givenRotatedFiles(10, 4);
+
+        existingFiles.forEach(file -> assertThat(file).doesNotExist());
+        assertThat(fileToIgnorePath.toFile()).exists();
+        firstFiles.forEach(file -> assertThat(file).doesNotExist());
+        lastFiles.forEach(file -> assertThat(file).exists());
+    }
+
+    @Test
+    public void testExistingFilesAreRotatedAndDirectoryIsIgnored() throws IOException
+    {
+        List<File> existingFiles = givenExistingFiles(10, 5);
+        Path dirToIgnorePath = Paths.get(tempDir.getPath(), "guck" + SingleChronicleQueue.SUFFIX);
+        Files.createDirectory(dirToIgnorePath);
+
+        givenStoreFileListener(49);
+        List<File> firstFiles = givenRotatedFiles(10, 10);
+        List<File> lastFiles = givenRotatedFiles(10, 4);
+
+        existingFiles.forEach(file -> assertThat(file).doesNotExist());
+        assertThat(dirToIgnorePath.toFile()).exists();
+        firstFiles.forEach(file -> assertThat(file).doesNotExist());
+        lastFiles.forEach(file -> assertThat(file).exists());
     }
 
     @Test
     public void testSurviveMissingFile() throws IOException
     {
-        givenStoreFileListener();
+        givenStoreFileListener(49);
         List<File> firstFiles = givenRotatedFiles(10, 10);
         List<File> lostFiles = givenRotatedFiles(10, 2);
-        lostFiles.forEach(file -> file.delete());
+        lostFiles.forEach(file -> assertThat(file.delete()).isTrue());
         List<File> moreFiles = givenRotatedFiles(10, 10);
         List<File> lastFiles = givenRotatedFiles(10, 4);
 
-        firstFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        lostFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        moreFiles.forEach(file -> assertThat(file.exists()).isFalse());
-        lastFiles.forEach(file -> assertThat(file.exists()).isTrue());
+        firstFiles.forEach(file -> assertThat(file).doesNotExist());
+        lostFiles.forEach(file -> assertThat(file).doesNotExist());
+        moreFiles.forEach(file -> assertThat(file).doesNotExist());
+        lastFiles.forEach(file -> assertThat(file).exists());
     }
 
-    private void givenStoreFileListener()
+    private void givenStoreFileListener(long maxLogSize)
     {
-        storeFileListener = new SizeRotatingStoreFileListener(tempDir.toPath(), 49);
+        storeFileListener = new SizeRotatingStoreFileListener(tempDir.toPath(), maxLogSize);
     }
 
     private List<File> givenRotatedFiles(int size, int count) throws IOException
     {
-        List<File> files = givenExistingFiles(size, count);
+        List<File> files = new ArrayList<>(count);
 
-        for (File file : files)
+        for (int i = 0; i < count; i++)
         {
+            File file = createFile(size);
             storeFileListener.onAcquired(1, file);
             storeFileListener.onReleased(1, file);
+            files.add(file);
         }
 
         return files;

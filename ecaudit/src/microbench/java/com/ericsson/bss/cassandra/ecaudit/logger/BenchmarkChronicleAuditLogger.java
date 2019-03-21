@@ -84,7 +84,7 @@ public class BenchmarkChronicleAuditLogger
         logger = new ChronicleAuditLogger(config);
     }
 
-    @Setup(Level.Invocation)
+    @Setup(Level.Iteration)
     public void setup() throws Exception
     {
         auditEntry = AuditEntry.newBuilder()

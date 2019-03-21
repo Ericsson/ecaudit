@@ -68,7 +68,7 @@ public class QueueReader
     {
         SingleChronicleQueueBuilder chronicleBuilder = ChronicleQueueBuilder.single(toolOptions.path().toFile())
                                                                             .readOnly(true);
-        toolOptions.rollCycle().map(chronicleBuilder::rollCycle);
+        toolOptions.rollCycle().ifPresent(chronicleBuilder::rollCycle);
 
         try
         {

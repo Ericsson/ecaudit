@@ -42,7 +42,8 @@ Depending on your Cassandra version, add the following JVM option to your ```jvm
 
 ## Configure Logger Backend
 
-The ecAudit plug-in is shipped with two different logger backends - SLF4J and Chronicle.
+In ecAudit the logger backend is pluggable.
+Two different backends comes with ecAudit out of the box - SLF4J and Chronicle.
 The SLF4J logger can be configured with LogBack to produce various log file formats,
 including clear text log files.
 The Chronicle logger produces binary log files but is more performant when handling large volumes of audit records. 
@@ -142,11 +143,11 @@ The logger name of the audit records is ```ECAUDIT```.
 
 Tuning tips:
 * The asynchronous appender can _improve or demote_ performance depending on your setup.
-* Compression on rotated may impact performance significantly.
+* Compression on rolling files may impact performance significantly.
 * If you are logging large volumes of data, make sure your storage can keep up.
 
 In the example snippet below,
-LOGBack is configured to use rotation of files with a synchronous appender.
+LOGBack is configured to use a rolling policy with a synchronous appender.
 Run performance tests on your workload to find out what settings works best for you.
 
 
@@ -206,9 +207,9 @@ logger_backend:
         roll_cycle: MINUTELY
 ```
 
-Log files will be rotated once a size threshold is reached.
-16GB of log files will be retained before the oldest is deleted.
-The value must be specified in *bytes*.
+The oldest log files will be discarded once a size threshold is reached.
+By default 16GB of log files will be retained before the oldest is deleted.
+The value is specified in *bytes*.
 
 ```YAML
 logger_backend:

@@ -74,21 +74,21 @@ public class TestChronicleAuditLogger
     @Test
     public void singleStatement() throws Exception
     {
-        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1993-07-27T18:15:30Z").toEpochMilli(), "Javier Sotomayor", "2.45.2.45", "High Jump", Status.ATTEMPT, null);
+        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1987-06-30T14:39:00Z").toEpochMilli(), "Patrik Sjoberg", "2.42.2.42", "High Jump", Status.ATTEMPT, null);
 
         logger.log(auditEntry);
 
-        verifyWire(Instant.parse("1993-07-27T18:15:30Z").toEpochMilli(),"Javier Sotomayor", "2.45.2.45", "High Jump", Status.ATTEMPT, null);
+        verifyWire(Instant.parse("1987-06-30T14:39:00Z").toEpochMilli(),"Patrik Sjoberg", "2.42.2.42", "High Jump", Status.ATTEMPT, null);
     }
 
     @Test
     public void batchStatement() throws Exception
     {
-        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1993-07-27T18:15:30Z").toEpochMilli(), "Javier Sotomayor", "2.45.2.45", "High Jump", Status.ATTEMPT, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
+        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1987-06-30T14:56:00Z").toEpochMilli(), "Patrik Sjoberg", "2.44.2.44", "High Jump", Status.FAILED, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
 
         logger.log(auditEntry);
 
-        verifyWire(Instant.parse("1993-07-27T18:15:30Z").toEpochMilli(),"Javier Sotomayor", "2.45.2.45", "High Jump", Status.ATTEMPT, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
+        verifyWire(Instant.parse("1987-06-30T14:56:00Z").toEpochMilli(),"Patrik Sjoberg", "2.44.2.44", "High Jump", Status.FAILED, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
     }
 
     @Test

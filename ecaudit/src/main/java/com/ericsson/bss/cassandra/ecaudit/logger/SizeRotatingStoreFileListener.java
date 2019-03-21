@@ -16,60 +16,33 @@
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.openhft.chronicle.queue.impl.StoreFileListener;
-import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
 
 public class SizeRotatingStoreFileListener implements StoreFileListener
 {
     private static final Logger LOG = LoggerFactory.getLogger(SizeRotatingStoreFileListener.class);
 
-    private final Path path;
+    private final SizeTrackedFileQueue releasedFileQueue = new SizeTrackedFileQueue();
+    private final FileQueueBootstrapper bootstrapper;
     private final long maxLogSize;
-    private final Queue<File> releasedStoreFiles = new ConcurrentLinkedQueue<>();
-    private long bytesInStoreFiles;
-    private List<File> discoveredFiles;
 
     SizeRotatingStoreFileListener(Path path, long maxLogSize)
     {
         LOG.debug("Rotating Chronicle audit logs at threshold {} bytes", maxLogSize);
-        this.path = path;
+        bootstrapper = new FileQueueBootstrapper(path);
         this.maxLogSize = maxLogSize;
-        discoverFiles();
+        reset();
     }
 
-    private void discoverFiles()
+    private void reset()
     {
-        try
-        {
-            discoveredFiles = Files.list(path)
-                                   .filter(Files::isRegularFile)
-                                   .map(Path::toFile)
-                                   .filter(file -> file.getPath().endsWith(SingleChronicleQueue.SUFFIX))
-                                   .sorted()
-                                   .collect(Collectors.toList());
-        }
-        catch (IOException e)
-        {
-            LOG.warn("Failed to list existing Chronicle files");
-            discoveredFiles = Collections.emptyList();
-        }
-
-        for (File discoveredFile : discoveredFiles)
-        {
-            LOG.debug("Discovered {}", discoveredFile.getPath());
-        }
+        releasedFileQueue.clear();
+        bootstrapper.discoverFiles();
     }
 
     @Override
@@ -77,49 +50,52 @@ public class SizeRotatingStoreFileListener implements StoreFileListener
     {
         LOG.debug("Chronicle acquired [{}] {} at {} bytes", cycle, file.getPath(), file.length());
 
-        discoveredFiles.remove(file);
-
-        int index = 0;
-        for (File existingFile : discoveredFiles)
+        if (bootstrapper.isBootstrapping())
         {
-            onReleased(index++, existingFile);
+            bootstrapper.excludeActiveFile(file);
+            bootstrapper.enqueueOn(releasedFileQueue);
+            // We may be above threshold at this point
+            // But we'll reclaim disk space on next call to onReleased()
         }
-        discoveredFiles.clear();
     }
 
     @Override
-    public synchronized void onReleased(int cycle, File file)
+    public void onReleased(int cycle, File file)
     {
-        releasedStoreFiles.offer(file);
-        // Not accurate because the files are sparse, but it's at least pessimistic
-        bytesInStoreFiles += file.length();
-        LOG.debug("Chronicle released {} at {} bytes", file.getPath(), file.length());
+        LOG.debug("Chronicle released [{}] {} at {} bytes", cycle, file.getPath(), file.length());
 
-        LOG.debug("Released Chronicle archive at {} / {} bytes", bytesInStoreFiles, maxLogSize);
-        while (bytesInStoreFiles > maxLogSize)
+        releasedFileQueue.offer(file);
+        maybeRotate();
+    }
+
+    private void maybeRotate()
+    {
+        while (releasedFileQueue.accumulatedFileSize() > maxLogSize)
         {
-            deleteOldestFile();
+            if (!tryDeleteOldestFile())
+            {
+                reset();
+                return;
+            }
         }
     }
 
-    private void deleteOldestFile()
+    private boolean tryDeleteOldestFile()
     {
-        if (releasedStoreFiles.isEmpty())
+        File toDelete = releasedFileQueue.poll();
+        if (toDelete == null)
         {
-            return;
+            LOG.error("Above audit file threshold but no Chronicle file to delete");
+            return false;
         }
-        File toDelete = releasedStoreFiles.poll();
-        long toDeleteLength = toDelete.length();
-        if (toDelete.delete())
+
+        LOG.debug("Deleting Chronicle file {} at {} bytes", toDelete.getPath(), toDelete.getPath().length());
+        if (!toDelete.delete())
         {
-            LOG.debug("Deleted Chronicle file {} at {} bytes", toDelete.getPath(), toDeleteLength);
-            bytesInStoreFiles -= toDeleteLength;
+            LOG.error("Failed to delete Chronicle file {}", toDelete.getPath());
+            return false;
         }
-        else
-        {
-            LOG.error("Failed to delete Chronicle file {} at {} bytes", toDelete.getPath(), toDeleteLength);
-            bytesInStoreFiles = 0;
-            discoverFiles();
-        }
+
+        return true;
     }
 }

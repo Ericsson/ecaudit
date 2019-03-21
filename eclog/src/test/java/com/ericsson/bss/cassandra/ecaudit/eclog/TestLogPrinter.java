@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -33,6 +34,7 @@ import org.mockito.stubbing.OngoingStubbing;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -40,6 +42,12 @@ public class TestLogPrinter
 {
     @Mock
     private PrintStream stream;
+
+    @After
+    public void after()
+    {
+        verifyNoMoreInteractions(stream);
+    }
 
     @Test(timeout = 5000)
     public void testFiveRecords() throws UnknownHostException
@@ -50,7 +58,7 @@ public class TestLogPrinter
 
         printer.print(reader);
 
-        verifySingleRecords(5);
+        verifySingleRecordsFromStartOfSequence(5);
     }
 
     @Test(timeout = 5000)
@@ -62,11 +70,11 @@ public class TestLogPrinter
 
         printer.print(reader);
 
-        verifyBatchRecords(5);
+        verifyBatchRecordsFromStartOfSequence(5);
     }
 
     @Test(timeout = 5000)
-    public void testFivePlusFiveWillSkipFiveRecords() throws UnknownHostException
+    public void testFivePlusFiveWithoutFollowWillSkipFiveLastRecords() throws UnknownHostException
     {
         ToolOptions options = ToolOptions.builder().build();
         LogPrinter printer = givenPrinter(options);
@@ -74,19 +82,19 @@ public class TestLogPrinter
 
         printer.print(reader);
 
-        verifySingleRecords(5);
+        verifySingleRecordsFromStartOfSequence(5);
     }
 
     @Test(timeout = 5000)
-    public void testFivePlusFiveWithFollowAndLimitRecords() throws UnknownHostException
+    public void testFivePlusTenWithFollowAndLimitRecords() throws UnknownHostException
     {
         ToolOptions options = ToolOptions.builder().withFollow(true).withLimit(10).build();
         LogPrinter printer = givenPrinter(options);
-        QueueReader reader = givenRecords(false, 5, 5);
+        QueueReader reader = givenRecords(false, 5, 10);
 
         printer.print(reader);
 
-        verifySingleRecords(10);
+        verifySingleRecordsFromStartOfSequence(10);
     }
 
     private LogPrinter givenPrinter(ToolOptions options)
@@ -109,7 +117,7 @@ public class TestLogPrinter
         }
         hasNextStub.thenReturn(false);
 
-        List<AuditRecord> records = new ArrayList<>(count1);
+        List<AuditRecord> records = new ArrayList<>();
         for (int i = 0; i < count1 + count2; i++)
         {
             records.add(mockRecord(i, "1.2.3.4", "king", "Attempt", withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
@@ -135,7 +143,7 @@ public class TestLogPrinter
         return record;
     }
 
-    private void verifySingleRecords(int count)
+    private void verifySingleRecordsFromStartOfSequence(int count)
     {
         for (int i = 0; i < count; i++)
         {
@@ -143,7 +151,7 @@ public class TestLogPrinter
         }
     }
 
-    private void verifyBatchRecords(int count)
+    private void verifyBatchRecordsFromStartOfSequence(int count)
     {
         for (int i = 0; i < count; i++)
         {

@@ -42,7 +42,7 @@ public class TestOptionParser
     }
 
     @Test
-    public void withDirectory() throws ParseException
+    public void withDirectoryOnly() throws ParseException
     {
         String[] argv = givenInputOptions("./dir");
 
@@ -50,9 +50,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().isPresent()).isFalse();
-        assertThat(options.tail().isPresent()).isFalse();
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).isEmpty();
+        assertThat(options.tail()).isEmpty();
     }
 
     @Test
@@ -64,9 +64,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isTrue();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().isPresent()).isFalse();
-        assertThat(options.tail().isPresent()).isFalse();
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).isEmpty();
+        assertThat(options.tail()).isEmpty();
     }
 
     @Test
@@ -78,9 +78,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isTrue();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().isPresent()).isFalse();
-        assertThat(options.tail().isPresent()).isFalse();
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).isEmpty();
+        assertThat(options.tail()).isEmpty();
     }
 
     @Test
@@ -102,9 +102,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().get()).isEqualTo(RollCycles.MINUTELY);
-        assertThat(options.limit().isPresent()).isFalse();
-        assertThat(options.tail().isPresent()).isFalse();
+        assertThat(options.rollCycle()).contains(RollCycles.MINUTELY);
+        assertThat(options.limit()).isEmpty();
+        assertThat(options.tail()).isEmpty();
     }
 
     @Test
@@ -116,9 +116,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().get()).isEqualTo(RollCycles.MINUTELY);
-        assertThat(options.limit().isPresent()).isFalse();
-        assertThat(options.tail().isPresent()).isFalse();
+        assertThat(options.rollCycle()).contains(RollCycles.MINUTELY);
+        assertThat(options.limit()).isEmpty();
+        assertThat(options.tail()).isEmpty();
     }
 
     @Test
@@ -164,9 +164,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().get()).isEqualTo(20);
-        assertThat(options.tail().isPresent()).isFalse();
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).contains(20L);
+        assertThat(options.tail()).isEmpty();
     }
 
     @Test
@@ -178,9 +178,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().get()).isEqualTo(20);
-        assertThat(options.tail().isPresent()).isFalse();
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).contains(20L);
+        assertThat(options.tail()).isEmpty();
     }
 
     @Test
@@ -222,9 +222,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().get()).isEqualTo(20);
-        assertThat(options.tail().get()).isEqualTo(20);
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).contains(20L);
+        assertThat(options.tail()).contains(20L);
     }
 
     @Test
@@ -236,9 +236,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().get()).isEqualTo(20);
-        assertThat(options.tail().get()).isEqualTo(20);
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).contains(20L);
+        assertThat(options.tail()).contains(20L);
     }
 
     @Test
@@ -250,9 +250,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().get()).isEqualTo(30);
-        assertThat(options.tail().get()).isEqualTo(20);
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).contains(30L);
+        assertThat(options.tail()).contains(20L);
     }
 
     @Test
@@ -264,9 +264,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().get()).isEqualTo(10);
-        assertThat(options.tail().get()).isEqualTo(20);
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).contains(10L);
+        assertThat(options.tail()).contains(20L);
     }
 
     @Test
@@ -278,9 +278,9 @@ public class TestOptionParser
 
         assertThat(options.path()).isEqualTo(Paths.get("./dir"));
         assertThat(options.follow()).isTrue();
-        assertThat(options.rollCycle().isPresent()).isFalse();
-        assertThat(options.limit().isPresent()).isFalse();
-        assertThat(options.tail().get()).isEqualTo(20);
+        assertThat(options.rollCycle()).isEmpty();
+        assertThat(options.limit()).isEmpty();
+        assertThat(options.tail()).contains(20L);
     }
 
     @Test

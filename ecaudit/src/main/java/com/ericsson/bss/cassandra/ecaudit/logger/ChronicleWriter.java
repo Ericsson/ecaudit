@@ -15,22 +15,25 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
+import java.io.File;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import org.apache.cassandra.concurrent.NamedThreadFactory;
 
-class ChronicleWriter implements Runnable, AutoCloseable
+class ChronicleWriter implements AutoCloseable
 {
     private static final int BUFFER_SIZE = 256;
 
-    private final Thread writerThread = new NamedThreadFactory("Chronicle Writer").newThread(this);
+    private final Thread writerThread = new NamedThreadFactory("Chronicle Writer").newThread(this::writerLoop);
     private final BlockingQueue<WriteMarshallable> queue;
     private final ChronicleQueue chronicle;
     private final ExcerptAppender appender;
@@ -39,10 +42,20 @@ class ChronicleWriter implements Runnable, AutoCloseable
 
     ChronicleWriter(ChronicleAuditLoggerConfig config)
     {
-        this(ChronicleQueueBuilder.single(config.getLogPath().toFile())
-                                  .rollCycle(config.getRollCycle())
-                                  .storeFileListener(new SizeRotatingStoreFileListener(config.getLogPath(), config.getMaxLogSize()))
-                                  .build());
+        this(ChronicleQueueBuilder::single, config);
+    }
+
+    @VisibleForTesting
+    ChronicleWriter(Function<File, SingleChronicleQueueBuilder> builderFunction, ChronicleAuditLoggerConfig config)
+    {
+        chronicle = builderFunction.apply(config.getLogPath().toFile())
+                                   .rollCycle(config.getRollCycle())
+                                   .storeFileListener(new SizeRotatingStoreFileListener(config.getLogPath(), config.getMaxLogSize()))
+                                   .build();
+
+        appender = chronicle.acquireAppender();
+        queue = new ArrayBlockingQueue<>(BUFFER_SIZE);
+        writerThread.start();
     }
 
     @VisibleForTesting
@@ -64,8 +77,7 @@ class ChronicleWriter implements Runnable, AutoCloseable
         queue.put(marshallable);
     }
 
-    @Override
-    public void run()
+    private void writerLoop()
     {
         try
         {
@@ -75,8 +87,9 @@ class ChronicleWriter implements Runnable, AutoCloseable
                 appender.writeDocument(marshallable);
             }
         }
-        catch (InterruptedException ignored)
+        catch (InterruptedException e)
         {
+            Thread.currentThread().interrupt();
         }
     }
 
