@@ -23,6 +23,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.AuditRecordReadMarshallable;
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.ReadMarshallable;
@@ -78,71 +82,59 @@ public class TestQueueReader
     @Test
     public void testValidSingleRecord() throws UnknownHostException
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, "attempt", "Some operation");
+        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
         QueueReader reader = givenReader();
 
         assertThat(reader.hasRecordAvailable()).isTrue();
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, "attempt", "Some operation");
+        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, Status.ATTEMPT, "Some operation");
     }
 
     @Test
     public void testValidSingleTailRecord() throws UnknownHostException
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, "attempt", "Some operation");
+        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
         QueueReader reader = givenReader(ToolOptions.builder().withTail(1).build());
 
         verify(tailer).moveToIndex(eq(999L));
         assertThat(reader.hasRecordAvailable()).isTrue();
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, "attempt", "Some operation");
+        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, Status.ATTEMPT, "Some operation");
     }
 
     @Test
     public void testValidSingleRecordDirect() throws UnknownHostException
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, "attempt", "Some operation");
+        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
         QueueReader reader = givenReader();
 
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, "attempt", "Some operation");
+        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, Status.ATTEMPT, "Some operation");
     }
 
     @Test
     public void testValidBatchRecord() throws UnknownHostException
     {
-        givenNextRecordIs((short) 800, "batch-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa"), "attempt", "Some operation");
+        givenNextRecordIs((short) 800, "batch-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa"), Status.ATTEMPT, "Some operation");
         QueueReader reader = givenReader();
 
         assertThat(reader.hasRecordAvailable()).isTrue();
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa"), "attempt", "Some operation");
+        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa"), Status.ATTEMPT, "Some operation");
     }
 
     @Test
-    public void testUnknownVersion() throws UnknownHostException
+    public void testFailOnCorruptRecord()
     {
-        givenNextRecordIs((short) 900, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, "attempt", "Some operation");
+        givenNextRecordIs((short) 800, "single-entry", 42L, new byte[]{ 1, 2, 3 }, "john", null, Status.ATTEMPT, "Some operation");
         QueueReader reader = givenReader();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
+        assertThatExceptionOfType(IORuntimeException.class)
         .isThrownBy(reader::hasRecordAvailable)
-        .withMessageContaining("Unsupported record version")
-        .withMessageContaining("900");
+        .withMessageContaining("Corrupt");
     }
 
-    @Test
-    public void testIllegalAddressVersion()
-    {
-        givenNextRecordIs((short) 800, "single-entry", 42L, new byte[]{ 1, 2, 3 }, "john", null, "attempt", "Some operation");
-        QueueReader reader = givenReader();
-
-        assertThat(reader.hasRecordAvailable()).isTrue();
-        AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getLoopbackAddress(), "john", null, "attempt", "Some operation");
-    }
-
-    private void givenNextRecordIs(short version, String type, long timestamp, byte[] clientAddress, String user, UUID batchId, String status, String operation)
+    private void givenNextRecordIs(short version, String type, long timestamp, byte[] clientAddress, String user, UUID batchId, Status status, String operation)
     {
         WireIn wireMock = mock(WireIn.class);
 
@@ -174,7 +166,7 @@ public class TestQueueReader
         }
 
         ValueIn statusValueMock = mock(ValueIn.class);
-        when(statusValueMock.text()).thenReturn(status);
+        when(statusValueMock.text()).thenReturn(status.toString());
         when(wireMock.read(eq("status"))).thenReturn(statusValueMock);
 
         ValueIn operationValueMock = mock(ValueIn.class);
@@ -183,7 +175,7 @@ public class TestQueueReader
 
         when(tailer.readDocument(any(ReadMarshallable.class)))
         .thenAnswer((Answer<Boolean>) invocation -> {
-                        QueueReader.MarshallableAuditEntry readMarshallable = invocation.getArgument(0);
+                        AuditRecordReadMarshallable readMarshallable = invocation.getArgument(0);
                         readMarshallable.readMarshallable(wireMock);
                         return true;
                     }
@@ -200,10 +192,10 @@ public class TestQueueReader
         return new QueueReader(toolOptions, queue);
     }
 
-    private void assertRecordMatches(AuditRecord auditRecord, long timestamp, InetAddress clientAddress, String user, UUID batchId, String status, String operation)
+    private void assertRecordMatches(AuditRecord auditRecord, long timestamp, InetAddress clientAddress, String user, UUID batchId, Status status, String operation)
     {
         assertThat(auditRecord.getTimestamp()).isEqualTo(timestamp);
-        assertThat(auditRecord.getClient()).isEqualTo(clientAddress);
+        assertThat(auditRecord.getClientAddress()).isEqualTo(clientAddress);
         assertThat(auditRecord.getUser()).isEqualTo(user);
         if (batchId != null)
         {
@@ -214,6 +206,6 @@ public class TestQueueReader
             assertThat(auditRecord.getBatchId()).isEmpty();
         }
         assertThat(auditRecord.getStatus()).isEqualTo(status);
-        assertThat(auditRecord.getOperation()).isEqualTo(operation);
+        assertThat(auditRecord.getOperation().getOperationString()).isEqualTo(operation);
     }
 }

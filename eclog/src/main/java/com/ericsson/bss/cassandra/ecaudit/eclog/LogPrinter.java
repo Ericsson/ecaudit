@@ -17,6 +17,8 @@ package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.PrintStream;
 
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+
 class LogPrinter
 {
     private static final long DEFAULT_POLL_INTERVAL_MS = 1000;
@@ -43,41 +45,32 @@ class LogPrinter
         long printedRecords = 0;
         while (true)
         {
-            while (queueReader.hasRecordAvailable())
+            while (isEligibleForPrint(queueReader, printedRecords))
             {
                 AuditRecord auditEntry = queueReader.nextRecord();
 
                 StringBuilder builder = new StringBuilder();
-                builder.append(auditEntry.getTimestamp())
-                       .append('|');
-                builder.append(auditEntry.getClient().getHostAddress())
-                       .append('|');
-                builder.append(auditEntry.getUser())
-                       .append('|');
-                builder.append(auditEntry.getStatus())
-                       .append('|');
+                builder.append(auditEntry.getTimestamp()).append('|');
+                builder.append(auditEntry.getClientAddress().getHostAddress()).append('|');
+                builder.append(auditEntry.getUser()).append('|');
+                builder.append(auditEntry.getStatus()).append('|');
                 auditEntry.getBatchId()
                           .ifPresent(bid -> builder.append(bid).append('|'));
 
-                builder.append(auditEntry.getOperation());
+                builder.append(auditEntry.getOperation().getOperationString());
                 out.println(builder.toString());
 
                 printedRecords++;
-
-                if (isLimitReached(printedRecords))
-                {
-                    break;
-                }
             }
 
             if (isLimitReached(printedRecords))
             {
-                break;
+                return;
             }
 
             if (!toolOptions.follow())
             {
-                break;
+                return;
             }
 
             try
@@ -87,9 +80,14 @@ class LogPrinter
             catch (InterruptedException e)
             {
                 Thread.currentThread().interrupt();
-                break;
+                return;
             }
         }
+    }
+
+    private boolean isEligibleForPrint(QueueReader queueReader, long printedRecords)
+    {
+        return queueReader.hasRecordAvailable() && !isLimitReached(printedRecords);
     }
 
     private boolean isLimitReached(long printedRecords)

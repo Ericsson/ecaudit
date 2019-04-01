@@ -25,8 +25,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;

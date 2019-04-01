@@ -27,10 +27,14 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.OngoingStubbing;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -53,7 +57,7 @@ public class TestLogPrinter
     public void testFiveRecords() throws UnknownHostException
     {
         ToolOptions options = ToolOptions.builder().build();
-        LogPrinter printer = givenPrinter(options);
+        LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(false, 5, 0);
 
         printer.print(reader);
@@ -65,7 +69,7 @@ public class TestLogPrinter
     public void testFiveBatchRecords() throws UnknownHostException
     {
         ToolOptions options = ToolOptions.builder().build();
-        LogPrinter printer = givenPrinter(options);
+        LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(true, 5, 0);
 
         printer.print(reader);
@@ -77,7 +81,7 @@ public class TestLogPrinter
     public void testFivePlusFiveWithoutFollowWillSkipFiveLastRecords() throws UnknownHostException
     {
         ToolOptions options = ToolOptions.builder().build();
-        LogPrinter printer = givenPrinter(options);
+        LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(false, 5, 5);
 
         printer.print(reader);
@@ -89,7 +93,7 @@ public class TestLogPrinter
     public void testFivePlusTenWithFollowAndLimitRecords() throws UnknownHostException
     {
         ToolOptions options = ToolOptions.builder().withFollow(true).withLimit(10).build();
-        LogPrinter printer = givenPrinter(options);
+        LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(false, 5, 10);
 
         printer.print(reader);
@@ -97,9 +101,35 @@ public class TestLogPrinter
         verifySingleRecordsFromStartOfSequence(10);
     }
 
-    private LogPrinter givenPrinter(ToolOptions options)
+    @Test(timeout = 5000)
+    public void testFivePlusFiveWithFollowHasPollDelay() throws UnknownHostException
     {
-        return new LogPrinter(options, stream, 10);
+        ToolOptions options = ToolOptions.builder().withFollow(true).withLimit(10).build();
+        LogPrinter printer = givenPrinter(options, 200);
+        QueueReader reader = givenRecords(false, 5, 5);
+
+        long start = System.currentTimeMillis();
+        printer.print(reader);
+        long end = System.currentTimeMillis();
+
+        verifySingleRecordsFromStartOfSequence(10);
+        
+        assertThat(end).isGreaterThanOrEqualTo(start + 200L);
+    }
+
+    @Test(timeout = 5000)
+    public void testFivePlusTenWithFollowAndLimitToZeroRecords() throws UnknownHostException
+    {
+        ToolOptions options = ToolOptions.builder().withFollow(true).withLimit(0).build();
+        LogPrinter printer = givenPrinter(options, 10);
+        QueueReader reader = givenRecords(false, 5, 10);
+
+        printer.print(reader);
+    }
+
+    private LogPrinter givenPrinter(ToolOptions options, long pollIntervallMs)
+    {
+        return new LogPrinter(options, stream, pollIntervallMs);
     }
 
     private QueueReader givenRecords(boolean withBatchId, int count1, int count2) throws UnknownHostException
@@ -120,7 +150,7 @@ public class TestLogPrinter
         List<AuditRecord> records = new ArrayList<>();
         for (int i = 0; i < count1 + count2; i++)
         {
-            records.add(mockRecord(i, "1.2.3.4", "king", "Attempt", withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
+            records.add(mockRecord(i, "1.2.3.4", "king", Status.ATTEMPT, withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
         }
         OngoingStubbing<AuditRecord> recordStub = when(reader.nextRecord());
         for (AuditRecord record : records)
@@ -131,15 +161,15 @@ public class TestLogPrinter
         return reader;
     }
 
-    private AuditRecord mockRecord(long timestamp, String clientHost, String user, String status, UUID batchId, String operation) throws UnknownHostException
+    private AuditRecord mockRecord(long timestamp, String clientHost, String user, Status status, UUID batchId, String operation) throws UnknownHostException
     {
         AuditRecord record = mock(AuditRecord.class);
         when(record.getTimestamp()).thenReturn(timestamp);
-        when(record.getClient()).thenReturn(InetAddress.getByName(clientHost));
+        when(record.getClientAddress()).thenReturn(InetAddress.getByName(clientHost));
         when(record.getUser()).thenReturn(user);
         when(record.getBatchId()).thenReturn(Optional.ofNullable(batchId));
         when(record.getStatus()).thenReturn(status);
-        when(record.getOperation()).thenReturn(operation);
+        when(record.getOperation()).thenReturn(new SimpleAuditOperation(operation));
         return record;
     }
 
@@ -147,7 +177,7 @@ public class TestLogPrinter
     {
         for (int i = 0; i < count; i++)
         {
-            verify(stream).println(eq(i + "|1.2.3.4|king|Attempt|SELECT QUERY"));
+            verify(stream).println(eq(i + "|1.2.3.4|king|ATTEMPT|SELECT QUERY"));
         }
     }
 
@@ -155,7 +185,7 @@ public class TestLogPrinter
     {
         for (int i = 0; i < count; i++)
         {
-            verify(stream).println(eq(i + "|1.2.3.4|king|Attempt|b23534c7-93af-497f-b00c-1edaaa335caa|SELECT QUERY"));
+            verify(stream).println(eq(i + "|1.2.3.4|king|ATTEMPT|b23534c7-93af-497f-b00c-1edaaa335caa|SELECT QUERY"));
         }
     }
 }

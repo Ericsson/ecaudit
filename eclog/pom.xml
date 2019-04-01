@@ -29,6 +29,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
+            <artifactId>common_c3.0.11</artifactId>
+        </dependency>
+        <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-queue</artifactId>
         </dependency>
@@ -66,6 +70,7 @@
                 <configuration>
                     <artifactSet>
                         <includes>
+                            <include>com.ericsson.bss.cassandra.ecaudit:*</include>
                             <include>net.openhft:*</include>
                             <include>net.java.dev.jna:*</include>
                             <include>com.intellij:annotations</include>

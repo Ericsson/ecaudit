@@ -31,7 +31,8 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
-import com.ericsson.bss.cassandra.ecaudit.eclog.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.eclog.QueueReader;
 import com.ericsson.bss.cassandra.ecaudit.eclog.ToolOptions;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
@@ -165,10 +166,10 @@ public class ITVerifyChronicleBackend
         assertThat(records).hasSize(1);
 
         AuditRecord record = records.get(0);
-        assertThat(record.getOperation()).isEqualTo(operation);
+        assertThat(record.getOperation().getOperationString()).isEqualTo(operation);
         assertThat(record.getUser()).isEqualTo(username);
-        assertThat(record.getStatus()).isEqualTo("ATTEMPT");
-        assertThat(record.getClient()).isEqualTo(InetAddress.getLoopbackAddress());
+        assertThat(record.getStatus()).isEqualTo(Status.ATTEMPT);
+        assertThat(record.getClientAddress()).isEqualTo(InetAddress.getLoopbackAddress());
         assertThat(record.getTimestamp()).isLessThanOrEqualTo(System.currentTimeMillis());
         assertThat(record.getTimestamp()).isGreaterThan(System.currentTimeMillis() - 30_000);
     }

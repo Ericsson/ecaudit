@@ -37,6 +37,7 @@
     </licenses>
 
     <modules>
+        <module>common</module>
         <module>ecaudit</module>
         <module>eclog</module>
         <module>test-utils</module>
@@ -84,6 +85,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
+                <artifactId>common_c3.0.11</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.cassandra</groupId>
                 <artifactId>cassandra-all</artifactId>
@@ -245,6 +251,8 @@ limitations under the License.
                             <exclude>**/pom.xml.tag</exclude>
                             <exclude>**/pom.xml.releaseBackup</exclude>
                             <exclude>release.properties</exclude>
+                            <exclude>**/*.cq4</exclude>
+                            <exclude>**/directory-listing.cq4t</exclude>
                         </excludes>
                     </configuration>
                 </plugin>
