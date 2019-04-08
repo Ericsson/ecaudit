@@ -1,6 +1,10 @@
 # Upgrading
 
-## To version 2.x.x
+Below you'll find special instructions to consider when upgrading to a new version of ecAudit.
+Check out the [change log](CHANGES.md) for a full list of new features and fixes.
+
+
+## To version 2.1.x
 
 Administrators should be aware of the following changes when upgrading from version 0.x.x, 1.x.x or 2.0.x to 2.1.0 or later.
 ecAudit can be upgraded to 2.1.x from any previous major version as long as these and any intermediate upgrade instructions are observed.
@@ -65,7 +69,7 @@ Administrators should be aware of the following changes when upgrading from vers
 ecAudit can be upgrade to 1.x.x from any 0.x.x version as long as the upgrade instructions below are observed.
 
 ecAudit now provides a custom authorizer plug-in in.
-This is necessary in order to resolve issue (Ericsson/ecaudit#31),
+This is necessary in order to resolve issue #31,
 allowing a role to whitelist applicable to a grantee as long as the role has `AUTHORIZE` permission on the resource.
 
 ### Instructions
