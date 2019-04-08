@@ -39,12 +39,7 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
             throw new IORuntimeException("Tried to read from wire with used marshallable");
         }
 
-        short version = wire.read(WireTags.KEY_VERSION).int16();
-
-        if (version != WireTags.VALUE_VERSION_CURRENT)
-        {
-            throw new IORuntimeException("Unsupported record version: " + version);
-        }
+        verifyVersion(wire);
 
         String type = wire.read(WireTags.KEY_TYPE).text();
 
@@ -86,11 +81,21 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         auditRecord = builder.build();
     }
 
+    private void verifyVersion(@NotNull WireIn wire)
+    {
+        short version = wire.read(WireTags.KEY_VERSION).int16();
+
+        if (version != WireTags.VALUE_VERSION_CURRENT)
+        {
+            throw new IORuntimeException("Unsupported record version: " + version);
+        }
+    }
+
     public AuditRecord getAuditRecord()
     {
         if (auditRecord == null)
         {
-            throw new IllegalStateException("No record has been red from the wire");
+            throw new IllegalStateException("No record has been read from the wire");
         }
 
         return auditRecord;
