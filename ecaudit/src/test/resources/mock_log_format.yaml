@@ -14,7 +14,9 @@
 # limitations under the License.
 #
 
----
-slf4j:
-  log_format: "user:{USER}, client:{CLIENT}"
-  time_format: "yyyy-MM-dd HH:mm:ss.SSS"
+logger_backend:
+  - class_name: com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger
+    parameters:
+      - log_dir: "/tmp"
+        roll_cycle: "MINUTELY"
+        max_log_size: 1000000

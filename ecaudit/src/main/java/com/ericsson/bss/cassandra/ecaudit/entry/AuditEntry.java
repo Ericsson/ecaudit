@@ -20,8 +20,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.annotations.VisibleForTesting;
-
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 
@@ -30,7 +31,7 @@ import org.apache.cassandra.auth.Permission;
  *
  * Instances are immutable an may only be created using the {@link AuditEntry.Builder}.
  */
-public class AuditEntry
+public class AuditEntry implements AuditRecord
 {
     private final InetAddress clientAddress;
     private final Set<Permission> permissions;
@@ -56,6 +57,7 @@ public class AuditEntry
         this.timestamp = builder.timestamp;
     }
 
+    @Override
     public InetAddress getClientAddress()
     {
         return clientAddress;
@@ -86,11 +88,13 @@ public class AuditEntry
      *
      * @return the audit operation
      */
+    @Override
     public AuditOperation getOperation()
     {
         return operation;
     }
 
+    @Override
     public String getUser()
     {
         return user;
@@ -101,11 +105,13 @@ public class AuditEntry
      *
      * @return the batch id
      */
+    @Override
     public Optional<UUID> getBatchId()
     {
         return Optional.ofNullable(batchId);
     }
 
+    @Override
     public Status getStatus()
     {
         return status;
@@ -114,6 +120,7 @@ public class AuditEntry
     /**
      * @return the timestamp when this entry was created. Represented by the number of milliseconds since Epoch.
      */
+    @Override
     public Long getTimestamp()
     {
         return timestamp;

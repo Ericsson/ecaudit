@@ -19,7 +19,7 @@ so make sure to add the following line *before* it is consumed.
 JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Dcassandra.custom_query_handler_class=com.ericsson.bss.cassandra.ecaudit.handler.AuditQueryHandler"
 ```
 
-Change the following setting in your ```cassandra.yaml```
+Change the following settings in your ```cassandra.yaml```
 
 ```
 authenticator: com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator
@@ -32,58 +32,41 @@ All configuration options and recommendations for the standard plug-ins applies 
 For instance, remember to increase the replication factor of the ```system_auth``` keyspace.
 Consult the Cassandra [configuration documentation](http://cassandra.apache.org/doc/latest/configuration/index.html) for details.
 
+Disable asserts for the Chronicle logger backend.
+Depending on your Cassandra version, add the following JVM option to your ```jvm.options``` or ```cassandra-env.sh``` file.
 
-## Configure LOGBack
-
-Add an appender and logger in your ```logback.xml``` configuration
-The logger name of the audit records is ```ECAUDIT```.
-
-Tuning tips:
-* The asynchronous appender can _improve or demote_ performance depending on your setup.
-* Compression on rotated may impact performance significantly.
-* If you are logging large volumes of data, make sure your storage can keep up.
-
-In the example snippet below,
-LOGBack is configured to use rotation of files with a synchronous appender.
-Run performance tests on your workload to find out what settings works best for you.
-
-
-```XML
-<!--audit log-->
-<appender name="AUDIT-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-  <file>${cassandra.logdir}/audit/audit.log</file>
-  <encoder>
-    <pattern>%d{HH:mm:ss.SSS} - %msg%n</pattern>
-    <immediateFlush>true</immediateFlush>
-  </encoder>
-  <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-    <fileNamePattern>${cassandra.logdir}/audit/audit.log.%i</fileNamePattern>
-    <minIndex>1</minIndex>
-    <maxIndex>5</maxIndex>
-  </rollingPolicy>
-  <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-    <maxFileSize>200MB</maxFileSize>
-  </triggeringPolicy>
-</appender>
-
-<logger name="ECAUDIT" level="INFO" additivity="false">
-  <appender-ref ref="AUDIT-FILE" />
-</logger>
+```
+-da:net.openhft...
 ```
 
-There are many ways to configure appenders with LOGBack.
-Refer to the [official documentation](https://logback.qos.ch/manual/appenders.html) for details.
 
+## Configure Logger Backend
 
-## The audit.yaml Configuration File
+In ecAudit the logger backend is pluggable.
+Two different backends comes with ecAudit out of the box - SLF4J and Chronicle.
+The SLF4J logger can be configured with LogBack to produce various log file formats,
+including clear text log files.
+The Chronicle logger produces binary log files but is more performant when handling large volumes of audit records. 
 
+The logger backend is configured in the ```audit.yaml```.
 By default ecAudit will look for the ```audit.yaml``` file in the Cassandra configuration directory.
 The path to the configuration file can be overridden with the ```com.ericsson.bss.cassandra.ecaudit.config``` Java property.
 
-The ecAudit configuration file allow you to define a custom log format and manage simple whitelists as described below.
+
+### SLF4J Logger
+
+The SLF4J logger is used by default.
+This can be configured explicitly.
+
+```YAML
+logger_backend:
+    - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
+```
+
+The SLF4J logger backend can be configured further with custom log message formats.
 
 
-## Custom Log Message Format
+#### Custom Log Message Format
 
 To configure a custom log message format the following parameters can be configured in the ```audit.yaml``` file:
 
@@ -115,8 +98,10 @@ Field name goes between ```${``` and ```}``` (*bash*-style parameter substitutio
 Use the example below as a template to define the log message format.
 
 ```YAML
-slf4j:
-  log_format: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
+logger_backend:
+    - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
+      parameters:
+      - log_format: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
 ```
 
 Which will generate logs entries like this:
@@ -132,10 +117,12 @@ The example below use conditional formatting for the batch id to get different l
 was part of a batch or not. Also the TIMESTAMP field have a custom time format configured.
 
 ```YAML
-slf4j:
-  log_format: "${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
-  time_format: "yyyy-MM-dd HH:mm:ss.SSS"
-  time_zone: "UTC"
+logger_backend:
+    - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
+      parameters:
+      - log_format: "${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+        time_format: "yyyy-MM-dd HH:mm:ss.SSS"
+        time_zone: UTC
 ```
 
 Which will generate logs entries like this (assuming LOGBack pattern does not contain timestamp as well):
@@ -147,9 +134,102 @@ Which will generate logs entries like this (assuming LOGBack pattern does not co
 ```
 
 
+#### Configure LOGBack
+
+When using the SLF4J logger, update the Cassandra ```logback.xml``` file to define path and rolling policy
+for generated audit logs.
+Add an appender and logger in your ```logback.xml``` configuration.
+The logger name of the audit records is ```ECAUDIT```.
+
+Tuning tips:
+* The asynchronous appender can _improve or demote_ performance depending on your setup.
+* Compression on rolling files may impact performance significantly.
+* If you are logging large volumes of data, make sure your storage can keep up.
+
+In the example snippet below,
+LOGBack is configured to use a rolling policy with a synchronous appender.
+Run performance tests on your workload to find out what settings works best for you.
+
+
+```XML
+<!--audit log-->
+<appender name="AUDIT-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <file>${cassandra.logdir}/audit/audit.log</file>
+  <encoder>
+    <pattern>%d{HH:mm:ss.SSS} - %msg%n</pattern>
+    <immediateFlush>true</immediateFlush>
+  </encoder>
+  <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+    <fileNamePattern>${cassandra.logdir}/audit/audit.log.%i</fileNamePattern>
+    <minIndex>1</minIndex>
+    <maxIndex>5</maxIndex>
+  </rollingPolicy>
+  <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+    <maxFileSize>200MB</maxFileSize>
+  </triggeringPolicy>
+</appender>
+
+<logger name="ECAUDIT" level="INFO" additivity="false">
+  <appender-ref ref="AUDIT-FILE" />
+</logger>
+```
+
+There are many ways to configure appenders with LOGBack.
+Refer to the [official documentation](https://logback.qos.ch/manual/appenders.html) for details.
+
+
+### Chronicle Logger
+
+The Chronicle logger backend stores audit records in a binary format and is more performant than the SLF4J logger.
+Audit records are viewed with the ```eclog``` tool.
+
+Update the ```audit.yaml``` file to enable the Chronicle logger and set target directory for audit records.
+
+```YAML
+logger_backend:
+    - class_name: com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger
+      parameters:
+      - log_dir: /var/lib/cassandra/audit
+```
+
+
+#### Options
+
+The Chronicle logger will roll to a new file every hour by default.
+The roll cycle frequency is configurable.
+Valid options are ```MINUTELY```, ```HOURLY```, and ```DAILY```.
+
+```YAML
+logger_backend:
+    - class_name: com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger
+      parameters:
+      - log_dir: /var/lib/cassandra/audit
+        roll_cycle: MINUTELY
+```
+
+The oldest log files will be discarded once a size threshold is reached.
+By default 16GB of log files will be retained before the oldest is deleted.
+The value is specified in *bytes*.
+
+```YAML
+logger_backend:
+    - class_name: com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger
+      parameters:
+      - log_dir: /var/lib/cassandra/audit
+        log_max_size: 536870912 # 512MB
+```
+
+#### The eclog tool
+
+The binary Chronicle log files can be viewed with the provided ```eclog``` tool.
+
+```bash
+$ java -jar eclog.jar <log-dir>
+```
+
 ## Configure Whitelists
 
-ecAudit support two different ways to define whitelists; Role Based Whitelists and/or YAML Whitelists.
+ecAudit support two different ways to define whitelists - Role Based Whitelists and YAML Whitelists.
 ecAudit can be configured to use any one of the whitelists, or a combination of the two.
 Finally, it is also possible to disable whitelists completely in which case all operations will be audit logged.
 
@@ -190,10 +270,9 @@ Modify the ```audit.yaml``` configuration file.
 Use the example below as a template and define the usernames to be whitelisted.
 
 ```YAML
----Whitelisted users
 whitelist:
-  - foo
-  - bar
+    - foo
+    - bar
 ```
 
 **Note**: User connection attempts are exempt from whitelisting, and will show in the audit log even if the user is whitelisted.

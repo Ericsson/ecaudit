@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry;
+package com.ericsson.bss.cassandra.ecaudit.common.record;
 
 /**
- * This audit operation simply wraps an operation/statement and provides it on request.
+ * An interface for audit operations.
+ *
+ * Different implementations may have specific strategies to derive the actual operation string.
  */
-public class SimpleAuditOperation implements AuditOperation
+public interface AuditOperation
 {
-    private final String operationString;
-
     /**
-     * Construct a new audit operation.
-     * @param operationString the operation/statement to wrap.
+     * Provide the operation string for this operation.
+     *
+     * @return the operation as a string
      */
-    public SimpleAuditOperation(String operationString)
-    {
-        this.operationString = operationString;
-    }
-
-    @Override
-    public String getOperationString()
-    {
-        return operationString;
-    }
+    String getOperationString();
 }

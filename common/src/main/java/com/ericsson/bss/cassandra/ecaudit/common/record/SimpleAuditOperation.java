@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry;
+package com.ericsson.bss.cassandra.ecaudit.common.record;
 
 /**
- * Indicates the status of an operation.
- * <ul>
- * <li>{@link #ATTEMPT} is logged before an operation is executed</li>
- * <li>{@link #FAILED} is logged after an operation has failed</li>
- * </ul>
+ * This audit operation simply wraps an operation/statement and provides it on request.
  */
-public enum Status
+public class SimpleAuditOperation implements AuditOperation
 {
+    private final String operationString;
+
     /**
-     * Operation is about to be executed.
+     * Construct a new audit operation.
+     * @param operationString the operation/statement to wrap.
      */
-    ATTEMPT,
-    /**
-     * Operation executed and failed.
-     */
-    FAILED
+    public SimpleAuditOperation(String operationString)
+    {
+        this.operationString = operationString;
+    }
+
+    @Override
+    public String getOperationString()
+    {
+        return operationString;
+    }
 }

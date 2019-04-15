@@ -17,6 +17,12 @@ package com.ericsson.bss.cassandra.ecaudit.config;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
+import org.apache.cassandra.config.ParameterizedClass;
 
 /**
  * Data class for configuration
@@ -24,12 +30,14 @@ import java.util.List;
 public final class AuditYamlConfig
 {
     private static final List<String> DEFAULT_WHITELIST = Collections.emptyList();
+    private static final ParameterizedClass DEFAULT_LOGGER_BACKEND = new ParameterizedClass(Slf4jAuditLogger.class.getCanonicalName(), Collections.emptyMap());
 
     private boolean fromFile = true;
 
     // Configuration parameters
+    // Has to be public for SnakeYaml to inject values
     public List<String> whitelist;
-    public AuditYamlSlf4jConfig slf4j;
+    public ParameterizedClass logger_backend;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -48,16 +56,35 @@ public final class AuditYamlConfig
      *
      * @return the list of whitelisted users
      */
-    public List<String> getWhitelist()
+    List<String> getWhitelist()
     {
         return whitelist != null ? Collections.unmodifiableList(whitelist) : DEFAULT_WHITELIST;
     }
 
-    /**
-     * @return the SLF4J configuration or {@code null} if not configured.
-     */
-    public AuditYamlSlf4jConfig getSlf4j()
+    ParameterizedClass getLoggerBackendParameters()
     {
-        return slf4j;
+        // We hand out a deep copy since:
+        // - ParameterizedClass is mutable
+        // - The original map of options may contain a mix of Integers and Strings
+        //   Converting it all to Strings makes life easier for plug-ins when parsing options
+        return logger_backend != null ? deepToStringCopy(logger_backend) : deepToStringCopy(DEFAULT_LOGGER_BACKEND);
+    }
+
+    private ParameterizedClass deepToStringCopy(ParameterizedClass original)
+    {
+        Map<String, String> parameters;
+        if (original.parameters == null)
+        {
+            parameters = Collections.emptyMap();
+        }
+        else
+        {
+            parameters = original.parameters
+                         .entrySet()
+                         .stream()
+                         .collect(Collectors.toMap(Map.Entry::getKey, e -> String.valueOf(e.getValue())));
+        }
+
+        return new ParameterizedClass(original.class_name, parameters);
     }
 }
