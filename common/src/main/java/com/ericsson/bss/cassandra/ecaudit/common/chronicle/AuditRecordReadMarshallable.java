@@ -17,7 +17,9 @@ package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.UUID;
 
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
@@ -39,51 +41,79 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
             throw new IORuntimeException("Tried to read from wire with used marshallable");
         }
 
+        verifyVersion(wire);
+
+        String type = readType(wire);
+
+        SimpleAuditRecord.Builder builder = SimpleAuditRecord
+                                            .builder()
+                                            .withTimestamp(wire.read(WireTags.KEY_TIMESTAMP).int64())
+                                            .withClientAddress(readClientAddress(wire))
+                                            .withUser(wire.read(WireTags.KEY_USER).text());
+
+        if (WireTags.VALUE_TYPE_BATCH_ENTRY.equals(type))
+        {
+            builder.withBatchId(readBatchId(wire));
+        }
+
+        auditRecord = builder.withStatus(readStatus(wire))
+                             .withOperation(readAuditOperation(wire))
+                             .build();
+    }
+
+    private void verifyVersion(WireIn wire) throws IORuntimeException
+    {
         short version = wire.read(WireTags.KEY_VERSION).int16();
 
         if (version != WireTags.VALUE_VERSION_CURRENT)
         {
             throw new IORuntimeException("Unsupported record version: " + version);
         }
+    }
 
+    private String readType(WireIn wire) throws IORuntimeException
+    {
         String type = wire.read(WireTags.KEY_TYPE).text();
+        if (!WireTags.VALUE_TYPE_BATCH_ENTRY.equals(type) && !WireTags.VALUE_TYPE_SINGLE_ENTRY.equals(type))
+        {
+            throw new IORuntimeException("Unsupported record type field: " + type);
+        }
 
-        SimpleAuditRecord.Builder builder = SimpleAuditRecord.builder();
+        return type;
+    }
 
-        builder.withTimestamp(wire.read(WireTags.KEY_TIMESTAMP).int64());
-
+    private InetAddress readClientAddress(WireIn wire) throws IORuntimeException
+    {
         try
         {
-            builder.withClientAddress(InetAddress.getByAddress(wire.read(WireTags.KEY_CLIENT).bytes()));
+            return InetAddress.getByAddress(wire.read(WireTags.KEY_CLIENT).bytes());
         }
         catch (UnknownHostException e)
         {
             throw new IORuntimeException("Corrupt client IP address field", e);
         }
+    }
 
-        builder.withUser(wire.read(WireTags.KEY_USER).text());
+    private UUID readBatchId(WireIn wire) throws IORuntimeException
+    {
+        return wire.read(WireTags.KEY_BATCH_ID).uuid();
+    }
 
-        if (WireTags.VALUE_TYPE_BATCH_ENTRY.equals(type))
-        {
-            builder.withBatchId(wire.read(WireTags.KEY_BATCH_ID).uuid());
-        }
-        else if (!WireTags.VALUE_TYPE_SINGLE_ENTRY.equals(type))
-        {
-            throw new IORuntimeException("Corrupt record type field: " + type);
-        }
-
+    private Status readStatus(WireIn wire) throws IORuntimeException
+    {
         try
         {
-            builder.withStatus(Status.valueOf(wire.read(WireTags.KEY_STATUS).text()));
+            return Status.valueOf(wire.read(WireTags.KEY_STATUS).text());
         }
         catch (IllegalArgumentException e)
         {
             throw new IORuntimeException("Corrupt record status field", e);
         }
+    }
 
-        builder.withOperation(new SimpleAuditOperation(wire.read(WireTags.KEY_OPERATION).text()));
-
-        auditRecord = builder.build();
+    private AuditOperation readAuditOperation(WireIn wire) throws IORuntimeException
+    {
+        return new SimpleAuditOperation(wire.read(WireTags.KEY_OPERATION).text());
     }
 
     public AuditRecord getAuditRecord()

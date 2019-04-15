@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.commons.cli.ParseException;
@@ -48,11 +49,8 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).isEmpty();
-        assertThat(options.tail()).isEmpty();
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir")));
     }
 
     @Test
@@ -62,11 +60,9 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isTrue();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).isEmpty();
-        assertThat(options.tail()).isEmpty();
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withFollow(true));
     }
 
     @Test
@@ -76,11 +72,9 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isTrue();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).isEmpty();
-        assertThat(options.tail()).isEmpty();
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withFollow(true));
     }
 
     @Test
@@ -100,11 +94,9 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).contains(RollCycles.MINUTELY);
-        assertThat(options.limit()).isEmpty();
-        assertThat(options.tail()).isEmpty();
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withRollCycle(RollCycles.MINUTELY));
     }
 
     @Test
@@ -114,11 +106,9 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).contains(RollCycles.MINUTELY);
-        assertThat(options.limit()).isEmpty();
-        assertThat(options.tail()).isEmpty();
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withRollCycle(RollCycles.MINUTELY));
     }
 
     @Test
@@ -162,11 +152,9 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).contains(20L);
-        assertThat(options.tail()).isEmpty();
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withLimit(20L));
     }
 
     @Test
@@ -176,11 +164,21 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).contains(20L);
-        assertThat(options.tail()).isEmpty();
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withLimit(20L));
+    }
+
+    @Test
+    public void withLongLimitNegative20AndDirectory() throws ParseException
+    {
+        String[] argv = givenInputOptions("--limit", "-20", "./dir");
+
+        ToolOptions options = parser.parse(argv);
+
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withLimit(20L));
     }
 
     @Test
@@ -190,7 +188,7 @@ public class TestOptionParser
 
         assertThatExceptionOfType(ParseException.class)
         .isThrownBy(() -> parser.parse(argv))
-        .withMessageContaining("specify number of records");
+        .withMessageContaining("specify a number");
     }
 
     @Test
@@ -220,11 +218,23 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).contains(20L);
-        assertThat(options.tail()).contains(20L);
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withLimit(20L)
+                                    .withTail(20L));
+    }
+
+    @Test
+    public void withTailMinus20AndDirectory() throws ParseException
+    {
+        String[] argv = givenInputOptions("-t", "-20", "./dir");
+
+        ToolOptions options = parser.parse(argv);
+
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withLimit(20L)
+                                    .withTail(20L));
     }
 
     @Test
@@ -234,11 +244,10 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).contains(20L);
-        assertThat(options.tail()).contains(20L);
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withLimit(20L)
+                                    .withTail(20L));
     }
 
     @Test
@@ -248,11 +257,10 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).contains(30L);
-        assertThat(options.tail()).contains(20L);
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withLimit(30L)
+                                    .withTail(20L));
     }
 
     @Test
@@ -262,11 +270,10 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isFalse();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).contains(10L);
-        assertThat(options.tail()).contains(20L);
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withLimit(10L)
+                                    .withTail(20L));
     }
 
     @Test
@@ -276,11 +283,10 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.path()).isEqualTo(Paths.get("./dir"));
-        assertThat(options.follow()).isTrue();
-        assertThat(options.rollCycle()).isEmpty();
-        assertThat(options.limit()).isEmpty();
-        assertThat(options.tail()).contains(20L);
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withFollow(true)
+                                    .withTail(20L));
     }
 
     @Test
@@ -290,7 +296,7 @@ public class TestOptionParser
 
         assertThatExceptionOfType(ParseException.class)
         .isThrownBy(() -> parser.parse(argv))
-        .withMessageContaining("specify number of records");
+        .withMessageContaining("specify a number");
     }
 
     @Test
@@ -341,11 +347,29 @@ public class TestOptionParser
 
         ToolOptions options = parser.parse(argv);
 
-        assertThat(options.help()).isTrue();
+        assertEqualOptions(options, expected()
+                                    .withHelp(true));
     }
 
     private String[] givenInputOptions(String... options)
     {
         return options;
+    }
+
+    private ToolOptions.Builder expected()
+    {
+        return ToolOptions.builder();
+    }
+
+    private void assertEqualOptions(ToolOptions actualOptions, ToolOptions.Builder expectedOptionsBuilder)
+    {
+        ToolOptions expectedOptions = expectedOptionsBuilder.build();
+
+        assertThat(actualOptions.path()).isEqualTo(expectedOptions.path());
+        assertThat(actualOptions.follow()).isEqualTo(expectedOptions.follow());
+        assertThat(actualOptions.rollCycle()).isEqualTo(expectedOptions.rollCycle());
+        assertThat(actualOptions.limit()).isEqualTo(expectedOptions.limit());
+        assertThat(actualOptions.tail()).isEqualTo(expectedOptions.tail());
+        assertThat(actualOptions.help()).isEqualTo(expectedOptions.help());
     }
 }

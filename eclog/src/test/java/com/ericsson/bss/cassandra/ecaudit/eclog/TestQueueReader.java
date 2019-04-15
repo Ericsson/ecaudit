@@ -82,34 +82,34 @@ public class TestQueueReader
     @Test
     public void testValidSingleRecord() throws UnknownHostException
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
+        givenNextRecordIsSingle();
         QueueReader reader = givenReader();
 
         assertThat(reader.hasRecordAvailable()).isTrue();
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, Status.ATTEMPT, "Some operation");
+        assertRecordMatchesSingle(auditRecord);
     }
 
     @Test
     public void testValidSingleTailRecord() throws UnknownHostException
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
+        givenNextRecordIsSingle();
         QueueReader reader = givenReader(ToolOptions.builder().withTail(1).build());
 
         verify(tailer).moveToIndex(eq(999L));
         assertThat(reader.hasRecordAvailable()).isTrue();
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, Status.ATTEMPT, "Some operation");
+        assertRecordMatchesSingle(auditRecord);
     }
 
     @Test
     public void testValidSingleRecordDirect() throws UnknownHostException
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
+        givenNextRecordIsSingle();
         QueueReader reader = givenReader();
 
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, Status.ATTEMPT, "Some operation");
+        assertRecordMatchesSingle(auditRecord);
     }
 
     @Test
@@ -132,6 +132,11 @@ public class TestQueueReader
         assertThatExceptionOfType(IORuntimeException.class)
         .isThrownBy(reader::hasRecordAvailable)
         .withMessageContaining("Corrupt");
+    }
+
+    private void givenNextRecordIsSingle() throws UnknownHostException
+    {
+        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
     }
 
     private void givenNextRecordIs(short version, String type, long timestamp, byte[] clientAddress, String user, UUID batchId, Status status, String operation)
@@ -190,6 +195,11 @@ public class TestQueueReader
     private QueueReader givenReader(ToolOptions toolOptions)
     {
         return new QueueReader(toolOptions, queue);
+    }
+
+    private void assertRecordMatchesSingle(AuditRecord auditRecord) throws UnknownHostException
+    {
+        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, Status.ATTEMPT, "Some operation");
     }
 
     private void assertRecordMatches(AuditRecord auditRecord, long timestamp, InetAddress clientAddress, String user, UUID batchId, Status status, String operation)
