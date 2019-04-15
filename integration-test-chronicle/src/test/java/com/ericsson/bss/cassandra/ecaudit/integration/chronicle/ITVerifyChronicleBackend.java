@@ -15,7 +15,11 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.integration.chronicle;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,9 +41,12 @@ import com.ericsson.bss.cassandra.ecaudit.eclog.QueueReader;
 import com.ericsson.bss.cassandra.ecaudit.eclog.ToolOptions;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
+import net.openhft.chronicle.queue.RollCycles;
+import org.assertj.core.data.Percentage;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 @NotThreadSafe
 @RunWith(MockitoJUnitRunner.class)
@@ -100,6 +107,7 @@ public class ITVerifyChronicleBackend
         ToolOptions options = ToolOptions
                               .builder()
                               .withPath(CassandraDaemonForAuditTest.getInstance().getAuditDirectory())
+                              .withRollCycle(RollCycles.TEST_SECONDLY)
                               .build();
         reader = new QueueReader(options);
     }
@@ -160,8 +168,44 @@ public class ITVerifyChronicleBackend
         thenChronicleLogContainEntryForUser("INSERT INTO ks2.tbl (key, value) VALUES (?, ?)[5, 'hepp']", username);
     }
 
+    @Test
+    public void sizeIsCloseToThreshold() throws Exception
+    {
+        givenTable("ks3", "tbl");
+        givenSuperuserWithMinimalWhitelist();
+
+        for (int i = 0; i < 10; i++)
+        {
+            Thread.sleep(300);
+            testSession.execute("UPDATE ks3.tbl SET value = 'hepp' WHERE key = 88");
+        }
+
+        verifyAuditSize();
+    }
+
+    private void verifyAuditSize() throws IOException
+    {
+        long actualSize = Files.walk(cdt.getAuditDirectory())
+                               .map(Path::toFile)
+                               .filter(File::isFile)
+                               .mapToLong(File::length)
+                               .sum();
+
+        assertThat(actualSize).isCloseTo(300L * 1024 * 1024, Percentage.withPercentage(20));
+    }
+
     private void thenChronicleLogContainEntryForUser(String operation, String username)
     {
+        try
+        {
+            Thread.sleep(100);
+        }
+        catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
+            fail("Interrupted during delay", e);
+        }
+
         List<AuditRecord> records = getRecords();
         assertThat(records).hasSize(1);
 

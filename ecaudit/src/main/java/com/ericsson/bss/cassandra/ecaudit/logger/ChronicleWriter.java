@@ -15,17 +15,14 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
-import java.io.File;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptAppender;
-import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import org.apache.cassandra.concurrent.NamedThreadFactory;
 
@@ -42,16 +39,10 @@ class ChronicleWriter implements AutoCloseable
 
     ChronicleWriter(ChronicleAuditLoggerConfig config)
     {
-        this(ChronicleQueueBuilder::single, config);
-    }
-
-    @VisibleForTesting
-    ChronicleWriter(Function<File, SingleChronicleQueueBuilder> builderFunction, ChronicleAuditLoggerConfig config)
-    {
-        chronicle = builderFunction.apply(config.getLogPath().toFile())
-                                   .rollCycle(config.getRollCycle())
-                                   .storeFileListener(new SizeRotatingStoreFileListener(config.getLogPath(), config.getMaxLogSize()))
-                                   .build();
+        chronicle = ChronicleQueueBuilder.single(config.getLogPath().toFile())
+                             .rollCycle(config.getRollCycle())
+                             .storeFileListener(new SizeRotatingStoreFileListener(config.getLogPath(), config.getMaxLogSize()))
+                             .build();
 
         appender = chronicle.acquireAppender();
         queue = new ArrayBlockingQueue<>(BUFFER_SIZE);

@@ -18,5 +18,5 @@ logger_backend:
   - class_name: com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger
     parameters:
       - log_dir: ###tmp###/audit
-        roll_cycle: MINUTELY
-        max_log_size: 5242880 #5MB
+        roll_cycle: TEST_SECONDLY
+        max_log_size: 314572800 #300MB

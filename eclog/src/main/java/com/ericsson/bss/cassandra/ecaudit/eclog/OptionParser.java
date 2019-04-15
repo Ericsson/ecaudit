@@ -58,8 +58,8 @@ class OptionParser
         }
 
         parseFollowOption(cmd).ifPresent(optionsBuilder::withFollow);
-        parseLimitOption(cmd).ifPresent(optionsBuilder::withLimit);
-        parseTailOption(cmd).ifPresent(optionsBuilder::withTail);
+        parseLongOption(cmd, LIMIT_OPTION).ifPresent(optionsBuilder::withLimit);
+        parseLongOption(cmd, TAIL_OPTION).ifPresent(optionsBuilder::withTail);
         parseRollCycleOption(cmd).ifPresent(optionsBuilder::withRollCycle);
         optionsBuilder.withPath(parsePath(cmd));
 
@@ -67,7 +67,7 @@ class OptionParser
         {
             // The tail is a moving target in a live queue
             // This will make sure we do not get more records than specified
-            parseTailOption(cmd).ifPresent(optionsBuilder::withLimit);
+            parseLongOption(cmd, TAIL_OPTION).ifPresent(optionsBuilder::withLimit);
         }
 
         return optionsBuilder.build();
@@ -78,36 +78,17 @@ class OptionParser
         return Optional.of(cmd.hasOption(FOLLOW_OPTION));
     }
 
-    private Optional<Long> parseLimitOption(CommandLine cmd) throws ParseException
+    private Optional<Long> parseLongOption(CommandLine cmd, String option) throws ParseException
     {
-        if (cmd.hasOption(LIMIT_OPTION))
+        if (cmd.hasOption(option))
         {
             try
             {
-                return Optional.of(Math.abs(Long.valueOf(cmd.getOptionValue(LIMIT_OPTION))));
+                return Optional.of(Math.abs(Long.valueOf(cmd.getOptionValue(option))));
             }
             catch (NumberFormatException e)
             {
-                throw new ParseException("Invalid record count '" + cmd.getOptionValue(LIMIT_OPTION) + "' for 'limit' option - specify number of records");
-            }
-        }
-        else
-        {
-            return Optional.empty();
-        }
-    }
-
-    private Optional<Long> parseTailOption(CommandLine cmd) throws ParseException
-    {
-        if (cmd.hasOption(TAIL_OPTION))
-        {
-            try
-            {
-                return Optional.of(Math.abs(Long.valueOf(cmd.getOptionValue(TAIL_OPTION))));
-            }
-            catch (NumberFormatException e)
-            {
-                throw new ParseException("Invalid record count '" + cmd.getOptionValue(TAIL_OPTION) + "' for 'tail' option - specify number of records");
+                throw new ParseException("Option '" + option + "' is used with an invalid value '" + cmd.getOptionValue(option) + "' - specify a number");
             }
         }
         else

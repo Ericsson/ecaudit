@@ -128,7 +128,7 @@ public class TestAuditRecordReadMarshallable
 
         assertThatExceptionOfType(IORuntimeException.class)
         .isThrownBy(() -> readMarshallable.readMarshallable(wireInMock))
-        .withMessageContaining("Corrupt record type field")
+        .withMessageContaining("Unsupported record type field")
         .withMessageContaining("fake-entry");
     }
 
