@@ -50,7 +50,7 @@ format_for_it () {
  sed -i 's/^enable_user_defined_functions:.*/enable_user_defined_functions: true/' $2
 }
 
-for IT_TARGET in ${SCRIPT_PATH}/../integration-test-custom-format/src/test/resources/cassandra.yaml ${SCRIPT_PATH}/../integration-test-standard/src/test/resources/cassandra.yaml;
+for IT_TARGET in ${SCRIPT_PATH}/../integration-test-*/src/test/resources/cassandra.yaml;
 do
  format_for_it ${IMPORT_YAML} ${IT_TARGET}
 done

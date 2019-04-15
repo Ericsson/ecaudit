@@ -14,7 +14,9 @@ For example, you can read about ecAudit 0.21.0 for Cassandra 3.0 by viewing the 
 ## Description
 
 Audit records are created locally on each Cassandra node covering all CQL requests.
-ecAudit is using the SLF4J logging framework which makes it possible to store and format audit logs in various ways.
+ecAudit has a pluggable logger backend with support for SLF4J and Chronicle Queues out of the box.
+The SLF4J logging framework makes it possible to store and format audit logs in various ways.
+The binary Chronicle Queues offers the best possible performance.
 It is possible to create a whitelist of usernames/resources which will not be included in the audit log.
 
 ecAudit will create an audit record before the operation is performed, marked with status=ATTEMPT.
@@ -63,9 +65,6 @@ Earlier versions are not published on any public repository.
 As of [CASSANDRA-12151](https://issues.apache.org/jira/browse/CASSANDRA-12151) native support for audit logs are available in Apache Cassandra 4.0 and later.
 
 Since ecAudit was developed before CASSANDRA-12151, there are several differences to be aware of. The most notable being:
-
-* ecAudit depends primarily on SLF4J/LOGBack.
-  CASSANDRA-12151 uses a Chronicle Queue as its primary backend, but SLF4J is also supported.
 
 * The format of the audit entries are different in ecAudit compared to CASSANDRA-12151.
 
@@ -118,10 +117,15 @@ However, as requests may be retried at the client side it is possible for a requ
 In order to get a complete cluster wide view of all audited operations
 it is necessary to gather and merge all individual audit logs into one.
 
-As the audit logs are generated with the SLF4J/LOGBack framework,
-there are many ways to customize this when it comes to synchronous or asynchronous writes, log file rotation etc.
+When ecAudit is configured to write audit logs with the SLF4J/LOGBack framework
+there are many ways to customize behavior in terms of synchronous vs. asynchronous writes, log file rotation etc.
 For details, consult the LOGBack [documentation](https://logback.qos.ch/).
 There is a useful example in the ecAudit [setup guide](doc/setup.md) to get you started.
+
+When ecAudit is configured to write audit logs into Chronicle Queues
+it is possible to write large volumes of audit records with minimal performance impact.
+This is achieved by minimizing memory allocations and storing records in an efficient binary format.
+Logs are extracted with a tool provided with ecAudit.
 
 
 ## Audit Whitelists

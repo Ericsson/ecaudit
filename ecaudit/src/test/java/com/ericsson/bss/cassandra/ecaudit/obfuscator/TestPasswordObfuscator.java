@@ -28,8 +28,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 

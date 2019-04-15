@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
----
 whitelist:
   - User1
   - User2

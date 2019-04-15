@@ -42,9 +42,14 @@ The report will be available in the ```target/pit-reports/``` directory.
 If you have [CCM](https://github.com/riptano/ccm) installed on your workstation you can easily verify parts of ecAudit in a local test cluster.
 Prepare by building the ecAudit project with maven and initialize a ccm cluster using a matching Cassandra version.
 
-To install ecAudit into the ccm cluster, execute:
+To install ecAudit with SLF4J backend into the ccm cluster, execute:
 ```bash
-./bin/install_into_current_ccm.sh
+./bin/configure_ccm_audit_slf4j.sh
+```
+
+To install ecAudit with Chronicle backend into the ccm cluster, execute:
+```bash
+./bin/configure_ccm_audit_chronicle.sh
 ```
 
 Now you can operate your ccm cluster as always and try out ecAudit.
