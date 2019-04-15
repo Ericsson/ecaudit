@@ -22,6 +22,8 @@ import java.util.UUID;
 
 import org.junit.Test;
 
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 

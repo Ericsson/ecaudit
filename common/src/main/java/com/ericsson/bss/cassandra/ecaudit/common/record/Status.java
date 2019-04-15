@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry;
+package com.ericsson.bss.cassandra.ecaudit.common.record;
 
 /**
- * An interface for audit operations.
- *
- * Different implementations may have specific strategies to derive the actual operation string.
+ * Indicates the status of an operation record.
  */
-public interface AuditOperation
+public enum Status
 {
     /**
-     * Provide the operation string for this operation.
-     *
-     * @return the operation as a string
+     * Operation is about to be executed.
      */
-    String getOperationString();
+    ATTEMPT,
+    /**
+     * Operation executed and failed.
+     */
+    FAILED
 }

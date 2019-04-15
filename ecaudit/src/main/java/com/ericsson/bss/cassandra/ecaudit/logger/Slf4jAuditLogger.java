@@ -29,7 +29,6 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
@@ -38,7 +37,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Implements an {@link AuditLogger} that writes {@link AuditEntry} instance into file using {@link Logger}.
  * <br>
- * It is possible to configure a parameterized log message by providing a formatting string {@link AuditConfig#getLogFormat()}.
+ * It is possible to configure a parameterized log message by providing a formatting string {@link Slf4jAuditLoggerConfig#getLogFormat()}.
  * The format for a field is {@code ${<Field Name>}}. With a formatting string like this: {@code "${USER} executed '${OPERATION}' from ${CLIENT}"},
  * the logged string could look like this:
  * <ul>
@@ -70,11 +69,11 @@ public class Slf4jAuditLogger implements AuditLogger
     /**
      * Constructor, injects logger from {@link LoggerFactory}.
      *
-     * @param auditConfig the audit configuration which provide the log format
+     * @param parameters the custom strategy parameters
      */
-    public Slf4jAuditLogger(AuditConfig auditConfig)
+    public Slf4jAuditLogger(Map<String, String> parameters)
     {
-        this(auditConfig, LoggerFactory.getLogger(AUDIT_LOGGER_NAME));
+        this(new Slf4jAuditLoggerConfig(parameters), LoggerFactory.getLogger(AUDIT_LOGGER_NAME));
     }
 
     /**
@@ -84,7 +83,7 @@ public class Slf4jAuditLogger implements AuditLogger
      * @param logger      the logger backend to use for audit logs
      */
     @VisibleForTesting
-    Slf4jAuditLogger(AuditConfig auditConfig, Logger logger)
+    Slf4jAuditLogger(Slf4jAuditLoggerConfig auditConfig, Logger logger)
     {
         auditLogger = logger;
         availableFieldFunctionMap = getAvailableFieldFunctionMap(auditConfig);
@@ -93,7 +92,7 @@ public class Slf4jAuditLogger implements AuditLogger
         fieldFunctions = getFieldFunctions(logFormat);
     }
 
-    static Map<String, Function<AuditEntry, Object>> getAvailableFieldFunctionMap(AuditConfig auditConfig)
+    static Map<String, Function<AuditEntry, Object>> getAvailableFieldFunctionMap(Slf4jAuditLoggerConfig auditConfig)
     {
         return ImmutableMap.<String, Function<AuditEntry, Object>>builder()
                .put("CLIENT", entry -> entry.getClientAddress().getHostAddress())
@@ -105,7 +104,7 @@ public class Slf4jAuditLogger implements AuditLogger
                .build();
     }
 
-    static Function<AuditEntry, Object> getTimeFunction(AuditConfig auditConfig)
+    static Function<AuditEntry, Object> getTimeFunction(Slf4jAuditLoggerConfig auditConfig)
     {
         return auditConfig.getTimeFormatter()
                           .map(Slf4jAuditLogger::getFormattedTimestamp)

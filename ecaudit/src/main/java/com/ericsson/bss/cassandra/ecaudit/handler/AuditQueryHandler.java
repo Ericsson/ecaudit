@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;

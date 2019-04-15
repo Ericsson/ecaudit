@@ -1,6 +1,8 @@
 # Changes
 
 ## Version 2.1.0
+* Add support for Chronicle-Queue backend - #62
+* Add metrics for filtering and logging - #72
 * Add support for system timestamp in log message - #27
 * Fix typo of java property for custom audit.yaml path - #59
 * Build with Cassandra 3.11.4 (only flavor ecaudit_c3.11)

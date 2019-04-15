@@ -2,3 +2,25 @@ ecAudit - The Ericsson Cassandra Audit plug-in
 Copyright 2018 Telefonaktiebolaget LM Ericsson
 
 This product includes software developed at Ericsson (http://www.ericsson.com/).
+
+This product also includes the following software:
+
+Chronicle-Queue (https://github.com/OpenHFT/Chronicle-Queue)
+Chronicle-Core (https://github.com/OpenHFT/Chronicle-Core)
+Chronicle-Bytes (https://github.com/OpenHFT/Chronicle-Bytes)
+Chronicle-Wire (https://github.com/OpenHFT/Chronicle-Wire)
+Chronicle-Threads (https://github.com/OpenHFT/Chronicle-Threads)
+Java-Thread-Affinity (https://github.com/OpenHFT/Java-Thread-Affinity)
+Licensed under the Apache License 2.0.
+
+IntelliJ IDEA Annotations (http://www.jetbrains.org)
+Licensed under the Apache License 2.0.
+
+JNA and JNA Platform (https://github.com/java-native-access/jna)
+Licensed under the Apache License 2.0.
+
+slf4j-api and slf4j-simple (https://www.slf4j.org)
+Licensed under the MIT License.
+
+Apache Commons CLI (http://commons.apache.org/proper/commons-cli/)
+Licensed under the Apache License 2.0.

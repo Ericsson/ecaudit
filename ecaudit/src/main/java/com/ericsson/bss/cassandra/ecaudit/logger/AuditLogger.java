@@ -15,18 +15,24 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
+import java.util.Map;
+
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 
 /**
  * An interface for logging audit records.
+ *
+ * Implementations must provide a constructor which is accepting a {@link Map} as the single argument
+ * which is using {@link String} for both keys and values.
+ * The map represents configuration parameters to the logger strategy.
  */
-public interface AuditLogger {
+public interface AuditLogger
+{
 
     /**
      * Add an entry to the audit log.
      *
-     * @param logEntry
-     *            the entry to commit to the log
+     * @param logEntry the entry to commit to the log
      */
     void log(AuditEntry logEntry);
 }

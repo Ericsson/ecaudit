@@ -24,7 +24,7 @@ import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 

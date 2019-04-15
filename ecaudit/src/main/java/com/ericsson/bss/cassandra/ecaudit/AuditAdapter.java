@@ -23,8 +23,8 @@ import java.util.UUID;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.entry.SimpleAuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.entry.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import org.apache.cassandra.cql3.BatchQueryOptions;

@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.transport.ProtocolVersion;
