@@ -103,7 +103,7 @@ public class TestAuditRecordReadMarshallable
 
         assertThatIllegalStateException()
         .isThrownBy(readMarshallable::getAuditRecord)
-        .withMessageContaining("No record has been red from the wire");
+        .withMessageContaining("No record has been read from the wire");
     }
 
     @Test
