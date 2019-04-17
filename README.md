@@ -34,11 +34,12 @@ ecAudit integrates with Apache Cassandra using its existing plug-in points.
 
 Official releases of ecAudit can be downloaded from Maven Central.
 Get the ecAudit flavor for your Cassandra version.
-For a detailed description of compatible Cassandra versions, refer to the [Cassandra Compatibility Matrix](doc/cassandra_compatibility.md).
 
 [![ecAudit for Cassandra 3.11.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.11.svg?label=ecAudit%20for%20Cassandra%203.11.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.11%22)
 [![ecAudit for Cassandra 3.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=ecAudit%20for%20Cassandra%203.0.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
 [![ecAudit for Cassandra 3.0.11](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.11.svg?label=ecAudit%20for%20Cassandra%203.0.11)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0.11%22)
+
+For a detailed description of compatible Cassandra versions, refer to the [Cassandra Compatibility Matrix](doc/cassandra_compatibility.md).
 
 
 ### Setup
@@ -50,7 +51,9 @@ Install and configure ecAudit using the setup guide for your Cassandra version.
 * [ecAudit Setup Guide for Cassandra 3.0.11](doc/setup.md)
 
 
-## Contributing
+## Issues & Contributions
+
+Report an issue if you're having trouble to use ecAudit or have an idea for an improvement.
 
 Want to contribute to ecAudit?
 Check out our [contribution guide](CONTRIBUTING.md).
