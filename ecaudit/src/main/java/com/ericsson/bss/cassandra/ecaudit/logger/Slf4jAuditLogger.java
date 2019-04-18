@@ -96,6 +96,7 @@ public class Slf4jAuditLogger implements AuditLogger
     {
         return ImmutableMap.<String, Function<AuditEntry, Object>>builder()
                .put("CLIENT", entry -> entry.getClientAddress().getHostAddress())
+               .put("COORDINATOR", entry -> entry.getCoordinatorAddress().getHostAddress())
                .put("USER", AuditEntry::getUser)
                .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
                .put("STATUS", AuditEntry::getStatus)

@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.1.0
+* Add support for host address in log message #28
 * Add support for Chronicle-Queue backend - #62
 * Add metrics for filtering and logging - #72
 * Add support for system timestamp in log message - #27

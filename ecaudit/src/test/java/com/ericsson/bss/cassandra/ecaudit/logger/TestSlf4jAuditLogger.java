@@ -51,6 +51,7 @@ public class TestSlf4jAuditLogger
     private static final String DEFAULT_LOG_TEMPLATE = "client:'{}'|user:'{}'{}{}{}|status:'{}'|operation:'{}'";
     private static final String EXPECTED_STATEMENT = "select * from ks.tbl";
     private static final String EXPECTED_HOST_ADDRESS = "127.0.0.1";
+    private static final String EXPECTED_COORDINATOR_ADDRESS = "127.0.0.2";
     private static final String EXPECTED_USER = "user";
     private static final Status EXPECTED_STATUS = Status.ATTEMPT;
     private static final UUID EXPECTED_BATCH_ID = UUID.randomUUID();
@@ -83,9 +84,12 @@ public class TestSlf4jAuditLogger
     {
         InetAddress expectedAddress = mock(InetAddress.class);
         when(expectedAddress.getHostAddress()).thenReturn(EXPECTED_HOST_ADDRESS);
+        InetAddress expectedCoordinatorAddress = mock(InetAddress.class);
+        when(expectedCoordinatorAddress.getHostAddress()).thenReturn(EXPECTED_COORDINATOR_ADDRESS);
         logEntryWithoutBatch = AuditEntry.newBuilder()
                                          .user(EXPECTED_USER)
                                          .client(expectedAddress)
+                                         .coordinator(expectedCoordinatorAddress)
                                          .operation(new SimpleAuditOperation(EXPECTED_STATEMENT))
                                          .status(EXPECTED_STATUS)
                                          .timestamp(EXPECTED_TIMESTAMP)
@@ -196,10 +200,13 @@ public class TestSlf4jAuditLogger
     {
         Slf4jAuditLoggerConfig configMock = mock(Slf4jAuditLoggerConfig.class);
         Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
-        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT", "USER", "BATCH_ID", "STATUS", "OPERATION", "TIMESTAMP");
+        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT", "COORDINATOR", "USER", "BATCH_ID", "STATUS", "OPERATION", "TIMESTAMP");
 
         Function<AuditEntry, Object> clientFunction = availableFieldFunctions.get("CLIENT");
         assertThat(clientFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_HOST_ADDRESS);
+
+        Function<AuditEntry, Object> coordinatorFunction = availableFieldFunctions.get("COORDINATOR");
+        assertThat(coordinatorFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_COORDINATOR_ADDRESS);
 
         Function<AuditEntry, Object> userFunction = availableFieldFunctions.get("USER");
         assertThat(userFunction.apply(logEntryWithBatch)).isEqualTo(EXPECTED_USER);
