@@ -11,7 +11,18 @@ ecAudit is integrating with Apache Cassandra using some of its many plug-in poin
 The [installation](install.md) guide describes how to deploy the ecAudit plugin and configure Cassandra to use it.
 
 
-## Logger Backend
+## Configuration
+
+Once installed, ecAudit will start to generate audit records.
+The ecAudit plugin itself is configured,
+either by settings in the ```audit.yaml``` file
+or with Java properties which typically are set in the ```cassandra-env.sh``` file.
+
+Read on below to learn how to tune the logger backend and manage audit whitelists.
+
+In the [audit.yaml reference](audit_yaml_reference.md) you'll find more details about different options.
+
+### Logger Backend
 
 Two different logger backends are supported out of the box:
 * There is the [SLF4J Logger](slf4j_logger.md) backend which is using the well known logging framework.
@@ -22,7 +33,7 @@ Two different logger backends are supported out of the box:
   This backend stores audit records in a binary format and is best suited when handling large volumes of records.
 
 
-## Audit Whitelists
+### Audit Whitelists
 
 By default ecAudit will create a record for each and every login attempt and CQL query.
 The result can be rather overwhelming,

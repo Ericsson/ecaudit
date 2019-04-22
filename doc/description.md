@@ -21,6 +21,7 @@ Passwords which appear in an audit record will be obfuscated.
 | batchId     | Internal identifier shared by all statements in a batch operation | no              |
 | status      | Value is either ATTEMPT or FAILED                                 | yes             |
 | operation   | The CQL statement or a textual description of the operation       | yes             |
+| timestamp   | The system timestamp of the request                               | yes             |
 
 
 ### Examples

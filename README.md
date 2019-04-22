@@ -1,7 +1,7 @@
 # ecAudit
 
-[![build status](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c3.0.11)](https://travis-ci.org/Ericsson/ecaudit)
-[![unit test coverage](https://coveralls.io/repos/github/Ericsson/ecaudit/badge.svg?branch=release%2Fc3.0.11)](https://coveralls.io/github/Ericsson/ecaudit?branch=release%2Fc3.0.11)
+[![build](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c3.0.11)](https://travis-ci.org/Ericsson/ecaudit)
+[![coverage](https://coveralls.io/repos/github/Ericsson/ecaudit/badge.svg?branch=release%2Fc3.0.11)](https://coveralls.io/github/Ericsson/ecaudit?branch=release%2Fc3.0.11)
 
 With ecAudit you get auditing and query logger functionality for Apache Cassandra 3.0 and 3.11.
 
@@ -46,7 +46,7 @@ For a detailed description of compatible Cassandra versions, refer to the [Cassa
 
 Install and configure ecAudit using the setup guide for your Cassandra version.
 
-* [ecAudit Setup Guide for Cassandra 3.11.<latest>](https://github.com/Ericsson/ecaudit/blob/release/c3.11/doc/setup.md)
+* [ecAudit Setup Guide for Cassandra 3.11.<latest>](https://github.com/Ericsson/ecaudit/blob/master/doc/setup.md)
 * [ecAudit Setup Guide for Cassandra 3.0.<latest>](https://github.com/Ericsson/ecaudit/blob/release/c3.0/doc/setup.md)
 * [ecAudit Setup Guide for Cassandra 3.0.11](doc/setup.md)
 
@@ -68,6 +68,7 @@ The following Ericsson developers contributed to the initial ecAudit project:
 * Laxmikant Upadhyay
 * Anuj Wadhera
 * Marcus Olsson
+* Ted Petersson
 
 
 ## License
