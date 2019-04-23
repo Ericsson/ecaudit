@@ -150,7 +150,7 @@ public class TestLogPrinter
         List<AuditRecord> records = new ArrayList<>();
         for (int i = 0; i < count1 + count2; i++)
         {
-            records.add(mockRecord(i, "1.2.3.4", "king", Status.ATTEMPT, withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
+            records.add(mockRecord(i, "1.2.3.4", "5.6.7.8", "king", Status.ATTEMPT, withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
         }
         OngoingStubbing<AuditRecord> recordStub = when(reader.nextRecord());
         for (AuditRecord record : records)
@@ -161,11 +161,12 @@ public class TestLogPrinter
         return reader;
     }
 
-    private AuditRecord mockRecord(long timestamp, String clientHost, String user, Status status, UUID batchId, String operation) throws UnknownHostException
+    private AuditRecord mockRecord(long timestamp, String clientHost, String coordinatorHost, String user, Status status, UUID batchId, String operation) throws UnknownHostException
     {
         AuditRecord record = mock(AuditRecord.class);
         when(record.getTimestamp()).thenReturn(timestamp);
         when(record.getClientAddress()).thenReturn(InetAddress.getByName(clientHost));
+        when(record.getCoordinatorAddress()).thenReturn(InetAddress.getByName(coordinatorHost));
         when(record.getUser()).thenReturn(user);
         when(record.getBatchId()).thenReturn(Optional.ofNullable(batchId));
         when(record.getStatus()).thenReturn(status);
@@ -177,7 +178,7 @@ public class TestLogPrinter
     {
         for (int i = 0; i < count; i++)
         {
-            verify(stream).println(eq(i + "|1.2.3.4|king|ATTEMPT|SELECT QUERY"));
+            verify(stream).println(eq(i + "|1.2.3.4|5.6.7.8|king|ATTEMPT|SELECT QUERY"));
         }
     }
 
@@ -185,7 +186,7 @@ public class TestLogPrinter
     {
         for (int i = 0; i < count; i++)
         {
-            verify(stream).println(eq(i + "|1.2.3.4|king|ATTEMPT|b23534c7-93af-497f-b00c-1edaaa335caa|SELECT QUERY"));
+            verify(stream).println(eq(i + "|1.2.3.4|5.6.7.8|king|ATTEMPT|b23534c7-93af-497f-b00c-1edaaa335caa|SELECT QUERY"));
         }
     }
 }

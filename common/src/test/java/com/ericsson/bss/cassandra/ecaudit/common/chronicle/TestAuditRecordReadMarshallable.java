@@ -47,7 +47,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testReadSingleRecord() throws Exception
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -57,6 +57,7 @@ public class TestAuditRecordReadMarshallable
 
         assertThat(actualAuditRecord.getBatchId()).isEmpty();
         assertThat(actualAuditRecord.getClientAddress()).isEqualTo(InetAddress.getByName("1.2.3.4"));
+        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(InetAddress.getByName("5.6.7.8"));
         assertThat(actualAuditRecord.getStatus()).isEqualTo(Status.ATTEMPT);
         assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo("Some operation");
         assertThat(actualAuditRecord.getUser()).isEqualTo("john");
@@ -66,7 +67,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testReadBatchBatch() throws Exception
     {
-        givenNextRecordIs((short) 800, "batch-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"), Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "batch-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"), Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -76,6 +77,7 @@ public class TestAuditRecordReadMarshallable
 
         assertThat(actualAuditRecord.getBatchId()).isEqualTo(Optional.of(UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9")));
         assertThat(actualAuditRecord.getClientAddress()).isEqualTo(InetAddress.getByName("1.2.3.4"));
+        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(InetAddress.getByName("5.6.7.8"));
         assertThat(actualAuditRecord.getStatus()).isEqualTo(Status.ATTEMPT);
         assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo("Some operation");
         assertThat(actualAuditRecord.getUser()).isEqualTo("john");
@@ -85,7 +87,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testReuseMarshallable() throws Exception
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -109,7 +111,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testUnknownVersion() throws Exception
     {
-        givenNextRecordIs((short) 10, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 10, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -122,7 +124,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testUnknownType() throws Exception
     {
-        givenNextRecordIs((short) 800, "fake-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, "GUCK", "Some operation");
+        givenNextRecordIs((short) 0, "fake-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, "GUCK", "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -133,9 +135,9 @@ public class TestAuditRecordReadMarshallable
     }
 
     @Test
-    public void testIllegalClientAddress()
+    public void testIllegalClientAddress() throws Exception
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, new byte[]{ 1, 2, 3 }, "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "single-entry", 42L, new byte[]{ 1, 2, 3 }, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -145,21 +147,45 @@ public class TestAuditRecordReadMarshallable
     }
 
     @Test
-    public void testNullClientAddress()
+    public void testNullClientAddress() throws Exception
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, null, "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "single-entry", 42L, null, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
         assertThatExceptionOfType(IORuntimeException.class)
         .isThrownBy(() -> readMarshallable.readMarshallable(wireInMock))
         .withMessageContaining("Corrupt client IP address field");
+    }
+
+    @Test
+    public void testIllegalCoordinatorAddress() throws Exception
+    {
+        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), new byte[]{ 1, 2, 3 }, "john", null, Status.ATTEMPT.toString(), "Some operation");
+
+        AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
+
+        assertThatExceptionOfType(IORuntimeException.class)
+        .isThrownBy(() -> readMarshallable.readMarshallable(wireInMock))
+        .withMessageContaining("Corrupt coordinator IP address field");
+    }
+
+    @Test
+    public void testNullCoordinatorAddress() throws Exception
+    {
+        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), null, "john", null, Status.ATTEMPT.toString(), "Some operation");
+
+        AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
+
+        assertThatExceptionOfType(IORuntimeException.class)
+        .isThrownBy(() -> readMarshallable.readMarshallable(wireInMock))
+        .withMessageContaining("Corrupt coordinator IP address field");
     }
 
     @Test
     public void testUnknownStatus() throws Exception
     {
-        givenNextRecordIs((short) 800, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), "john", null, "GUCK", "Some operation");
+        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, "GUCK", "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -168,7 +194,7 @@ public class TestAuditRecordReadMarshallable
         .withMessageContaining("Corrupt record status field");
     }
 
-    private void givenNextRecordIs(short version, String type, long timestamp, byte[] clientAddress, String user, UUID batchId, String status, String operation)
+    private void givenNextRecordIs(short version, String type, long timestamp, byte[] clientAddress, byte[] coordinatorAddress, String user, UUID batchId, String status, String operation)
     {
         ValueIn versionValueMock = mock(ValueIn.class);
         when(versionValueMock.int16()).thenReturn(version);
@@ -185,6 +211,10 @@ public class TestAuditRecordReadMarshallable
         ValueIn clientValueMock = mock(ValueIn.class);
         when(clientValueMock.bytes()).thenReturn(clientAddress);
         when(wireInMock.read(eq("client"))).thenReturn(clientValueMock);
+
+        ValueIn coordinatorValueMock = mock(ValueIn.class);
+        when(coordinatorValueMock.bytes()).thenReturn(coordinatorAddress);
+        when(wireInMock.read(eq("coordinator"))).thenReturn(coordinatorValueMock);
 
         ValueIn userValueMock = mock(ValueIn.class);
         when(userValueMock.text()).thenReturn(user);

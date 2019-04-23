@@ -29,11 +29,12 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
+import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestReadVersion800
+public class TestReadVersion0
 {
     private static ChronicleQueue chronicleQueue;
     private static ExcerptTailer tailer;
@@ -41,9 +42,9 @@ public class TestReadVersion800
     @BeforeClass
     public static void beforeClass()
     {
-        File queueDirVersion800 = new File("src/test/resources/q800");
+        File queueDirVersion0 = new File("src/test/resources/q0");
         chronicleQueue = ChronicleQueueBuilder
-                         .single(queueDirVersion800)
+                         .single(queueDirVersion0)
                          .blockSize(1024)
                          .readOnly(true)
                          .build();
@@ -69,6 +70,7 @@ public class TestReadVersion800
                                           .builder()
                                           .withBatchId(UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"))
                                           .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                           .withStatus(Status.ATTEMPT)
                                           .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
                                           .withUser("bob")
@@ -90,6 +92,7 @@ public class TestReadVersion800
         AuditRecord expectedAuditRecord = SimpleAuditRecord
                                           .builder()
                                           .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                           .withStatus(Status.FAILED)
                                           .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
                                           .withUser("bob")

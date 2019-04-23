@@ -59,6 +59,7 @@ import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.service.ClientState;
+import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MD5Digest;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -161,6 +162,7 @@ public class TestAuditAdapter
 
         AuditEntry captured = captor.getValue();
         assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
+        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedStatement);
         assertThat(captured.getUser()).isEqualTo(expectedUser);
         assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
@@ -194,6 +196,7 @@ public class TestAuditAdapter
 
         AuditEntry captured = captor.getValue();
         assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
+        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedStatement);
         assertThat(captured.getUser()).isEqualTo(expectedUser);
         assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
@@ -239,6 +242,7 @@ public class TestAuditAdapter
 
         AuditEntry captured = captor.getValue();
         assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
+        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedQuery);
         assertThat(captured.getUser()).isEqualTo(expectedUser);
         assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
@@ -284,6 +288,7 @@ public class TestAuditAdapter
 
         AuditEntry captured = captor.getValue();
         assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
+        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedQuery);
         assertThat(captured.getUser()).isEqualTo(expectedUser);
         assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
@@ -459,6 +464,7 @@ public class TestAuditAdapter
 
         AuditEntry captured = captor.getValue();
         assertThat(captured.getClientAddress()).isEqualTo(expectedAddress);
+        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getUser()).isEqualTo(expectedUser);
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedOperation);
         assertThat(captured.getStatus()).isEqualTo(expectedStatus);
@@ -489,6 +495,7 @@ public class TestAuditAdapter
 
         AuditEntry captured = captor.getValue();
         assertThat(captured.getClientAddress()).isEqualTo(expectedAddress);
+        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getUser()).isEqualTo(expectedUser);
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedOperation);
         assertThat(captured.getStatus()).isEqualTo(expectedStatus);

@@ -64,6 +64,7 @@ public class TestWriteReadVersionCurrent
                                           .builder()
                                           .withBatchId(UUID.randomUUID())
                                           .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                           .withStatus(Status.ATTEMPT)
                                           .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
                                           .withUser("bob")
@@ -76,6 +77,7 @@ public class TestWriteReadVersionCurrent
 
         assertThat(actualAuditRecord.getBatchId()).isEqualTo(expectedAuditRecord.getBatchId());
         assertThat(actualAuditRecord.getClientAddress()).isEqualTo(expectedAuditRecord.getClientAddress());
+        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(expectedAuditRecord.getCoordinatorAddress());
         assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
         assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
         assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
@@ -88,6 +90,7 @@ public class TestWriteReadVersionCurrent
         AuditRecord expectedAuditRecord = SimpleAuditRecord
                                           .builder()
                                           .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                           .withStatus(Status.FAILED)
                                           .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
                                           .withUser("bob")
@@ -100,6 +103,7 @@ public class TestWriteReadVersionCurrent
 
         assertThat(actualAuditRecord.getBatchId()).isEmpty();
         assertThat(actualAuditRecord.getClientAddress()).isEqualTo(expectedAuditRecord.getClientAddress());
+        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(expectedAuditRecord.getCoordinatorAddress());
         assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
         assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
         assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
@@ -112,6 +116,7 @@ public class TestWriteReadVersionCurrent
         AuditRecord expectedAuditRecord = SimpleAuditRecord
                                           .builder()
                                           .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                           .withStatus(Status.FAILED)
                                           .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
                                           .withUser("bob")

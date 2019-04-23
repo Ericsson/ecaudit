@@ -42,6 +42,7 @@ import com.ericsson.bss.cassandra.ecaudit.eclog.ToolOptions;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
 import net.openhft.chronicle.queue.RollCycles;
+import org.apache.cassandra.utils.FBUtilities;
 import org.assertj.core.data.Percentage;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -149,7 +150,7 @@ public class ITVerifyChronicleBackend
     public void simpleUpdateIsLogged()
     {
         givenTable("ks1", "tbl");
-        String username = givenSuperuserWithMinimalWhitelist();
+        String username = getSuperuserWithMinimalWhitelist();
 
         testSession.execute("UPDATE ks1.tbl SET value = 'hepp' WHERE key = 88");
 
@@ -160,7 +161,7 @@ public class ITVerifyChronicleBackend
     public void preparedInsertIsLogged()
     {
         givenTable("ks2", "tbl");
-        String username = givenSuperuserWithMinimalWhitelist();
+        String username = getSuperuserWithMinimalWhitelist();
 
         PreparedStatement preparedStatement = testSession.prepare("INSERT INTO ks2.tbl (key, value) VALUES (?, ?)");
         testSession.execute(preparedStatement.bind(5, "hepp"));
@@ -172,7 +173,6 @@ public class ITVerifyChronicleBackend
     public void sizeIsCloseToThreshold() throws Exception
     {
         givenTable("ks3", "tbl");
-        givenSuperuserWithMinimalWhitelist();
 
         for (int i = 0; i < 10; i++)
         {
@@ -214,6 +214,7 @@ public class ITVerifyChronicleBackend
         assertThat(record.getUser()).isEqualTo(username);
         assertThat(record.getStatus()).isEqualTo(Status.ATTEMPT);
         assertThat(record.getClientAddress()).isEqualTo(InetAddress.getLoopbackAddress());
+        assertThat(record.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(record.getTimestamp()).isLessThanOrEqualTo(System.currentTimeMillis());
         assertThat(record.getTimestamp()).isGreaterThan(System.currentTimeMillis() - 30_000);
     }
@@ -244,7 +245,7 @@ public class ITVerifyChronicleBackend
         "CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)"));
     }
 
-    private static String givenSuperuserWithMinimalWhitelist()
+    private static String getSuperuserWithMinimalWhitelist()
     {
         return testUsername;
     }

@@ -43,6 +43,7 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
         }
         wire.write(WireTags.KEY_TIMESTAMP).int64(auditRecord.getTimestamp());
         wire.write(WireTags.KEY_CLIENT).bytes(auditRecord.getClientAddress().getAddress());
+        wire.write(WireTags.KEY_COORDINATOR).bytes(auditRecord.getCoordinatorAddress().getAddress());
         wire.write(WireTags.KEY_USER).text(auditRecord.getUser());
         if (auditRecord.getBatchId().isPresent())
         {

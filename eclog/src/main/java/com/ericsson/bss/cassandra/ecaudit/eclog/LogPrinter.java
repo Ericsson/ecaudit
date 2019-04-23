@@ -52,6 +52,7 @@ class LogPrinter
                 StringBuilder builder = new StringBuilder();
                 builder.append(auditEntry.getTimestamp()).append('|');
                 builder.append(auditEntry.getClientAddress().getHostAddress()).append('|');
+                builder.append(auditEntry.getCoordinatorAddress().getHostAddress()).append('|');
                 builder.append(auditEntry.getUser()).append('|');
                 builder.append(auditEntry.getStatus()).append('|');
                 auditEntry.getBatchId()

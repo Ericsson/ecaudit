@@ -34,6 +34,7 @@ import org.apache.cassandra.auth.Permission;
 public class AuditEntry implements AuditRecord
 {
     private final InetAddress clientAddress;
+    private final InetAddress coordinatorAddress;
     private final Set<Permission> permissions;
     private final IResource resource;
     private final AuditOperation operation;
@@ -48,6 +49,7 @@ public class AuditEntry implements AuditRecord
     private AuditEntry(Builder builder)
     {
         this.clientAddress = builder.client;
+        this.coordinatorAddress = builder.coordinator;
         this.permissions = builder.permissions;
         this.resource = builder.resource;
         this.operation = builder.operation;
@@ -61,6 +63,12 @@ public class AuditEntry implements AuditRecord
     public InetAddress getClientAddress()
     {
         return clientAddress;
+    }
+
+    @Override
+    public InetAddress getCoordinatorAddress()
+    {
+        return coordinatorAddress;
     }
 
     /**
@@ -142,6 +150,7 @@ public class AuditEntry implements AuditRecord
     public static class Builder
     {
         private InetAddress client;
+        private InetAddress coordinator;
         private Set<Permission> permissions;
         private IResource resource;
         private AuditOperation operation;
@@ -153,6 +162,12 @@ public class AuditEntry implements AuditRecord
         public Builder client(InetAddress address)
         {
             this.client = address;
+            return this;
+        }
+
+        public Builder coordinator(InetAddress coordinator)
+        {
+            this.coordinator = coordinator;
             return this;
         }
 
@@ -231,6 +246,7 @@ public class AuditEntry implements AuditRecord
         public Builder basedOn(AuditEntry entry)
         {
             this.client = entry.getClientAddress();
+            this.coordinator = entry.getCoordinatorAddress();
             this.permissions = entry.getPermissions();
             this.resource = entry.getResource();
             this.operation = entry.getOperation();
