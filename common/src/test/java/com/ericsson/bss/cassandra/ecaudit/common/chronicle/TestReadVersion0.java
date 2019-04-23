@@ -29,7 +29,6 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
-import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 
 import static org.assertj.core.api.Assertions.assertThat;

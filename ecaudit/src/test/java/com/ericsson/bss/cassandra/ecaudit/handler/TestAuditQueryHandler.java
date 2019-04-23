@@ -65,28 +65,28 @@ public class TestAuditQueryHandler
     private static final Map<String, ByteBuffer> customPayload = Collections.emptyMap();
 
     @Mock
-    BatchQueryOptions mockBatchOptions;
+    private BatchQueryOptions mockBatchOptions;
 
     @Mock
-    BatchStatement mockBatchStatement;
+    private BatchStatement mockBatchStatement;
 
     @Mock
-    CQLStatement mockStatement;
+    private CQLStatement mockStatement;
 
     @Mock
-    QueryOptions mockOptions;
+    private QueryOptions mockOptions;
 
     @Mock
-    QueryState mockQueryState;
+    private QueryState mockQueryState;
 
     @Mock
-    ClientState mockClientState;
+    private ClientState mockClientState;
 
     @Mock
-    QueryHandler mockHandler;
+    private QueryHandler mockHandler;
 
     @Mock
-    AuditAdapter mockAdapter;
+    private AuditAdapter mockAdapter;
 
     private AuditQueryHandler queryHandler;
 

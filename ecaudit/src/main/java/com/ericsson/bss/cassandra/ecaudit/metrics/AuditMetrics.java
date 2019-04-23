@@ -48,7 +48,7 @@ public class AuditMetrics
     /**
      * Add timing for filtering a request for audit
      *
-     * @param time the time spent filtering
+     * @param time     the time spent filtering
      * @param timeUnit the time unit of the provided time
      */
     public void filterAuditRequest(long time, TimeUnit timeUnit)
@@ -59,7 +59,7 @@ public class AuditMetrics
     /**
      * Add timing for audit logging of a request.
      *
-     * @param time the time spent logging
+     * @param time     the time spent logging
      * @param timeUnit the time unit of the provided time
      */
     public void logAuditRequest(long time, TimeUnit timeUnit)
@@ -69,6 +69,7 @@ public class AuditMetrics
 
     /**
      * Copied from org.apache.cassandra.metrics.DefaultNameFactory but with tailored group name.
+     *
      * @return a Cassandra metric name
      */
     static CassandraMetricsRegistry.MetricName createMetricName(String metricName)
@@ -78,14 +79,11 @@ public class AuditMetrics
 
     /**
      * Copied from org.apache.cassandra.metrics.DefaultNameFactory but with tailored group name and slightly reduced.
+     *
      * @return the name of the mBean.
      */
     private static String createMBeanName(String name)
     {
-        return new StringBuilder()
-               .append(GROUP_NAME)
-               .append(":type=").append(METRIC_TYPE)
-               .append(",name=").append(name)
-               .toString();
+        return GROUP_NAME + ":type=" + METRIC_TYPE + ",name=" + name;
     }
 }

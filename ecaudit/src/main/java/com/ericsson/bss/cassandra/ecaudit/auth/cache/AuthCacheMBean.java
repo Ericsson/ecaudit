@@ -24,17 +24,17 @@ package com.ericsson.bss.cassandra.ecaudit.auth.cache;
  */
 public interface AuthCacheMBean
 {
-    public void invalidate();
+    void invalidate();
 
-    public void setValidity(int validityPeriod);
+    void setValidity(int validityPeriod);
 
-    public int getValidity();
+    int getValidity();
 
-    public void setUpdateInterval(int updateInterval);
+    void setUpdateInterval(int updateInterval);
 
-    public int getUpdateInterval();
+    int getUpdateInterval();
 
-    public void setMaxEntries(int maxEntries);
+    void setMaxEntries(int maxEntries);
 
-    public int getMaxEntries();
+    int getMaxEntries();
 }

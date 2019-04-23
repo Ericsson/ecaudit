@@ -168,9 +168,9 @@ public class Slf4jAuditLogger implements AuditLogger
     @Override
     public void log(AuditEntry logEntry)
     {
-        List<ToStringer> fields = fieldFunctions.stream()
-                                                    .map(valueSupplier -> new ToStringer<>(logEntry, valueSupplier))
-                                                    .collect(toList());
-        auditLogger.info(logTemplate, fields.toArray());
+        Object[] fieldValues = fieldFunctions.stream()
+                                             .map(valueSupplier -> new ToStringer<>(logEntry, valueSupplier))
+                                             .toArray();
+        auditLogger.info(logTemplate, fieldValues);
     }
 }

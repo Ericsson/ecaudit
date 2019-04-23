@@ -41,7 +41,7 @@ import org.apache.cassandra.cql3.statements.PermissionsManagementStatement;
 import org.apache.cassandra.cql3.statements.UseStatement;
 import org.apache.cassandra.db.view.View;
 
-public class StatementResourceAdapter
+class StatementResourceAdapter
 {
     /**
      * Extract the {@link RoleResource} from the {@link AuthenticationStatement}.
@@ -163,6 +163,7 @@ public class StatementResourceAdapter
         try
         {
             FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, "functionName", true);
+            @SuppressWarnings("unchecked")
             List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "argRawTypes", true);
             return FunctionResource.functionFromCql(functionName.keyspace, functionName.name, argRawTypes);
         }
@@ -190,6 +191,7 @@ public class StatementResourceAdapter
         try
         {
             FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, "functionName", true);
+            @SuppressWarnings("unchecked")
             List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "argRawTypes", true);
             return FunctionResource.functionFromCql(functionName.keyspace, functionName.name, argRawTypes);
         }

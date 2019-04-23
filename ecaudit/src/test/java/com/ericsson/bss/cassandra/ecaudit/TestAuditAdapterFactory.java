@@ -47,7 +47,6 @@ import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.jetbrains.annotations.NotNull;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
