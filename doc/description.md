@@ -97,8 +97,8 @@ In a busy system this may add as much as 20% overhead.
 
 This cassandra-stress chart illustrates typical performance impact of ecAudit:
 
-* [Throughput](https://rawgit.com/Ericsson/ecaudit/release/c3.0.11/doc/ecaudit-performance.html)
-* [Latency](https://rawgit.com/Ericsson/ecaudit/release/c3.0.11/doc/ecaudit-performance.html?stats=undefined&metric=mean&operation=WRITE&smoothing=1&show_aggregates=true&xmin=0&xmax=91.08&ymin=0&ymax=0.33)
+* [Throughput](https://rawgit.com/Ericsson/ecaudit/master/doc/ecaudit-performance.html)
+* [Latency](https://rawgit.com/Ericsson/ecaudit/master/doc/ecaudit-performance.html?metric=mean)
 
 Refer to the guides of Logback settings, authentication caches and whitelist settings to get best possible performance.
 
