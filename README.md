@@ -1,102 +1,19 @@
-# ecAudit - Ericsson Cassandra Audit
+# ecAudit
 
 [![build](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c3.0)](https://travis-ci.org/Ericsson/ecaudit)
 [![coverage](https://coveralls.io/repos/github/Ericsson/ecaudit/badge.svg?branch=release%2Fc3.0)](https://coveralls.io/github/Ericsson/ecaudit?branch=release%2Fc3.0)
-[![maven central](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=maven%20central)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
 
-The ecAudit plug-in provides an audit logging feature for Apache Cassandra to audit CQL statement execution and login attempt through native CQL protocol.
+With ecAudit you get auditing and query logger functionality for Apache Cassandra 3.0 and 3.11.
 
-If you are reading this on github.com, please be aware of that this is the documentation for the Cassandra 3.0 flavor of ecAudit.
-To get documentation for a specific flavor and version, refer to the corresponding tag.
-For example, you can read about ecAudit 0.21.0 for Cassandra 3.0 by viewing the [ecaudit_c3.0-0.21.0](https://github.com/Ericsson/ecaudit/tree/ecaudit_c3.0-0.21.0) tag.
+Features include:
+* Detailed audit records for CQL operations and login attempts
+* Customizable audit record format
+* Obfuscation of sensitive password information
+* Powerful filtering with centralized or local whitelists
+* Logger backends with SLF4J/Logback or Chronicle
 
-
-## Description
-
-Audit records are created locally on each Cassandra node covering all CQL requests.
-ecAudit has a pluggable logger backend with support for SLF4J and Chronicle Queues out of the box.
-The SLF4J logging framework makes it possible to store and format audit logs in various ways.
-The binary Chronicle Queues offers the best possible performance.
-It is possible to create a whitelist of usernames/resources which will not be included in the audit log.
-
-ecAudit will create an audit record before the operation is performed, marked with status=ATTEMPT.
-If the operation fails, for one reason or another, a corresponding failure record will be created, marked with status=FAILED.
-
-Passwords which appear in an audit record will be obfuscated.
-
-
-## Installation
-
-To get started with ecAudit, please refer to the [setup guide](doc/setup.md).
-Make sure to consult the compatibility guide below to get a version of ecAudit that match your specific Cassandra version.
-
-
-### Compatibility
-
-There are different flavors of the plug-in for different versions of Apache Cassandra.
-The Cassandra version that was used during build and integration tests can be derived from the full name of the ecAudit plugin.
-For instance, ecaudit_c3.11 indicate that the ecAudit flavor was built with Cassandra 3.11.x.
-
-The table below list the Cassandra versions used in the current and previous builds of ecAudit.
-
-| Flavor          | Versions       | Compiled With    |
-| ----------------| -------------- | ---------------- |
-| ecaudit_c3.11   | 0.22 ->        | Cassandra 3.11.3 |
-| ecaudit_c3.11   | 0.1  -> 0.21   | Cassandra 3.11.2 |
-| ecaudit_c3.0    | 0.22 ->        | Cassandra 3.0.17 |
-| ecaudit_c3.0    | 0.11 -> 0.21   | Cassandra 3.0.16 |
-| ecaudit_c3.0    | 0.1  -> 0.10   | Cassandra 3.0.15 |
-| ecaudit_c3.0.11 | 2.0  ->        | Cassandra 3.0.11 |
-
-The ecAudit plug-in is maintained for selected Cassandra versions only.
-It may be possible to use the ecAudit plug-in with related Cassandra versions as well.
-But we recommend users to deploy ecAudit with the Cassandra version that was used during build.
-New version flavors can be created on request.
-
-The ecAudit versions between flavors are feature compatible as far as it makes sense.
-For instance ecAudit_c3.0 version 0.4.0 and ecAudit_c3.11 0.4.0 have the same plug-in features.
-
-As of version 0.21.0, ecAudit is available on Maven Central.
-Earlier versions are not published on any public repository.
-
-
-### Apache Cassandra 4.0
-
-As of [CASSANDRA-12151](https://issues.apache.org/jira/browse/CASSANDRA-12151) native support for audit logs are available in Apache Cassandra 4.0 and later.
-
-Since ecAudit was developed before CASSANDRA-12151, there are several differences to be aware of. The most notable being:
-
-* The format of the audit entries are different in ecAudit compared to CASSANDRA-12151.
-
-* CASSANDRA-12151 uses settings in the ```cassandra.yaml``` to configure basic whitelists.
-  ecAudit uses role options in CQL and/or settings in the audit.yaml file to manage whitelists.
-  [CASSANDRA-14471](https://issues.apache.org/jira/browse/CASSANDRA-14471) is attempting to close this gap.
-
-
-## Audit Records
-
-| Field Label | Field Value                                                       | Mandatory Field |
-| ----------- | ----------------------------------------------------------------- | --------------- |
-| client      | Client IP address                                                 | yes             |
-| user        | Username of the authenticated user                                | yes             |
-| batchId     | Internal identifier shared by all statements in a batch operation | no              |
-| status      | Value is either ATTEMPT or FAILED                                 | yes             |
-| operation   | The CQL statement or a textual description of the operation       | yes             |
-
-
-### Examples
-
-In the examples below the audit record is prepended with a timestamp which is created by the SFL4J/LOGBack framework.
-
+Example of audit records created by ecAudit:
 ```
-9:53:00.644 - client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'CREATE ROLE ecuser WITH PASSWORD = '*****' AND LOGIN = true'
-19:53:00.653 - client:'127.0.0.1'|user:'cassandra'|status:'FAILED'|operation:'CREATE ROLE ecuser WITH PASSWORD = '*****' AND LOGIN = true'
-
-19:53:07.889 - client:'127.0.0.1'|user:'ecuser'|status:'ATTEMPT'|operation:'Authentication attempt'
-
-19:53:05.585 - client:'127.0.0.1'|user:'unknown'|status:'ATTEMPT'|operation:'Authentication attempt'
-19:53:05.587 - client:'127.0.0.1'|user:'unknown'|status:'FAILED'|operation:'Authentication failed'
-
 15:42:41.644 - client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']'
 15:42:41.646 - client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'SELECT * FROM ecks.ectbl WHERE partk = ?[1]'
 15:42:41.650 - client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'DELETE FROM ecks.ectbl WHERE partk = ?[1]'
@@ -105,89 +22,38 @@ In the examples below the audit record is prepended with a timestamp which is cr
 15:42:41.655 - client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'DELETE FROM ecks.ectbl WHERE partk = ?[2]'
 ```
 
-***Note*** - It is possible to customize the audit records by providing a parameterized log message format, see [setup guide](doc/setup.md).
-
-## Audit Logs
-
-Cassandra is a distributed system and so the generated audit logs will be created on different nodes.
-
-Records are created at the coordinator layer at Cassandra
-which means that each request typically will be audited on one single Cassandra node in the cluster.
-However, as requests may be retried at the client side it is possible for a request to appear in an audit log at several Cassandra nodes.
-In order to get a complete cluster wide view of all audited operations
-it is necessary to gather and merge all individual audit logs into one.
-
-When ecAudit is configured to write audit logs with the SLF4J/LOGBack framework
-there are many ways to customize behavior in terms of synchronous vs. asynchronous writes, log file rotation etc.
-For details, consult the LOGBack [documentation](https://logback.qos.ch/).
-There is a useful example in the ecAudit [setup guide](doc/setup.md) to get you started.
-
-When ecAudit is configured to write audit logs into Chronicle Queues
-it is possible to write large volumes of audit records with minimal performance impact.
-This is achieved by minimizing memory allocations and storing records in an efficient binary format.
-Logs are extracted with a tool provided with ecAudit.
+Checkout the detailed [description](doc/description.md) for a more comprehensive list of features, limitations and operational impact.
 
 
-## Audit Whitelists
+## Getting Started
 
-Two different mechanisms are used to define what operations that are whitelisted.
-Whitelists can be configured either centrally using custom options on Roles in Cassandra,
-or locally in each separate node in a YAML file.
-Whitelisted operations will not appear in the audit logs.
-For details, consult the [setup](doc/setup.md) and [whitelist](doc/role_whitelist_management.md) pages.
+ecAudit integrates with Apache Cassandra using its existing plug-in points.
 
 
-## Performance
+### Download
 
-There are two parts of ecAudit that adds an overhead to requests in Cassandra.
+Official releases of ecAudit can be downloaded from Maven Central.
+Get the ecAudit flavor for your Cassandra version.
 
-First, each request is checked towards the whitelist.
-This adds an overhead of ~1%.
-This check is performed on all requests when ecAudit is enabled.
+[![ecAudit for Cassandra 3.11.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.11.svg?label=ecAudit%20for%20Cassandra%203.11.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.11%22)
+[![ecAudit for Cassandra 3.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=ecAudit%20for%20Cassandra%203.0.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
+[![ecAudit for Cassandra 3.0.11](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.11.svg?label=ecAudit%20for%20Cassandra%203.0.11)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0.11%22)
 
-Second, there is an overhead involved with the actual logging of the audit record.
-This operation is performed on all requests that are not filtered by the whitelist.
-In a busy system this may add as much as 20% overhead.
-
-This cassandra-stress chart illustrates typical performance impact of ecAudit:
-
- * [Throughput](https://rawgit.com/Ericsson/ecaudit/release/c3.0/doc/ecaudit-performance.html)
- * [Latency](https://rawgit.com/Ericsson/ecaudit/release/c3.0/doc/ecaudit-performance.html?stats=undefined&metric=mean&operation=WRITE&smoothing=1&show_aggregates=true&xmin=0&xmax=91.08&ymin=0&ymax=0.33)
-
-Refer to the guides of LOGBack settings, authentication caches and whitelist settings to get best possible performance.
+For a detailed description of compatible Cassandra versions, refer to the [Cassandra Compatibility Matrix](doc/cassandra_compatibility.md).
 
 
-## Connections
+### Setup
 
-A typical Cassandra client will connect to many (if not all) nodes in the Cassandra cluster.
-For this reason audit records will be created on several places when a new client connect to a cluster.
-Further, it is not uncommon for a client to set up several connections to a server which will result in several audit records for user authentication.
+Install and configure ecAudit using the setup guide for your Cassandra version.
 
-Some clients will also make a few internal queries to the internal system tables in Cassandra.
-These queries will appear as any other audit record even though they were not generated by the actual application logic at the client.
-
-
-## Known Limitations
+* [ecAudit Setup Guide for Cassandra 3.11.<latest>](https://github.com/Ericsson/ecaudit/blob/master/doc/setup.md)
+* [ecAudit Setup Guide for Cassandra 3.0.<latest>](doc/setup.md)
+* [ecAudit Setup Guide for Cassandra 3.0.11](https://github.com/Ericsson/ecaudit/blob/release/c3.0.11/doc/setup.md)
 
 
-### Interfaces
+## Issues & Contributions
 
-ecAudit does not provide auditing on the JMX interface.
-ecAudit does not provide auditing functionality for prepared statements on the legacy RPC (Thrift) interface in Cassandra.
-However, regular (un-prepared) statements on the RPC (Thrift) interface are audit logged.
-
-
-### The USE statement
-
-When a USE statement is used at the client side this will be visible in the audit log.
-However, behavior is somewhat inconsistent with other statements as each USE statement typically will be logged twice.
-The first log entry will appear at the time when the USE statement is sent.
-The second log entry will appear just before the next statement in order is logged.
-So order will be preserved, but timing on second USE log entry may get wrong timestamp.
-This behavior is observed with the Java driver.
-
-
-## Contributing
+Report an issue if you're having trouble to use ecAudit or have an idea for an improvement.
 
 Want to contribute to ecAudit?
 Check out our [contribution guide](CONTRIBUTING.md).
@@ -197,16 +63,17 @@ Check out our [contribution guide](CONTRIBUTING.md).
 
 The following Ericsson developers contributed to the initial ecAudit project:
 
-*	Per Otterström <per.otterstrom@ericsson.com>
-*	Tobias Eriksson <tobias.a.eriksson@ericsson.com>
-*	Laxmikant Upadhyay <laxmikant.upadhyay@ericsson.com>
-*	Anuj Wadhera <anuj.wadhera@ericsson.com>
-*	Marcus Olsson <marcus.olsson@ericsson.com>
+* Per Otterström
+* Tobias Eriksson
+* Laxmikant Upadhyay
+* Anuj Wadhera
+* Marcus Olsson
+* Ted Petersson
 
 
 ## License
 
-Copyright 2018 Telefonaktiebolaget LM Ericsson
+Copyright 2018-19 Telefonaktiebolaget LM Ericsson
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
