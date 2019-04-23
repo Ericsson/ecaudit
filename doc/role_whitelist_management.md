@@ -1,11 +1,26 @@
-# Managing Whitelists
-
-The whitelist management described here is only applicable if you are using [Role Based Whitelists](setup.md#Role_Based_Whitelists).
+# Role Based Whitelist Management
 
 With this setup whitelists are managed using custom role options in Cassandra.
+* Whitelists are configured per role in Cassandra.
+* A role will inherit whitelists from other roles granted to it.
+* Only roles with SUPERUSER flag or with AUTHORIZE permission on the data resource have permission to whitelist another role on data access.
+* Only roles with SUPERUSER flag have permission to whitelist another role for connections.
+
 Whenever a whitelist setting is changed it will be distributed automatically in the cluster.
 Whitelist changes will be effective within 2 seconds (configurable) across the cluster.
 We'll describe this in more detail a bit later in the tuning section below.
+
+## Enable Role Base Whitelists
+
+This whitelist type is enabled by default in ecAudit.
+To set it explicitly, add the following option near the end of your ```cassandra-env.sh```
+
+```
+JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Decaudit.filter_type=ROLE"
+```
+
+Once all nodes are configured to use this whitelist backend it is possible to manage whitelisted users/resources without restart.
+Whitelist management is described in the following sections.
 
 
 ## Roles
