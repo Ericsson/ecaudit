@@ -94,15 +94,10 @@ class PermissionChecker
 
     private boolean hasPermissionToAlterRole(AuthenticatedUser performer, RoleResource roleResource)
     {
-        for (IResource resource : Resources.chain(roleResource))
-        {
-            Set<Permission> grantedPermissions = getPermissions(performer, resource);
-            if (grantedPermissions.contains(Permission.ALTER))
-            {
-                return true;
-            }
-        }
-        return false;
+        return Resources.chain(roleResource)
+                        .stream()
+                        .map(resource -> getPermissions(performer, resource))
+                        .anyMatch(permissions -> permissions.contains(Permission.ALTER));
     }
 
     private Set<Permission> getPermissions(AuthenticatedUser performer, IResource resource)

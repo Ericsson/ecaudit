@@ -18,6 +18,7 @@ package com.ericsson.bss.cassandra.ecaudit.filter.role;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -94,15 +95,8 @@ public class RoleAuditFilter implements AuditFilter
     {
         Set<RoleResource> roles = getRoles(logEntry.getUser());
         List<IResource> operationResourceHierarchy = getResourceHierarchy(logEntry.getResource());
-        for (Permission operation : logEntry.getPermissions())
-        {
-            if(!isOperationWhitelistedOnResourceByRoles(operation, operationResourceHierarchy, roles))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return logEntry.getPermissions().stream()
+                       .allMatch(permission -> isOperationWhitelistedOnResourceByRoles(permission, operationResourceHierarchy, roles));
     }
 
     private Set<RoleResource> getRoles(String username)
@@ -126,34 +120,16 @@ public class RoleAuditFilter implements AuditFilter
 
     private boolean isOperationWhitelistedOnResourceByRoles(Permission operation, List<IResource> operationResourceHierarchy, Set<RoleResource> roles)
     {
-        for (RoleResource role : roles)
-        {
-            if (isOperationWhitelistedOnResourceByRole(operation, operationResourceHierarchy, role))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return roles.stream()
+                    .anyMatch(role -> isOperationWhitelistedOnResourceByRole(operation, operationResourceHierarchy, role));
     }
 
-    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<IResource> operationResourceHierarchy, RoleResource role)
+    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<IResource> operationResources, RoleResource role)
     {
         Map<IResource, Set<Permission>> whitelist = whitelistCache.getWhitelist(role);
-        for (IResource resource : operationResourceHierarchy)
-        {
-            Set<Permission> whitelistedOperations = whitelist.get(resource);
-            if (whitelistContains(operation, whitelistedOperations))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private boolean whitelistContains(Permission operation, Set<Permission> whitelistedOperations)
-    {
-        return whitelistedOperations != null && whitelistedOperations.contains(operation);
+        return operationResources.stream()
+                                 .map(whitelist::get)
+                                 .filter(Objects::nonNull)
+                                 .anyMatch(whitelistedOperations -> whitelistedOperations.contains(operation));
     }
 }
