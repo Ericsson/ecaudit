@@ -5,6 +5,8 @@ cache:
   - $HOME/.m2
 matrix:
   include:
+  - name: "Style check"
+    env: TEST_SUITE='pmd:pmd pmd:cpd pmd:check pmd:cpd-check -Dpmd.printFailingErrors'
   - name: "Javadoc"
     env: TEST_SUITE='javadoc:jar'
   - name: "Unit tests"

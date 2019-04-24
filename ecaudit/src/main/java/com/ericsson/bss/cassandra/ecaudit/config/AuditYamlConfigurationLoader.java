@@ -118,7 +118,7 @@ public final class AuditYamlConfigurationLoader
 
     private URL getDefaultConfigURL()
     {
-        return AuditYamlConfigurationLoader.class.getClassLoader().getResource(DEFAULT_CONFIG_FILE);
+        return Thread.currentThread().getContextClassLoader().getResource(DEFAULT_CONFIG_FILE);
     }
 
     private AuditYamlConfig loadConfigFromUrl(URL url)

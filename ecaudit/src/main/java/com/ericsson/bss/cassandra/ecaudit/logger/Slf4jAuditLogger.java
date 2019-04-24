@@ -62,7 +62,7 @@ public class Slf4jAuditLogger implements AuditLogger
     private static final Pattern FIELD_PATTERN = Pattern.compile(COMBINED_FIELDS_EXP);
 
     private final Map<String, Function<AuditEntry, Object>> availableFieldFunctionMap;
-    private final Logger auditLogger; // NOSONAR
+    private final Logger auditLogger; // NOPMD
     private final String logTemplate;
     private final List<Function<AuditEntry, Object>> fieldFunctions;
 
@@ -129,7 +129,7 @@ public class Slf4jAuditLogger implements AuditLogger
         return logFormat.replaceAll(OPTIONAL_FIELD_EXP, "{}{}{}").replaceAll(FIELD_EXP, "{}");
     }
 
-    List<Function<AuditEntry, Object>> getFieldFunctions(String logFormat)
+    final List<Function<AuditEntry, Object>> getFieldFunctions(String logFormat)
     {
         List<Function<AuditEntry, Object>> fieldFunctions = new ArrayList<>();
         Matcher matcher = FIELD_PATTERN.matcher(logFormat);

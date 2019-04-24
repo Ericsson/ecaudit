@@ -91,7 +91,7 @@ public class AuditPasswordAuthenticator implements IAuthenticator
     public SaslNegotiator newSaslNegotiator(InetAddress clientAddress)
     {
         LOG.debug("Setting up SASL negotiation with {}", clientAddress);
-        return new AuditPlainTextSaslAuthenticator(clientAddress, wrappedAuthenticator.newSaslNegotiator(clientAddress));
+        return new AuditPlainTextSaslAuthenticator(clientAddress, wrappedAuthenticator.newSaslNegotiator(clientAddress), auditAdapter);
     }
 
     @Override
@@ -104,13 +104,15 @@ public class AuditPasswordAuthenticator implements IAuthenticator
     {
         private final InetAddress clientAddress;
         private final SaslNegotiator saslNegotiator;
+        private final AuditAdapter auditAdapter;
 
         private String decodedUsername;
 
-        AuditPlainTextSaslAuthenticator(InetAddress clientAddress, SaslNegotiator saslNegotiator)
+        AuditPlainTextSaslAuthenticator(InetAddress clientAddress, SaslNegotiator saslNegotiator, AuditAdapter auditAdapter)
         {
             this.clientAddress = clientAddress;
             this.saslNegotiator = saslNegotiator;
+            this.auditAdapter = auditAdapter;
         }
 
         @Override

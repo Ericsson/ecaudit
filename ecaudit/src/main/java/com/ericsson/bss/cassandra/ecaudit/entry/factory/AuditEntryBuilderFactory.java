@@ -30,8 +30,6 @@ import com.ericsson.bss.cassandra.ecaudit.facade.CassandraAuditException;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.cql3.CQLStatement;
-import org.apache.cassandra.cql3.ColumnCondition;
-import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.statements.AlterKeyspaceStatement;
 import org.apache.cassandra.cql3.statements.AlterRoleStatement;
@@ -72,7 +70,6 @@ import org.apache.cassandra.cql3.statements.TruncateStatement;
 import org.apache.cassandra.cql3.statements.UseStatement;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.service.ClientState;
-import org.apache.cassandra.utils.Pair;
 
 public class AuditEntryBuilderFactory
 {
@@ -98,6 +95,7 @@ public class AuditEntryBuilderFactory
     private static final Set<Permission> DROP_PERMISSIONS = ImmutableSet.of(Permission.DROP);
     private static final Set<Permission> DESCRIBE_PERMISSIONS = ImmutableSet.of(Permission.DESCRIBE);
     private static final Set<Permission> AUTHORIZE_PERMISSIONS = ImmutableSet.of(Permission.AUTHORIZE);
+    private static final String UNEXPECTED_BATCH_STATEMENT = "Unexpected BatchStatement when mapping singe query for audit";
 
     private final StatementResourceAdapter statementResourceAdapter = new StatementResourceAdapter();
 
@@ -154,6 +152,7 @@ public class AuditEntryBuilderFactory
      * @param parsedStatement the {@link ParsedStatement} or {@link CFStatement}
      * @return the initialized builder with operation and resource assigned
      */
+    @SuppressWarnings("PMD")
     private Builder createEntryBuilder(ParsedStatement parsedStatement)
     {
         if (parsedStatement instanceof SelectStatement.RawStatement)
@@ -187,14 +186,15 @@ public class AuditEntryBuilderFactory
 
         if (parsedStatement instanceof BatchStatement.Parsed)
         {
-            LOG.error("Unexpected BatchStatement when mapping singe query for audit");
-            throw new CassandraAuditException("Unexpected BatchStatement when mapping singe query for audit");
+            LOG.error(UNEXPECTED_BATCH_STATEMENT);
+            throw new CassandraAuditException(UNEXPECTED_BATCH_STATEMENT);
         }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
         return createDefaultEntryBuilder();
     }
 
+    @SuppressWarnings("PMD")
     public Builder createEntryBuilder(CQLStatement statement)
     {
         if (statement instanceof SelectStatement)
@@ -413,6 +413,7 @@ public class AuditEntryBuilderFactory
                          .resource(statementResourceAdapter.resolveManagedResource(statement));
     }
 
+    @SuppressWarnings("PMD")
     private Builder createSchemaAlteringEntryBuilder(SchemaAlteringStatement statement)
     {
         if (statement instanceof CreateKeyspaceStatement)

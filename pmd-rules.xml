@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+
+    Copyright 2019 Telefonaktiebolaget LM Ericsson
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ruleset name="Custom ruleset"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
+    <description>
+        ecAudit mandatory ruleset.
+    </description>
+    <rule ref="category/java/design.xml">
+        <exclude name="TooManyMethods" />
+        <exclude name="LawOfDemeter" />
+        <exclude name="ExcessiveImports" />
+        <exclude name="AvoidCatchingGenericException" />
+        <exclude name="DataClass" />
+    </rule>
+
+    <rule ref="category/java/bestpractices.xml">
+        <exclude name="AccessorClassGeneration" />
+        <exclude name="AccessorMethodGeneration" />
+    </rule>
+
+    <rule ref="category/java/errorprone.xml">
+        <exclude name="AvoidLiteralsInIfCondition" />
+        <exclude name="UseLocaleWithCaseConversions" />
+        <exclude name="BeanMembersShouldSerialize" />
+        <exclude name="DataflowAnomalyAnalysis" />
+        <exclude name="AvoidFieldNameMatchingMethodName" />
+    </rule>
+</ruleset>

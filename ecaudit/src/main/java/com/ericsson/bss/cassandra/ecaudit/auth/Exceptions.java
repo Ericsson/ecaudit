@@ -17,8 +17,13 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import org.apache.cassandra.exceptions.CassandraException;
 
-public class Exceptions
+public final class Exceptions
 {
+    private Exceptions()
+    {
+        // Utility class
+    }
+
     /**
      * Try to find a CassandraException which is wrapped in a generic RuntimeException.
      *
@@ -44,7 +49,7 @@ public class Exceptions
         {
             RuntimeException causeOfCause = tryGetCassandraExceptionCause((RuntimeException) cause);
 
-            if (causeOfCause == cause)
+            if (causeOfCause == cause) // NOPMD
             {
                 return exception;
             }
@@ -56,5 +61,20 @@ public class Exceptions
         {
             return exception;
         }
+    }
+
+    /**
+     * Appends the cause the provided exception.
+     * <p>
+     * This can be useful if there is no constructor available that takes a throwable parameter.
+     *
+     * @param exception the exception to append a cause to
+     * @param cause     the cause to append
+     * @param <T>       type of the throwable
+     * @return the provided exception
+     */
+    public static <T extends Throwable> T appendCause(T exception, Throwable cause)
+    {
+        return (T) exception.initCause(cause);
     }
 }

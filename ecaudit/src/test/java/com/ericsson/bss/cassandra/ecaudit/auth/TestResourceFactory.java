@@ -177,7 +177,7 @@ public class TestResourceFactory
     public void testStringArrayToResourceSet()
     {
         Set<IResource> expectedResourceSet = ImmutableSet.of(ConnectionResource.fromName("connections"), DataResource.fromName("data/ks"));
-        assertThat(ResourceFactory.toResourceSet(Arrays.array("connections", "data/ks"))).isEqualTo(expectedResourceSet);
+        assertThat(ResourceFactory.toResourceSet("connections", "data/ks")).isEqualTo(expectedResourceSet);
     }
 
     @Test
