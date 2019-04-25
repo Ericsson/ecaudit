@@ -30,6 +30,7 @@ public class AuditMetrics
     private static final String METRIC_TYPE = "Audit";
     private static final String METRIC_NAME_FILTER = "Filter";
     private static final String METRIC_NAME_LOG = "Log";
+    private static final String MBEAN_BASE = GROUP_NAME + ":type=" + METRIC_TYPE + ",name=";
 
     private final Timer auditFilterTimer;
     private final Timer auditTimer;
@@ -84,6 +85,6 @@ public class AuditMetrics
      */
     private static String createMBeanName(String name)
     {
-        return GROUP_NAME + ":type=" + METRIC_TYPE + ",name=" + name;
+        return MBEAN_BASE + name;
     }
 }
