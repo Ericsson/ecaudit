@@ -84,7 +84,7 @@ public class AuthCache<K, V> implements AuthCacheMBean
         init();
     }
 
-    private void init()
+    protected void init()
     {
         this.cacheRefreshExecutor = new DebuggableThreadPoolExecutor(name + "Refresh", Thread.NORM_PRIORITY);
         this.cache = initCache(null);
@@ -99,12 +99,12 @@ public class AuthCache<K, V> implements AuthCacheMBean
         }
     }
 
-    private ObjectName getObjectName() throws MalformedObjectNameException
+    protected ObjectName getObjectName() throws MalformedObjectNameException
     {
         return new ObjectName(MBEAN_NAME_BASE + name);
     }
 
-    protected V get(K k) throws ExecutionException
+    public V get(K k) throws ExecutionException
     {
         if (cache == null)
             return loadFunction.apply(k);
@@ -123,7 +123,7 @@ public class AuthCache<K, V> implements AuthCacheMBean
             cache.invalidate(k);
     }
 
-    public synchronized void setValidity(int validityPeriod)
+    public void setValidity(int validityPeriod)
     {
         if (Boolean.getBoolean("cassandra.disable_auth_caches_remote_configuration"))
             throw new UnsupportedOperationException("Remote configuration of auth caches is disabled");
@@ -137,7 +137,7 @@ public class AuthCache<K, V> implements AuthCacheMBean
         return getValidityDelegate.get();
     }
 
-    public synchronized void setUpdateInterval(int updateInterval)
+    public void setUpdateInterval(int updateInterval)
     {
         if (Boolean.getBoolean("cassandra.disable_auth_caches_remote_configuration"))
             throw new UnsupportedOperationException("Remote configuration of auth caches is disabled");
@@ -151,7 +151,7 @@ public class AuthCache<K, V> implements AuthCacheMBean
         return getUpdateIntervalDelegate.get();
     }
 
-    public synchronized void setMaxEntries(int maxEntries)
+    public void setMaxEntries(int maxEntries)
     {
         if (Boolean.getBoolean("cassandra.disable_auth_caches_remote_configuration"))
             throw new UnsupportedOperationException("Remote configuration of auth caches is disabled");
@@ -182,7 +182,7 @@ public class AuthCache<K, V> implements AuthCacheMBean
                 .maximumSize(getMaxEntries())
                 .build(new CacheLoader<K, V>()
                 {
-                    public V load(K k)
+                    public V load(K k) throws Exception
                     {
                         return loadFunction.apply(k);
                     }
