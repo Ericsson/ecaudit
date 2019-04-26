@@ -15,7 +15,6 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.filter.role;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +31,7 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
+import org.apache.cassandra.auth.Resources;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.auth.Roles;
 
@@ -40,8 +40,6 @@ import org.apache.cassandra.auth.Roles;
  */
 public class RoleAuditFilter implements AuditFilter
 {
-    private static final int MAX_RESOURCE_DEPTH = 3;
-
     private final Function<RoleResource, Set<RoleResource>> getRolesFunction;
     private final AuditWhitelistCache whitelistCache;
     private final WhitelistDataAccess whitelistDataAccess;
@@ -94,9 +92,9 @@ public class RoleAuditFilter implements AuditFilter
     private boolean isFilteredUnchecked(AuditEntry logEntry)
     {
         Set<RoleResource> roles = getRoles(logEntry.getUser());
-        List<IResource> operationResourceHierarchy = getResourceHierarchy(logEntry.getResource());
+        List<? extends IResource> operationResourceChain = Resources.chain(logEntry.getResource());
         return logEntry.getPermissions().stream()
-                       .allMatch(permission -> isOperationWhitelistedOnResourceByRoles(permission, operationResourceHierarchy, roles));
+                       .allMatch(permission -> isOperationWhitelistedOnResourceByRoles(permission, operationResourceChain, roles));
     }
 
     private Set<RoleResource> getRoles(String username)
@@ -105,31 +103,18 @@ public class RoleAuditFilter implements AuditFilter
         return getRolesFunction.apply(primaryRole);
     }
 
-    private List<IResource> getResourceHierarchy(IResource primaryResource)
-    {
-        List<IResource> resourceList = new ArrayList<>(MAX_RESOURCE_DEPTH);
-        resourceList.add(primaryResource);
-        IResource resource = primaryResource;
-        while (resource.hasParent())
-        {
-            resource = resource.getParent();
-            resourceList.add(resource);
-        }
-        return resourceList;
-    }
-
-    private boolean isOperationWhitelistedOnResourceByRoles(Permission operation, List<IResource> operationResourceHierarchy, Set<RoleResource> roles)
+    private boolean isOperationWhitelistedOnResourceByRoles(Permission operation, List<? extends IResource> operationResourceChain, Set<RoleResource> roles)
     {
         return roles.stream()
-                    .anyMatch(role -> isOperationWhitelistedOnResourceByRole(operation, operationResourceHierarchy, role));
+                    .anyMatch(role -> isOperationWhitelistedOnResourceByRole(operation, operationResourceChain, role));
     }
 
-    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<IResource> operationResources, RoleResource role)
+    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<? extends IResource> operationResourceChain, RoleResource role)
     {
         Map<IResource, Set<Permission>> whitelist = whitelistCache.getWhitelist(role);
-        return operationResources.stream()
-                                 .map(whitelist::get)
-                                 .filter(Objects::nonNull)
-                                 .anyMatch(whitelistedOperations -> whitelistedOperations.contains(operation));
+        return operationResourceChain.stream()
+                                     .map(whitelist::get)
+                                     .filter(Objects::nonNull)
+                                     .anyMatch(whitelistedOperations -> whitelistedOperations.contains(operation));
     }
 }
