@@ -32,8 +32,7 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
     @Override
     public void writeMarshallable(@NotNull WireOut wire)
     {
-        boolean batchRecord = auditRecord.getBatchId().isPresent();
-        String type = batchRecord ? WireTags.VALUE_TYPE_BATCH_ENTRY : WireTags.VALUE_TYPE_SINGLE_ENTRY;
+        String type = auditRecord.getBatchId().isPresent() ? WireTags.VALUE_TYPE_BATCH_ENTRY : WireTags.VALUE_TYPE_SINGLE_ENTRY;
 
         wire.write(WireTags.KEY_VERSION).int16(WireTags.VALUE_VERSION_CURRENT);
         wire.write(WireTags.KEY_TYPE).text(type);
@@ -41,10 +40,7 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
         wire.write(WireTags.KEY_CLIENT).bytes(auditRecord.getClientAddress().getAddress());
         wire.write(WireTags.KEY_COORDINATOR).bytes(auditRecord.getCoordinatorAddress().getAddress());
         wire.write(WireTags.KEY_USER).text(auditRecord.getUser());
-        if (batchRecord)
-        {
-            wire.write(WireTags.KEY_BATCH_ID).uuid(auditRecord.getBatchId().get());
-        }
+        auditRecord.getBatchId().ifPresent(batchId -> wire.write(WireTags.KEY_BATCH_ID).uuid(batchId));
         wire.write(WireTags.KEY_STATUS).text(auditRecord.getStatus().name());
         wire.write(WireTags.KEY_OPERATION).text(auditRecord.getOperation().getOperationString());
     }

@@ -97,7 +97,8 @@ class PermissionChecker
         return Resources.chain(roleResource)
                         .stream()
                         .map(resource -> getPermissions(performer, resource))
-                        .anyMatch(permissions -> permissions.contains(Permission.ALTER));
+                        .flatMap(Set::stream)
+                        .anyMatch(Permission.ALTER::equals);
     }
 
     private Set<Permission> getPermissions(AuthenticatedUser performer, IResource resource)
