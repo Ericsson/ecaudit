@@ -73,7 +73,8 @@ public class TestRoleAuditFilter
         whitelistMap = Maps.newHashMap();
         when(auditWhitelistCacheMock.getWhitelist(any(RoleResource.class)))
         .thenAnswer((invocation) -> {
-            Map<IResource, Set<Permission>> whitelist = whitelistMap.get(invocation.getArgument(0));
+            RoleResource roleResource = invocation.getArgument(0);
+            Map<IResource, Set<Permission>> whitelist = whitelistMap.get(roleResource);
             return whitelist != null ? whitelist : Collections.emptyMap();
         });
     }

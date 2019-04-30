@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import net.openhft.chronicle.queue.impl.StoreFileListener;
 
-public class SizeRotatingStoreFileListener implements StoreFileListener
+class SizeRotatingStoreFileListener implements StoreFileListener
 {
     private static final Logger LOG = LoggerFactory.getLogger(SizeRotatingStoreFileListener.class);
 

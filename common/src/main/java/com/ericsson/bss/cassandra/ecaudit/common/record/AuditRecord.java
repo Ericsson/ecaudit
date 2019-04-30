@@ -25,6 +25,8 @@ public interface AuditRecord
 
     InetAddress getClientAddress();
 
+    InetAddress getCoordinatorAddress();
+
     String getUser();
 
     Optional<UUID> getBatchId();

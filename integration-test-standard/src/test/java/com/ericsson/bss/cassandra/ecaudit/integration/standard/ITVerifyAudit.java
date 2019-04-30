@@ -373,9 +373,9 @@ public class ITVerifyAudit
         // Was expecting "v9 inet" to get quotes
         // Was expecting "v13 timestamp" to get quotes
 
-        session.execute(preparedStatement.bind(Integer.valueOf(1), "text", "ascii", Long.valueOf(123123123123123123L),
-                Boolean.valueOf(true), LocalDate.fromYearMonthDay(1976, 2, 25), InetAddress.getByName("8.8.8.8"),
-                Date.from(Instant.parse("2004-05-29T14:29:00.000Z")), "varchar"));
+        session.execute(preparedStatement.bind(1, "text", "ascii", 123123123123123123L,
+                                               Boolean.TRUE, LocalDate.fromYearMonthDay(1976, 2, 25), InetAddress.getByName("8.8.8.8"),
+                                               Date.from(Instant.parse("2004-05-29T14:29:00.000Z")), "varchar"));
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
         verify(mockAuditAppender, atLeast(1)).doAppend(loggingEventCaptor.capture());

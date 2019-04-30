@@ -137,10 +137,10 @@ public class ITVerifyCustomLogFormat
                                                     .map(ILoggingEvent::getFormattedMessage)
                                                     .collect(Collectors.toList());
 
-        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(createKeyspace));
-        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(createTable));
-        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=" + UUID_REGEX + ", operation='" + Pattern.quote(insert));
-        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=" + UUID_REGEX + ", operation='" + Pattern.quote(update));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(createKeyspace));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(createTable));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=" + UUID_REGEX + ", operation='" + Pattern.quote(insert));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=" + UUID_REGEX + ", operation='" + Pattern.quote(update));
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);// With second resolution...
         String expectedTimestampString = dateTimeFormatter.format(now);

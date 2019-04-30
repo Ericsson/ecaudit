@@ -99,7 +99,7 @@ public class AuditEntryBuilderFactory
     private static final Set<Permission> DESCRIBE_PERMISSIONS = ImmutableSet.of(Permission.DESCRIBE);
     private static final Set<Permission> AUTHORIZE_PERMISSIONS = ImmutableSet.of(Permission.AUTHORIZE);
 
-    private StatementResourceAdapter statementResourceAdapter = new StatementResourceAdapter();
+    private final StatementResourceAdapter statementResourceAdapter = new StatementResourceAdapter();
 
     public Builder createAuthenticationEntryBuilder()
     {
@@ -295,7 +295,7 @@ public class AuditEntryBuilderFactory
         Set<Permission> permissions;
         try
         {
-            boolean hasCondition = !((List<Pair<ColumnIdentifier.Raw, ColumnCondition.Raw>>) FieldUtils.readField(statement, "conditions", true)).isEmpty();
+            boolean hasCondition = !((List<?>) FieldUtils.readField(statement, "conditions", true)).isEmpty();
             permissions = hasCondition ? CAS_PERMISSIONS : MODIFY_PERMISSIONS;
         }
         catch (IllegalAccessException e)

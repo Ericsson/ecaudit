@@ -61,7 +61,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @State(Scope.Benchmark)
 public class BenchmarkChronicleAuditLogger
 {
-    private ChronicleAuditLogger logger;
+    private final ChronicleAuditLogger logger;
     private AuditEntry auditEntry;
 
     public static void main(String[] args) throws RunnerException

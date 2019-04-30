@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * IResource implementation representing database connections.
@@ -115,7 +116,7 @@ public class ConnectionResource implements IResource, Comparable<ConnectionResou
     }
 
     @Override
-    public int compareTo(ConnectionResource o)
+    public int compareTo(@NotNull ConnectionResource o)
     {
         return this.getName().compareTo(o.getName());
     }
