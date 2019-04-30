@@ -30,11 +30,8 @@
     <dependencies>
         <dependency>
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-            <artifactId>common_c3.11</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-queue</artifactId>
+            <artifactId>common_${artifact.flavor.version}</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
@@ -48,17 +45,14 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -73,7 +67,6 @@
                             <include>com.ericsson.bss.cassandra.ecaudit:*</include>
                             <include>net.openhft:*</include>
                             <include>net.java.dev.jna:*</include>
-                            <include>com.intellij:annotations</include>
                             <include>commons-cli:commons-cli</include>
                             <include>org.slf4j:*</include>
                         </includes>
