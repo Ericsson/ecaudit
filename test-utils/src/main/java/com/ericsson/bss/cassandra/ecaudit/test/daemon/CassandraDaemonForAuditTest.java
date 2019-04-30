@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Cluster;
-import com.ericsson.bss.cassandra.ecaudit.handler.AuditQueryHandler;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.service.CassandraDaemon;
 
@@ -97,7 +96,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
         System.setProperty("cassandra-foreground", "true");
         System.setProperty("cassandra.superuser_setup_delay_ms", "1");
 
-        System.setProperty("cassandra.custom_query_handler_class", AuditQueryHandler.class.getCanonicalName());
+        System.setProperty("cassandra.custom_query_handler_class", "com.ericsson.bss.cassandra.ecaudit.handler.AuditQueryHandler");
         System.setProperty("ecaudit.filter_type", "YAML_AND_ROLE");
 
         Path auditYamlPath = moveResourceFileToTempDirWithSubstitution("integration_audit.yaml");
