@@ -36,6 +36,7 @@ import static org.mockito.Mockito.mock;
 public class TestAuditEntry
 {
     private static final InetAddress CLIENT = mock(InetAddress.class);
+    private static final InetAddress COORDINATOR = mock(InetAddress.class);
     private static final Set<Permission> PERMISSIONS = Collections.emptySet();
     private static final IResource RESOURCE = mock(IResource.class);
     private static final AuditOperation OPERATION = mock(AuditOperation.class);
@@ -49,19 +50,21 @@ public class TestAuditEntry
     {
         // Given
         AuditEntry auditEntry = AuditEntry.newBuilder()
-                                     .client(CLIENT)
-                                     .permissions(PERMISSIONS)
-                                     .resource(RESOURCE)
-                                     .operation(OPERATION)
-                                     .user(USER)
-                                     .batch(BATCH)
-                                     .status(STATUS)
-                                     .timestamp(TIMESTAMP)
-                                     .build();
+                                          .client(CLIENT)
+                                          .coordinator(COORDINATOR)
+                                          .permissions(PERMISSIONS)
+                                          .resource(RESOURCE)
+                                          .operation(OPERATION)
+                                          .user(USER)
+                                          .batch(BATCH)
+                                          .status(STATUS)
+                                          .timestamp(TIMESTAMP)
+                                          .build();
         // When
         AuditEntry newEntry = AuditEntry.newBuilder().basedOn(auditEntry).build();
         // Then
         assertThat(auditEntry.getClientAddress()).isSameAs(newEntry.getClientAddress()).isSameAs(CLIENT);
+        assertThat(auditEntry.getCoordinatorAddress()).isSameAs(newEntry.getCoordinatorAddress()).isSameAs(COORDINATOR);
         assertThat(auditEntry.getPermissions()).isSameAs(newEntry.getPermissions()).isSameAs(PERMISSIONS);
         assertThat(auditEntry.getResource()).isSameAs(newEntry.getResource()).isSameAs(RESOURCE);
         assertThat(auditEntry.getOperation()).isSameAs(newEntry.getOperation()).isSameAs(OPERATION);

@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.config;
 import java.net.URL;
 import java.util.Properties;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import org.apache.cassandra.exceptions.ConfigurationException;

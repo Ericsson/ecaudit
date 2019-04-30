@@ -22,6 +22,7 @@ import java.util.UUID;
 public class SimpleAuditRecord implements AuditRecord
 {
     private final InetAddress clientAddress;
+    private final InetAddress coordinatorAddress;
     private final String user;
     private final UUID batchId;
     private final Status status;
@@ -31,6 +32,7 @@ public class SimpleAuditRecord implements AuditRecord
     private SimpleAuditRecord(Builder builder)
     {
         this.clientAddress = builder.clientAddress;
+        this.coordinatorAddress = builder.coordinatorAddress;
         this.user = builder.user;
         this.batchId = builder.batchId;
         this.status = builder.status;
@@ -48,6 +50,12 @@ public class SimpleAuditRecord implements AuditRecord
     public InetAddress getClientAddress()
     {
         return clientAddress;
+    }
+
+    @Override
+    public InetAddress getCoordinatorAddress()
+    {
+        return coordinatorAddress;
     }
 
     @Override
@@ -82,6 +90,7 @@ public class SimpleAuditRecord implements AuditRecord
     public static class Builder
     {
         private InetAddress clientAddress;
+        private InetAddress coordinatorAddress;
         private String user;
         private UUID batchId;
         private Status status;
@@ -91,6 +100,12 @@ public class SimpleAuditRecord implements AuditRecord
         public Builder withClientAddress(InetAddress clientAddress)
         {
             this.clientAddress = clientAddress;
+            return this;
+        }
+
+        public Builder withCoordinatorAddress(InetAddress coordinatorAddress)
+        {
+            this.coordinatorAddress = coordinatorAddress;
             return this;
         }
 

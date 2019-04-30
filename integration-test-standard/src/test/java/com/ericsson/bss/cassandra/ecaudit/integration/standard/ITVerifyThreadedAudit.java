@@ -58,7 +58,7 @@ public class ITVerifyThreadedAudit
 {
     private final static String UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
-    private static int USER_COUNT = 20;
+    private static final int USER_COUNT = 20;
 
     private static CassandraDaemonForAuditTest cdt;
 
@@ -175,7 +175,7 @@ public class ITVerifyThreadedAudit
         }
 
         @Override
-        public List<String> call() throws Exception
+        public List<String> call()
         {
             try (Cluster privateCluster = cdt.createCluster(username, "secret");
                     Session privateSession = privateCluster.connect())
@@ -217,7 +217,7 @@ public class ITVerifyThreadedAudit
         }
 
         @Override
-        public List<String> call() throws Exception
+        public List<String> call()
         {
             try (Cluster cluster = cdt.createCluster(username, "secret");
                     Session session = cluster.connect())

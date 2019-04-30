@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 public class TestPreparedAuditOperation
 {
     @Mock
-    QueryOptions mockOptions;
+    private QueryOptions mockOptions;
 
     @Test
     public void testThatValuesAreBound()

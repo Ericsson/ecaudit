@@ -34,6 +34,7 @@ import org.apache.cassandra.cql3.statements.BatchStatement;
 import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.service.ClientState;
+import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MD5Digest;
 
 /**
@@ -90,6 +91,7 @@ public class AuditAdapter
     {
         AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
                                                  .client(state.getRemoteAddress().getAddress())
+                                                 .coordinator(FBUtilities.getBroadcastAddress())
                                                  .user(state.getUser().getName())
                                                  .operation(new SimpleAuditOperation(operation))
                                                  .status(status)
@@ -113,6 +115,7 @@ public class AuditAdapter
     {
         AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
                                                  .client(state.getRemoteAddress().getAddress())
+                                                 .coordinator(FBUtilities.getBroadcastAddress())
                                                  .user(state.getUser().getName())
                                                  .operation(new PreparedAuditOperation(rawStatement, options))
                                                  .status(status)
@@ -137,6 +140,7 @@ public class AuditAdapter
     {
         AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
                                                         .client(state.getRemoteAddress().getAddress())
+                                                        .coordinator(FBUtilities.getBroadcastAddress())
                                                         .user(state.getUser().getName())
                                                         .batch(uuid)
                                                         .status(status)
@@ -169,6 +173,7 @@ public class AuditAdapter
     {
         AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                                                  .client(clientIp)
+                                                 .coordinator(FBUtilities.getBroadcastAddress())
                                                  .user(username)
                                                  .status(status)
                                                  .operation(status == Status.ATTEMPT ? AUTHENTICATION_ATTEMPT : AUTHENTICATION_FAILED)

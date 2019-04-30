@@ -29,10 +29,7 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry.Builder;
 import com.ericsson.bss.cassandra.ecaudit.facade.CassandraAuditException;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.Permission;
-import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.cql3.CQLStatement;
-import org.apache.cassandra.cql3.ColumnCondition;
-import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.statements.AlterKeyspaceStatement;
 import org.apache.cassandra.cql3.statements.AlterRoleStatement;
@@ -73,7 +70,6 @@ import org.apache.cassandra.cql3.statements.TruncateStatement;
 import org.apache.cassandra.cql3.statements.UseStatement;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.service.ClientState;
-import org.apache.cassandra.utils.Pair;
 
 public class AuditEntryBuilderFactory
 {
@@ -100,7 +96,7 @@ public class AuditEntryBuilderFactory
     private static final Set<Permission> DESCRIBE_PERMISSIONS = ImmutableSet.of(Permission.DESCRIBE);
     private static final Set<Permission> AUTHORIZE_PERMISSIONS = ImmutableSet.of(Permission.AUTHORIZE);
 
-    private StatementResourceAdapter statementResourceAdapter = new StatementResourceAdapter();
+    private final StatementResourceAdapter statementResourceAdapter = new StatementResourceAdapter();
 
     public Builder createAuthenticationEntryBuilder()
     {
@@ -296,7 +292,7 @@ public class AuditEntryBuilderFactory
         Set<Permission> permissions;
         try
         {
-            boolean hasCondition = !((List<Pair<ColumnDefinition.Raw, ColumnDefinition.Raw>>) FieldUtils.readField(statement, "conditions", true)).isEmpty();
+            boolean hasCondition = !((List<?>) FieldUtils.readField(statement, "conditions", true)).isEmpty();
             permissions = hasCondition ? CAS_PERMISSIONS : MODIFY_PERMISSIONS;
         }
         catch (IllegalAccessException e)

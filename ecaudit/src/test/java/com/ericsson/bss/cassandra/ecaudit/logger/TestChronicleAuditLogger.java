@@ -74,27 +74,27 @@ public class TestChronicleAuditLogger
     @Test
     public void singleStatement() throws Exception
     {
-        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1987-06-30T14:39:00Z").toEpochMilli(), "Patrik Sjoberg", "2.42.2.42", "High Jump", Status.ATTEMPT, null);
+        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1987-06-30T14:39:00Z").toEpochMilli(), "Patrik Sjoberg", "2.42.2.42", "5.6.7.8", "High Jump", Status.ATTEMPT, null);
 
         logger.log(auditEntry);
 
-        verifyWire(Instant.parse("1987-06-30T14:39:00Z").toEpochMilli(),"Patrik Sjoberg", "2.42.2.42", "High Jump", Status.ATTEMPT, null);
+        verifyWire(Instant.parse("1987-06-30T14:39:00Z").toEpochMilli(),"Patrik Sjoberg", "2.42.2.42", "5.6.7.8", "High Jump", Status.ATTEMPT, null);
     }
 
     @Test
     public void batchStatement() throws Exception
     {
-        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1987-06-30T14:56:00Z").toEpochMilli(), "Patrik Sjoberg", "2.44.2.44", "High Jump", Status.FAILED, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
+        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1987-06-30T14:56:00Z").toEpochMilli(), "Patrik Sjoberg", "2.44.2.44", "5.6.7.8", "High Jump", Status.FAILED, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
 
         logger.log(auditEntry);
 
-        verifyWire(Instant.parse("1987-06-30T14:56:00Z").toEpochMilli(),"Patrik Sjoberg", "2.44.2.44", "High Jump", Status.FAILED, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
+        verifyWire(Instant.parse("1987-06-30T14:56:00Z").toEpochMilli(),"Patrik Sjoberg", "2.44.2.44", "5.6.7.8", "High Jump", Status.FAILED, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
     }
 
     @Test
     public void interruptOnPut() throws Exception
     {
-        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1993-07-27T18:15:30Z").toEpochMilli(), "Javier Sotomayor", "2.45.2.45", "High Jump", Status.ATTEMPT, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
+        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1993-07-27T18:15:30Z").toEpochMilli(), "Javier Sotomayor", "2.45.2.45", "5.6.7.8", "High Jump", Status.ATTEMPT, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
         doThrow(InterruptedException.class).when(mockWriter).put(any());
 
         logger.log(auditEntry);
@@ -105,19 +105,20 @@ public class TestChronicleAuditLogger
         Thread.interrupted();
     }
 
-    private AuditEntry givenAuditEntry(Long timestamp, String user, String ip, String operation, Status status, UUID batchId) throws UnknownHostException
+    private AuditEntry givenAuditEntry(Long timestamp, String user, String ip, String coordinator, String operation, Status status, UUID batchId) throws UnknownHostException
     {
         return AuditEntry.newBuilder()
                          .timestamp(timestamp)
                          .user(user)
                          .client(InetAddress.getByName(ip))
+                         .coordinator(InetAddress.getByName(coordinator))
                          .operation(new SimpleAuditOperation(operation))
                          .status(status)
                          .batch(batchId)
                          .build();
     }
 
-    private void verifyWire(Long timestamp, String user, String ip, String operation, Status status, UUID batchId) throws Exception
+    private void verifyWire(Long timestamp, String user, String ip, String coordinator, String operation, Status status, UUID batchId) throws Exception
     {
         ArgumentCaptor<WriteMarshallable> marshallableArgumentCaptor = ArgumentCaptor.forClass(WriteMarshallable.class);
 
@@ -128,7 +129,7 @@ public class TestChronicleAuditLogger
         writeMarshallable.writeMarshallable(mockWire);
 
         verify(mockWire).write(eq("version"));
-        verify(mockValue).int16(eq((short) 800));
+        verify(mockValue).int16(eq((short) 0));
         verify(mockWire).write(eq("type"));
         if (batchId == null)
         {
@@ -143,6 +144,8 @@ public class TestChronicleAuditLogger
         verify(mockValue).int64(eq(timestamp));
         verify(mockWire).write(eq("client"));
         verify(mockValue).bytes(eq(InetAddress.getByName(ip).getAddress()));
+        verify(mockWire).write(eq("coordinator"));
+        verify(mockValue).bytes(eq(InetAddress.getByName(coordinator).getAddress()));
         verify(mockWire).write(eq("user"));
         verify(mockValue).text(eq(user));
         verify(mockWire).write(eq("status"));

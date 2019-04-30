@@ -80,11 +80,7 @@ class PermissionChecker
 
     private boolean isChangingPasswordOfOtherRole(AuthenticatedUser performer, RoleResource role, RoleOptions options)
     {
-        if (options.getPassword().isPresent())
-        {
-            return !performer.getName().equals(role.getRoleName());
-        }
-        return false;
+        return options.getPassword().isPresent() && !performer.getName().equals(role.getRoleName());
     }
 
     private boolean isChangingRestrictedSettings(RoleOptions options)
@@ -94,15 +90,11 @@ class PermissionChecker
 
     private boolean hasPermissionToAlterRole(AuthenticatedUser performer, RoleResource roleResource)
     {
-        for (IResource resource : Resources.chain(roleResource))
-        {
-            Set<Permission> grantedPermissions = getPermissions(performer, resource);
-            if (grantedPermissions.contains(Permission.ALTER))
-            {
-                return true;
-            }
-        }
-        return false;
+        return Resources.chain(roleResource)
+                        .stream()
+                        .map(resource -> getPermissions(performer, resource))
+                        .flatMap(Set::stream)
+                        .anyMatch(Permission.ALTER::equals);
     }
 
     private Set<Permission> getPermissions(AuthenticatedUser performer, IResource resource)

@@ -35,6 +35,7 @@ The following fields are available:
 | STATUS      | Value is either ATTEMPT or FAILED                                 | yes             |
 | OPERATION   | The CQL statement or a textual description of the operation       | yes             |
 | TIMESTAMP   | The system timestamp of the request (\*) (**)                     | yes             |
+| COORDINATOR | Coordinator IP address (host address)                             | yes             |
 
 (*) - This timestamp is more accurate than the Logback time (since that is written asynchronously).
 If this timestamp is used, then the Logback timestamp can be removed by reconfiguring the encoder pattern in logback.xml.

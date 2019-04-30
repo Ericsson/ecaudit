@@ -96,6 +96,7 @@ public class Slf4jAuditLogger implements AuditLogger
     {
         return ImmutableMap.<String, Function<AuditEntry, Object>>builder()
                .put("CLIENT", entry -> entry.getClientAddress().getHostAddress())
+               .put("COORDINATOR", entry -> entry.getCoordinatorAddress().getHostAddress())
                .put("USER", AuditEntry::getUser)
                .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
                .put("STATUS", AuditEntry::getStatus)
@@ -167,9 +168,9 @@ public class Slf4jAuditLogger implements AuditLogger
     @Override
     public void log(AuditEntry logEntry)
     {
-        List<ToStringer> fields = fieldFunctions.stream()
-                                                    .map(valueSupplier -> new ToStringer<>(logEntry, valueSupplier))
-                                                    .collect(toList());
-        auditLogger.info(logTemplate, fields.toArray());
+        Object[] fieldValues = fieldFunctions.stream()
+                                             .map(valueSupplier -> new ToStringer<>(logEntry, valueSupplier))
+                                             .toArray();
+        auditLogger.info(logTemplate, fieldValues);
     }
 }

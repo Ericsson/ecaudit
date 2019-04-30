@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 
 import net.openhft.chronicle.queue.RollCycle;
 import net.openhft.chronicle.queue.RollCycles;

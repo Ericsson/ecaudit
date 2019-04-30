@@ -86,13 +86,10 @@ class SchemaHelper
 
         for (InetAddress memberAddress : gossiper.getLiveMembers())
         {
-            if (isRemoteEndpoint(memberAddress))
+            if (isRemoteEndpoint(memberAddress) && isDifferentSchema(localSchemaId, memberAddress))
             {
-                if (isDifferentSchema(localSchemaId, memberAddress))
-                {
-                    LOG.debug("Waiting for schema alignment at endpoint {}", memberAddress);
-                    return true;
-                }
+                LOG.debug("Waiting for schema alignment at endpoint {}", memberAddress);
+                return true;
             }
         }
 

@@ -254,9 +254,9 @@ public class WhitelistDataAccess
             {
                 SetSerializer<String> serializer = SetSerializer.getInstance(UTF8Serializer.instance, UTF8Type.instance);
                 Set<String> resourceNames = serializer.deserialize(row.getBytes("resources"));
+                RoleResource role = RoleResource.role(row.getString("role"));
                 for (String resourceName : resourceNames)
                 {
-                    RoleResource role = RoleResource.role(row.getString("role"));
                     IResource resource = ResourceFactory.toResource(resourceName);
                     addToWhitelist(role, resource, resource.applicablePermissions());
                 }

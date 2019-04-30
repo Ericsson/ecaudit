@@ -48,7 +48,8 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         SimpleAuditRecord.Builder builder = SimpleAuditRecord
                                             .builder()
                                             .withTimestamp(wire.read(WireTags.KEY_TIMESTAMP).int64())
-                                            .withClientAddress(readClientAddress(wire))
+                                            .withClientAddress(readAddress(wire, WireTags.KEY_CLIENT))
+                                            .withCoordinatorAddress(readAddress(wire, WireTags.KEY_COORDINATOR))
                                             .withUser(wire.read(WireTags.KEY_USER).text());
 
         if (WireTags.VALUE_TYPE_BATCH_ENTRY.equals(type))
@@ -82,15 +83,15 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         return type;
     }
 
-    private InetAddress readClientAddress(WireIn wire) throws IORuntimeException
+    private InetAddress readAddress(WireIn wire, String key) throws IORuntimeException
     {
         try
         {
-            return InetAddress.getByAddress(wire.read(WireTags.KEY_CLIENT).bytes());
+            return InetAddress.getByAddress(wire.read(key).bytes());
         }
         catch (UnknownHostException e)
         {
-            throw new IORuntimeException("Corrupt client IP address field", e);
+            throw new IORuntimeException("Corrupt " + key + " IP address field", e);
         }
     }
 

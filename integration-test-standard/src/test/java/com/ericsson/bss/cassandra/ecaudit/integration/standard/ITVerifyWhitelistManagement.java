@@ -53,16 +53,13 @@ public class ITVerifyWhitelistManagement
     private static Cluster cluster;
     private static Session session;
 
-    private static String superUsername = "super_user";
+    private static final String SUPER_USER = "super_user";
     private static Cluster superCluster;
     private static Session superSession;
 
-    private static String authorizedUsername = "authorized_user";
+    private static final String AUTHORIZED_USER = "authorized_user";
     private static Cluster authorizedCluster;
     private static Session authorizedSession;
-
-    @Mock
-    private Appender<ILoggingEvent> mockAuditAppender;
 
     @BeforeClass
     public static void beforeClass() throws Exception
@@ -127,10 +124,10 @@ public class ITVerifyWhitelistManagement
         session.execute(new SimpleStatement(
         "GRANT CREATE ON ALL ROLES TO trusted_user"));
 
-        superCluster = cdt.createCluster(superUsername, "secret");
+        superCluster = cdt.createCluster(SUPER_USER, "secret");
         superSession = superCluster.connect();
 
-        authorizedCluster = cdt.createCluster(authorizedUsername, "secret");
+        authorizedCluster = cdt.createCluster(AUTHORIZED_USER, "secret");
         authorizedSession = authorizedCluster.connect();
     }
 
