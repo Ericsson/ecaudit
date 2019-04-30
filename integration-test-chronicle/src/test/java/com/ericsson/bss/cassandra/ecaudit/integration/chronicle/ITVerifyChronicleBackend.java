@@ -55,7 +55,7 @@ public class ITVerifyChronicleBackend
 {
     private static final String SUITE_SUPER_USER = "superchronicle";
     private static final String SUITE_TEST_USER_PREFIX = "chroniclerole";
-    private static AtomicInteger usernameNumber = new AtomicInteger();
+    private static final AtomicInteger usernameNumber = new AtomicInteger();
 
     private static CassandraDaemonForAuditTest cdt;
     private static Cluster superCluster;

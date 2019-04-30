@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.config;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;

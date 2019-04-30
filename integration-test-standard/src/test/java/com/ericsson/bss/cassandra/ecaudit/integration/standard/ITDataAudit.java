@@ -56,7 +56,7 @@ public class ITDataAudit
     private static Cluster testCluster;
     private static Session testSession;
 
-    private static AtomicInteger usernameNumber = new AtomicInteger();
+    private static final AtomicInteger usernameNumber = new AtomicInteger();
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;

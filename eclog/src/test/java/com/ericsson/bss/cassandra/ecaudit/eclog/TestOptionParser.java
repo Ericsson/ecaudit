@@ -17,7 +17,6 @@ package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.commons.cli.ParseException;
@@ -30,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class TestOptionParser
 {
-    private OptionParser parser = new OptionParser();
+    private final OptionParser parser = new OptionParser();
 
     @Test
     public void noOptions()

@@ -41,8 +41,8 @@ public class AuditPasswordAuthenticator implements IAuthenticator
 {
     private static final Logger LOG = LoggerFactory.getLogger(AuditPasswordAuthenticator.class);
 
-    private IAuthenticator wrappedAuthenticator;
-    private AuditAdapter auditAdapter;
+    private final IAuthenticator wrappedAuthenticator;
+    private final AuditAdapter auditAdapter;
 
     /**
      * Default constructor used by Cassandra.
@@ -102,8 +102,8 @@ public class AuditPasswordAuthenticator implements IAuthenticator
 
     private class AuditPlainTextSaslAuthenticator implements SaslNegotiator
     {
-        private InetAddress clientAddress;
-        private SaslNegotiator saslNegotiator;
+        private final InetAddress clientAddress;
+        private final SaslNegotiator saslNegotiator;
 
         private String decodedUsername;
 

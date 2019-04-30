@@ -80,11 +80,7 @@ class PermissionChecker
 
     private boolean isChangingPasswordOfOtherRole(AuthenticatedUser performer, RoleResource role, RoleOptions options)
     {
-        if (options.getPassword().isPresent())
-        {
-            return !performer.getName().equals(role.getRoleName());
-        }
-        return false;
+        return options.getPassword().isPresent() && !performer.getName().equals(role.getRoleName());
     }
 
     private boolean isChangingRestrictedSettings(RoleOptions options)

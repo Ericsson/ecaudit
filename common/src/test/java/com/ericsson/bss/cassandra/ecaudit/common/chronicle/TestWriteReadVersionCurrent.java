@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 public class TestWriteReadVersionCurrent
 {
     @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private ChronicleQueue chronicleQueue;
 

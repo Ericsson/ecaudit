@@ -19,10 +19,6 @@ import java.io.File;
 import java.net.InetAddress;
 import java.util.UUID;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
@@ -30,9 +26,6 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptAppender;
-import net.openhft.chronicle.queue.ExcerptTailer;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Util for creating chronicle test data used for verifying backwards compatibility.
