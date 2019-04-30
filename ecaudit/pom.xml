@@ -29,42 +29,40 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-            <artifactId>common_c3.0.11</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-all</artifactId>
         </dependency>
         <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-queue</artifactId>
+            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
+            <artifactId>common_${artifact.flavor.version}</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -97,7 +95,6 @@
                             <include>com.ericsson.bss.cassandra.ecaudit:*</include>
                             <include>net.openhft:*</include>
                             <include>net.java.dev.jna:jna-platform</include>
-                            <include>com.intellij:annotations</include>
                         </includes>
                     </artifactSet>
                 </configuration>

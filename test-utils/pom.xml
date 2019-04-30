@@ -29,28 +29,24 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-            <artifactId>ecaudit_${artifact.flavor.version}</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-all</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <artifactId>maven-install-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
             <plugin>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <configuration>
