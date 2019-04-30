@@ -29,6 +29,12 @@
     <dependencies>
         <dependency>
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
+            <artifactId>test-utils_${artifact.flavor.version}</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
             <artifactId>ecaudit_${artifact.flavor.version}</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -38,37 +44,28 @@
             <artifactId>eclog_${artifact.flavor.version}</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-            <artifactId>test-utils_${artifact.flavor.version}</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
