@@ -149,6 +149,7 @@ public class TestAuditQueryHandler
 
         queryHandler.process(query, mockQueryState, mockOptions, customPayload);
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
         verify(mockHandler, times(1)).process(eq(query), eq(mockQueryState), eq(mockOptions), eq(customPayload));
     }
 
@@ -180,6 +181,7 @@ public class TestAuditQueryHandler
 
         verify(mockHandler, times(1)).getPrepared(eq(statementId));
         verify(mockAdapter, times(1)).auditPrepared(eq(statementId), eq(mockStatement), eq(mockClientState), eq(mockOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditPrepared(eq(statementId), eq(mockStatement), eq(mockClientState), eq(mockOptions), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
         verify(mockHandler, times(1)).processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload));
     }
 
@@ -240,6 +242,7 @@ public class TestAuditQueryHandler
     {
         queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload);
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
         verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload));
     }
 

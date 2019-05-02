@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.config;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
@@ -38,6 +37,7 @@ public final class AuditYamlConfig
     // Has to be public for SnakeYaml to inject values
     public List<String> whitelist;
     public ParameterizedClass logger_backend;
+    public LoggerTiming logger_timing;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -86,5 +86,10 @@ public final class AuditYamlConfig
         }
 
         return new ParameterizedClass(original.class_name, parameters);
+    }
+
+    boolean isPostLogging()
+    {
+        return logger_timing == LoggerTiming.post_logging;
     }
 }

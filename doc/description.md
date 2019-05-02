@@ -9,6 +9,9 @@ It is possible to create a whitelist of usernames/resources which will not be in
 ecAudit will create an audit record before the operation is performed, marked with status=ATTEMPT.
 If the operation fails, for one reason or another, a corresponding failure record will be created, marked with status=FAILED.
 
+Post-logging (C* 4.0 style logging) can also be configured. Then *one* log entry will always be written after the operation
+completes, indicating if the operation SUCCEEDED or FAILED.
+
 Passwords which appear in an audit record will be obfuscated.
 
 

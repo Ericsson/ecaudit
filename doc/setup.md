@@ -32,6 +32,10 @@ Two different logger backends are supported out of the box:
 * Then there is the [Chronicle Logger](chronicle_logger.md) backend which has the best performance characteristics.
   This backend stores audit records in a binary format and is best suited when handling large volumes of records.
 
+### Logger Timing
+
+Logger timing specifies *when* log entries should be written, **pre-logging** (legacy) and **post-logging** (C* 4.0 style) are available.
+You'll find more details in the [audit.yaml reference](audit_yaml_reference.md).
 
 ### Audit Whitelists
 

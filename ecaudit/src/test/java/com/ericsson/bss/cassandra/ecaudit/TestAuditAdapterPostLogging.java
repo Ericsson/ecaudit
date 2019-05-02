@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Telefonaktiebolaget LM Ericsson
+ * Copyright 2019 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import org.apache.cassandra.auth.AuthenticatedUser;
@@ -79,7 +79,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class TestAuditAdapter
+public class TestAuditAdapterPostLogging
 {
     private static final long TIMESTAMP = 42L;
     @Mock
@@ -114,7 +114,7 @@ public class TestAuditAdapter
     @Before
     public void before()
     {
-        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, false);
+        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, true);
     }
 
     @After
@@ -143,7 +143,7 @@ public class TestAuditAdapter
         String expectedStatement = "select * from ks.tbl";
         InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
         String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
+        Status expectedStatus = Status.SUCCEEDED;
 
         when(mockUser.getName()).thenReturn(expectedUser);
         when(mockState.getUser()).thenReturn(mockUser);
@@ -215,7 +215,7 @@ public class TestAuditAdapter
         String expectedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?['text', 'text']";
         InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
         String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
+        Status expectedStatus = Status.SUCCEEDED;
 
         List<ByteBuffer> values = createValues("text", "text");
         ImmutableList<ColumnSpecification> columns = createTextColumns("text", "text");
@@ -307,11 +307,12 @@ public class TestAuditAdapter
 
         UUID expectedBatchId = UUID.randomUUID();
 
-        String expectedQuery = String.format("Apply batch failed: %s", expectedBatchId.toString());
+        List<Object> expectedQueries = Arrays.asList("query1", "query2", "query3");
         InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
         String expectedUser = "user";
         Status expectedStatus = Status.FAILED;
 
+        when(mockBatchOptions.getQueryOrIdList()).thenReturn(expectedQueries);
         when(mockUser.getName()).thenReturn(expectedUser);
         when(mockState.getUser()).thenReturn(mockUser);
         when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
@@ -319,13 +320,15 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder())
         .thenReturn(AuditEntry
                     .newBuilder()
-                    .permissions(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT))
+                    .permissions(Sets.immutableEnumSet(Permission.MODIFY))
                     .resource(DataResource.root()));
+        when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(String.class), any(ClientState.class)))
+        .thenAnswer(a -> a.getArgument(0));
 
         auditAdapter.auditBatch(mockBatchStatement, expectedBatchId, mockState, mockBatchOptions, expectedStatus, TIMESTAMP);
 
         ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
+        verify(mockAuditor, times(3)).audit(captor.capture());
 
         List<AuditEntry> entries = captor.getAllValues();
 
@@ -333,8 +336,8 @@ public class TestAuditAdapter
         assertThat(entries).extracting(AuditEntry::getUser).containsOnly(expectedUser);
         assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
         assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(expectedStatus);
-        assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsOnly(expectedQuery);
-        assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT));
+        assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsExactly("query1", "query2", "query3");
+        assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY));
         assertThat(entries).extracting(AuditEntry::getResource).containsOnly(DataResource.root());
         assertThat(entries).extracting(AuditEntry::getTimestamp).containsOnly(TIMESTAMP);
     }
@@ -351,7 +354,7 @@ public class TestAuditAdapter
         List<Object> expectedQueries = Arrays.asList("query1", "query2", "query3");
         InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
         String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
+        Status expectedStatus = Status.SUCCEEDED;
 
         when(mockBatchOptions.getQueryOrIdList()).thenReturn(expectedQueries);
         when(mockUser.getName()).thenReturn(expectedUser);
@@ -395,7 +398,7 @@ public class TestAuditAdapter
 
         InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
         String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
+        Status expectedStatus = Status.SUCCEEDED;
 
         String preparedQuery = "insert into ts.ks (id, value) values (?, ?)";
         String expectedQuery = "insert into ts.ks (id, value) values (?, ?)['hello', 'world']";
@@ -448,8 +451,8 @@ public class TestAuditAdapter
     {
         InetAddress expectedAddress = mock(InetAddress.class);
         String expectedUser = "user";
-        String expectedOperation = "Authentication attempt";
-        Status expectedStatus = Status.ATTEMPT;
+        String expectedOperation = "Authentication succeeded";
+        Status expectedStatus = Status.SUCCEEDED;
 
         when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder())
         .thenReturn(AuditEntry.newBuilder()
@@ -510,7 +513,7 @@ public class TestAuditAdapter
     {
         InetAddress expectedAddress = mock(InetAddress.class);
         String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
+        Status expectedStatus = Status.SUCCEEDED;
 
         when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder())
         .thenReturn(AuditEntry.newBuilder()
@@ -526,8 +529,8 @@ public class TestAuditAdapter
     @Test
     public void testSkipLogging()
     {
-        assertThat(auditAdapter.skipLogging(Status.ATTEMPT)).isFalse();
-        assertThat(auditAdapter.skipLogging(Status.SUCCEEDED)).isTrue();
+        assertThat(auditAdapter.skipLogging(Status.ATTEMPT)).isTrue();
+        assertThat(auditAdapter.skipLogging(Status.SUCCEEDED)).isFalse();
         assertThat(auditAdapter.skipLogging(Status.FAILED)).isFalse();
     }
 

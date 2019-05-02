@@ -23,10 +23,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
@@ -38,6 +38,7 @@ import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MD5Digest;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This class will be responsible for populating {@link AuditEntry} instance and passing that to {@link Auditor} instance
@@ -46,6 +47,7 @@ public class AuditAdapter
 {
     // Authentication
     private final static SimpleAuditOperation AUTHENTICATION_ATTEMPT = new SimpleAuditOperation("Authentication attempt");
+    private final static SimpleAuditOperation AUTHENTICATION_SUCCEEDED = new SimpleAuditOperation("Authentication succeeded");
     private final static SimpleAuditOperation AUTHENTICATION_FAILED = new SimpleAuditOperation("Authentication failed");
 
     // Batch
@@ -56,16 +58,19 @@ public class AuditAdapter
 
     private final Map<MD5Digest, String> idQueryCache = new ConcurrentHashMap<>();
 
+    private final boolean postLogging;
+
     /**
      * Constructor, see {@link AuditAdapterFactory#createAuditAdapter()}
      *
      * @param auditor             the auditor to use
      * @param entryBuilderFactory the audit entry builder factory to use
      */
-    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory)
+    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, boolean postLogging)
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
+        this.postLogging = postLogging;
     }
 
     public static AuditAdapter getInstance()
@@ -93,6 +98,10 @@ public class AuditAdapter
      */
     public void auditRegular(String operation, ClientState state, Status status, long timestamp)
     {
+        if (skipLogging(status))
+        {
+            return;
+        }
         AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
                                                  .client(state.getRemoteAddress().getAddress())
                                                  .coordinator(FBUtilities.getBroadcastAddress())
@@ -103,6 +112,12 @@ public class AuditAdapter
                                                  .build();
 
         auditor.audit(logEntry);
+    }
+
+    protected final boolean skipLogging(Status status)
+    {
+        return (postLogging && status == Status.ATTEMPT)
+               || (!postLogging && status == Status.SUCCEEDED);
     }
 
     /**
@@ -117,6 +132,10 @@ public class AuditAdapter
      */
     public void auditPrepared(MD5Digest id, CQLStatement statement, ClientState state, QueryOptions options, Status status, long timestamp)
     {
+        if (skipLogging(status))
+        {
+            return;
+        }
         AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
                                                  .client(state.getRemoteAddress().getAddress())
                                                  .coordinator(FBUtilities.getBroadcastAddress())
@@ -141,6 +160,10 @@ public class AuditAdapter
      */
     public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status, long timestamp)
     {
+        if (skipLogging(status))
+        {
+            return;
+        }
         AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
                                                         .client(state.getRemoteAddress().getAddress())
                                                         .coordinator(FBUtilities.getBroadcastAddress())
@@ -149,7 +172,7 @@ public class AuditAdapter
                                                         .status(status)
                                                         .timestamp(timestamp);
 
-        if (status == Status.FAILED)
+        if (status == Status.FAILED && !postLogging)
         {
             String failedBatchStatement = String.format(BATCH_FAILURE, uuid.toString());
             auditor.audit(builder.operation(new SimpleAuditOperation(failedBatchStatement)).build());
@@ -174,12 +197,16 @@ public class AuditAdapter
      */
     public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp) throws AuthenticationException
     {
+        if (skipLogging(status))
+        {
+            return;
+        }
         AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                                                  .client(clientIp)
                                                  .coordinator(FBUtilities.getBroadcastAddress())
                                                  .user(username)
                                                  .status(status)
-                                                 .operation(status == Status.ATTEMPT ? AUTHENTICATION_ATTEMPT : AUTHENTICATION_FAILED)
+                                                 .operation(statusToAuthentication(status))
                                                  .timestamp(timestamp)
                                                  .build();
 
@@ -190,6 +217,22 @@ public class AuditAdapter
         catch (RequestExecutionException e)
         {
             throw new AuthenticationException(e.toString());
+        }
+    }
+
+    @NotNull
+    private SimpleAuditOperation statusToAuthentication(Status status)
+    {
+        switch (status)
+        {
+            case ATTEMPT:
+                return AUTHENTICATION_ATTEMPT;
+            case FAILED:
+                return AUTHENTICATION_FAILED;
+            case SUCCEEDED:
+                return AUTHENTICATION_SUCCEEDED;
+            default:
+                throw new IllegalArgumentException("Unexpected status: " + status);
         }
     }
 

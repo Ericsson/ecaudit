@@ -86,6 +86,7 @@ public class TestAuditYamlConfigurationLoader
         AuditConfig config = givenLoadedConfig(properties);
 
         assertThat(config.getYamlWhitelist()).isEmpty();
+        assertThat(config.isPostLogging()).isFalse();
     }
 
     @Test
@@ -96,6 +97,7 @@ public class TestAuditYamlConfigurationLoader
         AuditConfig config = givenLoadedConfig(properties);
 
         assertThat(config.getYamlWhitelist()).containsOnly("User1", "User2");
+        assertThat(config.isPostLogging()).isTrue();
     }
 
     @Test

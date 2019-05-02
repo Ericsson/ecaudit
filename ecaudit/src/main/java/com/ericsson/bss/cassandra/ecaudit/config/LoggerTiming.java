@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Telefonaktiebolaget LM Ericsson
+ * Copyright 2019 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.common.record;
+package com.ericsson.bss.cassandra.ecaudit.config;
 
-/**
- * Indicates the status of an operation record.
- */
-public enum Status
+public enum LoggerTiming
 {
-    /**
-     * Operation is about to be executed.
-     */
-    ATTEMPT,
-    /**
-     * Operation executed and failed.
-     */
-    FAILED,
-    /**
-     * Operation executed and succeeded.
-     */
-    SUCCEEDED
+    // Enum values in lower case - to match logger_timing config values
+    pre_logging, post_logging
 }
