@@ -47,7 +47,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testReadSingleRecord() throws Exception
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -67,7 +67,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testReadBatchBatch() throws Exception
     {
-        givenNextRecordIs((short) 0, "batch-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"), Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-batch", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"), Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -87,7 +87,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testReuseMarshallable() throws Exception
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -111,7 +111,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testUnknownVersion() throws Exception
     {
-        givenNextRecordIs((short) 10, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 10, "ecaudit-single", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -137,7 +137,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testIllegalClientAddress() throws Exception
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, new byte[]{ 1, 2, 3 }, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, new byte[]{ 1, 2, 3 }, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -149,7 +149,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testNullClientAddress() throws Exception
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, null, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, null, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -161,7 +161,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testIllegalCoordinatorAddress() throws Exception
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), new byte[]{ 1, 2, 3 }, "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, InetAddress.getByName("1.2.3.4").getAddress(), new byte[]{ 1, 2, 3 }, "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -173,7 +173,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testNullCoordinatorAddress() throws Exception
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), null, "john", null, Status.ATTEMPT.toString(), "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, InetAddress.getByName("1.2.3.4").getAddress(), null, "john", null, Status.ATTEMPT.toString(), "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -185,7 +185,7 @@ public class TestAuditRecordReadMarshallable
     @Test
     public void testUnknownStatus() throws Exception
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, "GUCK", "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, "GUCK", "Some operation");
 
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
