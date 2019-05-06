@@ -115,7 +115,7 @@ public class TestQueueReader
     @Test
     public void testValidBatchRecord() throws UnknownHostException
     {
-        givenNextRecordIs((short) 0, "batch-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa"), Status.ATTEMPT, "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-batch", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa"), Status.ATTEMPT, "Some operation");
         QueueReader reader = givenReader();
 
         assertThat(reader.hasRecordAvailable()).isTrue();
@@ -126,7 +126,7 @@ public class TestQueueReader
     @Test
     public void testFailOnCorruptRecord() throws UnknownHostException
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, new byte[]{ 1, 2, 3 }, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, new byte[]{ 1, 2, 3 }, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
         QueueReader reader = givenReader();
 
         assertThatExceptionOfType(IORuntimeException.class)
@@ -136,7 +136,7 @@ public class TestQueueReader
 
     private void givenNextRecordIsSingle() throws UnknownHostException
     {
-        givenNextRecordIs((short) 0, "single-entry", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
+        givenNextRecordIs((short) 0, "ecaudit-single", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
     }
 
     private void givenNextRecordIs(short version, String type, long timestamp, byte[] clientAddress, byte[] coordinatorAddress, String user, UUID batchId, Status status, String operation)

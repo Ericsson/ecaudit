@@ -59,8 +59,30 @@ public class TestReadVersion0
     @Test
     public void test() throws Exception
     {
-        readBatch();
         readSingle();
+        readBatch();
+    }
+
+    private void readSingle() throws Exception
+    {
+        AuditRecord expectedAuditRecord = SimpleAuditRecord
+                                          .builder()
+                                          .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
+                                          .withStatus(Status.FAILED)
+                                          .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
+                                          .withUser("bob")
+                                          .withTimestamp(1554188832323L)
+                                          .build();
+
+        AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
+
+        assertThat(actualAuditRecord.getBatchId()).isEmpty();
+        assertThat(actualAuditRecord.getClientAddress()).isEqualTo(expectedAuditRecord.getClientAddress());
+        assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
+        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
+        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
+        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedAuditRecord.getTimestamp());
     }
 
     private void readBatch() throws Exception
@@ -79,28 +101,6 @@ public class TestReadVersion0
         AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
 
         assertThat(actualAuditRecord.getBatchId()).isEqualTo(expectedAuditRecord.getBatchId());
-        assertThat(actualAuditRecord.getClientAddress()).isEqualTo(expectedAuditRecord.getClientAddress());
-        assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
-        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
-        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
-        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedAuditRecord.getTimestamp());
-    }
-
-    private void readSingle() throws Exception
-    {
-        AuditRecord expectedAuditRecord = SimpleAuditRecord
-                                          .builder()
-                                          .withClientAddress(InetAddress.getByName("0.1.2.3"))
-                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
-                                          .withStatus(Status.FAILED)
-                                          .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
-                                          .withUser("bob")
-                                          .withTimestamp(1554188832323L)
-                                          .build();
-
-        AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
-
-        assertThat(actualAuditRecord.getBatchId()).isEmpty();
         assertThat(actualAuditRecord.getClientAddress()).isEqualTo(expectedAuditRecord.getClientAddress());
         assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
         assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
