@@ -133,11 +133,11 @@ public class TestChronicleAuditLogger
         verify(mockWire).write(eq("type"));
         if (batchId == null)
         {
-            verify(mockValue).text(eq("single-entry"));
+            verify(mockValue).text(eq("ecaudit-single"));
         }
         else
         {
-            verify(mockValue).text(eq("batch-entry"));
+            verify(mockValue).text(eq("ecaudit-batch"));
         }
 
         verify(mockWire).write(eq("timestamp"));
