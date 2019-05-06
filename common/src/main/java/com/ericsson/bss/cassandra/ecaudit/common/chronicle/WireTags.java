@@ -28,6 +28,6 @@ class WireTags
     static final String KEY_OPERATION = "operation";
 
     static final short VALUE_VERSION_CURRENT = 0;
-    static final String VALUE_TYPE_BATCH_ENTRY = "batch-entry";
-    static final String VALUE_TYPE_SINGLE_ENTRY = "single-entry";
+    static final String VALUE_TYPE_BATCH_ENTRY = "ecaudit-batch";
+    static final String VALUE_TYPE_SINGLE_ENTRY = "ecaudit-single";
 }
