@@ -10,6 +10,6 @@ matrix:
   - name: "Unit tests"
     env: TEST_SUITE='test jacoco:report coveralls:report'
   - name: "Integration tests"
-    env: TEST_SUITE='test-compile license:check failsafe:integration-test failsafe:verify'
+    env: TEST_SUITE='test-compile license:check failsafe:integration-test failsafe:verify -DskipUTs'
 script:
   - mvn -P travis $TEST_SUITE -B
