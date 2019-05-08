@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
@@ -48,8 +49,8 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         SimpleAuditRecord.Builder builder = SimpleAuditRecord
                                             .builder()
                                             .withTimestamp(wire.read(WireTags.KEY_TIMESTAMP).int64())
-                                            .withClientAddress(readAddress(wire, WireTags.KEY_CLIENT))
-                                            .withCoordinatorAddress(readAddress(wire, WireTags.KEY_COORDINATOR))
+                                            .withClientAddress(readInetSocketAddress(wire, WireTags.KEY_CLIENT_IP, WireTags.KEY_CLIENT_PORT))
+                                            .withCoordinatorAddress(readInetAddress(wire, WireTags.KEY_COORDINATOR_IP))
                                             .withUser(wire.read(WireTags.KEY_USER).text());
 
         if (WireTags.VALUE_TYPE_BATCH_ENTRY.equals(type))
@@ -83,7 +84,21 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         return type;
     }
 
-    private InetAddress readAddress(WireIn wire, String key) throws IORuntimeException
+    private InetSocketAddress readInetSocketAddress(WireIn wire, String ipKey, String portKey) throws IORuntimeException
+    {
+        try
+        {
+            InetAddress inetAddress = InetAddress.getByAddress(wire.read(ipKey).bytes());
+            int port = wire.read(portKey).int32();
+            return new InetSocketAddress(inetAddress, port);
+        }
+        catch (UnknownHostException e)
+        {
+            throw new IORuntimeException("Corrupt " + ipKey + " field", e);
+        }
+    }
+
+    private InetAddress readInetAddress(WireIn wire, String key) throws IORuntimeException
     {
         try
         {
@@ -91,7 +106,7 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         }
         catch (UnknownHostException e)
         {
-            throw new IORuntimeException("Corrupt " + key + " IP address field", e);
+            throw new IORuntimeException("Corrupt " + key + " field", e);
         }
     }
 

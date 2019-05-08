@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -138,10 +139,10 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessRegular()
+    public void testProcessRegular() throws UnknownHostException
     {
         String expectedStatement = "select * from ks.tbl";
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
+        InetSocketAddress expectedSocketAddress = spy(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 234));
         String expectedUser = "user";
         Status expectedStatus = Status.ATTEMPT;
 
@@ -161,7 +162,7 @@ public class TestAuditAdapter
         verify(mockAuditor, times(1)).audit(captor.capture());
 
         AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
+        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress);
         assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedStatement);
         assertThat(captured.getUser()).isEqualTo(expectedUser);
@@ -172,10 +173,10 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessRegularFailure()
+    public void testProcessRegularFailure() throws UnknownHostException
     {
         String expectedStatement = "select * from ks.tbl";
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
+        InetSocketAddress expectedSocketAddress = spy(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 234));
         String expectedUser = "user";
         Status expectedStatus = Status.FAILED;
 
@@ -195,7 +196,7 @@ public class TestAuditAdapter
         verify(mockAuditor, times(1)).audit(captor.capture());
 
         AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
+        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress);
         assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedStatement);
         assertThat(captured.getUser()).isEqualTo(expectedUser);
@@ -207,13 +208,13 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessPreparedStatementSuccessful()
+    public void testProcessPreparedStatementSuccessful() throws UnknownHostException
     {
         String preparedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?";
         MD5Digest statementId = MD5Digest.compute(preparedQuery);
 
         String expectedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?['text', 'text']";
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
+        InetSocketAddress expectedSocketAddress = spy(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 234));
         String expectedUser = "user";
         Status expectedStatus = Status.ATTEMPT;
 
@@ -241,7 +242,7 @@ public class TestAuditAdapter
         verifyNoMoreInteractions(mockOptions);
 
         AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
+        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress);
         assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedQuery);
         assertThat(captured.getUser()).isEqualTo(expectedUser);
@@ -253,13 +254,13 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessPreparedStatementFailure()
+    public void testProcessPreparedStatementFailure() throws UnknownHostException
     {
         String preparedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?";
         MD5Digest statementId = MD5Digest.compute(preparedQuery);
 
         String expectedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?['text', 'text']";
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
+        InetSocketAddress expectedSocketAddress = spy(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 234));
         String expectedUser = "user";
         Status expectedStatus = Status.FAILED;
 
@@ -287,7 +288,7 @@ public class TestAuditAdapter
         verifyNoMoreInteractions(mockOptions);
 
         AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
+        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress);
         assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedQuery);
         assertThat(captured.getUser()).isEqualTo(expectedUser);
@@ -300,7 +301,7 @@ public class TestAuditAdapter
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testProcessBatchFailed()
+    public void testProcessBatchFailed() throws UnknownHostException
     {
         BatchStatement mockBatchStatement = mock(BatchStatement.class);
         BatchQueryOptions mockBatchOptions = mock(BatchQueryOptions.class);
@@ -308,7 +309,7 @@ public class TestAuditAdapter
         UUID expectedBatchId = UUID.randomUUID();
 
         String expectedQuery = String.format("Apply batch failed: %s", expectedBatchId.toString());
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
+        InetSocketAddress expectedSocketAddress = spy(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 234));
         String expectedUser = "user";
         Status expectedStatus = Status.FAILED;
 
@@ -329,7 +330,7 @@ public class TestAuditAdapter
 
         List<AuditEntry> entries = captor.getAllValues();
 
-        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress.getAddress());
+        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress);
         assertThat(entries).extracting(AuditEntry::getUser).containsOnly(expectedUser);
         assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
         assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(expectedStatus);
@@ -341,7 +342,7 @@ public class TestAuditAdapter
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testProcessBatchRegularStatements()
+    public void testProcessBatchRegularStatements() throws UnknownHostException
     {
         BatchStatement mockBatchStatement = mock(BatchStatement.class);
         BatchQueryOptions mockBatchOptions = mock(BatchQueryOptions.class);
@@ -349,7 +350,7 @@ public class TestAuditAdapter
         UUID expectedBatchId = UUID.randomUUID();
 
         List<Object> expectedQueries = Arrays.asList("query1", "query2", "query3");
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
+        InetSocketAddress expectedSocketAddress = spy(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 234));
         String expectedUser = "user";
         Status expectedStatus = Status.ATTEMPT;
 
@@ -373,7 +374,7 @@ public class TestAuditAdapter
 
         List<AuditEntry> entries = captor.getAllValues();
 
-        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress.getAddress());
+        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress);
         assertThat(entries).extracting(AuditEntry::getUser).containsOnly(expectedUser);
         assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
         assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(expectedStatus);
@@ -385,7 +386,7 @@ public class TestAuditAdapter
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testProcessBatchPreparedStatements()
+    public void testProcessBatchPreparedStatements() throws UnknownHostException
     {
         ModificationStatement mockModifyStatement = mock(ModificationStatement.class);
         BatchStatement mockBatchStatement = mock(BatchStatement.class);
@@ -393,7 +394,7 @@ public class TestAuditAdapter
 
         UUID expectedBatchId = UUID.randomUUID();
 
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
+        InetSocketAddress expectedSocketAddress = spy(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 234));
         String expectedUser = "user";
         Status expectedStatus = Status.ATTEMPT;
 
@@ -433,7 +434,7 @@ public class TestAuditAdapter
 
         List<AuditEntry> entries = captor.getAllValues();
 
-        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress.getAddress());
+        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress);
         assertThat(entries).extracting(AuditEntry::getUser).containsOnly(expectedUser);
         assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
         assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(expectedStatus);
@@ -463,7 +464,8 @@ public class TestAuditAdapter
         verify(mockAuditor, times(1)).audit(captor.capture());
 
         AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedAddress);
+        assertThat(captured.getClientAddress().getAddress()).isEqualTo(expectedAddress);
+        assertThat(captured.getClientAddress().getPort()).isEqualTo(0);
         assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getUser()).isEqualTo(expectedUser);
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedOperation);
@@ -494,7 +496,8 @@ public class TestAuditAdapter
         verify(mockAuditor, times(1)).audit(captor.capture());
 
         AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedAddress);
+        assertThat(captured.getClientAddress().getAddress()).isEqualTo(expectedAddress);
+        assertThat(captured.getClientAddress().getPort()).isEqualTo(0);
         assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(captured.getUser()).isEqualTo(expectedUser);
         assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedOperation);

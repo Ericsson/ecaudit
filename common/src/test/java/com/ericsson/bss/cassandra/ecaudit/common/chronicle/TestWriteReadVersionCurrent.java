@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import org.junit.After;
@@ -63,7 +64,7 @@ public class TestWriteReadVersionCurrent
         AuditRecord expectedAuditRecord = SimpleAuditRecord
                                           .builder()
                                           .withBatchId(UUID.randomUUID())
-                                          .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 876))
                                           .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                           .withStatus(Status.ATTEMPT)
                                           .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
@@ -89,7 +90,7 @@ public class TestWriteReadVersionCurrent
     {
         AuditRecord expectedAuditRecord = SimpleAuditRecord
                                           .builder()
-                                          .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 876))
                                           .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                           .withStatus(Status.FAILED)
                                           .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
@@ -115,7 +116,7 @@ public class TestWriteReadVersionCurrent
     {
         AuditRecord expectedAuditRecord = SimpleAuditRecord
                                           .builder()
-                                          .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                          .withClientAddress(new InetSocketAddress("0.1.2.3", 0))
                                           .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                           .withStatus(Status.FAILED)
                                           .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))

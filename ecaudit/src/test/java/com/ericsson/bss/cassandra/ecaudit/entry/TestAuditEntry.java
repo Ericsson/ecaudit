@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.entry;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -35,7 +36,7 @@ import static org.mockito.Mockito.mock;
  */
 public class TestAuditEntry
 {
-    private static final InetAddress CLIENT = mock(InetAddress.class);
+    private static final InetSocketAddress CLIENT = mock(InetSocketAddress.class);
     private static final InetAddress COORDINATOR = mock(InetAddress.class);
     private static final Set<Permission> PERMISSIONS = Collections.emptySet();
     private static final IResource RESOURCE = mock(IResource.class);
