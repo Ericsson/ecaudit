@@ -74,20 +74,40 @@ The most notable being:
   ecAudit uses role options in CQL and/or settings in the audit.yaml file to manage whitelists.
   [CASSANDRA-14471](https://issues.apache.org/jira/browse/CASSANDRA-14471) is attempting to close this gap.
 
+* Cassandra 4.0 will create an audit record to indicate when a new statement is prepared.
+  This is not the case in ecAudit.
+
+* Both Cassandra 4.0 and ecAudit will create separate records for the operations within a batch sometimes (for prepared statements),
+  and sometimes not (regular statements).
+  When Cassandra 4.0 do separate statements, they will be prepended with a summary record indicating number of records in the batch.
+  The ecAudit plug-in will not write a batch summary record.
+
 * ecAudit requires authentication and authorization backends to be enabled.
   Cassandra 4.0 have no such requirements.
   This is being addressed in [#77](https://github.com/Ericsson/ecaudit/issues/77).
 
+* ecAudit will log values for prepared statements.
+  Audit logs in Cassandra 4.0 will not, but with the FQL (Full Query Log) feature this is possible.
 
 ### Audit Record Format
 
 Cassandra 4.0 is creating a fixed record format with some optional fields.
 The record format is the same whether the SLF4J logger or Chronicle logger is being used.
 
-Example of audit records in Cassandra 4.0:
+Here's a random set of example of audit records produced by Cassandra 4.0:
 ```
 user:cassandra|host:127.0.0.1:7000|source:/127.0.0.1|port:45164|timestamp:1556888680933|type:UPDATE|category:DML|ks:myks|scope:mytbl|operation:INSERT INTO myks.mytbl (part, value) VALUES (3,2);
 user:cassandra|host:127.0.0.1:7000|source:/127.0.0.1|port:45164|timestamp:1556888680949|type:SELECT|category:QUERY|ks:myks|scope:mytbl|operation:SELECT * from myks.mytbl;
+user:cassandra|host:127.0.0.1:7000|source:/127.0.0.1|port:42726|timestamp:1557392371598|type:BATCH|category:DML|operation:BEGIN BATCH
+insert into myks.mytbl (part, value) VALUES (3,2);
+insert into myks.mytbl (part, value) VALUES (4,2);
+APPLY BATCH;
+user:cassandra|host:127.0.0.1:7000|source:/127.0.0.1|port:42712|timestamp:1557392226735|type:REQUEST_FAILURE|category:ERROR|operation:select * from nonexistent.nonexistent;; keyspace nonexistent does not exist
+user:anonymous|host:127.0.0.1:7000|source:/127.0.0.1|port:42854|timestamp:1557392983448|type:UPDATE|category:DML|ks:keyspace1|scope:standard1|operation:UPDATE "standard1" SET "C0" = ?,"C1" = ?,"C2" = ?,"C3" = ?,"C4" = ? WHERE KEY=?
+user:anonymous|host:127.0.0.1:7000|source:/127.0.0.1|port:44156|timestamp:1557402879728|type:BATCH|category:DML|batch:a6d522aa-2eff-4f6a-a768-fba362ac3f59|operation:BatchId:[a6d522aa-2eff-4f6a-a768-fba362ac3f59] - BATCH of [3] statements
+user:anonymous|host:127.0.0.1:7000|source:/127.0.0.1|port:44156|timestamp:1557402879728|type:UPDATE|category:DML|batch:a6d522aa-2eff-4f6a-a768-fba362ac3f59|ks:myks|scope:mytbl|operation:UPDATE myks.mytbl SET value=? WHERE part=?;
+user:anonymous|host:127.0.0.1:7000|source:/127.0.0.1|port:44156|timestamp:1557402879728|type:UPDATE|category:DML|batch:a6d522aa-2eff-4f6a-a768-fba362ac3f59|ks:myks|scope:mytbl|operation:UPDATE myks.mytbl SET value=? WHERE part=?;
+user:anonymous|host:127.0.0.1:7000|source:/127.0.0.1|port:44156|timestamp:1557402879728|type:UPDATE|category:DML|batch:a6d522aa-2eff-4f6a-a768-fba362ac3f59|ks:myks|scope:mytbl|operation:UPDATE myks.mytbl SET value=? WHERE part=?;
 ```
 
 The following fields are optional and may be missing in some records:
@@ -105,7 +125,7 @@ Comparing record fields between Cassandra 4.0 and ecAudit:
 | host          | COORDINATOR | C* 4.0 will print \<IP\>:\<port\>, while ecAudit only print \<IP\>                     |
 | source        | CLIENT      | C* 4.0 will print \[\<hostname\>\]/\<IP\> (including the '/'), while ecAudit only print \<IP\> |
 | port          | -           | Not present in ecAduit, addressed in [#90](https://github.com/Ericsson/ecaudit/issues/90) |
-| batch         | BATCH_ID    |                                                                                        |
+| batch         | BATCH_ID    | Correlation ID for entries in separated batches                                        |
 | timestamp     | TIMESTAMP   |                                                                                        |
 | type          | -           | Not present in ecAudit                                                                 |
 | category      | -           | Not present in ecAudit                                                                 |
@@ -113,4 +133,3 @@ Comparing record fields between Cassandra 4.0 and ecAudit:
 | scope         | -           | Not present in ecAudit                                                                 |
 | operation     | OPERATION   |                                                                                        |
 | -             | STATUS      | Not present in Cassandra                                                               |
-
