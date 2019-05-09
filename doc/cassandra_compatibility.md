@@ -32,7 +32,7 @@ The table below list the Cassandra version used while building each ecAudit rele
 ## ecaudit_c3.0.11
 
 This flavor is built with Apache Cassandra 3.0.11 specifically and it is not compatible with any other version.
-This flavor is deprecated and so this flavor may not be supported in future versions of ecAduit.
+This flavor is deprecated and so this flavor may not be supported in future versions of ecAudit.
 Users should consider to upgrade to one of the latest Cassandra releases together with a suitable ecAudit flavor. 
 
 | ecAudit Version | Compiled With    | Compatible With  |
@@ -94,7 +94,7 @@ The most notable being:
 Cassandra 4.0 is creating a fixed record format with some optional fields.
 The record format is the same whether the SLF4J logger or Chronicle logger is being used.
 
-Here's a random set of example of audit records produced by Cassandra 4.0:
+Here's a random set of example records produced by Cassandra 4.0:
 ```
 user:cassandra|host:127.0.0.1:7000|source:/127.0.0.1|port:45164|timestamp:1556888680933|type:UPDATE|category:DML|ks:myks|scope:mytbl|operation:INSERT INTO myks.mytbl (part, value) VALUES (3,2);
 user:cassandra|host:127.0.0.1:7000|source:/127.0.0.1|port:45164|timestamp:1556888680949|type:SELECT|category:QUERY|ks:myks|scope:mytbl|operation:SELECT * from myks.mytbl;
@@ -110,7 +110,7 @@ user:anonymous|host:127.0.0.1:7000|source:/127.0.0.1|port:44156|timestamp:155740
 user:anonymous|host:127.0.0.1:7000|source:/127.0.0.1|port:44156|timestamp:1557402879728|type:UPDATE|category:DML|batch:a6d522aa-2eff-4f6a-a768-fba362ac3f59|ks:myks|scope:mytbl|operation:UPDATE myks.mytbl SET value=? WHERE part=?;
 ```
 
-The following fields are optional and may be missing in some records:
+The following fields are optional in Cassandra 4.0 and may be missing in some records:
 * port - representing the port used by the client
 * batch - indicates a UUID to correlate different records which belong to the same batch operation
 * ks - representing the keyspace used by the operation where applicable
@@ -124,7 +124,7 @@ Comparing record fields between Cassandra 4.0 and ecAudit:
 | user          | USER        |                                                                                        |
 | host          | COORDINATOR | C* 4.0 will print \<IP\>:\<port\>, while ecAudit only print \<IP\>                     |
 | source        | CLIENT      | C* 4.0 will print \[\<hostname\>\]/\<IP\> (including the '/'), while ecAudit only print \<IP\> |
-| port          | -           | Not present in ecAduit, addressed in [#90](https://github.com/Ericsson/ecaudit/issues/90) |
+| port          | -           | Not present in ecAudit, addressed in [#90](https://github.com/Ericsson/ecaudit/issues/90) |
 | batch         | BATCH_ID    | Correlation ID for entries in separated batches                                        |
 | timestamp     | TIMESTAMP   |                                                                                        |
 | type          | -           | Not present in ecAudit                                                                 |
