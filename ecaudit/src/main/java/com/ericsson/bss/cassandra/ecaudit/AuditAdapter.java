@@ -38,7 +38,6 @@ import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MD5Digest;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * This class will be responsible for populating {@link AuditEntry} instance and passing that to {@link Auditor} instance
@@ -58,19 +57,20 @@ public class AuditAdapter
 
     private final Map<MD5Digest, String> idQueryCache = new ConcurrentHashMap<>();
 
-    private final boolean postLogging;
+    private final LoggingStrategy loggingStrategy;
 
     /**
      * Constructor, see {@link AuditAdapterFactory#createAuditAdapter()}
      *
      * @param auditor             the auditor to use
      * @param entryBuilderFactory the audit entry builder factory to use
+     * @param logStrategy         the logging strategy to use
      */
-    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, boolean postLogging)
+    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, LoggingStrategy logStrategy)
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
-        this.postLogging = postLogging;
+        this.loggingStrategy = logStrategy;
     }
 
     public static AuditAdapter getInstance()
@@ -98,26 +98,19 @@ public class AuditAdapter
      */
     public void auditRegular(String operation, ClientState state, Status status, long timestamp)
     {
-        if (skipLogging(status))
+        if (loggingStrategy.logStatus(status))
         {
-            return;
+            AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
+                                                     .client(state.getRemoteAddress().getAddress())
+                                                     .coordinator(FBUtilities.getBroadcastAddress())
+                                                     .user(state.getUser().getName())
+                                                     .operation(new SimpleAuditOperation(operation))
+                                                     .status(status)
+                                                     .timestamp(timestamp)
+                                                     .build();
+
+            auditor.audit(logEntry);
         }
-        AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
-                                                 .client(state.getRemoteAddress().getAddress())
-                                                 .coordinator(FBUtilities.getBroadcastAddress())
-                                                 .user(state.getUser().getName())
-                                                 .operation(new SimpleAuditOperation(operation))
-                                                 .status(status)
-                                                 .timestamp(timestamp)
-                                                 .build();
-
-        auditor.audit(logEntry);
-    }
-
-    protected final boolean skipLogging(Status status)
-    {
-        return (postLogging && status == Status.ATTEMPT)
-               || (!postLogging && status == Status.SUCCEEDED);
     }
 
     /**
@@ -132,20 +125,19 @@ public class AuditAdapter
      */
     public void auditPrepared(MD5Digest id, CQLStatement statement, ClientState state, QueryOptions options, Status status, long timestamp)
     {
-        if (skipLogging(status))
+        if (loggingStrategy.logStatus(status))
         {
-            return;
-        }
-        AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
-                                                 .client(state.getRemoteAddress().getAddress())
-                                                 .coordinator(FBUtilities.getBroadcastAddress())
-                                                 .user(state.getUser().getName())
-                                                 .operation(new PreparedAuditOperation(idQueryCache.get(id), options))
-                                                 .status(status)
-                                                 .timestamp(timestamp)
-                                                 .build();
+            AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
+                                                     .client(state.getRemoteAddress().getAddress())
+                                                     .coordinator(FBUtilities.getBroadcastAddress())
+                                                     .user(state.getUser().getName())
+                                                     .operation(new PreparedAuditOperation(idQueryCache.get(id), options))
+                                                     .status(status)
+                                                     .timestamp(timestamp)
+                                                     .build();
 
-        auditor.audit(logEntry);
+            auditor.audit(logEntry);
+        }
     }
 
     /**
@@ -160,28 +152,27 @@ public class AuditAdapter
      */
     public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status, long timestamp)
     {
-        if (skipLogging(status))
+        if (loggingStrategy.logStatus(status))
         {
-            return;
-        }
-        AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
-                                                        .client(state.getRemoteAddress().getAddress())
-                                                        .coordinator(FBUtilities.getBroadcastAddress())
-                                                        .user(state.getUser().getName())
-                                                        .batch(uuid)
-                                                        .status(status)
-                                                        .timestamp(timestamp);
+            AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
+                                                            .client(state.getRemoteAddress().getAddress())
+                                                            .coordinator(FBUtilities.getBroadcastAddress())
+                                                            .user(state.getUser().getName())
+                                                            .batch(uuid)
+                                                            .status(status)
+                                                            .timestamp(timestamp);
 
-        if (status == Status.FAILED && !postLogging)
-        {
-            String failedBatchStatement = String.format(BATCH_FAILURE, uuid.toString());
-            auditor.audit(builder.operation(new SimpleAuditOperation(failedBatchStatement)).build());
-        }
-        else
-        {
-            for (AuditEntry entry : getBatchOperations(builder, statement, state, options))
+            if (loggingStrategy.logBatchSummary(status))
             {
-                auditor.audit(entry);
+                String failedBatchStatement = String.format(BATCH_FAILURE, uuid.toString());
+                auditor.audit(builder.operation(new SimpleAuditOperation(failedBatchStatement)).build());
+            }
+            else
+            {
+                for (AuditEntry entry : getBatchOperations(builder, statement, state, options))
+                {
+                    auditor.audit(entry);
+                }
             }
         }
     }
@@ -197,30 +188,28 @@ public class AuditAdapter
      */
     public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp) throws AuthenticationException
     {
-        if (skipLogging(status))
+        if (loggingStrategy.logStatus(status))
         {
-            return;
-        }
-        AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
-                                                 .client(clientIp)
-                                                 .coordinator(FBUtilities.getBroadcastAddress())
-                                                 .user(username)
-                                                 .status(status)
-                                                 .operation(statusToAuthentication(status))
-                                                 .timestamp(timestamp)
-                                                 .build();
+            AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
+                                                     .client(clientIp)
+                                                     .coordinator(FBUtilities.getBroadcastAddress())
+                                                     .user(username)
+                                                     .status(status)
+                                                     .operation(statusToAuthentication(status))
+                                                     .timestamp(timestamp)
+                                                     .build();
 
-        try
-        {
-            auditor.audit(logEntry);
-        }
-        catch (RequestExecutionException e)
-        {
-            throw new AuthenticationException(e.toString());
+            try
+            {
+                auditor.audit(logEntry);
+            }
+            catch (RequestExecutionException e)
+            {
+                throw new AuthenticationException(e.toString());
+            }
         }
     }
 
-    @NotNull
     private SimpleAuditOperation statusToAuthentication(Status status)
     {
         switch (status)
@@ -265,13 +254,13 @@ public class AuditAdapter
         {
             if (queryOrId instanceof MD5Digest)
             {
-                builder = entryBuilderFactory.updateBatchEntryBuilder(builder, batchStatement.getStatements().get(statementIndex));
-                builder = builder.operation(new PreparedAuditOperation(idQueryCache.get(queryOrId), options.forStatement(statementIndex)));
+                entryBuilderFactory.updateBatchEntryBuilder(builder, batchStatement.getStatements().get(statementIndex));
+                builder.operation(new PreparedAuditOperation(idQueryCache.get(queryOrId), options.forStatement(statementIndex)));
                 batchOperations.add(builder.build());
             }
             else
             {
-                builder = entryBuilderFactory.updateBatchEntryBuilder(builder, queryOrId.toString(), state);
+                entryBuilderFactory.updateBatchEntryBuilder(builder, queryOrId.toString(), state);
                 builder.operation(new SimpleAuditOperation(queryOrId.toString()));
                 batchOperations.add(builder.build());
             }

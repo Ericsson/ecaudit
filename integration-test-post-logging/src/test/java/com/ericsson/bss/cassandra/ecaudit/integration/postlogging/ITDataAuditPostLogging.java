@@ -103,9 +103,9 @@ public class ITDataAuditPostLogging
             assertThat(privateSession.isClosed()).isFalse();
         }
 
-        assertThat(getLogEntries())
-            .contains("Status=SUCCEEDED|User=cassandra|Operation=Authentication succeeded")
-            .doesNotContain("Status=ATTEMPT");
+        List<String> logEntries = getLogEntries();
+        assertThat(logEntries).contains("Status=SUCCEEDED|User=cassandra|Operation=Authentication succeeded");
+        logEntries.forEach(s -> assertThat(s).as("No attempts should be logged").doesNotContain("Status=ATTEMPT"));
     }
 
     @Test(expected = AuthenticationException.class)
@@ -120,9 +120,9 @@ public class ITDataAuditPostLogging
         }
         finally
         {
-            assertThat(getLogEntries())
-                .contains("Status=FAILED|User=unknown|Operation=Authentication failed")
-                .doesNotContain("Status=ATTEMPT");
+            List<String> logEntries = getLogEntries();
+            assertThat(logEntries).contains("Status=FAILED|User=unknown|Operation=Authentication failed");
+            logEntries.forEach(s -> assertThat(s).as("No attempts should be logged").doesNotContain("Status=ATTEMPT"));
         }
     }
 
