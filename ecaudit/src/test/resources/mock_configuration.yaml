@@ -18,4 +18,4 @@ whitelist:
   - User1
   - User2
 
-logger_timing: post_logging
+log_timing_strategy: post_logging

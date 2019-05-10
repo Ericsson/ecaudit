@@ -34,7 +34,7 @@ Two different logger backends are supported out of the box:
 
 ### Logger Timing
 
-Logger timing specifies *when* log entries should be written, **pre-logging** (legacy) and **post-logging** (C* 4.0 style) are available.
+Logger timing specifies *when* log entries should be written, **pre-logging** (default) and **post-logging** (C* 4.0 style) are available.
 You'll find more details in the [audit.yaml reference](audit_yaml_reference.md).
 
 ### Audit Whitelists

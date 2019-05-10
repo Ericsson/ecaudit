@@ -37,7 +37,7 @@ public final class AuditYamlConfig
     // Has to be public for SnakeYaml to inject values
     public List<String> whitelist;
     public ParameterizedClass logger_backend;
-    public LoggerTiming logger_timing;
+    public LoggerTiming log_timing_strategy;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -90,6 +90,6 @@ public final class AuditYamlConfig
 
     boolean isPostLogging()
     {
-        return logger_timing == LoggerTiming.post_logging;
+        return log_timing_strategy == LoggerTiming.post_logging;
     }
 }

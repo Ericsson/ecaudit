@@ -28,15 +28,15 @@
 #    - username2
 
 
-# logger_timing - specify WHEN ecAudit should write log entries. The two options are:
+# log_timing_strategy - specify WHEN ecAudit should write log entries. The two options are:
 #
 # pre_logging  -> Will log an ATTEMPT before passing the operation to the QueryProcessor.
 #                 In the event of failure a matching FAILED message will also be logged.
-#                 This is the default value - to be backwards compatible.
+#                 This is the default value.
 #
 # post_logging -> One message will always be logged after the operation has completed. That message will indicate
 #                 whether operation SUCCEEDED or FAILED. This is how logging is implemented in C* 4.0.
-logger_timing: post_logging
+log_timing_strategy: post_logging
 
 
 # Audit logger backend, implementing the AuditLogger interface

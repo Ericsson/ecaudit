@@ -35,6 +35,7 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
@@ -100,7 +101,7 @@ public class TestAuditAdapter
     @Mock
     private Auditor mockAuditor;
     @Mock
-    private LoggingStrategy mockLoggingStrategy;
+    private LogTimingStrategy mockLogTimingStrategy;
     @Mock
     private AuditEntryBuilderFactory mockAuditEntryBuilderFactory;
     @Mock
@@ -122,9 +123,9 @@ public class TestAuditAdapter
     @Before
     public void before()
     {
-        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockLoggingStrategy);
+        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockLogTimingStrategy);
         when(mockState.getUser()).thenReturn(mockUser);
-        when(mockLoggingStrategy.logStatus(any(Status.class))).thenReturn(true);
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(true);
     }
 
     @After
@@ -173,10 +174,10 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessRegularNoLoggingStrategy()
+    public void testProcessRegularNoLogTimeStrategy()
     {
         // Given
-        when(mockLoggingStrategy.logStatus(any(Status.class))).thenReturn(false);
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
         auditAdapter.auditRegular(STATEMENT, mockState, Status.ATTEMPT, TIMESTAMP);
         // Then
@@ -220,10 +221,10 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessPreparedNoLoggingStrategy()
+    public void testProcessPreparedNoLogTimeStrategy()
     {
         // Given
-        when(mockLoggingStrategy.logStatus(any(Status.class))).thenReturn(false);
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
         auditAdapter.auditPrepared(mock(MD5Digest.class), mockStatement, mockState, mockOptions, Status.ATTEMPT, TIMESTAMP);
         // Then
@@ -234,7 +235,7 @@ public class TestAuditAdapter
     public void testProcessBatchWithLogSummaryStrategy()
     {
         // Given
-        when(mockLoggingStrategy.logBatchSummary(any(Status.class))).thenReturn(true);
+        when(mockLogTimingStrategy.shouldLogFailedBatchSummary()).thenReturn(true);
 
         UUID expectedBatchId = UUID.randomUUID();
         String expectedQuery = String.format("Apply batch failed: %s", expectedBatchId.toString());
@@ -331,10 +332,10 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessBatchNoLoggingStrategy()
+    public void testProcessBatchNoLogTimeStrategy()
     {
         // Given
-        when(mockLoggingStrategy.logStatus(any(Status.class))).thenReturn(false);
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
         auditAdapter.auditBatch(mock(BatchStatement.class), mock(UUID.class), mockState, mock(BatchQueryOptions.class), Status.ATTEMPT, TIMESTAMP);
         // Then
@@ -369,10 +370,10 @@ public class TestAuditAdapter
     }
 
     @Test
-    public void testProcessAuthNoLoggingStrategy()
+    public void testProcessAuthNoLogTimeStrategy()
     {
         // Given
-        when(mockLoggingStrategy.logStatus(any(Status.class))).thenReturn(false);
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
         auditAdapter.auditAuth(USER, mock(InetAddress.class), Status.ATTEMPT, TIMESTAMP);
         // Then
@@ -391,6 +392,18 @@ public class TestAuditAdapter
 
         assertThatExceptionOfType(AuthenticationException.class)
         .isThrownBy(() -> auditAdapter.auditAuth(USER, expectedAddress, Status.ATTEMPT, TIMESTAMP));
+    }
+
+    @Test
+    public void testStatusToAuthenticationOperation()
+    {
+        // Given
+        Status mockStatus = mock(Status.class);
+        when(mockStatus.getDisplayName()).thenReturn("OK");
+        // When
+        SimpleAuditOperation operation = AuditAdapter.statusToAuthenticationOperation(mockStatus);
+        // Then
+        assertThat(operation.getOperationString()).isEqualTo("Authentication OK");
     }
 
     private ImmutableList<ColumnSpecification> createTextColumns(String... columns)

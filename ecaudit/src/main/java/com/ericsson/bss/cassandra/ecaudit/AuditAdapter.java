@@ -44,11 +44,6 @@ import org.apache.cassandra.utils.MD5Digest;
  */
 public class AuditAdapter
 {
-    // Authentication
-    private final static SimpleAuditOperation AUTHENTICATION_ATTEMPT = new SimpleAuditOperation("Authentication attempt");
-    private final static SimpleAuditOperation AUTHENTICATION_SUCCEEDED = new SimpleAuditOperation("Authentication succeeded");
-    private final static SimpleAuditOperation AUTHENTICATION_FAILED = new SimpleAuditOperation("Authentication failed");
-
     // Batch
     private final static String BATCH_FAILURE = "Apply batch failed: %s";
 
@@ -57,7 +52,7 @@ public class AuditAdapter
 
     private final Map<MD5Digest, String> idQueryCache = new ConcurrentHashMap<>();
 
-    private final LoggingStrategy loggingStrategy;
+    private final LogTimingStrategy logTimingStrategy;
 
     /**
      * Constructor, see {@link AuditAdapterFactory#createAuditAdapter()}
@@ -66,11 +61,11 @@ public class AuditAdapter
      * @param entryBuilderFactory the audit entry builder factory to use
      * @param logStrategy         the logging strategy to use
      */
-    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, LoggingStrategy logStrategy)
+    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, LogTimingStrategy logStrategy)
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
-        this.loggingStrategy = logStrategy;
+        this.logTimingStrategy = logStrategy;
     }
 
     public static AuditAdapter getInstance()
@@ -98,7 +93,7 @@ public class AuditAdapter
      */
     public void auditRegular(String operation, ClientState state, Status status, long timestamp)
     {
-        if (loggingStrategy.logStatus(status))
+        if (logTimingStrategy.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
                                                      .client(state.getRemoteAddress().getAddress())
@@ -125,7 +120,7 @@ public class AuditAdapter
      */
     public void auditPrepared(MD5Digest id, CQLStatement statement, ClientState state, QueryOptions options, Status status, long timestamp)
     {
-        if (loggingStrategy.logStatus(status))
+        if (logTimingStrategy.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
                                                      .client(state.getRemoteAddress().getAddress())
@@ -152,7 +147,7 @@ public class AuditAdapter
      */
     public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status, long timestamp)
     {
-        if (loggingStrategy.logStatus(status))
+        if (logTimingStrategy.shouldLogForStatus(status))
         {
             AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
                                                             .client(state.getRemoteAddress().getAddress())
@@ -162,7 +157,7 @@ public class AuditAdapter
                                                             .status(status)
                                                             .timestamp(timestamp);
 
-            if (loggingStrategy.logBatchSummary(status))
+            if (status == Status.FAILED && logTimingStrategy.shouldLogFailedBatchSummary())
             {
                 String failedBatchStatement = String.format(BATCH_FAILURE, uuid.toString());
                 auditor.audit(builder.operation(new SimpleAuditOperation(failedBatchStatement)).build());
@@ -188,14 +183,14 @@ public class AuditAdapter
      */
     public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp) throws AuthenticationException
     {
-        if (loggingStrategy.logStatus(status))
+        if (logTimingStrategy.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                                                      .client(clientIp)
                                                      .coordinator(FBUtilities.getBroadcastAddress())
                                                      .user(username)
                                                      .status(status)
-                                                     .operation(statusToAuthentication(status))
+                                                     .operation(statusToAuthenticationOperation(status))
                                                      .timestamp(timestamp)
                                                      .build();
 
@@ -210,19 +205,9 @@ public class AuditAdapter
         }
     }
 
-    private SimpleAuditOperation statusToAuthentication(Status status)
+    protected static final SimpleAuditOperation statusToAuthenticationOperation(Status status)
     {
-        switch (status)
-        {
-            case ATTEMPT:
-                return AUTHENTICATION_ATTEMPT;
-            case FAILED:
-                return AUTHENTICATION_FAILED;
-            case SUCCEEDED:
-                return AUTHENTICATION_SUCCEEDED;
-            default:
-                throw new IllegalArgumentException("Unexpected status: " + status);
-        }
+        return new SimpleAuditOperation("Authentication " + status.getDisplayName());
     }
 
     /**

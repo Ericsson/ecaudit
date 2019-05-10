@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.1.0
+* Add support for post-logging - #24
 * Add support for host address in log message #28
 * Add support for Chronicle-Queue backend - #62
 * Add metrics for filtering and logging - #72
@@ -10,7 +11,6 @@
 * Build with Cassandra 3.0.18 (only flavor ecaudit_c3.0)
 * Introduce configurable log message format - #55
 * Make the audit whitelist table a protected resource in Cassandra
-* Add support for post-logging - #24
 
 ## Version 2.0.0
 * __NOTE__: This version is breaking backwards compatibility - consult detailed instructions in the [upgrade guide](UPGRADING.md)

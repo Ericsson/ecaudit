@@ -17,6 +17,6 @@ package com.ericsson.bss.cassandra.ecaudit.config;
 
 public enum LoggerTiming
 {
-    // Enum values in lower case - to match logger_timing config values
+    // Enum values in lower case - to match log_timing_strategy config values
     pre_logging, post_logging
 }

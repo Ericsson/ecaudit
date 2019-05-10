@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-logger_timing: post_logging
+log_timing_strategy: post_logging
 
 logger_backend:
   - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger

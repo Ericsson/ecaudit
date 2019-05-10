@@ -17,41 +17,40 @@ package com.ericsson.bss.cassandra.ecaudit;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 
-public interface LoggingStrategy
+public interface LogTimingStrategy
 {
     /**
      * @param status the log operation status
      * @return {@code true} if the provided status should be logged, {@code false} otherwise.
      */
-    boolean logStatus(Status status);
+    boolean shouldLogForStatus(Status status);
 
     /**
-     * @param status the log operation status
-     * @return {@code true} if the only a summary should be logged for the provided status, {@code false} otherwise.
+     * @return {@code true} if a summary should be logged for a failed batch, {@code false} otherwise.
      */
-    boolean logBatchSummary(Status status);
+    boolean shouldLogFailedBatchSummary();
 
-    LoggingStrategy PRE_LOGGING_STRATEGY = new LoggingStrategy()
+    LogTimingStrategy PRE_LOGGING_STRATEGY = new LogTimingStrategy()
     {
-        public boolean logStatus(Status status)
+        public boolean shouldLogForStatus(Status status)
         {
             return status == Status.ATTEMPT || status == Status.FAILED;
         }
 
-        public boolean logBatchSummary(Status status)
+        public boolean shouldLogFailedBatchSummary()
         {
-            return status == Status.FAILED;
+            return true;
         }
     };
 
-    LoggingStrategy POST_LOGGING_STRATEGY = new LoggingStrategy()
+    LogTimingStrategy POST_LOGGING_STRATEGY = new LogTimingStrategy()
     {
-        public boolean logStatus(Status status)
+        public boolean shouldLogForStatus(Status status)
         {
             return status == Status.SUCCEEDED || status == Status.FAILED;
         }
 
-        public boolean logBatchSummary(Status status)
+        public boolean shouldLogFailedBatchSummary()
         {
             return false;
         }
