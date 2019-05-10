@@ -47,7 +47,6 @@ import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.jetbrains.annotations.NotNull;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -216,6 +215,21 @@ public class TestAuditAdapterFactory
         .withMessageContaining("InvalidAuditLogger");
     }
 
+    @Test
+    public void testLogTimingStrategy() throws Exception
+    {
+        // Given
+        AuditConfig defaultConfig = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
+        AuditConfig postLoggingConfig = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
+        when(postLoggingConfig.isPostLogging()).thenReturn(true);
+        // When
+        AuditAdapter adapterWithDefaultConfig = AuditAdapterFactory.createAuditAdapter(defaultConfig);
+        AuditAdapter adapterWithPostLogging = AuditAdapterFactory.createAuditAdapter(postLoggingConfig);
+        // Then
+        assertThat(logTimingStrategyIn(adapterWithDefaultConfig)).isSameAs(LogTimingStrategy.PRE_LOGGING_STRATEGY);
+        assertThat(logTimingStrategyIn(adapterWithPostLogging)).isSameAs(LogTimingStrategy.POST_LOGGING_STRATEGY);
+    }
+
     private static String getPathToTestResourceFile()
     {
         URL url = TestAuditAdapterFactory.class.getResource("/mock_configuration.yaml");
@@ -256,5 +270,12 @@ public class TestAuditAdapterFactory
         Field field = DefaultAuditor.class.getDeclaredField("obfuscator");
         field.setAccessible(true);
         return (AuditObfuscator) field.get(auditor);
+    }
+
+    private static LogTimingStrategy logTimingStrategyIn(AuditAdapter auditAdapter) throws Exception
+    {
+        Field field = AuditAdapter.class.getDeclaredField("logTimingStrategy");
+        field.setAccessible(true);
+        return (LogTimingStrategy) field.get(auditAdapter);
     }
 }

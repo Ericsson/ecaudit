@@ -59,13 +59,13 @@ public class AuditAdapter
      *
      * @param auditor             the auditor to use
      * @param entryBuilderFactory the audit entry builder factory to use
-     * @param logStrategy         the logging strategy to use
+     * @param logTimingStrategy   the logging strategy to use
      */
-    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, LogTimingStrategy logStrategy)
+    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, LogTimingStrategy logTimingStrategy)
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
-        this.logTimingStrategy = logStrategy;
+        this.logTimingStrategy = logTimingStrategy;
     }
 
     public static AuditAdapter getInstance()
