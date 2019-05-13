@@ -96,6 +96,10 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         {
             throw new IORuntimeException("Corrupt " + ipKey + " field", e);
         }
+        catch (IllegalArgumentException e)
+        {
+            throw new IORuntimeException("Corrupt " + portKey + " field", e);
+        }
     }
 
     private InetAddress readInetAddress(WireIn wire, String key) throws IORuntimeException

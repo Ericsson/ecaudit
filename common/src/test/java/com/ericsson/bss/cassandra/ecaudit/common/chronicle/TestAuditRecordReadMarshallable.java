@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestAuditRecordReadMarshallable
 {
-    @Mock(lenient = true)
+    @Mock
     private WireIn wireInMock;
 
     private RecordValues defaultValues;
@@ -136,29 +136,9 @@ public class TestAuditRecordReadMarshallable
     }
 
     @Test
-    public void testNullClientAddress()
-    {
-        givenNextRecordIs(defaultValues.butWithClientAddress(null));
-
-        assertThatExceptionOfType(IORuntimeException.class)
-        .isThrownBy(() -> readMarshallable.readMarshallable(wireInMock))
-        .withMessageContaining("Corrupt client_ip field");
-    }
-
-    @Test
     public void testIllegalCoordinatorAddress()
     {
         givenNextRecordIs(defaultValues.butWithCoordinatorAddress(new byte[]{ 1, 2, 3 }));
-
-        assertThatExceptionOfType(IORuntimeException.class)
-        .isThrownBy(() -> readMarshallable.readMarshallable(wireInMock))
-        .withMessageContaining("Corrupt coordinator_ip field");
-    }
-
-    @Test
-    public void testNullCoordinatorAddress()
-    {
-        givenNextRecordIs(defaultValues.butWithCoordinatorAddress(null));
 
         assertThatExceptionOfType(IORuntimeException.class)
         .isThrownBy(() -> readMarshallable.readMarshallable(wireInMock))
