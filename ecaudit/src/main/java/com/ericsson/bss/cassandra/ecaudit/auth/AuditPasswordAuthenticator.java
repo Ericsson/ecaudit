@@ -133,7 +133,9 @@ public class AuditPasswordAuthenticator implements IAuthenticator
             auditAdapter.auditAuth(decodedUsername, clientAddress, Status.ATTEMPT, timestamp);
             try
             {
-                return saslNegotiator.getAuthenticatedUser();
+                AuthenticatedUser result = saslNegotiator.getAuthenticatedUser();
+                auditAdapter.auditAuth(decodedUsername, clientAddress, Status.SUCCEEDED, timestamp);
+                return result;
             }
             catch (RuntimeException e)
             {

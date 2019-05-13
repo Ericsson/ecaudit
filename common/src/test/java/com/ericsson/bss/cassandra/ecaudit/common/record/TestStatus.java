@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Telefonaktiebolaget LM Ericsson
+ * Copyright 2019 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,17 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.common.record;
 
-/**
- * Indicates the status of an operation record.
- */
-public enum Status
+import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class TestStatus
 {
-    /**
-     * Operation is about to be executed.
-     */
-    ATTEMPT("attempt"),
-    /**
-     * Operation executed and failed.
-     */
-    FAILED("failed"),
-    /**
-     * Operation executed and succeeded.
-     */
-    SUCCEEDED("succeeded");
-
-    private final String displayName;
-
-    Status(String displayName)
+    @Test
+    public void testGetDisplayName()
     {
-        this.displayName = displayName;
-    }
-
-    public String getDisplayName()
-    {
-        return displayName;
+        assertThat(Status.ATTEMPT.getDisplayName()).isEqualTo("attempt");
+        assertThat(Status.SUCCEEDED.getDisplayName()).isEqualTo("succeeded");
+        assertThat(Status.FAILED.getDisplayName()).isEqualTo("failed");
     }
 }

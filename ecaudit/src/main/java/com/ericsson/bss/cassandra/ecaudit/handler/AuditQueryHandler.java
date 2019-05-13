@@ -102,7 +102,9 @@ public class AuditQueryHandler implements QueryHandler
         auditAdapter.auditRegular(query, state.getClientState(), Status.ATTEMPT, timestamp);
         try
         {
-            return wrappedQueryHandler.process(query, state, options, customPayload);
+            ResultMessage result = wrappedQueryHandler.process(query, state, options, customPayload);
+            auditAdapter.auditRegular(query, state.getClientState(), Status.SUCCEEDED, timestamp);
+            return result;
         }
         catch (RuntimeException e)
         {
@@ -133,7 +135,9 @@ public class AuditQueryHandler implements QueryHandler
         auditAdapter.auditPrepared(id, statement, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try
         {
-            return wrappedQueryHandler.processPrepared(statement, state, options, customPayload);
+            ResultMessage result = wrappedQueryHandler.processPrepared(statement, state, options, customPayload);
+            auditAdapter.auditPrepared(id, statement, state.getClientState(), options, Status.SUCCEEDED, timestamp);
+            return result;
         }
         catch (RuntimeException e)
         {
@@ -151,7 +155,9 @@ public class AuditQueryHandler implements QueryHandler
         auditAdapter.auditBatch(statement, uuid, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try
         {
-            return wrappedQueryHandler.processBatch(statement, state, options, customPayload);
+            ResultMessage result = wrappedQueryHandler.processBatch(statement, state, options, customPayload);
+            auditAdapter.auditBatch(statement, uuid, state.getClientState(), options, Status.SUCCEEDED, timestamp);
+            return result;
         }
         catch (RuntimeException e)
         {
