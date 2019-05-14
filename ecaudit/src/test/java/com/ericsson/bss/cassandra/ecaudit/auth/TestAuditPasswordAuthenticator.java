@@ -157,6 +157,7 @@ public class TestAuditPasswordAuthenticator
 
         negotiator.getAuthenticatedUser();
         verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(clientAddress), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(clientAddress), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
     }
 
     @SuppressWarnings("unchecked")

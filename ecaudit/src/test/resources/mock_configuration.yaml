@@ -17,3 +17,5 @@
 whitelist:
   - User1
   - User2
+
+log_timing_strategy: post_logging

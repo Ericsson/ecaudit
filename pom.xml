@@ -44,6 +44,7 @@
         <module>integration-test-standard</module>
         <module>integration-test-custom-format</module>
         <module>integration-test-chronicle</module>
+        <module>integration-test-post-logging</module>
     </modules>
 
     <properties>
@@ -81,6 +82,8 @@
         <org.eluder.coveralls.coveralls-maven-plugin.version>4.3.0</org.eluder.coveralls.coveralls-maven-plugin.version>
         <org.jacoco.jacoco-maven-plugin.version>0.8.2</org.jacoco.jacoco-maven-plugin.version>
         <org.pitest.pitest-maven.version>1.4.6</org.pitest.pitest-maven.version>
+
+        <skipUTs>false</skipUTs>
     </properties>
 
     <dependencyManagement>
@@ -187,6 +190,7 @@
                         <excludes>
                             <exclude>com.ericsson.bss.cassandra.ecaudit.integration.*</exclude>
                         </excludes>
+                        <skipTests>${skipUTs}</skipTests>
                     </configuration>
                 </plugin>
                 <plugin>

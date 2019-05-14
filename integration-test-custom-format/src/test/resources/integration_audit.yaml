@@ -17,6 +17,6 @@
 logger_backend:
   - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
     parameters:
-      - log_format: "${TIMESTAMP}-> client=${CLIENT}, coordinator=${COORDINATOR}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+      - log_format: "${TIMESTAMP}-> client=${CLIENT_IP}{?:${CLIENT_PORT}?}, coordinator=${COORDINATOR_IP}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
         time_format: "yyyy-MM-dd HH:mm:ss.SSS"
         time_zone: UTC

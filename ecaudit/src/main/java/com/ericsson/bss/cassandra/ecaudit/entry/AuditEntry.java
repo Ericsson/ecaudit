@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.entry;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -33,7 +34,9 @@ import org.apache.cassandra.auth.Permission;
  */
 public class AuditEntry implements AuditRecord
 {
-    private final InetAddress clientAddress;
+    public static final int UNKNOWN_PORT = 0;
+
+    private final InetSocketAddress clientAddress;
     private final InetAddress coordinatorAddress;
     private final Set<Permission> permissions;
     private final IResource resource;
@@ -60,7 +63,7 @@ public class AuditEntry implements AuditRecord
     }
 
     @Override
-    public InetAddress getClientAddress()
+    public InetSocketAddress getClientAddress()
     {
         return clientAddress;
     }
@@ -149,7 +152,7 @@ public class AuditEntry implements AuditRecord
      */
     public static class Builder
     {
-        private InetAddress client;
+        private InetSocketAddress client;
         private InetAddress coordinator;
         private Set<Permission> permissions;
         private IResource resource;
@@ -159,7 +162,7 @@ public class AuditEntry implements AuditRecord
         private Status status;
         private Long timestamp;
 
-        public Builder client(InetAddress address)
+        public Builder client(InetSocketAddress address)
         {
             this.client = address;
             return this;

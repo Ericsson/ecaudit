@@ -69,4 +69,9 @@ public class AuditConfig
             yamlConfig = yamlConfigurationLoader.loadConfig();
         }
     }
+
+    public boolean isPostLogging()
+    {
+        return yamlConfig.isPostLogging();
+    }
 }

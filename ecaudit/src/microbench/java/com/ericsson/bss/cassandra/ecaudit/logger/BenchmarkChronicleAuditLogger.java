@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.logger;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +90,8 @@ public class BenchmarkChronicleAuditLogger
     {
         auditEntry = AuditEntry.newBuilder()
                                .timestamp(System.currentTimeMillis())
-                               .client(InetAddress.getLocalHost())
+                               .client(new InetSocketAddress(InetAddress.getLocalHost(), 678))
+                               .coordinator(InetAddress.getLocalHost())
                                .user("cassandra")
                                .batch(UUID.randomUUID())
                                .status(Status.ATTEMPT)

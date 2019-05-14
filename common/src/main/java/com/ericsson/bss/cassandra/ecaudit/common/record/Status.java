@@ -23,9 +23,25 @@ public enum Status
     /**
      * Operation is about to be executed.
      */
-    ATTEMPT,
+    ATTEMPT("attempt"),
     /**
      * Operation executed and failed.
      */
-    FAILED
+    FAILED("failed"),
+    /**
+     * Operation executed and succeeded.
+     */
+    SUCCEEDED("succeeded");
+
+    private final String displayName;
+
+    Status(String displayName)
+    {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName()
+    {
+        return displayName;
+    }
 }
