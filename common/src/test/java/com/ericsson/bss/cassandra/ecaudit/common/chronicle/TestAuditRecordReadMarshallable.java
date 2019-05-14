@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.test.chronicle.RecordValues;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
@@ -153,117 +154,6 @@ public class TestAuditRecordReadMarshallable
         assertThatExceptionOfType(IORuntimeException.class)
         .isThrownBy(() -> readMarshallable.readMarshallable(wireInMock))
         .withMessageContaining("Corrupt record status field");
-    }
-
-    private static class RecordValues
-    {
-        private short version = 0;
-        private String type = "ecaudit-single";
-        private long timestamp = 42;
-        private byte[] clientAddress;
-        private int clientPort = 555;
-        private byte[] coordinatorAddress;
-        private String user = "john";
-        private UUID batchId = null;
-        private String status = Status.ATTEMPT.toString();
-        private String operation = "Some operation";
-
-        private RecordValues() throws UnknownHostException
-        {
-            clientAddress = InetAddress.getByName("1.2.3.4").getAddress();
-            coordinatorAddress = InetAddress.getByName("5.6.7.8").getAddress();
-        }
-
-        static RecordValues defaultValues() throws UnknownHostException
-        {
-            return new RecordValues();
-        }
-
-        RecordValues butWithVersion(short version)
-        {
-            this.version = version;
-            return this;
-        }
-
-        RecordValues butWithType(String type)
-        {
-            this.type = type;
-            return this;
-        }
-
-        RecordValues butWithClientAddress(byte[] clientAddress)
-        {
-            this.clientAddress = clientAddress;
-            return this;
-        }
-
-        RecordValues butWithCoordinatorAddress(byte[] coordinatorAddress)
-        {
-            this.coordinatorAddress = coordinatorAddress;
-            return this;
-        }
-
-        RecordValues butWithBatchId(UUID batchId)
-        {
-            this.batchId = batchId;
-            return this;
-        }
-
-        RecordValues butWithStatus(String status)
-        {
-            this.status = status;
-            return this;
-        }
-
-        public short getVersion()
-        {
-            return version;
-        }
-
-        public String getType()
-        {
-            return type;
-        }
-
-        public long getTimestamp()
-        {
-            return timestamp;
-        }
-
-        byte[] getClientAddress()
-        {
-            return clientAddress;
-        }
-
-        int getClientPort()
-        {
-            return clientPort;
-        }
-
-        byte[] getCoordinatorAddress()
-        {
-            return coordinatorAddress;
-        }
-
-        String gethUser()
-        {
-            return user;
-        }
-
-        UUID getBatchId()
-        {
-            return batchId;
-        }
-
-        String getStatus()
-        {
-            return status;
-        }
-
-        String getOperation()
-        {
-            return operation;
-        }
     }
 
     private void givenNextRecordIs(RecordValues values)

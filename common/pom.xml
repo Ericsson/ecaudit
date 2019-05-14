@@ -45,5 +45,11 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
+            <artifactId>test-utils_${artifact.flavor.version}</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

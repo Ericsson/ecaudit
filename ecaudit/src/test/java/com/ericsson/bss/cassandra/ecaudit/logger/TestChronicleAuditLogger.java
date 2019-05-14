@@ -75,30 +75,30 @@ public class TestChronicleAuditLogger
     @Test
     public void singleStatement() throws Exception
     {
-        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1987-06-30T14:39:00Z").toEpochMilli(), "Patrik Sjoberg", "2.42.2.42", 242, "5.6.7.8", "High Jump", Status.ATTEMPT, null);
+        AuditEntry expectedAuditEntry = likeGenericRecord().build();
 
-        logger.log(auditEntry);
+        logger.log(expectedAuditEntry);
 
-        verifyWire(Instant.parse("1987-06-30T14:39:00Z").toEpochMilli(),"Patrik Sjoberg", "2.42.2.42", 242, "5.6.7.8", "High Jump", Status.ATTEMPT, null);
+        assertThatWireMatchRecord(expectedAuditEntry);
     }
 
     @Test
     public void batchStatement() throws Exception
     {
-        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1987-06-30T14:56:00Z").toEpochMilli(), "Patrik Sjoberg", "2.44.2.44", 244, "5.6.7.8", "High Jump", Status.FAILED, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
+        AuditEntry expectedAuditEntry = likeGenericRecord().batch(UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969")).build();
 
-        logger.log(auditEntry);
+        logger.log(expectedAuditEntry);
 
-        verifyWire(Instant.parse("1987-06-30T14:56:00Z").toEpochMilli(),"Patrik Sjoberg", "2.44.2.44", 244, "5.6.7.8", "High Jump", Status.FAILED, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
+        assertThatWireMatchRecord(expectedAuditEntry);
     }
 
     @Test
     public void interruptOnPut() throws Exception
     {
-        AuditEntry auditEntry = givenAuditEntry(Instant.parse("1993-07-27T18:15:30Z").toEpochMilli(), "Javier Sotomayor", "2.45.2.45", 245, "5.6.7.8", "High Jump", Status.ATTEMPT, UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969"));
+        AuditEntry expectedAuditEntry = likeGenericRecord().build();
         doThrow(InterruptedException.class).when(mockWriter).put(any());
 
-        logger.log(auditEntry);
+        logger.log(expectedAuditEntry);
 
         assertThat(Thread.currentThread().isInterrupted()).isTrue();
 
@@ -106,20 +106,18 @@ public class TestChronicleAuditLogger
         Thread.interrupted();
     }
 
-    private AuditEntry givenAuditEntry(Long timestamp, String user, String ip, int port, String coordinator, String operation, Status status, UUID batchId) throws UnknownHostException
+    private AuditEntry.Builder likeGenericRecord() throws UnknownHostException
     {
         return AuditEntry.newBuilder()
-                         .timestamp(timestamp)
-                         .user(user)
-                         .client(new InetSocketAddress(InetAddress.getByName(ip), port))
-                         .coordinator(InetAddress.getByName(coordinator))
-                         .operation(new SimpleAuditOperation(operation))
-                         .status(status)
-                         .batch(batchId)
-                         .build();
+                         .timestamp(Instant.parse("1993-07-27T18:15:30Z").toEpochMilli())
+                         .user("Javier Sotomayor")
+                         .client(new InetSocketAddress(InetAddress.getByName("2.45.2.45"), 245))
+                         .coordinator(InetAddress.getByName("5.6.7.8"))
+                         .operation(new SimpleAuditOperation("High Jump"))
+                         .status(Status.ATTEMPT);
     }
 
-    private void verifyWire(Long timestamp, String user, String ip, Integer port, String coordinator, String operation, Status status, UUID batchId) throws Exception
+    private void assertThatWireMatchRecord(AuditEntry expectedAuditEntry) throws Exception
     {
         ArgumentCaptor<WriteMarshallable> marshallableArgumentCaptor = ArgumentCaptor.forClass(WriteMarshallable.class);
 
@@ -132,34 +130,34 @@ public class TestChronicleAuditLogger
         verify(mockWire).write(eq("version"));
         verify(mockValue).int16(eq((short) 0));
         verify(mockWire).write(eq("type"));
-        if (batchId == null)
-        {
-            verify(mockValue).text(eq("ecaudit-single"));
-        }
-        else
+        if (expectedAuditEntry.getBatchId().isPresent())
         {
             verify(mockValue).text(eq("ecaudit-batch"));
         }
+        else
+        {
+            verify(mockValue).text(eq("ecaudit-single"));
+        }
 
         verify(mockWire).write(eq("timestamp"));
-        verify(mockValue).int64(eq(timestamp));
+        verify(mockValue).int64(eq(expectedAuditEntry.getTimestamp()));
         verify(mockWire).write(eq("client_ip"));
-        verify(mockValue).bytes(eq(InetAddress.getByName(ip).getAddress()));
+        verify(mockValue).bytes(eq(expectedAuditEntry.getClientAddress().getAddress().getAddress()));
         verify(mockWire).write(eq("client_port"));
-        verify(mockValue).int32(eq(port));
+        verify(mockValue).int32(eq(expectedAuditEntry.getClientAddress().getPort()));
         verify(mockWire).write(eq("coordinator_ip"));
-        verify(mockValue).bytes(eq(InetAddress.getByName(coordinator).getAddress()));
+        verify(mockValue).bytes(eq(expectedAuditEntry.getCoordinatorAddress().getAddress()));
         verify(mockWire).write(eq("user"));
-        verify(mockValue).text(eq(user));
+        verify(mockValue).text(eq(expectedAuditEntry.getUser()));
         verify(mockWire).write(eq("status"));
-        verify(mockValue).text(eq(status.name()));
+        verify(mockValue).text(eq(expectedAuditEntry.getStatus().name()));
         verify(mockWire).write(eq("operation"));
-        verify(mockValue).text(eq(operation));
+        verify(mockValue).text(eq(expectedAuditEntry.getOperation().getOperationString()));
 
-        if (batchId != null)
+        if (expectedAuditEntry.getBatchId().isPresent())
         {
             verify(mockWire).write(eq("batchId"));
-            verify(mockValue).uuid(eq(batchId));
+            verify(mockValue).uuid(eq(expectedAuditEntry.getBatchId().get()));
         }
     }
 }
