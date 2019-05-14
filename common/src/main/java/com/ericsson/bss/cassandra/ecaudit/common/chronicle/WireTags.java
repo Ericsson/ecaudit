@@ -20,8 +20,9 @@ class WireTags
     static final String KEY_VERSION = "version";
     static final String KEY_TYPE = "type";
     static final String KEY_TIMESTAMP = "timestamp";
-    static final String KEY_CLIENT = "client";
-    static final String KEY_COORDINATOR = "coordinator";
+    static final String KEY_CLIENT_IP = "client_ip";
+    static final String KEY_CLIENT_PORT = "client_port";
+    static final String KEY_COORDINATOR_IP = "coordinator_ip";
     static final String KEY_USER = "user";
     static final String KEY_BATCH_ID = "batchId";
     static final String KEY_STATUS = "status";

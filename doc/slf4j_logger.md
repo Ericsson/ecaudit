@@ -27,15 +27,16 @@ To configure a custom log message format the following parameters can be configu
 It is possible to configure a parameterized log message by providing a formatting string.
 The following fields are available:
 
-| Field       | Field Value                                                       | Mandatory Field |
-| ----------- | ----------------------------------------------------------------- | --------------- |
-| CLIENT      | Client IP address                                                 | yes             |
-| USER        | Username of the authenticated user                                | yes             |
-| BATCH_ID    | Internal identifier shared by all statements in a batch operation | no              |
-| STATUS      | Value is either ATTEMPT or FAILED                                 | yes             |
-| OPERATION   | The CQL statement or a textual description of the operation       | yes             |
-| TIMESTAMP   | The system timestamp of the request (\*) (**)                     | yes             |
-| COORDINATOR | Coordinator IP address (host address)                             | yes             |
+| Field          | Field Value                                                       | Mandatory Field |
+| -------------- | ----------------------------------------------------------------- | --------------- |
+| CLIENT_IP      | Client IP address                                                 | yes             |
+| CLIENT_PORT    | Client port                                                       | no              |
+| USER           | Username of the authenticated user                                | yes             |
+| BATCH_ID       | Internal identifier shared by all statements in a batch operation | no              |
+| STATUS         | Value is either ATTEMPT or FAILED                                 | yes             |
+| OPERATION      | The CQL statement or a textual description of the operation       | yes             |
+| TIMESTAMP      | The system timestamp of the request (\*) (**)                     | yes             |
+| COORDINATOR_IP | Coordinator IP address (host address)                             | yes             |
 
 (*) - This timestamp is more accurate than the Logback time (since that is written asynchronously).
 If this timestamp is used, then the Logback timestamp can be removed by reconfiguring the encoder pattern in logback.xml.
@@ -50,7 +51,7 @@ Use the example below as a template to define the log message format.
 logger_backend:
     - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
       parameters:
-      - log_format: "client=${CLIENT}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
+      - log_format: "client=${CLIENT_IP}, user=${USER}, status=${STATUS}, operation='${OPERATION}'"
 ```
 
 Which will generate logs entries like this:
@@ -69,7 +70,7 @@ was part of a batch or not. Also the TIMESTAMP field have a custom time format c
 logger_backend:
     - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
       parameters:
-      - log_format: "${TIMESTAMP}-> client=${CLIENT}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
+      - log_format: "${TIMESTAMP}-> client=${CLIENT_IP}, user=${USER}, status=${STATUS}, {?batch-id=${BATCH_ID}, ?}operation='${OPERATION}'"
         time_format: "yyyy-MM-dd HH:mm:ss.SSS"
         time_zone: UTC
 ```

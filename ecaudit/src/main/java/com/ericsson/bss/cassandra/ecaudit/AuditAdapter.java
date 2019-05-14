@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -96,7 +97,7 @@ public class AuditAdapter
         if (logTimingStrategy.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
-                                                     .client(state.getRemoteAddress().getAddress())
+                                                     .client(state.getRemoteAddress())
                                                      .coordinator(FBUtilities.getBroadcastAddress())
                                                      .user(state.getUser().getName())
                                                      .operation(new SimpleAuditOperation(operation))
@@ -123,7 +124,7 @@ public class AuditAdapter
         if (logTimingStrategy.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
-                                                     .client(state.getRemoteAddress().getAddress())
+                                                     .client(state.getRemoteAddress())
                                                      .coordinator(FBUtilities.getBroadcastAddress())
                                                      .user(state.getUser().getName())
                                                      .operation(new PreparedAuditOperation(idQueryCache.get(id), options))
@@ -150,7 +151,7 @@ public class AuditAdapter
         if (logTimingStrategy.shouldLogForStatus(status))
         {
             AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
-                                                            .client(state.getRemoteAddress().getAddress())
+                                                            .client(state.getRemoteAddress())
                                                             .coordinator(FBUtilities.getBroadcastAddress())
                                                             .user(state.getUser().getName())
                                                             .batch(uuid)
@@ -186,7 +187,7 @@ public class AuditAdapter
         if (logTimingStrategy.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
-                                                     .client(clientIp)
+                                                     .client(new InetSocketAddress(clientIp, AuditEntry.UNKNOWN_PORT))
                                                      .coordinator(FBUtilities.getBroadcastAddress())
                                                      .user(username)
                                                      .status(status)

@@ -37,8 +37,9 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
         wire.write(WireTags.KEY_VERSION).int16(WireTags.VALUE_VERSION_CURRENT);
         wire.write(WireTags.KEY_TYPE).text(type);
         wire.write(WireTags.KEY_TIMESTAMP).int64(auditRecord.getTimestamp());
-        wire.write(WireTags.KEY_CLIENT).bytes(auditRecord.getClientAddress().getAddress());
-        wire.write(WireTags.KEY_COORDINATOR).bytes(auditRecord.getCoordinatorAddress().getAddress());
+        wire.write(WireTags.KEY_CLIENT_IP).bytes(auditRecord.getClientAddress().getAddress().getAddress());
+        wire.write(WireTags.KEY_CLIENT_PORT).int32(auditRecord.getClientAddress().getPort());
+        wire.write(WireTags.KEY_COORDINATOR_IP).bytes(auditRecord.getCoordinatorAddress().getAddress());
         wire.write(WireTags.KEY_USER).text(auditRecord.getUser());
         auditRecord.getBatchId().ifPresent(batchId -> wire.write(WireTags.KEY_BATCH_ID).uuid(batchId));
         wire.write(WireTags.KEY_STATUS).text(auditRecord.getStatus().name());

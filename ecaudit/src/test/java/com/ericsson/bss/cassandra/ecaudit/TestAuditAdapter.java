@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,10 +83,12 @@ public class TestAuditAdapter
 {
     private static final long TIMESTAMP = 42L;
     private static final String USER = "user";
+    private static final String CLIENT_IP = "127.0.0.1";
+    private static final int CLIENT_PORT = 565;
+    private static final int CLIENT_AUTH_PORT = 0;
     private static final String STATEMENT = "select * from ks.tbl";
     private static final String PREPARED_STATEMENT = "insert into ts.ks (id, value) values (?, ?)";
     private static final MD5Digest PREPARED_STATEMENT_ID = MD5Digest.compute(PREPARED_STATEMENT);
-    private static final InetAddress REMOTE_ADDRESS = mock(InetAddress.class);
     private static final DataResource RESOURCE = DataResource.table("ks", "tbl");
     private static final ImmutableSet<Permission> PERMISSIONS = ImmutableSet.of(Permission.SELECT);
     private static final UUID BATCH_ID = UUID.randomUUID();
@@ -108,8 +111,9 @@ public class TestAuditAdapter
     private BatchStatement mockBatchStatement;
     @Mock
     private BatchQueryOptions mockBatchOptions;
-    @Mock
-    private InetSocketAddress mockRemoteSocketAddress;
+
+    private InetAddress clientAddress;
+    private InetSocketAddress clientSocketAddress;
 
     private AuditAdapter auditAdapter;
 
@@ -123,12 +127,13 @@ public class TestAuditAdapter
     }
 
     @Before
-    public void before()
+    public void before() throws UnknownHostException
     {
+        clientAddress = InetAddress.getByName(CLIENT_IP);
+        clientSocketAddress = new InetSocketAddress(clientAddress, CLIENT_PORT);
         auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockLogTimingStrategy);
         when(mockState.getUser()).thenReturn(mockUser);
         when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(true);
-        when(mockRemoteSocketAddress.getAddress()).thenReturn(REMOTE_ADDRESS);
     }
 
     @After
@@ -162,7 +167,7 @@ public class TestAuditAdapter
     {
         // Given
         when(mockUser.getName()).thenReturn(USER);
-        when(mockState.getRemoteAddress()).thenReturn(mockRemoteSocketAddress);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
 
         AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
         when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(STATEMENT), eq(mockState))).thenReturn(entryBuilder);
@@ -172,7 +177,7 @@ public class TestAuditAdapter
 
         // Then
         AuditEntry entry = getAuditEntry();
-        assertThat(entry.getClientAddress()).isEqualTo(REMOTE_ADDRESS);
+        assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(entry.getOperation().getOperationString()).isEqualTo(STATEMENT);
         assertThat(entry.getUser()).isEqualTo(USER);
@@ -203,7 +208,7 @@ public class TestAuditAdapter
         ImmutableList<ColumnSpecification> columns = createTextColumns("c1", "c2");
 
         when(mockUser.getName()).thenReturn(USER);
-        when(mockState.getRemoteAddress()).thenReturn(mockRemoteSocketAddress);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
         when(mockOptions.getValues()).thenReturn(values);
         when(mockOptions.getColumnSpecifications()).thenReturn(columns);
         when(mockOptions.hasColumnSpecifications()).thenReturn(true);
@@ -219,7 +224,7 @@ public class TestAuditAdapter
         verifyNoMoreInteractions(mockOptions);
 
         AuditEntry entry = getAuditEntry();
-        assertThat(entry.getClientAddress()).isEqualTo(REMOTE_ADDRESS);
+        assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedQuery);
         assertThat(entry.getUser()).isEqualTo(USER);
@@ -251,7 +256,7 @@ public class TestAuditAdapter
         String expectedQuery = String.format("Apply batch failed: %s", expectedBatchId.toString());
 
         when(mockUser.getName()).thenReturn(USER);
-        when(mockState.getRemoteAddress()).thenReturn(mockRemoteSocketAddress);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
 
         AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder()).thenReturn(entryBuilder);
@@ -261,7 +266,7 @@ public class TestAuditAdapter
 
         // Then
         AuditEntry entry = getAuditEntry();
-        assertThat(entry.getClientAddress()).isEqualTo(REMOTE_ADDRESS);
+        assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getBatchId()).contains(expectedBatchId);
@@ -282,7 +287,7 @@ public class TestAuditAdapter
 
         when(mockBatchOptions.getQueryOrIdList()).thenReturn(expectedQueries);
         when(mockUser.getName()).thenReturn(USER);
-        when(mockState.getRemoteAddress()).thenReturn(mockRemoteSocketAddress);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
 
         AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder()).thenReturn(entryBuilder);
@@ -292,7 +297,7 @@ public class TestAuditAdapter
 
         // Then
         List<AuditEntry> entries = getAuditEntries(3);
-        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(REMOTE_ADDRESS);
+        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(clientSocketAddress);
         assertThat(entries).extracting(AuditEntry::getUser).containsOnly(USER);
         assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
         assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(Status.ATTEMPT);
@@ -318,7 +323,7 @@ public class TestAuditAdapter
         when(mockBatchStatement.getStatements()).thenReturn(singletonList(mock(ModificationStatement.class)));
         when(mockBatchOptions.getQueryOrIdList()).thenReturn(singletonList(PREPARED_STATEMENT_ID));
         when(mockUser.getName()).thenReturn(USER);
-        when(mockState.getRemoteAddress()).thenReturn(mockRemoteSocketAddress);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
 
         AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder()).thenReturn(entryBuilder);
@@ -330,7 +335,7 @@ public class TestAuditAdapter
         // Then
         verifyNoMoreInteractions(mockOptions);
         AuditEntry entry = getAuditEntry();
-        assertThat(entry.getClientAddress()).isEqualTo(REMOTE_ADDRESS);
+        assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getBatchId()).contains(BATCH_ID);
@@ -356,7 +361,6 @@ public class TestAuditAdapter
     public void testProcessAuth()
     {
         // Given
-        InetAddress expectedAddress = mock(InetAddress.class);
         String expectedOperation = "Authentication attempt";
         ConnectionResource resource = ConnectionResource.root();
 
@@ -364,11 +368,11 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder()).thenReturn(auditBuilder);
 
         // When
-        auditAdapter.auditAuth(USER, expectedAddress, Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP);
 
         // Then
         AuditEntry entry = getAuditEntry();
-        assertThat(entry.getClientAddress()).isEqualTo(expectedAddress);
+        assertThat(entry.getClientAddress()).isEqualTo(new InetSocketAddress(clientAddress, CLIENT_AUTH_PORT));
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedOperation);
@@ -385,7 +389,7 @@ public class TestAuditAdapter
         // Given
         when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
-        auditAdapter.auditAuth(USER, mock(InetAddress.class), Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP);
         // Then
         verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
@@ -393,15 +397,13 @@ public class TestAuditAdapter
     @Test
     public void testProcessAuthException()
     {
-        InetAddress expectedAddress = mock(InetAddress.class);
-
         AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(ConnectionResource.root());
         when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder()).thenReturn(entryBuilder);
 
         doThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 3, 4, true)).when(mockAuditor).audit(any(AuditEntry.class));
 
         assertThatExceptionOfType(AuthenticationException.class)
-        .isThrownBy(() -> auditAdapter.auditAuth(USER, expectedAddress, Status.ATTEMPT, TIMESTAMP));
+        .isThrownBy(() -> auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP));
     }
 
     @Test

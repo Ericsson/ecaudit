@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.PrintStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,21 @@ public class TestLogPrinter
     public void after()
     {
         verifyNoMoreInteractions(stream);
+    }
+
+    @Test(timeout = 5000)
+    public void testAuthRecord() throws UnknownHostException
+    {
+        ToolOptions options = ToolOptions.builder().build();
+        LogPrinter printer = givenPrinter(options, 10);
+        QueueReader reader = mock(QueueReader.class);
+        when(reader.hasRecordAvailable()).thenReturn(true).thenReturn(false);
+        AuditRecord authRecord = mockRecord(0, "1.2.3.4", 0, "5.6.7.8", "king", Status.ATTEMPT, null, "Authentication operation");
+        when(reader.nextRecord()).thenReturn(authRecord);
+
+        printer.print(reader);
+
+        verify(stream).println(eq("0|1.2.3.4|5.6.7.8|king|ATTEMPT|Authentication operation"));
     }
 
     @Test(timeout = 5000)
@@ -127,9 +143,9 @@ public class TestLogPrinter
         printer.print(reader);
     }
 
-    private LogPrinter givenPrinter(ToolOptions options, long pollIntervallMs)
+    private LogPrinter givenPrinter(ToolOptions options, long pollIntervalMs)
     {
-        return new LogPrinter(options, stream, pollIntervallMs);
+        return new LogPrinter(options, stream, pollIntervalMs);
     }
 
     private QueueReader givenRecords(boolean withBatchId, int count1, int count2) throws UnknownHostException
@@ -150,7 +166,7 @@ public class TestLogPrinter
         List<AuditRecord> records = new ArrayList<>();
         for (int i = 0; i < count1 + count2; i++)
         {
-            records.add(mockRecord(i, "1.2.3.4", "5.6.7.8", "king", Status.ATTEMPT, withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
+            records.add(mockRecord(i, "1.2.3.4", 222, "5.6.7.8", "king", Status.ATTEMPT, withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
         }
         OngoingStubbing<AuditRecord> recordStub = when(reader.nextRecord());
         for (AuditRecord record : records)
@@ -161,11 +177,11 @@ public class TestLogPrinter
         return reader;
     }
 
-    private AuditRecord mockRecord(long timestamp, String clientHost, String coordinatorHost, String user, Status status, UUID batchId, String operation) throws UnknownHostException
+    private AuditRecord mockRecord(long timestamp, String clientHost, int clientPort, String coordinatorHost, String user, Status status, UUID batchId, String operation) throws UnknownHostException
     {
         AuditRecord record = mock(AuditRecord.class);
         when(record.getTimestamp()).thenReturn(timestamp);
-        when(record.getClientAddress()).thenReturn(InetAddress.getByName(clientHost));
+        when(record.getClientAddress()).thenReturn(new InetSocketAddress(InetAddress.getByName(clientHost), clientPort));
         when(record.getCoordinatorAddress()).thenReturn(InetAddress.getByName(coordinatorHost));
         when(record.getUser()).thenReturn(user);
         when(record.getBatchId()).thenReturn(Optional.ofNullable(batchId));
@@ -178,7 +194,7 @@ public class TestLogPrinter
     {
         for (int i = 0; i < count; i++)
         {
-            verify(stream).println(eq(i + "|1.2.3.4|5.6.7.8|king|ATTEMPT|SELECT QUERY"));
+            verify(stream).println(eq(i + "|1.2.3.4:222|5.6.7.8|king|ATTEMPT|SELECT QUERY"));
         }
     }
 
@@ -186,7 +202,7 @@ public class TestLogPrinter
     {
         for (int i = 0; i < count; i++)
         {
-            verify(stream).println(eq(i + "|1.2.3.4|5.6.7.8|king|ATTEMPT|b23534c7-93af-497f-b00c-1edaaa335caa|SELECT QUERY"));
+            verify(stream).println(eq(i + "|1.2.3.4:222|5.6.7.8|king|ATTEMPT|b23534c7-93af-497f-b00c-1edaaa335caa|SELECT QUERY"));
         }
     }
 }

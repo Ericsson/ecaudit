@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
@@ -44,7 +45,7 @@ public class WriteTestDataUtil
 
         // Data
         AuditRecord singleRecord = SimpleAuditRecord.builder()
-                                                    .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                                    .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 777))
                                                     .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                                     .withStatus(Status.FAILED)
                                                     .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
@@ -54,7 +55,7 @@ public class WriteTestDataUtil
 
         AuditRecord batchRecord = SimpleAuditRecord.builder()
                                                    .withBatchId(UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"))
-                                                   .withClientAddress(InetAddress.getByName("0.1.2.3"))
+                                                   .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 777))
                                                    .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
                                                    .withStatus(Status.ATTEMPT)
                                                    .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
