@@ -300,7 +300,7 @@ saved_caches_directory: ###tmp###/cassandra/saved_caches
 #
 # the other option is "periodic" where writes may be acked immediately
 # and the CommitLog is simply synced every commitlog_sync_period_in_ms
-# milliseconds. 
+# milliseconds.
 commitlog_sync: periodic
 commitlog_sync_period_in_ms: 10000
 
@@ -315,6 +315,7 @@ commitlog_sync_period_in_ms: 10000
 # is reasonable.
 # Max mutation size is also configurable via max_mutation_size_in_kb setting in
 # cassandra.yaml. The default is half the size commitlog_segment_size_in_mb * 1024.
+# This should be positive and less than 2048.
 #
 # NOTE: If max_mutation_size_in_kb is set explicitly then commitlog_segment_size_in_mb must
 # be set to at least twice the size of max_mutation_size_in_kb / 1024
@@ -397,7 +398,11 @@ concurrent_materialized_view_writes: 32
 # Specify the way Cassandra allocates and manages memtable memory.
 # Options are:
 #   heap_buffers:    on heap nio buffers
-#   offheap_buffers: off heap (direct) nio buffers
+#
+# Note: offheap_buffers are not supported in Cassandra 3.0 - 3.3.
+# They have been re-introduced in Cassandra 3.4. For details see
+# https://issues.apache.org/jira/browse/CASSANDRA-9472 and
+# https://issues.apache.org/jira/browse/CASSANDRA-11039
 memtable_allocation_type: heap_buffers
 
 # Total space to use for commit logs on disk.
@@ -513,7 +518,7 @@ native_transport_port: ###native_transport_port###
 #
 # The maximum size of allowed frame. Frame (requests) larger than this will
 # be rejected as invalid. The default is 256MB. If you're changing this parameter,
-# you may want to adjust max_value_size_in_mb accordingly.
+# you may want to adjust max_value_size_in_mb accordingly. This should be positive and less than 2048.
 # native_transport_max_frame_size_in_mb: 256
 
 # The maximum number of concurrent client connections.
@@ -947,6 +952,10 @@ enable_user_defined_functions: true
 # This option has no effect, if enable_user_defined_functions is false.
 enable_scripted_user_defined_functions: false
 
+# Enables materialized view creation on this node.
+# Materialized views are considered experimental and are not recommended for production use.
+enable_materialized_views: true
+
 # The default Windows kernel timer and scheduling resolution is 15.6ms for power conservation.
 # Lowering this value on Windows can provide much tighter latency and better throughput, however
 # some virtualized environments may see a negative performance impact from changing this setting
@@ -956,7 +965,7 @@ windows_timer_interval: 1
 
 # Maximum size of any value in SSTables. Safety measure to detect SSTable corruption
 # early. Any value size larger than this threshold will result into marking an SSTable
-# as corrupted.
+# as corrupted. This should be positive and less than 2048.
 # max_value_size_in_mb: 256
 
 # Coalescing Strategies #
@@ -985,3 +994,12 @@ windows_timer_interval: 1
 
 # Do not try to coalesce messages if we already got that many messages. This should be more than 2 and less than 128.
 # otc_coalescing_enough_coalesced_messages: 8
+
+# How many milliseconds to wait between two expiration runs on the backlog (queue) of the OutboundTcpConnection.
+# Expiration is done if messages are piling up in the backlog. Droppable messages are expired to free the memory
+# taken by expired messages. The interval should be between 0 and 1000, and in most installations the default value
+# will be appropriate. A smaller value could potentially expire messages slightly sooner at the expense of more CPU
+# time and queue contention while iterating the backlog of messages.
+# An interval of 0 disables any wait time, which is the behavior of former Cassandra versions.
+#
+# otc_backlog_expiration_interval_ms: 200
