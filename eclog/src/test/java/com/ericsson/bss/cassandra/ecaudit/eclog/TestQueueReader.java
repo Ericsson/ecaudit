@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
@@ -25,7 +26,7 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.AuditRecordReadMarshallable;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
-import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.test.chronicle.RecordValues;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
@@ -53,9 +54,13 @@ public class TestQueueReader
     @Mock
     private ExcerptTailer tailer;
 
+    private RecordValues defaultValues;
+
     @Before
-    public void before()
+    public void before() throws UnknownHostException
     {
+        defaultValues = RecordValues.defaultValues();
+
         when(queue.createTailer()).thenReturn(tailer);
         when(tailer.toEnd()).thenReturn(tailer);
         when(tailer.index()).thenReturn(0L).thenReturn(1000L);
@@ -82,51 +87,51 @@ public class TestQueueReader
     @Test
     public void testValidSingleRecord() throws UnknownHostException
     {
-        givenNextRecordIsSingle();
+        givenNextRecordIs(defaultValues);
         QueueReader reader = givenReader();
 
         assertThat(reader.hasRecordAvailable()).isTrue();
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatchesSingle(auditRecord);
+        assertRecordMatchesWire(auditRecord, defaultValues);
     }
 
     @Test
     public void testValidSingleTailRecord() throws UnknownHostException
     {
-        givenNextRecordIsSingle();
+        givenNextRecordIs(defaultValues);
         QueueReader reader = givenReader(ToolOptions.builder().withTail(1).build());
 
         verify(tailer).moveToIndex(eq(999L));
         assertThat(reader.hasRecordAvailable()).isTrue();
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatchesSingle(auditRecord);
+        assertRecordMatchesWire(auditRecord, defaultValues);
     }
 
     @Test
     public void testValidSingleRecordDirect() throws UnknownHostException
     {
-        givenNextRecordIsSingle();
+        givenNextRecordIs(defaultValues);
         QueueReader reader = givenReader();
 
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatchesSingle(auditRecord);
+        assertRecordMatchesWire(auditRecord, defaultValues);
     }
 
     @Test
     public void testValidBatchRecord() throws UnknownHostException
     {
-        givenNextRecordIs((short) 0, "ecaudit-batch", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa"), Status.ATTEMPT, "Some operation");
+        givenNextRecordIs(defaultValues.butWithType("ecaudit-batch").butWithBatchId(UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa")));
         QueueReader reader = givenReader();
 
         assertThat(reader.hasRecordAvailable()).isTrue();
         AuditRecord auditRecord = reader.nextRecord();
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa"), Status.ATTEMPT, "Some operation");
+        assertRecordMatchesWire(auditRecord, defaultValues);
     }
 
     @Test
-    public void testFailOnCorruptRecord() throws UnknownHostException
+    public void testFailOnCorruptRecord()
     {
-        givenNextRecordIs((short) 0, "ecaudit-single", 42L, new byte[]{ 1, 2, 3 }, InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
+        givenNextRecordIs(defaultValues.butWithClientAddress(new byte[]{ 1, 2, 3 }));
         QueueReader reader = givenReader();
 
         assertThatExceptionOfType(IORuntimeException.class)
@@ -134,52 +139,51 @@ public class TestQueueReader
         .withMessageContaining("Corrupt");
     }
 
-    private void givenNextRecordIsSingle() throws UnknownHostException
-    {
-        givenNextRecordIs((short) 0, "ecaudit-single", 42L, InetAddress.getByName("1.2.3.4").getAddress(), InetAddress.getByName("5.6.7.8").getAddress(), "john", null, Status.ATTEMPT, "Some operation");
-    }
-
-    private void givenNextRecordIs(short version, String type, long timestamp, byte[] clientAddress, byte[] coordinatorAddress, String user, UUID batchId, Status status, String operation)
+    private void givenNextRecordIs(RecordValues recordValues)
     {
         WireIn wireMock = mock(WireIn.class);
 
         ValueIn versionValueMock = mock(ValueIn.class);
-        when(versionValueMock.int16()).thenReturn(version);
+        when(versionValueMock.int16()).thenReturn(recordValues.getVersion());
         when(wireMock.read(eq("version"))).thenReturn(versionValueMock);
 
         ValueIn typeValueMock = mock(ValueIn.class);
-        when(typeValueMock.text()).thenReturn(type);
+        when(typeValueMock.text()).thenReturn(recordValues.getType());
         when(wireMock.read(eq("type"))).thenReturn(typeValueMock);
 
         ValueIn timestampValueMock = mock(ValueIn.class);
-        when(timestampValueMock.int64()).thenReturn(timestamp);
+        when(timestampValueMock.int64()).thenReturn(recordValues.getTimestamp());
         when(wireMock.read(eq("timestamp"))).thenReturn(timestampValueMock);
 
-        ValueIn clientValueMock = mock(ValueIn.class);
-        when(clientValueMock.bytes()).thenReturn(clientAddress);
-        when(wireMock.read(eq("client"))).thenReturn(clientValueMock);
+        ValueIn clientIpValueMock = mock(ValueIn.class);
+        when(clientIpValueMock.bytes()).thenReturn(recordValues.getClientAddress());
+        when(wireMock.read(eq("client_ip"))).thenReturn(clientIpValueMock);
 
-        ValueIn coordinatorValueMock = mock(ValueIn.class);
-        when(coordinatorValueMock.bytes()).thenReturn(coordinatorAddress);
-        when(wireMock.read(eq("coordinator"))).thenReturn(coordinatorValueMock);
+        ValueIn clientPortValueMock = mock(ValueIn.class);
+        when(clientPortValueMock.int32()).thenReturn(recordValues.getClientPort());
+        when(wireMock.read(eq("client_port"))).thenReturn(clientPortValueMock);
+
+        ValueIn coordinatorIpValueMock = mock(ValueIn.class);
+        when(coordinatorIpValueMock.bytes()).thenReturn(recordValues.getCoordinatorAddress());
+        when(wireMock.read(eq("coordinator_ip"))).thenReturn(coordinatorIpValueMock);
 
         ValueIn userValueMock = mock(ValueIn.class);
-        when(userValueMock.text()).thenReturn(user);
+        when(userValueMock.text()).thenReturn(recordValues.gethUser());
         when(wireMock.read(eq("user"))).thenReturn(userValueMock);
 
-        if (batchId != null)
+        if (recordValues.getBatchId() != null)
         {
             ValueIn batchIdValueMock = mock(ValueIn.class);
-            when(batchIdValueMock.uuid()).thenReturn(batchId);
+            when(batchIdValueMock.uuid()).thenReturn(recordValues.getBatchId());
             when(wireMock.read(eq("batchId"))).thenReturn(batchIdValueMock);
         }
 
         ValueIn statusValueMock = mock(ValueIn.class);
-        when(statusValueMock.text()).thenReturn(status.toString());
+        when(statusValueMock.text()).thenReturn(recordValues.getStatus());
         when(wireMock.read(eq("status"))).thenReturn(statusValueMock);
 
         ValueIn operationValueMock = mock(ValueIn.class);
-        when(operationValueMock.text()).thenReturn(operation);
+        when(operationValueMock.text()).thenReturn(recordValues.getOperation());
         when(wireMock.read(eq("operation"))).thenReturn(operationValueMock);
 
         when(tailer.readDocument(any(ReadMarshallable.class)))
@@ -201,25 +205,21 @@ public class TestQueueReader
         return new QueueReader(toolOptions, queue);
     }
 
-    private void assertRecordMatchesSingle(AuditRecord auditRecord) throws UnknownHostException
+    private void assertRecordMatchesWire(AuditRecord actualAuditRecord, RecordValues expectedValues) throws UnknownHostException
     {
-        assertRecordMatches(auditRecord, 42L, InetAddress.getByName("1.2.3.4"), "john", null, Status.ATTEMPT, "Some operation");
-    }
-
-    private void assertRecordMatches(AuditRecord auditRecord, long timestamp, InetAddress clientAddress, String user, UUID batchId, Status status, String operation)
-    {
-        assertThat(auditRecord.getTimestamp()).isEqualTo(timestamp);
-        assertThat(auditRecord.getClientAddress()).isEqualTo(clientAddress);
-        assertThat(auditRecord.getUser()).isEqualTo(user);
-        if (batchId != null)
+        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedValues.getTimestamp());
+        assertThat(actualAuditRecord.getClientAddress()).isEqualTo(new InetSocketAddress(InetAddress.getByAddress(expectedValues.getClientAddress()), expectedValues.getClientPort()));
+        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(InetAddress.getByAddress(expectedValues.getCoordinatorAddress()));
+        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedValues.gethUser());
+        if (expectedValues.getBatchId() != null)
         {
-            assertThat(auditRecord.getBatchId()).contains(batchId);
+            assertThat(actualAuditRecord.getBatchId()).contains(expectedValues.getBatchId());
         }
         else
         {
-            assertThat(auditRecord.getBatchId()).isEmpty();
+            assertThat(actualAuditRecord.getBatchId()).isEmpty();
         }
-        assertThat(auditRecord.getStatus()).isEqualTo(status);
-        assertThat(auditRecord.getOperation().getOperationString()).isEqualTo(operation);
+        assertThat(actualAuditRecord.getStatus().name()).isEqualTo(expectedValues.getStatus());
+        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedValues.getOperation());
     }
 }

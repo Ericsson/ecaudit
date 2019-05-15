@@ -16,12 +16,13 @@
 package com.ericsson.bss.cassandra.ecaudit.common.record;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.UUID;
 
 public class SimpleAuditRecord implements AuditRecord
 {
-    private final InetAddress clientAddress;
+    private final InetSocketAddress clientAddress;
     private final InetAddress coordinatorAddress;
     private final String user;
     private final UUID batchId;
@@ -47,7 +48,7 @@ public class SimpleAuditRecord implements AuditRecord
     }
 
     @Override
-    public InetAddress getClientAddress()
+    public InetSocketAddress getClientAddress()
     {
         return clientAddress;
     }
@@ -89,7 +90,7 @@ public class SimpleAuditRecord implements AuditRecord
 
     public static class Builder
     {
-        private InetAddress clientAddress;
+        private InetSocketAddress clientAddress;
         private InetAddress coordinatorAddress;
         private String user;
         private UUID batchId;
@@ -97,7 +98,7 @@ public class SimpleAuditRecord implements AuditRecord
         private AuditOperation operation;
         private long timestamp;
 
-        public Builder withClientAddress(InetAddress clientAddress)
+        public Builder withClientAddress(InetSocketAddress clientAddress)
         {
             this.clientAddress = clientAddress;
             return this;

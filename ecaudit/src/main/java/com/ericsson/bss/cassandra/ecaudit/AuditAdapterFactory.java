@@ -72,7 +72,10 @@ class AuditAdapterFactory
         Auditor auditor = new DefaultAuditor(logger, filter, obfuscator);
         AuditEntryBuilderFactory entryBuilderFactory = new AuditEntryBuilderFactory();
 
-        return new AuditAdapter(auditor, entryBuilderFactory);
+        LogTimingStrategy logStrategy = auditConfig.isPostLogging()
+                                      ? LogTimingStrategy.POST_LOGGING_STRATEGY
+                                      : LogTimingStrategy.PRE_LOGGING_STRATEGY;
+        return new AuditAdapter(auditor, entryBuilderFactory, logStrategy);
     }
 
     /**

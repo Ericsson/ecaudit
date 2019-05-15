@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,6 @@ import java.util.UUID;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -36,9 +36,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import org.apache.cassandra.auth.AuthenticatedUser;
@@ -66,13 +67,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -82,23 +83,38 @@ import static org.mockito.Mockito.when;
 public class TestAuditAdapter
 {
     private static final long TIMESTAMP = 42L;
+    private static final String USER = "user";
+    private static final String CLIENT_IP = "127.0.0.1";
+    private static final int CLIENT_PORT = 565;
+    private static final int CLIENT_AUTH_PORT = 0;
+    private static final String STATEMENT = "select * from ks.tbl";
+    private static final String PREPARED_STATEMENT = "insert into ts.ks (id, value) values (?, ?)";
+    private static final MD5Digest PREPARED_STATEMENT_ID = MD5Digest.compute(PREPARED_STATEMENT);
+    private static final DataResource RESOURCE = DataResource.table("ks", "tbl");
+    private static final ImmutableSet<Permission> PERMISSIONS = ImmutableSet.of(Permission.SELECT);
+    private static final UUID BATCH_ID = UUID.randomUUID();
+
     @Mock
     private AuthenticatedUser mockUser;
-
     @Mock
     private ClientState mockState;
-
     @Mock
     private CQLStatement mockStatement;
-
     @Mock
     private QueryOptions mockOptions;
-
     @Mock
     private Auditor mockAuditor;
-
+    @Mock
+    private LogTimingStrategy mockLogTimingStrategy;
     @Mock
     private AuditEntryBuilderFactory mockAuditEntryBuilderFactory;
+    @Mock
+    private BatchStatement mockBatchStatement;
+    @Mock
+    private BatchQueryOptions mockBatchOptions;
+
+    private InetAddress clientAddress;
+    private InetSocketAddress clientSocketAddress;
 
     private AuditAdapter auditAdapter;
 
@@ -115,9 +131,13 @@ public class TestAuditAdapter
     }
 
     @Before
-    public void before()
+    public void before() throws UnknownHostException
     {
-        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory);
+        clientAddress = InetAddress.getByName(CLIENT_IP);
+        clientSocketAddress = new InetSocketAddress(clientAddress, CLIENT_PORT);
+        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockLogTimingStrategy);
+        when(mockState.getUser()).thenReturn(mockUser);
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(true);
     }
 
     @After
@@ -135,6 +155,12 @@ public class TestAuditAdapter
     }
 
     @Test
+    public void testGetInstance()
+    {
+        assertThat(AuditAdapter.getInstance()).isInstanceOf(AuditAdapter.class);
+    }
+
+    @Test
     public void testSetupDelegation()
     {
         auditAdapter.setup();
@@ -144,382 +170,253 @@ public class TestAuditAdapter
     @Test
     public void testProcessRegular()
     {
-        String expectedStatement = "select * from ks.tbl";
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
-        String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
+        // Given
+        when(mockUser.getName()).thenReturn(USER);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
 
-        when(mockUser.getName()).thenReturn(expectedUser);
-        when(mockState.getUser()).thenReturn(mockUser);
-        when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
+        AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
+        when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(STATEMENT), eq(mockState))).thenReturn(entryBuilder);
 
-        when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(expectedStatement), eq(mockState)))
-        .thenReturn(AuditEntry.newBuilder()
-                              .permissions(ImmutableSet.of(Permission.SELECT))
-                              .resource(DataResource.table("ks", "tbl")));
+        // When
+        auditAdapter.auditRegular(STATEMENT, mockState, Status.ATTEMPT, TIMESTAMP);
 
-        auditAdapter.auditRegular(expectedStatement, mockState, expectedStatus, TIMESTAMP);
-
-        // Capture and perform validation
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
-
-        AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
-        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedStatement);
-        assertThat(captured.getUser()).isEqualTo(expectedUser);
-        assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
-        assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
-        assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "tbl"));
-        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
+        // Then
+        AuditEntry entry = getAuditEntry();
+        assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getOperation().getOperationString()).isEqualTo(STATEMENT);
+        assertThat(entry.getUser()).isEqualTo(USER);
+        assertThat(entry.getStatus()).isEqualTo(Status.ATTEMPT);
+        assertThat(entry.getBatchId()).isEmpty();
+        assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
+        assertThat(entry.getResource()).isEqualTo(RESOURCE);
+        assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @Test
-    public void testProcessRegularFailure()
+    public void testProcessRegularNoLogTimeStrategy()
     {
-        String expectedStatement = "select * from ks.tbl";
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
-        String expectedUser = "user";
-        Status expectedStatus = Status.FAILED;
-
-        when(mockUser.getName()).thenReturn(expectedUser);
-        when(mockState.getUser()).thenReturn(mockUser);
-        when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
-
-        when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(expectedStatement), eq(mockState)))
-        .thenReturn(AuditEntry.newBuilder()
-                              .permissions(ImmutableSet.of(Permission.SELECT))
-                              .resource(DataResource.table("ks", "tbl")));
-
-        auditAdapter.auditRegular(expectedStatement, mockState, expectedStatus, TIMESTAMP);
-
-        // Capture and perform validation
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
-
-        AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
-        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedStatement);
-        assertThat(captured.getUser()).isEqualTo(expectedUser);
-        assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
-        assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
-        assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.SELECT));
-        assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "tbl"));
-        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
+        // Given
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
+        // When
+        auditAdapter.auditRegular(STATEMENT, mockState, Status.ATTEMPT, TIMESTAMP);
+        // Then
+        verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
 
     @Test
-    public void testProcessPreparedStatementSuccessful()
+    public void testProcessPrepared()
     {
-        String preparedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?";
+        // Given
+        String expectedQuery = PREPARED_STATEMENT + "['id1', 'val1']";
+        List<ByteBuffer> values = createValues("id1", "val1");
+        ImmutableList<ColumnSpecification> columns = createTextColumns("c1", "c2");
 
-        String expectedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?['text', 'text']";
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
-        String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
-
-        List<ByteBuffer> values = createValues("text", "text");
-        ImmutableList<ColumnSpecification> columns = createTextColumns("text", "text");
-
-        when(mockUser.getName()).thenReturn(expectedUser);
-        when(mockState.getUser()).thenReturn(mockUser);
-        when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
+        when(mockUser.getName()).thenReturn(USER);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
         when(mockOptions.getValues()).thenReturn(values);
         when(mockOptions.getColumnSpecifications()).thenReturn(columns);
         when(mockOptions.hasColumnSpecifications()).thenReturn(true);
 
-        when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(mockStatement)))
-        .thenReturn(AuditEntry.newBuilder()
-                              .permissions(ImmutableSet.of(Permission.SELECT))
-                              .resource(DataResource.table("ks", "cf")));
+        AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
+        when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(mockStatement))).thenReturn(entryBuilder);
 
-        auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus, TIMESTAMP);
+        auditAdapter.auditPrepared(PREPARED_STATEMENT, mockStatement, mockState, mockOptions, Status.ATTEMPT, TIMESTAMP);
 
-        // Capture and perform validation
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
+        // Then
         verifyNoMoreInteractions(mockOptions);
 
-        AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
-        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedQuery);
-        assertThat(captured.getUser()).isEqualTo(expectedUser);
-        assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
-        assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
-        assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.SELECT));
-        assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "cf"));
-        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
+        AuditEntry entry = getAuditEntry();
+        assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedQuery);
+        assertThat(entry.getUser()).isEqualTo(USER);
+        assertThat(entry.getStatus()).isEqualByComparingTo(Status.ATTEMPT);
+        assertThat(entry.getBatchId()).isEmpty();
+        assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
+        assertThat(entry.getResource()).isEqualTo(RESOURCE);
+        assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @Test
-    public void testProcessPreparedStatementFailure()
+    public void testProcessPreparedNoLogTimeStrategy()
     {
-        String preparedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?";
-
-        String expectedQuery = "select value1, value2 from ks.cf where pk = ? and ck = ?['text', 'text']";
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
-        String expectedUser = "user";
-        Status expectedStatus = Status.FAILED;
-
-        List<ByteBuffer> values = createValues("text", "text");
-        ImmutableList<ColumnSpecification> columns = createTextColumns("text", "text");
-
-        when(mockUser.getName()).thenReturn(expectedUser);
-        when(mockState.getUser()).thenReturn(mockUser);
-        when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
-        when(mockOptions.getValues()).thenReturn(values);
-        when(mockOptions.getColumnSpecifications()).thenReturn(columns);
-        when(mockOptions.hasColumnSpecifications()).thenReturn(true);
-
-        when(mockAuditEntryBuilderFactory.createEntryBuilder(eq(mockStatement)))
-        .thenReturn(AuditEntry.newBuilder()
-                              .permissions(ImmutableSet.of(Permission.SELECT))
-                              .resource(DataResource.table("ks", "cf")));
-
-        auditAdapter.auditPrepared(preparedQuery, mockStatement, mockState, mockOptions, expectedStatus, TIMESTAMP);
-
-        // Capture and perform validation
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
-        verifyNoMoreInteractions(mockOptions);
-
-        AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedSocketAddress.getAddress());
-        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedQuery);
-        assertThat(captured.getUser()).isEqualTo(expectedUser);
-        assertThat(captured.getStatus()).isEqualByComparingTo(expectedStatus);
-        assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
-        assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.SELECT));
-        assertThat(captured.getResource()).isEqualTo(DataResource.table("ks", "cf"));
-        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
+        // Given
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
+        // When
+        auditAdapter.auditPrepared(PREPARED_STATEMENT, mockStatement, mockState, mockOptions, Status.ATTEMPT, TIMESTAMP);
+        // Then
+        verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testProcessBatchFailed()
+    public void testProcessBatchWithLogSummaryStrategy()
     {
-        BatchStatement mockBatchStatement = mock(BatchStatement.class);
-        BatchQueryOptions mockBatchOptions = mock(BatchQueryOptions.class);
+        // Given
+        when(mockLogTimingStrategy.shouldLogFailedBatchSummary()).thenReturn(true);
 
         UUID expectedBatchId = UUID.randomUUID();
-
         String expectedQuery = String.format("Apply batch failed: %s", expectedBatchId.toString());
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
-        String expectedUser = "user";
-        Status expectedStatus = Status.FAILED;
 
-        when(mockUser.getName()).thenReturn(expectedUser);
-        when(mockState.getUser()).thenReturn(mockUser);
-        when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
+        when(mockUser.getName()).thenReturn(USER);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
 
-        when(mockAuditEntryBuilderFactory.createBatchEntryBuilder())
-        .thenReturn(AuditEntry
-                    .newBuilder()
-                    .permissions(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT))
-                    .resource(DataResource.root()));
+        AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
+        when(mockAuditEntryBuilderFactory.createBatchEntryBuilder()).thenReturn(entryBuilder);
 
-        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus, TIMESTAMP);
+        // When
+        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, Status.FAILED, TIMESTAMP);
 
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
-
-        List<AuditEntry> entries = captor.getAllValues();
-
-        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress.getAddress());
-        assertThat(entries).extracting(AuditEntry::getUser).containsOnly(expectedUser);
-        assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
-        assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(expectedStatus);
-        assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsOnly(expectedQuery);
-        assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY, Permission.SELECT));
-        assertThat(entries).extracting(AuditEntry::getResource).containsOnly(DataResource.root());
-        assertThat(entries).extracting(AuditEntry::getTimestamp).containsOnly(TIMESTAMP);
+        // Then
+        AuditEntry entry = getAuditEntry();
+        assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getUser()).isEqualTo(USER);
+        assertThat(entry.getBatchId()).contains(expectedBatchId);
+        assertThat(entry.getStatus()).isEqualByComparingTo(Status.FAILED);
+        assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedQuery);
+        assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
+        assertThat(entry.getResource()).isEqualTo(RESOURCE);
+        assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void testProcessBatchRegularStatements()
     {
-        BatchStatement mockBatchStatement = mock(BatchStatement.class);
-        BatchQueryOptions mockBatchOptions = mock(BatchQueryOptions.class);
-
+        // Given
         UUID expectedBatchId = UUID.randomUUID();
-
         List<Object> expectedQueries = Arrays.asList("query1", "query2", "query3");
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
-        String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
 
         when(mockBatchOptions.getQueryOrIdList()).thenReturn(expectedQueries);
-        when(mockUser.getName()).thenReturn(expectedUser);
-        when(mockState.getUser()).thenReturn(mockUser);
-        when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
+        when(mockUser.getName()).thenReturn(USER);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
 
-        when(mockAuditEntryBuilderFactory.createBatchEntryBuilder())
-        .thenReturn(AuditEntry
-                    .newBuilder()
-                    .permissions(Sets.immutableEnumSet(Permission.MODIFY))
-                    .resource(DataResource.root()));
-        when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(String.class), any(ClientState.class)))
-        .thenAnswer(a -> a.getArgument(0));
+        AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
+        when(mockAuditEntryBuilderFactory.createBatchEntryBuilder()).thenReturn(entryBuilder);
 
-        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, expectedStatus, TIMESTAMP);
+        // When
+        auditAdapter.auditBatch(mockBatchStatement, Collections.emptyList(), expectedBatchId, mockState, mockBatchOptions, Status.ATTEMPT, TIMESTAMP);
 
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(3)).audit(captor.capture());
-
-        List<AuditEntry> entries = captor.getAllValues();
-
-        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress.getAddress());
-        assertThat(entries).extracting(AuditEntry::getUser).containsOnly(expectedUser);
+        // Then
+        List<AuditEntry> entries = getAuditEntries(3);
+        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(clientSocketAddress);
+        assertThat(entries).extracting(AuditEntry::getUser).containsOnly(USER);
         assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
-        assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(expectedStatus);
+        assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(Status.ATTEMPT);
         assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsExactly("query1", "query2", "query3");
-        assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY));
-        assertThat(entries).extracting(AuditEntry::getResource).containsOnly(DataResource.root());
+        assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(PERMISSIONS);
+        assertThat(entries).extracting(AuditEntry::getResource).containsOnly(RESOURCE);
         assertThat(entries).extracting(AuditEntry::getTimestamp).containsOnly(TIMESTAMP);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testProcessBatchPreparedStatements()
     {
-        ModificationStatement mockModifyStatement = mock(ModificationStatement.class);
-        BatchStatement mockBatchStatement = mock(BatchStatement.class);
-        BatchQueryOptions mockBatchOptions = mock(BatchQueryOptions.class);
-
-        UUID expectedBatchId = UUID.randomUUID();
-
-        InetSocketAddress expectedSocketAddress = spy(InetSocketAddress.createUnresolved("localhost", 0));
-        String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
-
-        String preparedQuery = "insert into ts.ks (id, value) values (?, ?)";
-        String expectedQuery = "insert into ts.ks (id, value) values (?, ?)['hello', 'world']";
-        MD5Digest id = MD5Digest.compute(preparedQuery);
-
+        // Given
+        String expectedQuery = PREPARED_STATEMENT + "['hello', 'world']";
         List<ByteBuffer> values = createValues("hello", "world");
-        ImmutableList<ColumnSpecification> columns = createTextColumns("hello", "world");
+        ImmutableList<ColumnSpecification> columns = createTextColumns("c1", "c2");
 
         when(mockBatchOptions.forStatement(0)).thenReturn(mockOptions);
         when(mockOptions.getValues()).thenReturn(values);
         when(mockOptions.getColumnSpecifications()).thenReturn(columns);
         when(mockOptions.hasColumnSpecifications()).thenReturn(true);
 
-        when(mockBatchStatement.getStatements()).thenReturn(Collections.singletonList(mockModifyStatement));
-        when(mockBatchOptions.getQueryOrIdList()).thenReturn(Collections.singletonList(id));
-        when(mockUser.getName()).thenReturn(expectedUser);
-        when(mockState.getUser()).thenReturn(mockUser);
-        when(mockState.getRemoteAddress()).thenReturn(expectedSocketAddress);
+        when(mockBatchStatement.getStatements()).thenReturn(singletonList(mock(ModificationStatement.class)));
+        when(mockBatchOptions.getQueryOrIdList()).thenReturn(singletonList(PREPARED_STATEMENT_ID));
+        when(mockUser.getName()).thenReturn(USER);
+        when(mockState.getRemoteAddress()).thenReturn(clientSocketAddress);
 
-        when(mockAuditEntryBuilderFactory.createBatchEntryBuilder())
-        .thenReturn(AuditEntry
-                    .newBuilder()
-                    .permissions(Sets.immutableEnumSet(Permission.MODIFY))
-                    .resource(DataResource.root()));
-        when(mockAuditEntryBuilderFactory.updateBatchEntryBuilder(any(AuditEntry.Builder.class), any(ModificationStatement.class)))
-        .thenAnswer(a -> a.getArgument(0));
+        AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(RESOURCE);
+        when(mockAuditEntryBuilderFactory.createBatchEntryBuilder()).thenReturn(entryBuilder);
 
-        auditAdapter.auditBatch(mockBatchStatement, Arrays.asList(preparedQuery), expectedBatchId, mockState, mockBatchOptions, expectedStatus, TIMESTAMP);
+        auditAdapter.auditBatch(mockBatchStatement, Arrays.asList(PREPARED_STATEMENT), BATCH_ID, mockState, mockBatchOptions, Status.ATTEMPT, TIMESTAMP);
 
-        // Begin, prepared statement, end
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
+        // Then
         verifyNoMoreInteractions(mockOptions);
+        AuditEntry entry = getAuditEntry();
+        assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getUser()).isEqualTo(USER);
+        assertThat(entry.getBatchId()).contains(BATCH_ID);
+        assertThat(entry.getStatus()).isEqualByComparingTo(Status.ATTEMPT);
+        assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedQuery);
+        assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
+        assertThat(entry.getResource()).isEqualTo(RESOURCE);
+        assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
+    }
 
-        List<AuditEntry> entries = captor.getAllValues();
-
-        assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(expectedSocketAddress.getAddress());
-        assertThat(entries).extracting(AuditEntry::getUser).containsOnly(expectedUser);
-        assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
-        assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(expectedStatus);
-        assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsExactly(expectedQuery);
-        assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(Sets.immutableEnumSet(Permission.MODIFY));
-        assertThat(entries).extracting(AuditEntry::getResource).containsOnly(DataResource.root());
-        assertThat(entries).extracting(AuditEntry::getTimestamp).containsOnly(TIMESTAMP);
+    @Test
+    public void testProcessBatchNoLogTimeStrategy()
+    {
+        // Given
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
+        // When
+        auditAdapter.auditBatch(mock(BatchStatement.class), Collections.emptyList(), mock(UUID.class), mockState, mock(BatchQueryOptions.class), Status.ATTEMPT, TIMESTAMP);
+        // Then
+        verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
 
     @Test
     public void testProcessAuth()
     {
-        InetAddress expectedAddress = mock(InetAddress.class);
-        String expectedUser = "user";
+        // Given
         String expectedOperation = "Authentication attempt";
-        Status expectedStatus = Status.ATTEMPT;
+        ConnectionResource resource = ConnectionResource.root();
 
-        when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder())
-        .thenReturn(AuditEntry.newBuilder()
-                              .permissions(ImmutableSet.of(Permission.EXECUTE))
-                              .resource(ConnectionResource.root()));
+        AuditEntry.Builder auditBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(resource);
+        when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder()).thenReturn(auditBuilder);
 
-        auditAdapter.auditAuth(expectedUser, expectedAddress, expectedStatus, TIMESTAMP);
+        // When
+        auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP);
 
-        // Capture and perform validation
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
-
-        AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedAddress);
-        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(captured.getUser()).isEqualTo(expectedUser);
-        assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedOperation);
-        assertThat(captured.getStatus()).isEqualTo(expectedStatus);
-        assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
-        assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.EXECUTE));
-        assertThat(captured.getResource()).isEqualTo(ConnectionResource.root());
-        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
+        // Then
+        AuditEntry entry = getAuditEntry();
+        assertThat(entry.getClientAddress()).isEqualTo(new InetSocketAddress(clientAddress, CLIENT_AUTH_PORT));
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getUser()).isEqualTo(USER);
+        assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedOperation);
+        assertThat(entry.getStatus()).isEqualTo(Status.ATTEMPT);
+        assertThat(entry.getBatchId()).isEmpty();
+        assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
+        assertThat(entry.getResource()).isEqualTo(resource);
+        assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
     @Test
-    public void testProcessAuthFailed()
+    public void testProcessAuthNoLogTimeStrategy()
     {
-        InetAddress expectedAddress = mock(InetAddress.class);
-        String expectedUser = "user";
-        String expectedOperation = "Authentication failed";
-        Status expectedStatus = Status.FAILED;
-
-        when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder())
-        .thenReturn(AuditEntry.newBuilder()
-                              .permissions(ImmutableSet.of(Permission.EXECUTE))
-                              .resource(ConnectionResource.root()));
-
-        auditAdapter.auditAuth(expectedUser, expectedAddress, expectedStatus, TIMESTAMP);
-
-        // Capture and perform validation
-        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
-        verify(mockAuditor, times(1)).audit(captor.capture());
-
-        AuditEntry captured = captor.getValue();
-        assertThat(captured.getClientAddress()).isEqualTo(expectedAddress);
-        assertThat(captured.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(captured.getUser()).isEqualTo(expectedUser);
-        assertThat(captured.getOperation().getOperationString()).isEqualTo(expectedOperation);
-        assertThat(captured.getStatus()).isEqualTo(expectedStatus);
-        assertThat(captured.getBatchId()).isEqualTo(Optional.empty());
-        assertThat(captured.getPermissions()).isEqualTo(Sets.immutableEnumSet(Permission.EXECUTE));
-        assertThat(captured.getResource()).isEqualTo(ConnectionResource.root());
-        assertThat(captured.getTimestamp()).isEqualTo(TIMESTAMP);
+        // Given
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
+        // When
+        auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP);
+        // Then
+        verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
 
     @Test
     public void testProcessAuthException()
     {
-        InetAddress expectedAddress = mock(InetAddress.class);
-        String expectedUser = "user";
-        Status expectedStatus = Status.ATTEMPT;
-
-        when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder())
-        .thenReturn(AuditEntry.newBuilder()
-                              .permissions(ImmutableSet.of(Permission.EXECUTE))
-                              .resource(ConnectionResource.root()));
+        AuditEntry.Builder entryBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(ConnectionResource.root());
+        when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder()).thenReturn(entryBuilder);
 
         doThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 3, 4, true)).when(mockAuditor).audit(any(AuditEntry.class));
 
         assertThatExceptionOfType(AuthenticationException.class)
-        .isThrownBy(() -> auditAdapter.auditAuth(expectedUser, expectedAddress, expectedStatus, TIMESTAMP));
+        .isThrownBy(() -> auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP));
+    }
+
+    @Test
+    public void testStatusToAuthenticationOperation()
+    {
+        // Given
+        Status mockStatus = mock(Status.class);
+        when(mockStatus.getDisplayName()).thenReturn("OK");
+        // When
+        SimpleAuditOperation operation = AuditAdapter.statusToAuthenticationOperation(mockStatus);
+        // Then
+        assertThat(operation.getOperationString()).isEqualTo("Authentication OK");
     }
 
     private ImmutableList<ColumnSpecification> createTextColumns(String... columns)
@@ -547,5 +444,21 @@ public class TestAuditAdapter
         }
 
         return rawValues;
+    }
+
+    private AuditEntry getAuditEntry()
+    {
+        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
+        verify(mockAuditor, times(1)).audit(captor.capture());
+
+        return captor.getValue();
+    }
+
+    private List<AuditEntry> getAuditEntries(int expectedNumberOfEntries)
+    {
+        ArgumentCaptor<AuditEntry> captor = ArgumentCaptor.forClass(AuditEntry.class);
+        verify(mockAuditor, times(expectedNumberOfEntries)).audit(captor.capture());
+
+        return captor.getAllValues();
     }
 }

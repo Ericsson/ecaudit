@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.common.record;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public interface AuditRecord
 {
     Long getTimestamp();
 
-    InetAddress getClientAddress();
+    InetSocketAddress getClientAddress();
 
     InetAddress getCoordinatorAddress();
 

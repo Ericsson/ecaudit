@@ -28,6 +28,17 @@
 #    - username2
 
 
+# log_timing_strategy - specify WHEN ecAudit should write log entries. The two options are:
+#
+# pre_logging  -> Will log an ATTEMPT before passing the operation to the QueryProcessor.
+#                 In the event of failure a matching FAILED message will also be logged.
+#                 This is the default value.
+#
+# post_logging -> One message will always be logged after the operation has completed. That message will indicate
+#                 whether operation SUCCEEDED or FAILED. This is how logging is implemented in C* 4.0.
+log_timing_strategy: post_logging
+
+
 # Audit logger backend, implementing the AuditLogger interface
 #
 # Out of the box, ecAudit provides the following logger backends
@@ -37,8 +48,8 @@
 # Slf4jAuditLogger: Configure you logback.xml to specify location of log files and rotation policy. The following
 # optional parameters are accepted:
 # - log_format   - Format of the audit record sent to SLF4J. Fields can be configured with bash-style parameter
-#                  substitution. Supported parameters are ${CLIENT}, ${USER}, ${BATCH_ID}, ${STATUS}, ${OPERATION},
-#                  and ${TIMESTAMP}.
+#                  substitution. Supported parameters are ${CLIENT_IP}, ${CLIENT_PORT}, ${COORDINATOR_IP}, ${USER},
+#                  ${BATCH_ID}, ${STATUS}, ${OPERATION}, and ${TIMESTAMP}.
 # - time_format  - Format of ${TIMESTAMP} field as defined by the Java DateTimeFormatter. By default this field will be
 #                  unformatted and get printed as milliseconds since epoch of 1970-01-01Z.
 # - time_zone    - Time zone of formatted ${TIMESTAMP}, using system default if unspecified.
@@ -54,6 +65,6 @@
 logger_backend:
     - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
       parameters:
-#      - log_format: "client:'${CLIENT}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'"
+#      - log_format: "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'"
 #        time_format:
 #        time_zone:

@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.PrintStream;
+import java.net.InetSocketAddress;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 
@@ -51,7 +52,9 @@ class LogPrinter
 
                 StringBuilder builder = new StringBuilder();
                 builder.append(auditEntry.getTimestamp()).append('|');
-                builder.append(auditEntry.getClientAddress().getHostAddress()).append('|');
+                builder.append(auditEntry.getClientAddress().getAddress().getHostAddress())
+                       .append(portIfPresent(auditEntry.getClientAddress()))
+                       .append('|');
                 builder.append(auditEntry.getCoordinatorAddress().getHostAddress()).append('|');
                 builder.append(auditEntry.getUser()).append('|');
                 builder.append(auditEntry.getStatus()).append('|');
@@ -83,6 +86,19 @@ class LogPrinter
                 Thread.currentThread().interrupt();
                 return;
             }
+        }
+    }
+
+    private String portIfPresent(InetSocketAddress address)
+    {
+        int clientPort = address.getPort();
+        if (clientPort > 0)
+        {
+            return ":" + clientPort;
+        }
+        else
+        {
+            return "";
         }
     }
 

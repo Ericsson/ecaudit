@@ -107,7 +107,9 @@ public class AuditQueryHandler implements QueryHandler
         auditAdapter.auditRegular(query, state.getClientState(), Status.ATTEMPT, timestamp);
         try
         {
-            return wrappedQueryHandler.process(query, state, options, customPayload, queryStartNanoTime);
+            ResultMessage result = wrappedQueryHandler.process(query, state, options, customPayload, queryStartNanoTime);
+            auditAdapter.auditRegular(query, state.getClientState(), Status.SUCCEEDED, timestamp);
+            return result;
         }
         catch (RuntimeException e)
         {
@@ -149,7 +151,9 @@ public class AuditQueryHandler implements QueryHandler
         auditAdapter.auditPrepared(rawCqlStatement, statement, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try
         {
-            return wrappedQueryHandler.processPrepared(statement, state, options, customPayload, queryStartNanoTime);
+            ResultMessage result = wrappedQueryHandler.processPrepared(statement, state, options, customPayload, queryStartNanoTime);
+            auditAdapter.auditPrepared(rawCqlStatement, statement, state.getClientState(), options, Status.SUCCEEDED, timestamp);
+            return result;
         }
         catch (RuntimeException e)
         {
@@ -174,8 +178,8 @@ public class AuditQueryHandler implements QueryHandler
         }
     }
 
-    public ResultMessage processBatchWithAudit(BatchStatement statement, List<String> rawCqlStatements,
-                                               QueryState state, BatchQueryOptions options, Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
+    private ResultMessage processBatchWithAudit(BatchStatement statement, List<String> rawCqlStatements,
+                                                QueryState state, BatchQueryOptions options, Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
     throws RequestExecutionException, RequestValidationException
     {
         UUID uuid = UUID.randomUUID();
@@ -183,7 +187,9 @@ public class AuditQueryHandler implements QueryHandler
         auditAdapter.auditBatch(statement, rawCqlStatements, uuid, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try
         {
-            return wrappedQueryHandler.processBatch(statement, state, options, customPayload, queryStartNanoTime);
+            ResultMessage result = wrappedQueryHandler.processBatch(statement, state, options, customPayload, queryStartNanoTime);
+            auditAdapter.auditBatch(statement, rawCqlStatements, uuid, state.getClientState(), options, Status.SUCCEEDED, timestamp);
+            return result;
         }
         catch (RuntimeException e)
         {

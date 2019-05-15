@@ -213,7 +213,8 @@ public class ITVerifyChronicleBackend
         assertThat(record.getOperation().getOperationString()).isEqualTo(operation);
         assertThat(record.getUser()).isEqualTo(username);
         assertThat(record.getStatus()).isEqualTo(Status.ATTEMPT);
-        assertThat(record.getClientAddress()).isEqualTo(InetAddress.getLoopbackAddress());
+        assertThat(record.getClientAddress().getAddress()).isEqualTo(InetAddress.getLoopbackAddress());
+        assertThat(record.getClientAddress().getPort()).isGreaterThan(0);
         assertThat(record.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(record.getTimestamp()).isLessThanOrEqualTo(System.currentTimeMillis());
         assertThat(record.getTimestamp()).isGreaterThan(System.currentTimeMillis() - 30_000);
