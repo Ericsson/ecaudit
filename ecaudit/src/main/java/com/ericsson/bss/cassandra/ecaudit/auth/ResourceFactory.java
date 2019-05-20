@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +40,7 @@ final class ResourceFactory
     private static final String FUNCTIONS_ROOT = "functions";
 
     private static final String SEPARATOR = "/";
-    private static final String WORD_REGEX = "\\w+";
+    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("\\w+");
 
     static Set<IResource> toResourceSet(String... resourceNames)
     {
@@ -88,11 +89,11 @@ final class ResourceFactory
     {
         if (!dataResource.isRootLevel())
         {
-            if (!dataResource.getKeyspace().matches(WORD_REGEX))
+            if (isInvalidName(dataResource.getKeyspace()))
             {
                 throw new IllegalArgumentException(String.format("\"%s\" is not a valid keyspace name", dataResource.getKeyspace()));
             }
-            if (dataResource.isTableLevel() && !dataResource.getTable().matches(WORD_REGEX))
+            if (dataResource.isTableLevel() && isInvalidName(dataResource.getTable()))
             {
                 throw new IllegalArgumentException(String.format("\"%s\" is not a valid table name", dataResource.getTable()));
             }
@@ -101,7 +102,7 @@ final class ResourceFactory
 
     private static void validateRoleResourceName(RoleResource roleResource)
     {
-        if (roleResource.hasParent() && !roleResource.getRoleName().matches(WORD_REGEX))
+        if (roleResource.hasParent() && isInvalidName(roleResource.getRoleName()))
         {
             throw new IllegalArgumentException(String.format("\"%s\" is not a valid role name", roleResource.getRoleName()));
         }
@@ -109,7 +110,7 @@ final class ResourceFactory
 
     private static void validateFunctionResourceName(FunctionResource functionResource)
     {
-        if (functionResource.hasParent() && !functionResource.getKeyspace().matches(WORD_REGEX))
+        if (functionResource.hasParent() && isInvalidName(functionResource.getKeyspace()))
         {
             throw new IllegalArgumentException(String.format("\"%s\" is not a valid keyspace name", functionResource.getKeyspace()));
         }
@@ -118,5 +119,9 @@ final class ResourceFactory
     static String toPrintableName(IResource resource)
     {
         return "AUDIT WHITELIST ON " + resource.getName();
+    }
+
+    private static boolean isInvalidName(String name) {
+        return !VALID_NAME_PATTERN.matcher(name).matches();
     }
 }

@@ -95,7 +95,7 @@ public class AuditEntryBuilderFactory
     private static final Set<Permission> DROP_PERMISSIONS = ImmutableSet.of(Permission.DROP);
     private static final Set<Permission> DESCRIBE_PERMISSIONS = ImmutableSet.of(Permission.DESCRIBE);
     private static final Set<Permission> AUTHORIZE_PERMISSIONS = ImmutableSet.of(Permission.AUTHORIZE);
-    private static final String UNEXPECTED_BATCH_STATEMENT = "Unexpected BatchStatement when mapping singe query for audit";
+    private static final String UNEXPECTED_BATCH_STATEMENT = "Unexpected BatchStatement when mapping single query for audit";
 
     private final StatementResourceAdapter statementResourceAdapter = new StatementResourceAdapter();
 

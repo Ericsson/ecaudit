@@ -28,6 +28,7 @@
         <exclude name="ExcessiveImports" />
         <exclude name="AvoidCatchingGenericException" />
         <exclude name="DataClass" />
+        <exclude name="AvoidUncheckedExceptionsInSignatures" />
     </rule>
 
     <rule ref="category/java/bestpractices.xml">
