@@ -12,4 +12,4 @@ matrix:
   - name: "Integration tests"
     env: TEST_SUITE='test-compile license:check failsafe:integration-test failsafe:verify'
 script:
-  - mvn -P travis $TEST_SUITE -B
+  - mvn -P travis $TEST_SUITE -B -V
