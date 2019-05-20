@@ -50,6 +50,7 @@ public class DefaultAuditor implements Auditor
         this.auditMetrics = auditMetrics;
     }
 
+    @Override
     public void setup()
     {
         filter.setup();

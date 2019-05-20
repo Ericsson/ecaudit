@@ -23,6 +23,8 @@ import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 
+import static com.ericsson.bss.cassandra.ecaudit.auth.Exceptions.appendCause;
+
 class WhitelistOptionParser
 {
     private static final String ALL_OPERATIONS = "ALL";
@@ -69,7 +71,7 @@ class WhitelistOptionParser
         }
         catch (IllegalArgumentException e)
         {
-            throw new InvalidRequestException("Invalid whitelist option: " + e.getMessage());
+            throw appendCause(new InvalidRequestException("Invalid whitelist option: " + e.getMessage()), e);
         }
     }
 
@@ -91,7 +93,7 @@ class WhitelistOptionParser
         }
         catch (IllegalArgumentException e)
         {
-            throw new InvalidRequestException(String.format("Unable to parse whitelisted resource [%s]: %s", resourceName, e.getMessage()));
+            throw appendCause(new InvalidRequestException(String.format("Unable to parse whitelisted resource [%s]: %s", resourceName, e.getMessage())), e);
         }
     }
 }

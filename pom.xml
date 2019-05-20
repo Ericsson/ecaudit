@@ -82,6 +82,7 @@
         <org.eluder.coveralls.coveralls-maven-plugin.version>4.3.0</org.eluder.coveralls.coveralls-maven-plugin.version>
         <org.jacoco.jacoco-maven-plugin.version>0.8.2</org.jacoco.jacoco-maven-plugin.version>
         <org.pitest.pitest-maven.version>1.4.6</org.pitest.pitest-maven.version>
+        <org.apache.maven.plugins-maven-pmd-plugin.version>3.12.0</org.apache.maven.plugins-maven-pmd-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -253,6 +254,7 @@ limitations under the License.
                             <exclude>release.properties</exclude>
                             <exclude>**/*.cq4</exclude>
                             <exclude>**/directory-listing.cq4t</exclude>
+                            <exclude>pmd-rules.xml</exclude>
                         </excludes>
                     </configuration>
                 </plugin>
@@ -293,6 +295,18 @@ limitations under the License.
                         <useReleaseProfile>false</useReleaseProfile>
                         <releaseProfiles>release</releaseProfiles>
                         <goals>deploy</goals>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>${org.apache.maven.plugins-maven-pmd-plugin.version}</version>
+                    <configuration>
+                        <rulesets>
+                            <ruleset>${session.executionRootDirectory}/pmd-rules.xml</ruleset>
+                        </rulesets>
+                        <excludes>
+                            <exclude>com/ericsson/bss/cassandra/ecaudit/auth/cache/</exclude>
+                        </excludes>
                     </configuration>
                 </plugin>
             </plugins>

@@ -43,6 +43,10 @@ import org.apache.cassandra.db.view.View;
 
 class StatementResourceAdapter
 {
+
+    private static final String FAILED_TO_RESOLVE_RESOURCE = "Failed to resolve resource";
+    public static final String FUNCTION_NAME = "functionName";
+
     /**
      * Extract the {@link RoleResource} from the {@link AuthenticationStatement}.
      * <p>
@@ -60,7 +64,7 @@ class StatementResourceAdapter
         }
         catch (IllegalAccessException e)
         {
-            throw new CassandraAuditException("Failed to resolve resource", e);
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_RESOURCE, e);
         }
     }
 
@@ -72,7 +76,7 @@ class StatementResourceAdapter
         }
         catch (IllegalAccessException e)
         {
-            throw new CassandraAuditException("Failed to resolve resource", e);
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_RESOURCE, e);
         }
     }
 
@@ -89,7 +93,7 @@ class StatementResourceAdapter
         }
         catch (IllegalAccessException e)
         {
-            throw new CassandraAuditException("Failed to resolve resource", e);
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_RESOURCE, e);
         }
     }
 
@@ -102,7 +106,7 @@ class StatementResourceAdapter
         }
         catch (IllegalAccessException e)
         {
-            throw new CassandraAuditException("Failed to resolve resource", e);
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_RESOURCE, e);
         }
     }
 
@@ -149,7 +153,7 @@ class StatementResourceAdapter
     {
         try
         {
-            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, "functionName", true);
+            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, FUNCTION_NAME, true);
             return FunctionResource.keyspace(functionName.keyspace);
         }
         catch (IllegalAccessException e)
@@ -162,7 +166,7 @@ class StatementResourceAdapter
     {
         try
         {
-            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, "functionName", true);
+            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, FUNCTION_NAME, true);
             @SuppressWarnings("unchecked")
             List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "argRawTypes", true);
             return FunctionResource.functionFromCql(functionName.keyspace, functionName.name, argRawTypes);
@@ -177,7 +181,7 @@ class StatementResourceAdapter
     {
         try
         {
-            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, "functionName", true);
+            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, FUNCTION_NAME, true);
             return FunctionResource.keyspace(functionName.keyspace);
         }
         catch (IllegalAccessException e)
@@ -190,7 +194,7 @@ class StatementResourceAdapter
     {
         try
         {
-            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, "functionName", true);
+            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, FUNCTION_NAME, true);
             @SuppressWarnings("unchecked")
             List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "argRawTypes", true);
             return FunctionResource.functionFromCql(functionName.keyspace, functionName.name, argRawTypes);

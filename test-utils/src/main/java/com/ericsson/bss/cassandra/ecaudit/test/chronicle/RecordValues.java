@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
+@SuppressWarnings("PMD")
 public class RecordValues
 {
     private short version = 0;
