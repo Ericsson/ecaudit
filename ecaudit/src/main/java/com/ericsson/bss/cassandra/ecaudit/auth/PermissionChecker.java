@@ -29,11 +29,10 @@ import org.apache.cassandra.exceptions.UnauthorizedException;
 
 class PermissionChecker
 {
-    private IAuthorizer authorizer;
+    private IAuthorizer authorizer; // lazy initialization
 
     PermissionChecker()
     {
-        this.authorizer = null;
     }
 
     PermissionChecker(IAuthorizer authorizer)
@@ -68,14 +67,16 @@ class PermissionChecker
             return;
         }
 
-        if (isChangingPasswordOfOtherRole(performer, role, options) || isChangingRestrictedSettings(options))
+        if (isPermissionRequired(performer, role, options) && !hasPermissionToAlterRole(performer, role))
         {
-            if (!hasPermissionToAlterRole(performer, role))
-            {
-                throw new UnauthorizedException(String.format("User %s is not authorized to alter role %s",
-                                                              performer.getName(), role.getRoleName()));
-            }
+            throw new UnauthorizedException(String.format("User %s is not authorized to alter role %s",
+                                                          performer.getName(), role.getRoleName()));
         }
+    }
+
+    private boolean isPermissionRequired(AuthenticatedUser performer, RoleResource role, RoleOptions options)
+    {
+        return isChangingPasswordOfOtherRole(performer, role, options) || isChangingRestrictedSettings(options);
     }
 
     private boolean isChangingPasswordOfOtherRole(AuthenticatedUser performer, RoleResource role, RoleOptions options)

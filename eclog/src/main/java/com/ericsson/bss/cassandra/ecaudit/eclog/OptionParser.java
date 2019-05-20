@@ -44,7 +44,7 @@ class OptionParser
     private static final String HELP_OPTION_SHORT = "h";
     private static final String HELP_OPTION = "help";
 
-    ToolOptions parse(String[] argv) throws ParseException
+    ToolOptions parse(String... argv) throws ParseException
     {
         CommandLine cmd = new DefaultParser().parse(getCmdLineOptions(), argv, false);
 
@@ -88,7 +88,7 @@ class OptionParser
             }
             catch (NumberFormatException e)
             {
-                throw new ParseException("Option '" + option + "' is used with an invalid value '" + cmd.getOptionValue(option) + "' - specify a number");
+                throw new ParseException("Option '" + option + "' is used with an invalid value '" + cmd.getOptionValue(option) + "' - specify a number"); // NOPMD
             }
         }
         else
@@ -107,7 +107,7 @@ class OptionParser
             }
             catch (IllegalArgumentException e)
             {
-                throw new ParseException("Unrecognized roll cycle '" + cmd.getOptionValue(ROLL_CYCLE_OPTION) + "' - valid options are " + Arrays.asList(RollCycles.values()));
+                throw new ParseException("Unrecognized roll cycle '" + cmd.getOptionValue(ROLL_CYCLE_OPTION) + "' - valid options are " + Arrays.asList(RollCycles.values())); // NOPMD
             }
         }
         else

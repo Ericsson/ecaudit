@@ -56,8 +56,8 @@ public class QueueReader
         }
         catch (IllegalArgumentException e)
         {
-            System.err.println(e.getMessage());
-            System.exit(2);
+            System.err.println(e.getMessage()); // NOPMD
+            System.exit(2); // NOPMD
             return null;
         }
     }
@@ -108,7 +108,7 @@ public class QueueReader
     {
         maybeReadNext();
         AuditRecord entry = nextRecord;
-        nextRecord = null;
+        nextRecord = null; // NOPMD
         return entry;
     }
 }

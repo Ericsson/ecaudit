@@ -40,6 +40,8 @@ import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MD5Digest;
 
+import static com.ericsson.bss.cassandra.ecaudit.auth.Exceptions.appendCause;
+
 /**
  * This class will be responsible for populating {@link AuditEntry} instance and passing that to {@link Auditor} instance
  */
@@ -201,7 +203,7 @@ public class AuditAdapter
             }
             catch (RequestExecutionException e)
             {
-                throw new AuthenticationException(e.toString());
+                throw appendCause(new AuthenticationException(e.toString()), e);
             }
         }
     }
