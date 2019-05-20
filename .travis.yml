@@ -3,15 +3,14 @@ jdk: oraclejdk8
 cache:
   directories:
   - $HOME/.m2
+install: true
 matrix:
   include:
-  - name: "Style check"
-    env: TEST_SUITE='pmd:pmd pmd:cpd pmd:check pmd:cpd-check -Dpmd.printFailingErrors'
-  - name: "Javadoc"
-    env: TEST_SUITE='javadoc:jar'
+  - name: "Code Analysis"
+    env: TEST_SUITE='install pmd:check pmd:cpd-check license:check javadoc:jar -DskipTests=true'
   - name: "Unit tests"
     env: TEST_SUITE='test jacoco:report coveralls:report'
   - name: "Integration tests"
-    env: TEST_SUITE='test-compile license:check failsafe:integration-test failsafe:verify'
+    env: TEST_SUITE='test-compile failsafe:integration-test failsafe:verify'
 script:
   - mvn -P travis $TEST_SUITE -B -V

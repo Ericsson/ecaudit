@@ -29,6 +29,7 @@
         <exclude name="AvoidCatchingGenericException" />
         <exclude name="DataClass" />
         <exclude name="AvoidUncheckedExceptionsInSignatures" />
+        <exclude name="LoosePackageCoupling"/>
     </rule>
 
     <rule ref="category/java/bestpractices.xml">

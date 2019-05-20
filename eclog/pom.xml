@@ -27,6 +27,10 @@
 
     <name>Ericsson Cassandra Audit - Log Tool</name>
 
+    <properties>
+        <pmd-config-url>../pmd-rules.xml</pmd-config-url>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>

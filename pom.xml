@@ -37,6 +37,7 @@
     </licenses>
 
     <modules>
+        <!--<module>build-tools</module>-->
         <module>common</module>
         <module>ecaudit</module>
         <module>eclog</module>
@@ -54,6 +55,8 @@
 
         <cassandra.version>3.0.11</cassandra.version>
         <artifact.flavor.version>c3.0.11</artifact.flavor.version>
+
+        <pmd-config-url>pmd-rules.xml</pmd-config-url>
 
         <commons-cli.version>1.4</commons-cli.version>
         <chronicle-queue.version>4.16.5</chronicle-queue.version>
@@ -209,6 +212,20 @@
                     </configuration>
                 </plugin>
                 <plugin>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>${org.apache.maven.plugins-maven-pmd-plugin.version}</version>
+                    <configuration>
+                        <rulesets>
+                            <ruleset>${pmd-config-url}</ruleset>
+                        </rulesets>
+                        <printFailingErrors>true</printFailingErrors>
+                        <linkXRef>false</linkXRef>
+                        <excludes>
+                            <exclude>com/ericsson/bss/cassandra/ecaudit/auth/cache/</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
                     <version>${com.mycila.license-maven-plugin.version}</version>
@@ -254,7 +271,7 @@ limitations under the License.
                             <exclude>release.properties</exclude>
                             <exclude>**/*.cq4</exclude>
                             <exclude>**/directory-listing.cq4t</exclude>
-                            <exclude>pmd-rules.xml</exclude>
+                            <exclude>${pmd-config-url}</exclude>
                         </excludes>
                     </configuration>
                 </plugin>
@@ -297,18 +314,6 @@ limitations under the License.
                         <goals>deploy</goals>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <artifactId>maven-pmd-plugin</artifactId>
-                    <version>${org.apache.maven.plugins-maven-pmd-plugin.version}</version>
-                    <configuration>
-                        <rulesets>
-                            <ruleset>${session.executionRootDirectory}/pmd-rules.xml</ruleset>
-                        </rulesets>
-                        <excludes>
-                            <exclude>com/ericsson/bss/cassandra/ecaudit/auth/cache/</exclude>
-                        </excludes>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -338,13 +343,27 @@ limitations under the License.
             <build>
                 <plugins>
                     <plugin>
+                        <artifactId>maven-pmd-plugin</artifactId>
+                        <version>${org.apache.maven.plugins-maven-pmd-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>pmd-check</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                    <goal>cpd-check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>com.mycila</groupId>
                         <artifactId>license-maven-plugin</artifactId>
                         <version>${com.mycila.license-maven-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>license-check</id>
-                                <phase>verify</phase>
+                                <phase>compile</phase>
                                 <goals>
                                     <goal>check</goal>
                                 </goals>

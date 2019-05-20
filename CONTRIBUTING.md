@@ -86,22 +86,22 @@ ccm node1 cqlsh -u cassandra -p cassandra
 
 ## Useful commands
 
-To just compile, execute;
+To compile and do static code analysis, execute;
 ```bash
 mvn compile
 ```
 
-To compile and run unit tests; execute:
+To run unit tests; execute:
 ```bash
 mvn test
 ```
 
-To compile and run integration tests; execute:
+To run integration tests; execute:
 ```bash
 mvn test-compile failsafe:integration-test failsafe:verify
 ```
 
-To compile, run unit tests, integration tests and license checks; execute:
+To run unit tests and integration tests; execute:
 ```bash
 mvn verify
 ```
