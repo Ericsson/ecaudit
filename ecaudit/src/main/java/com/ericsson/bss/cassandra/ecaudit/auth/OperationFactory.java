@@ -21,8 +21,13 @@ import java.util.stream.Collectors;
 
 import org.apache.cassandra.auth.Permission;
 
-class OperationFactory
+final class OperationFactory
 {
+    private OperationFactory()
+    {
+        // Utility class
+    }
+
     static Set<Permission> toOperationSet(Set<String> permissionNames)
     {
         return permissionNames

@@ -19,8 +19,11 @@ import org.junit.Test;
 
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
+import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 public class TestExceptions
 {
@@ -84,5 +87,18 @@ public class TestExceptions
         assertThat(actualCause).isSameAs(expectedException);
         assertThat(actualCause.getSuppressed()).contains(exception);
         assertThat(exception.getSuppressed()).isEmpty();
+    }
+
+    @Test
+    public void testAppendCause()
+    {
+        // Given
+        IllegalArgumentException ex = new IllegalArgumentException("Ex");
+        Throwable cause = mock(Throwable.class);
+        // When
+        IllegalArgumentException result = Exceptions.appendCause(ex, cause);
+        // Then
+        assertThat(result).isSameAs(ex);
+        assertThat(result.getCause()).isSameAs(cause);
     }
 }

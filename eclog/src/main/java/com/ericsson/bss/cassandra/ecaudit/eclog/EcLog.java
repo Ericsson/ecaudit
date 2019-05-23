@@ -23,8 +23,13 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.onoes.ExceptionHandler;
 import net.openhft.chronicle.core.onoes.ThreadLocalisedExceptionHandler;
 
-public class EcLog
+public final class EcLog
 {
+    private EcLog()
+    {
+        // Main class
+    }
+
     public static void main(String[] argv)
     {
         ToolOptions toolOptions = getToolOptions(argv);
@@ -37,7 +42,7 @@ public class EcLog
         logPrinter.print(queueReader);
     }
 
-    private static ToolOptions getToolOptions(String[] argv)
+    private static ToolOptions getToolOptions(String... argv)
     {
         return getToolOptions(argv, new OptionParser(), System::exit);
     }
@@ -51,7 +56,7 @@ public class EcLog
         }
         catch (ParseException e)
         {
-            System.err.println(e.getMessage());
+            System.err.println(e.getMessage()); // NOPMD
             optionParser.printUsage();
             exiter.accept(1);
             return null;

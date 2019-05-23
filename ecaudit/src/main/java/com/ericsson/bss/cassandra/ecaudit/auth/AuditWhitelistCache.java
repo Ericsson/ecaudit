@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
+
 import com.ericsson.bss.cassandra.ecaudit.auth.cache.AuthCache;
 import com.ericsson.bss.cassandra.ecaudit.auth.cache.DescriptorBridge;
 import org.apache.cassandra.auth.IResource;
@@ -71,7 +73,7 @@ public class AuditWhitelistCache extends AuthCache<RoleResource, Map<IResource, 
         }
         catch (ExecutionException e)
         {
-            throw new RuntimeException(e);
+            throw new UncheckedExecutionException(e);
         }
     }
 }

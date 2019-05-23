@@ -1,4 +1,14 @@
-# Contribute
+# Contributing to ecAudit
+
+We're really glad that you want to contribute to ecAudit!
+
+All kinds of improvements are welcomed.
+Be it bug fixes, improved automation, new features, better documentation or new tests cases.
+We're accepting contributions as Pull Requests on GitHub.
+But before you dig into the code, consider to create a ticket on the [issue tracker](https://github.com/Ericsson/ecaudit/issues)
+and discuss your improvement with the project maintainers.
+
+Below you'll find a few things to be aware of when you're working with this project.
 
 
 ## Flavours
@@ -10,16 +20,27 @@ on to more resent release branches (if any) and then finally into the master bra
 
 This way feature compatibility will be maintained on the different flavours of ecAudit.
 
-At the moment the oldest maintained release branch is ```release/c3.0```
+At the moment the oldest maintained release branch is ```release/c3.0.11```
+which is building with Cassandra 3.0.11 specifically.
+Then comes ```release/3.0```
 which is tracking the latest release of Cassandra 3.0.x.
 The ```master``` branch is tracking the latest release of Cassandra 3.11.x.
 
+Pull Requests with new features should typically target ```release/3.0.11```.
+Merge order is then ```PR``` -> ```release/3.0.11``` -> ```release/3.0``` -> ```master```
 
-## Code Style
 
-Code style settings are included in the repository for Intellij IDEA.
-They should be picked up automatically when you import the Maven project at the root of the repository.
-The intention is to use the same settings as those of Apache Cassandra.
+## Design Environment
+
+With Intellij IDEA you'll get a good setup, more or less, out of the box.
+From a fresh clone of the repository, navigate to the project root and do ```idea .&```
+This way Intellij will pick up some of the project settings which are included in git repository.
+The rest will be generated as need by Intellij.
+
+It is of course possible to setup the project with other IDEs as well,
+but you'll have to figure it out on your own.
+
+In general we're adopting the same code style and project settings as Apache Cassandra itself.
 
 
 ## Build & Test
@@ -28,13 +49,17 @@ If you're looking to contribute to ecAudit you should sign up on [Travis](https:
 and enable builds and reports on your own fork of ecAudit.
 This allow you to verify your patch before you create a pull request.
 
-You can also execute Mutation Tests on your local machine based on the [Pitest](http://pitest.org/) framework.
-To run them, execute:
-```bash
-mvn clean compile test org.pitest:pitest-maven:mutationCoverage
-```
+The project is using Maven for build, test and deployment.
+The repository is divided in a few different Maven modules that make out the ecAudit plug-in and tools.
+Modules named ```integration-test-*``` contain integration tests which are executed with the ```maven-failsafe-plugin```.
 
-The report will be available in the ```target/pit-reports/``` directory.
+We're using unit tests, integration tests and mutation tests to make sure that we're testing the right behavior of ecAudit.
+On top of this we verify with PMD to get a consistent, maintainable and predictable code base.
+We're only using Javadoc sparsely since ecAudit don't have a public Java API.
+But in those cases where Javadoc is used, it should be valid and complete.
+The build cycle is also verifying that all source files have a valid license header.
+
+At the end of this document you'll find a shortlist of useful commands to trigger the different test suites on your local machine. 
 
 
 ## CCM
@@ -56,4 +81,34 @@ Now you can operate your ccm cluster as always and try out ecAudit.
 Remember to provide the standard credentials when you login:
 ```bash
 ccm node1 cqlsh -u cassandra -p cassandra
+```
+
+
+## Useful commands
+
+To compile and do static code analysis, execute;
+```bash
+mvn compile
+```
+
+To run unit tests; execute:
+```bash
+mvn test
+```
+
+To run integration tests; execute:
+```bash
+mvn test-compile failsafe:integration-test failsafe:verify
+```
+
+To run unit tests and integration tests; execute:
+```bash
+mvn verify
+```
+
+You can also execute Mutation Tests on your local machine based on the [Pitest](http://pitest.org/) framework.
+The report will be available in the ```target/pit-reports/``` directory of each module.
+To run them; execute:
+```bash
+mvn compile test org.pitest:pitest-maven:mutationCoverage
 ```

@@ -87,7 +87,8 @@ The most notable being:
   This is being addressed in [#77](https://github.com/Ericsson/ecaudit/issues/77).
 
 * ecAudit will log values for prepared statements.
-  Audit logs in Cassandra 4.0 will not, but with the FQL (Full Query Log) feature this is possible.
+  Audit logs in Cassandra 4.0 will not but this is being addressd in [CASSANDRA-14465](https://issues.apache.org/jira/browse/CASSANDRA-14465)
+  FQL (Full Query Log) records in Cassandra 4.0 will include values for prepared statements.
 
 ### Audit Record Format
 
