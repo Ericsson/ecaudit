@@ -27,6 +27,10 @@
 
     <name>Ericsson Cassandra Audit - Test Utils</name>
 
+    <properties>
+        <pmd-config-url>../pmd-rules.xml</pmd-config-url>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.cassandra</groupId>

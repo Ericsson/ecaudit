@@ -26,6 +26,10 @@
 
     <name>Ericsson Cassandra Audit - Custom Format IT</name>
 
+    <properties>
+        <pmd-config-url>../pmd-rules.xml</pmd-config-url>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>

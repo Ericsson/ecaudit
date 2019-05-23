@@ -40,7 +40,7 @@ import org.apache.cassandra.exceptions.ConfigurationException;
 /**
  * Factory class for creating configured instances of AuditAdapter.
  */
-class AuditAdapterFactory
+final class AuditAdapterFactory
 {
     private final static Logger LOG = LoggerFactory.getLogger(AuditAdapterFactory.class);
 
@@ -49,6 +49,10 @@ class AuditAdapterFactory
     static final String FILTER_TYPE_ROLE = "ROLE";
     static final String FILTER_TYPE_YAML_AND_ROLE = "YAML_AND_ROLE";
     static final String FILTER_TYPE_NONE = "NONE";
+
+    private AuditAdapterFactory(){
+        // Utility class
+    }
 
     /**
      * Create a new AuditAdapter instance.

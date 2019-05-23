@@ -37,7 +37,7 @@ public class PreparedAuditOperation implements AuditOperation
 {
     private final String preparedStatement;
     private final QueryOptions options;
-    private String effectiveStatement;
+    private String effectiveStatement; // lazy initialization
 
     /**
      * Construct a new prepared audit operation based on the prepared statement and options.
@@ -51,7 +51,6 @@ public class PreparedAuditOperation implements AuditOperation
     {
         this.preparedStatement = preparedStatement;
         this.options = options;
-        this.effectiveStatement = null;
     }
 
     @Override

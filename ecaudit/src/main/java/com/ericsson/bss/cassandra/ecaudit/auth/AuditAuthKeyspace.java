@@ -25,6 +25,11 @@ import org.apache.cassandra.schema.Tables;
 
 final class AuditAuthKeyspace
 {
+    private AuditAuthKeyspace()
+    {
+        // Utility class
+    }
+
     static final String WHITELIST_TABLE_NAME_V1 = "role_audit_whitelists";
     static final String WHITELIST_TABLE_NAME_V2 = "role_audit_whitelists_v2";
     private static final String WHITELIST_TABLE_SCHEMA = "CREATE TABLE " + WHITELIST_TABLE_NAME_V2 + " ("

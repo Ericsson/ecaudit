@@ -25,6 +25,8 @@ import net.openhft.chronicle.queue.RollCycle;
 import net.openhft.chronicle.queue.RollCycles;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
+import static com.ericsson.bss.cassandra.ecaudit.auth.Exceptions.appendCause;
+
 class ChronicleAuditLoggerConfig
 {
     private static final String CONFIG_LOG_DIR = "log_dir";
@@ -81,7 +83,7 @@ class ChronicleAuditLoggerConfig
         }
         catch (NumberFormatException e)
         {
-            throw new ConfigurationException("Invalid chronicle logger max log size: " + parameters.get(CONFIG_MAX_LOG_SIZE));
+            throw appendCause(new ConfigurationException("Invalid chronicle logger max log size: " + parameters.get(CONFIG_MAX_LOG_SIZE)), e);
         }
 
         if (size <= 0)

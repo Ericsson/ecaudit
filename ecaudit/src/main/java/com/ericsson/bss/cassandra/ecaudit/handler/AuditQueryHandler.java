@@ -90,7 +90,7 @@ public class AuditQueryHandler implements QueryHandler
         LOG.info("Auditing enabled on queries");
         if (DatabaseDescriptor.startRpc())
         {
-            LOG.warn("Auditing will not be performed on prepared requests on the RPC (Thrift) interface. "
+            LOG.warn("Auditing will not be performed on prepared requests on the RPC (Thrift) interface. " // NOPMD
                      + "Disable the RPC server to remove this message.");
         }
 

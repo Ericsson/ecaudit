@@ -45,7 +45,7 @@ public class TestEcLog
     @Test
     public void testWorking() throws ParseException
     {
-        when(parser.parse(any(String[].class))).thenReturn(options);
+        when(parser.parse(any(String.class))).thenReturn(options);
         ToolOptions actualOptions = EcLog.getToolOptions(new String[]{ "some/path" }, parser, exiter);
         assertThat(actualOptions).isEqualTo(options);
     }
@@ -53,7 +53,7 @@ public class TestEcLog
     @Test
     public void testHelp() throws ParseException
     {
-        when(parser.parse(any(String[].class))).thenReturn(options);
+        when(parser.parse(any(String.class))).thenReturn(options);
         when(options.help()).thenReturn(true);
         EcLog.getToolOptions(new String[]{ "-h" }, parser, exiter);
         verify(parser).printUsage();
@@ -63,7 +63,7 @@ public class TestEcLog
     @Test
     public void testInvalidArgument() throws ParseException
     {
-        when(parser.parse(any(String[].class))).thenThrow(new ParseException("Invalid argument"));
+        when(parser.parse(any(String.class))).thenThrow(new ParseException("Invalid argument"));
         EcLog.getToolOptions(new String[]{ "--wrong" }, parser, exiter);
         verify(parser).printUsage();
         verify(exiter).accept(eq(1));

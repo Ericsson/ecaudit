@@ -32,11 +32,13 @@ public interface LogTimingStrategy
 
     LogTimingStrategy PRE_LOGGING_STRATEGY = new LogTimingStrategy()
     {
+        @Override
         public boolean shouldLogForStatus(Status status)
         {
             return status == Status.ATTEMPT || status == Status.FAILED;
         }
 
+        @Override
         public boolean shouldLogFailedBatchSummary()
         {
             return true;
@@ -45,11 +47,13 @@ public interface LogTimingStrategy
 
     LogTimingStrategy POST_LOGGING_STRATEGY = new LogTimingStrategy()
     {
+        @Override
         public boolean shouldLogForStatus(Status status)
         {
             return status == Status.SUCCEEDED || status == Status.FAILED;
         }
 
+        @Override
         public boolean shouldLogFailedBatchSummary()
         {
             return false;

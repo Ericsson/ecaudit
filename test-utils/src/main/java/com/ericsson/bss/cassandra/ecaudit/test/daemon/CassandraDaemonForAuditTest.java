@@ -37,6 +37,7 @@ import org.apache.cassandra.service.CassandraDaemon;
 /**
  * Singleton for creating a Cassandra Daemon for Test.
  */
+@SuppressWarnings("PMD")
 public class CassandraDaemonForAuditTest // NOSONAR
 {
     private static final Logger LOG = LoggerFactory.getLogger(CassandraDaemonForAuditTest.class);
@@ -211,7 +212,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     private Path moveResourceFileToTempDirWithSubstitution(String filename) throws IOException
     {
-        InputStream inStream = CassandraDaemonForAuditTest.class.getClassLoader().getResourceAsStream(filename);
+        InputStream inStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
         String content = readStream(inStream);
 
         Path outPath = Paths.get(tempDir.getPath(), filename);
@@ -222,7 +223,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
         content = content.replaceAll("###native_transport_port###", String.valueOf(nativePort));
         Files.write(outPath, content.getBytes(StandardCharsets.UTF_8));
 
-        LOG.debug("Created temporary resource at: " + outPath);
+        LOG.debug("Created temporary resource at: {}", outPath);
 
         return outPath;
     }

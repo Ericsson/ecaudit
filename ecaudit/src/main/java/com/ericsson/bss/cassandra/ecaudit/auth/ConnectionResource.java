@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
  * Currently only root level resources are represented, but this could be extended to separate between native and JMX
  * connections.
  */
-public class ConnectionResource implements IResource, Comparable<ConnectionResource>
+public final class ConnectionResource implements IResource, Comparable<ConnectionResource>
 {
     enum Level
     {
