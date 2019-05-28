@@ -15,23 +15,28 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.integration.standard;
 
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.base.Splitter;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnauthorizedException;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This test class provides a functional integration test with Cassandra itself.
@@ -204,6 +209,8 @@ public class ITVerifyWhitelistManagement
     {
         authorizedSession.execute(new SimpleStatement(
         "ALTER ROLE other_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+
+        assertRoleOperations("other_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
     }
 
     @Test(expected = UnauthorizedException.class)
@@ -229,7 +236,11 @@ public class ITVerifyWhitelistManagement
     {
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_modify' : 'data' }"));
+
+        assertRoleOperations("temporary_user", "data", asList("SELECT", "MODIFY"));
     }
 
     @Test
@@ -238,6 +249,8 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
         "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl' }"));
+
+        assertRoleOperations("temporary_user", "data/ecks/ectbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
     }
 
     @Test
@@ -246,6 +259,8 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
         "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/unknownks' }"));
+
+        assertRoleOperations("temporary_user", "data/unknownks", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -262,6 +277,8 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
         "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl' }"));
+
+        assertRoleOperations("temporary_user", "data/ecks/unknowntbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -286,6 +303,8 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
         "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections' }"));
+
+        assertRoleOperations("temporary_user", "connections", asList("AUTHORIZE", "EXECUTE"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -302,6 +321,8 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
         "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles' }"));
+
+        assertRoleOperations("temporary_user", "roles", asList("CREATE", "ALTER", "AUTHORIZE", "DESCRIBE", "DROP"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -332,9 +353,36 @@ public class ITVerifyWhitelistManagement
         }
     }
 
+    @Test
+    public void testRevokeOperations()
+    {
+        given_temporary_user(superSession);
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'revoke_audit_whitelist_for_modify' : 'data' }"));
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'revoke_audit_whitelist_for_drop' : 'data' }"));
+
+        assertRoleOperations("temporary_user", "data", asList("CREATE", "ALTER", "SELECT", "AUTHORIZE"));
+    }
+
     private void given_temporary_user(Session privateSession)
     {
         privateSession.execute(new SimpleStatement(
         "CREATE ROLE temporary_user WITH PASSWORD = 'secret' AND LOGIN = true"));
+    }
+
+    private void assertRoleOperations(String roleName, String resource, List<String> expectedOperations)
+    {
+        ResultSet result = superSession.execute(new SimpleStatement("LIST ROLES OF " + roleName));
+        Map<String, String> optionsMap = result.one().getMap("options", String.class, String.class);
+
+        String expectedKey = "AUDIT WHITELIST ON " + resource;
+        assertThat(optionsMap).containsKey(expectedKey);
+
+        String operationsString = optionsMap.get(expectedKey);
+        List<String> operations = Splitter.on(",").trimResults().splitToList(operationsString);
+        assertThat(operations).containsOnlyElementsOf(expectedOperations);
     }
 }

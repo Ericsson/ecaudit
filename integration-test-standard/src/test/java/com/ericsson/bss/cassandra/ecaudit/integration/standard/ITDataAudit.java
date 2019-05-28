@@ -694,26 +694,6 @@ public class ITDataAudit
         thenAuditLogContainNothingForUser();
     }
 
-    @Test
-    public void whitelistIsRevoked()
-    {
-        // Given
-        givenTable("dataks", "tbl");
-        String username = givenSuperuserWithMinimalWhitelist();
-
-        // When operation is whitelisted
-        whenRoleIsWhitelistedForOperationOnResource(username, "select", "data/dataks/tbl");
-        testSession.execute("SELECT * FROM dataks.tbl WHERE key = 12");
-        // Then nothing is audited
-        thenAuditLogContainNothingForUser();
-
-        // When whitelist is revoked
-        whenRoleWhitelistGetRevokedForOperationOnResource(username, "select", "data/dataks/tbl");
-        testSession.execute("SELECT * FROM dataks.tbl WHERE key = 42");
-        // Then operation is audited
-        thenAuditLogContainEntryForUser("SELECT * FROM dataks.tbl WHERE key = 42", username);
-    }
-
     private void givenKeyspace(String keyspace)
     {
         superSession.execute(new SimpleStatement(
@@ -787,11 +767,6 @@ public class ITDataAudit
     private void whenRoleIsWhitelistedForOperationOnResource(String username, String operation, String resource)
     {
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = {'grant_audit_whitelist_for_" + operation + "' : '" + resource + "'}");
-    }
-
-    private void whenRoleWhitelistGetRevokedForOperationOnResource(String username, String operation, String resource)
-    {
-        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = {'revoke_audit_whitelist_for_" + operation + "' : '" + resource + "'}");
     }
 
     private void thenAuditLogContainNothingForUser()
