@@ -15,6 +15,8 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.UntypedResultSet;
 import org.apache.cassandra.cql3.statements.DeleteStatement;
 import org.apache.cassandra.cql3.statements.SelectStatement;
+import org.apache.cassandra.cql3.statements.UpdateStatement;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.RequestValidationException;
@@ -59,6 +61,7 @@ public class WhitelistDataAccess
     private static final Logger LOG = LoggerFactory.getLogger(WhitelistDataAccess.class);
 
     private static final long SCHEMA_ALIGNMENT_DELAY_MS = Long.getLong("ecaudit.schema_alignment_delay_ms", 120_000L);
+    private static final SetSerializer<String> SET_SERIALIZER = SetSerializer.getInstance(UTF8Serializer.instance, UTF8Type.instance);
 
     private boolean setupCompleted = false;
 
@@ -66,6 +69,8 @@ public class WhitelistDataAccess
 
     private DeleteStatement deleteWhitelistStatement;
     private SelectStatement loadWhitelistStatement;
+    private UpdateStatement addToWhitelistStatement;
+    private UpdateStatement removeFromWhitelistStatement;
 
     private WhitelistDataAccess()
     {
@@ -100,6 +105,16 @@ public class WhitelistDataAccess
                 AuthKeyspace.NAME,
                 AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
 
+        addToWhitelistStatement = (UpdateStatement) prepare(
+                "UPDATE %s.%s SET operations = operations + ? WHERE role = ? AND resource = ?",
+                AuthKeyspace.NAME,
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
+
+        removeFromWhitelistStatement = (UpdateStatement) prepare(
+                "UPDATE %s.%s SET operations = operations - ? WHERE role = ? AND resource = ?",
+                AuthKeyspace.NAME,
+                AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
+
         maybeMigrateTableData();
 
         setupCompleted = true;
@@ -107,33 +122,33 @@ public class WhitelistDataAccess
 
     void addToWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations)
     {
-        updateWhitelist(role, whitelistResource, whitelistOperations,
-                        "UPDATE %s.%s SET operations = operations + {%s} WHERE role = '%s' AND resource = '%s'");
+        List<ByteBuffer> values = getSerializedUpdateValues(role.getRoleName(), whitelistResource.getName(), whitelistOperations);
+
+        addToWhitelistStatement.execute(QueryState.forInternalCalls(),
+                                        QueryOptions.forInternalCalls(consistencyForRole(role),
+                                                                      values));
+    }
+
+    static List<ByteBuffer> getSerializedUpdateValues(String role, String resource, Set<Permission> whitelistOperations)
+    {
+        Set<String> operations = whitelistOperations.stream()
+                                                    .map(Enum::name)
+                                                    .collect(Collectors.toSet());
+
+        List<ByteBuffer> values = new ArrayList<>(3);
+        values.add(SET_SERIALIZER.serialize(operations));
+        values.add(ByteBufferUtil.bytes(role));
+        values.add(ByteBufferUtil.bytes(resource));
+        return values;
     }
 
     void removeFromWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations)
     {
-        updateWhitelist(role, whitelistResource, whitelistOperations,
-                        "UPDATE %s.%s SET operations = operations - {%s} WHERE role = '%s' AND resource = '%s'");
-    }
+        List<ByteBuffer> values = getSerializedUpdateValues(role.getRoleName(), whitelistResource.getName(), whitelistOperations);
 
-    private void updateWhitelist(RoleResource role, IResource whitelistResource, Set<Permission> whitelistOperations, String statementTemplate)
-    {
-        List<String> quotedWhitelistOperations = whitelistOperations
-                                                 .stream()
-                                                 .map(Enum::name)
-                                                 .map(p -> "'" + p + "'")
-                                                 .collect(Collectors.toList());
-
-        String statement = String.format(
-        statementTemplate,
-        AuthKeyspace.NAME,
-        AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2,
-        StringUtils.join(quotedWhitelistOperations, ','),
-        escape(role.getRoleName()),
-        whitelistResource.getName());
-
-        QueryProcessor.process(statement, consistencyForRole(role));
+        removeFromWhitelistStatement.execute(QueryState.forInternalCalls(),
+                                             QueryOptions.forInternalCalls(consistencyForRole(role),
+                                                                           values));
     }
 
     Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
@@ -248,8 +263,7 @@ public class WhitelistDataAccess
 
             for (UntypedResultSet.Row row : whitelists)
             {
-                SetSerializer<String> serializer = SetSerializer.getInstance(UTF8Serializer.instance, UTF8Type.instance);
-                Set<String> resourceNames = serializer.deserialize(row.getBytes("resources"));
+                Set<String> resourceNames = SET_SERIALIZER.deserialize(row.getBytes("resources"));
                 RoleResource role = RoleResource.role(row.getString("role"));
                 for (String resourceName : resourceNames)
                 {
@@ -272,11 +286,6 @@ public class WhitelistDataAccess
     {
         LOG.info("Dropping legacy (v1) audit whitelist data");
         MigrationManager.announceColumnFamilyDrop(AuthKeyspace.NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1);
-    }
-
-    private String escape(String name)
-    {
-        return StringUtils.replace(name, "'", "''");
     }
 
     private CQLStatement prepare(String template, String keyspace, String table)
