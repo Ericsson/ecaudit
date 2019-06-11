@@ -28,4 +28,12 @@ public interface AuditOperation
      * @return the operation as a string
      */
     String getOperationString();
+
+    /**
+     * Provide the operation string for this operation without bound values being appended. This applies to
+     * prepared statement operations.
+     *
+     * @return the operation without bound values as a string
+     */
+    String getOperationStringWithoutBoundValues();
 }

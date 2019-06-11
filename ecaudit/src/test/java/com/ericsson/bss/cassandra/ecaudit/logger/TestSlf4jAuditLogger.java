@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
@@ -50,7 +51,8 @@ public class TestSlf4jAuditLogger
 {
     private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
     private static final String DEFAULT_LOG_TEMPLATE = "client:'{}'|user:'{}'{}{}{}|status:'{}'|operation:'{}'";
-    private static final String EXPECTED_STATEMENT = "select * from ks.tbl";
+    private static final String EXPECTED_STATEMENT = "insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']";
+    private static final String EXPECTED_STATEMENT_NAKED = "insert into ks.tbl (key, val) values (?, ?)";
     private static final String EXPECTED_CLIENT_ADDRESS = "127.0.0.1";
     private static final Integer EXPECTED_CLIENT_PORT = 789;
     private static final String EXPECTED_COORDINATOR_ADDRESS = "127.0.0.2";
@@ -87,11 +89,14 @@ public class TestSlf4jAuditLogger
     {
         InetAddress expectedCoordinatorAddress = mock(InetAddress.class);
         when(expectedCoordinatorAddress.getHostAddress()).thenReturn(EXPECTED_COORDINATOR_ADDRESS);
+        AuditOperation auditOperation = mock(AuditOperation.class);
+        when(auditOperation.getOperationString()).thenReturn(EXPECTED_STATEMENT);
+        when(auditOperation.getOperationStringWithoutBoundValues()).thenReturn(EXPECTED_STATEMENT_NAKED);
         logEntryWithAll = AuditEntry.newBuilder()
                                     .user(EXPECTED_USER)
                                     .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, EXPECTED_CLIENT_PORT))
                                     .coordinator(expectedCoordinatorAddress)
-                                    .operation(new SimpleAuditOperation(EXPECTED_STATEMENT))
+                                    .operation(auditOperation)
                                     .status(EXPECTED_STATUS)
                                     .timestamp(EXPECTED_TIMESTAMP)
                                     .batch(EXPECTED_BATCH_ID)
@@ -207,7 +212,7 @@ public class TestSlf4jAuditLogger
     {
         Slf4jAuditLoggerConfig configMock = mock(Slf4jAuditLoggerConfig.class);
         Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
-        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "TIMESTAMP");
+        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "TIMESTAMP");
 
         Function<AuditEntry, Object> clientFunction = availableFieldFunctions.get("CLIENT_IP");
         assertThat(clientFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_CLIENT_ADDRESS);
@@ -231,6 +236,9 @@ public class TestSlf4jAuditLogger
 
         Function<AuditEntry, Object> operationFunction = availableFieldFunctions.get("OPERATION");
         assertThat(operationFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_STATEMENT);
+
+        Function<AuditEntry, Object> operationNakedFunction = availableFieldFunctions.get("OPERATION_NAKED");
+        assertThat(operationNakedFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_STATEMENT_NAKED);
 
         Function<AuditEntry, Object> timestampFunction = availableFieldFunctions.get("TIMESTAMP");
         assertThat(timestampFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_TIMESTAMP);

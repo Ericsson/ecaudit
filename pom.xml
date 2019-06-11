@@ -46,6 +46,7 @@
         <module>integration-test-custom-format</module>
         <module>integration-test-chronicle</module>
         <module>integration-test-post-logging</module>
+        <module>integration-test-skip-prepared-statement-values</module>
     </modules>
 
     <properties>

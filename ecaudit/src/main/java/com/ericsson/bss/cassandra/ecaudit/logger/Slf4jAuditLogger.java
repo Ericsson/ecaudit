@@ -102,6 +102,7 @@ public class Slf4jAuditLogger implements AuditLogger
                .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
                .put("STATUS", AuditEntry::getStatus)
                .put("OPERATION", entry -> entry.getOperation().getOperationString())
+               .put("OPERATION_NAKED", entry -> entry.getOperation().getOperationStringWithoutBoundValues())
                .put("TIMESTAMP", getTimeFunction(auditConfig))
                .build();
     }

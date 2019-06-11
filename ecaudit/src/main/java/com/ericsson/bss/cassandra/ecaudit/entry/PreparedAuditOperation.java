@@ -98,4 +98,10 @@ public class PreparedAuditOperation implements AuditOperation
 
         return fullStatement.toString();
     }
+
+    @Override
+    public String getOperationStringWithoutBoundValues()
+    {
+        return preparedStatement;
+    }
 }
