@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.1.0
+* Optionally skip values when logging prepared statements - #92
 * Add support for client port in log messages - #90
 * Add support for post-logging - #24
 * Add support for host address in log message - #28

@@ -36,4 +36,10 @@ public class SimpleAuditOperation implements AuditOperation
     {
         return operationString;
     }
+
+    @Override
+    public String getNakedOperationString()
+    {
+        return operationString;
+    }
 }

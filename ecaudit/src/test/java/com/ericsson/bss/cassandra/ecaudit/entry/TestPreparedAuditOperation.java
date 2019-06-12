@@ -58,6 +58,7 @@ public class TestPreparedAuditOperation
         auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
+        assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
     }
 
     @Test
@@ -77,6 +78,7 @@ public class TestPreparedAuditOperation
         auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
+        assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
     }
 
     @Test
@@ -96,6 +98,7 @@ public class TestPreparedAuditOperation
         auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
+        assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
     }
 
     @Test
@@ -109,6 +112,7 @@ public class TestPreparedAuditOperation
         auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(preparedStatement);
+        assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
 
         verify(mockOptions, times(1)).hasColumnSpecifications();
         verify(mockOptions, times(0)).getColumnSpecifications();
