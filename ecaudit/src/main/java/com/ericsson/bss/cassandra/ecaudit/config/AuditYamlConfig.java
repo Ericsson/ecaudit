@@ -30,6 +30,7 @@ public final class AuditYamlConfig
 {
     private static final List<String> DEFAULT_WHITELIST = Collections.emptyList();
     private static final ParameterizedClass DEFAULT_LOGGER_BACKEND = new ParameterizedClass(Slf4jAuditLogger.class.getCanonicalName(), Collections.emptyMap());
+    private static final String DEFAULT_WRAPPED_AUTHORIZER = "org.apache.cassandra.auth.CassandraAuthorizer";
 
     private boolean fromFile = true;
 
@@ -38,6 +39,7 @@ public final class AuditYamlConfig
     public List<String> whitelist;
     public ParameterizedClass logger_backend;
     public LoggerTiming log_timing_strategy;
+    public String wrapped_authorizer;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -91,5 +93,10 @@ public final class AuditYamlConfig
     boolean isPostLogging()
     {
         return log_timing_strategy == LoggerTiming.post_logging;
+    }
+
+    String getWrappedAuthorizer()
+    {
+        return wrapped_authorizer != null ? wrapped_authorizer : DEFAULT_WRAPPED_AUTHORIZER;
     }
 }

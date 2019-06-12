@@ -100,6 +100,26 @@ public class TestAuditYamlConfigurationLoader
     }
 
     @Test
+    public void testPostLoggingDefault()
+    {
+        Properties properties = getProperties("empty.yaml");
+
+        AuditConfig config = givenLoadedConfig(properties);
+
+        assertThat(config.isPostLogging()).isFalse();
+    }
+
+    @Test
+    public void testPostLoggingConfigured()
+    {
+        Properties properties = getProperties("mock_configuration.yaml");
+
+        AuditConfig config = givenLoadedConfig(properties);
+
+        assertThat(config.isPostLogging()).isTrue();
+    }
+
+    @Test
     public void testLoggerTypeWhenMissingDefaultFile()
     {
         AuditConfig config = givenLoadedDefaultConfig();
@@ -118,6 +138,23 @@ public class TestAuditYamlConfigurationLoader
         assertThat(config.getLoggerBackendParameters().parameters).containsOnly(entry("log_dir", "/tmp"),
                                                                                 entry("roll_cycle", "MINUTELY"),
                                                                                 entry("max_log_size", "1000000"));
+    }
+
+    @Test
+    public void testAuthorizerTypeWhenMissingDefaultFile()
+    {
+        AuditConfig config = givenLoadedDefaultConfig();
+
+        assertThat(config.getWrappedAuthorizer()).isEqualTo("org.apache.cassandra.auth.CassandraAuthorizer");
+    }
+
+    @Test
+    public void testCustomAuthorizerType()
+    {
+        Properties properties = getProperties("mock_configuration.yaml");
+        AuditConfig config = givenLoadedConfig(properties);
+
+        assertThat(config.getWrappedAuthorizer()).isEqualTo("org.apache.cassandra.auth.AllowAllAuthorizer");
     }
 
     private AuditConfig givenLoadedConfig(Properties properties)

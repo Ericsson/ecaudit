@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.auth;
+package com.ericsson.bss.cassandra.ecaudit.utils;
 
 import org.apache.cassandra.exceptions.CassandraException;
 

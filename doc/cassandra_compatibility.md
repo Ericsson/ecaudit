@@ -82,13 +82,14 @@ The most notable being:
   When Cassandra 4.0 do separate statements, they will be prepended with a summary record indicating number of records in the batch.
   The ecAudit plug-in will not write a batch summary record.
 
-* ecAudit requires authentication and authorization backends to be enabled.
+* ecAudit requires an authentication backend to be enabled.
   Cassandra 4.0 have no such requirements.
   This is being addressed in [#77](https://github.com/Ericsson/ecaudit/issues/77).
 
 * ecAudit will log values for prepared statements.
   Audit logs in Cassandra 4.0 will not but this is being addressd in [CASSANDRA-14465](https://issues.apache.org/jira/browse/CASSANDRA-14465)
   FQL (Full Query Log) records in Cassandra 4.0 will include values for prepared statements.
+
 
 ### Audit Record Format
 
