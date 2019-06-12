@@ -86,9 +86,10 @@ The most notable being:
   Cassandra 4.0 have no such requirements.
   This is being addressed in [#77](https://github.com/Ericsson/ecaudit/issues/77).
 
-* ecAudit will log values for prepared statements.
-  Audit logs in Cassandra 4.0 will not but this is being addressd in [CASSANDRA-14465](https://issues.apache.org/jira/browse/CASSANDRA-14465)
+* ecAudit will by default log values for prepared statements.
+  Audit logs in Cassandra 4.0 will not but this is being addressed in [CASSANDRA-14465](https://issues.apache.org/jira/browse/CASSANDRA-14465)
   FQL (Full Query Log) records in Cassandra 4.0 will include values for prepared statements.
+  With ecAudit it is possible to skip the prepared statement values by configuring a custom log message format ([SLF4J Logger](slf4j_logger.md)).
 
 ### Audit Record Format
 

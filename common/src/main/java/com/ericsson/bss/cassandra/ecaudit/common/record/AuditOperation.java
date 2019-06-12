@@ -35,5 +35,5 @@ public interface AuditOperation
      *
      * @return the operation without bound values as a string
      */
-    String getOperationStringWithoutBoundValues();
+    String getNakedOperationString();
 }

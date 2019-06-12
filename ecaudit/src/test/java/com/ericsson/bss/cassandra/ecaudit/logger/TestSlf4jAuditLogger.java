@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.ArgumentCaptor;
@@ -91,7 +90,7 @@ public class TestSlf4jAuditLogger
         when(expectedCoordinatorAddress.getHostAddress()).thenReturn(EXPECTED_COORDINATOR_ADDRESS);
         AuditOperation auditOperation = mock(AuditOperation.class);
         when(auditOperation.getOperationString()).thenReturn(EXPECTED_STATEMENT);
-        when(auditOperation.getOperationStringWithoutBoundValues()).thenReturn(EXPECTED_STATEMENT_NAKED);
+        when(auditOperation.getNakedOperationString()).thenReturn(EXPECTED_STATEMENT_NAKED);
         logEntryWithAll = AuditEntry.newBuilder()
                                     .user(EXPECTED_USER)
                                     .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, EXPECTED_CLIENT_PORT))

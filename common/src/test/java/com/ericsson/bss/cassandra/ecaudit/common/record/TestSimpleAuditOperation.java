@@ -27,7 +27,7 @@ public class TestSimpleAuditOperation
         String operation = "select something...";
         AuditOperation auditOperation = new SimpleAuditOperation(operation);
         assertThat(auditOperation.getOperationString())
-            .isEqualTo(auditOperation.getOperationStringWithoutBoundValues())
+            .isEqualTo(auditOperation.getNakedOperationString())
             .isEqualTo(operation);
     }
 }

@@ -38,7 +38,7 @@ public class SimpleAuditOperation implements AuditOperation
     }
 
     @Override
-    public String getOperationStringWithoutBoundValues()
+    public String getNakedOperationString()
     {
         return operationString;
     }

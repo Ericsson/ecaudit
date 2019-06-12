@@ -100,7 +100,7 @@ public class PreparedAuditOperation implements AuditOperation
     }
 
     @Override
-    public String getOperationStringWithoutBoundValues()
+    public String getNakedOperationString()
     {
         return preparedStatement;
     }
