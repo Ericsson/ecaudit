@@ -35,6 +35,7 @@ The following fields are available:
 | BATCH_ID       | Internal identifier shared by all statements in a batch operation | no              |
 | STATUS         | Value is either ATTEMPT or FAILED                                 | yes             |
 | OPERATION      | The CQL statement or a textual description of the operation       | yes             |
+| OPERATION_NAKED | The CQL statement or a textual description of the operation, *without* bound values appended to prepared statements | yes |
 | TIMESTAMP      | The system timestamp of the request (\*) (**)                     | yes             |
 | COORDINATOR_IP | Coordinator IP address (host address)                             | yes             |
 
