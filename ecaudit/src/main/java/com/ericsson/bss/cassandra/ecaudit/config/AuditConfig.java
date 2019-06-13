@@ -62,16 +62,25 @@ public class AuditConfig
         return yamlConfig.getLoggerBackendParameters();
     }
 
+    public boolean isPostLogging()
+    {
+        loadConfigIfNeeded();
+
+        return yamlConfig.isPostLogging();
+    }
+
+    public String getWrappedAuthorizer()
+    {
+        loadConfigIfNeeded();
+
+        return yamlConfig.getWrappedAuthorizer();
+    }
+
     private synchronized void loadConfigIfNeeded()
     {
         if (yamlConfig == null)
         {
             yamlConfig = yamlConfigurationLoader.loadConfig();
         }
-    }
-
-    public boolean isPostLogging()
-    {
-        return yamlConfig.isPostLogging();
     }
 }

@@ -19,10 +19,24 @@
 # directory.
 
 
+# The authorizer backend where the AuditAuthorizer delegate authorization requests.
+#
+# The value must represent a class name implementing the IAuthorizer interface. This can be any of the backends provided
+# out of the box by Cassandra, or your own custom implementation. Cassandra comes with the following authorizer
+# implementations:
+# - org.apache.cassandra.auth.AllowAllAuthorizer allows any action to any user - set it to disable authorization.
+# - org.apache.cassandra.auth.CassandraAuthorizer stores permissions in system_auth.role_permissions table.
+#
+# By default ecAudit will delegate to the CassandraAuthorizer.
+#
+wrapped_authorizer: org.apache.cassandra.auth.CassandraAuthorizer
+
+
 # Role/User whitelist at node level
 # This whitelist is only considered if the Java property 'ecaudit.filter_type' is set to YAML or YAML_AND_ROLE
 # When enabled, log entries will not be generated for queries performed by roles listed here.
 # Authentication attempts will still be logged.
+#
 #whitelist:
 #    - username1
 #    - username2
@@ -36,7 +50,8 @@
 #
 # post_logging -> One message will always be logged after the operation has completed. That message will indicate
 #                 whether operation SUCCEEDED or FAILED. This is how logging is implemented in C* 4.0.
-log_timing_strategy: post_logging
+#
+log_timing_strategy: pre_logging
 
 
 # Audit logger backend, implementing the AuditLogger interface
@@ -44,6 +59,8 @@ log_timing_strategy: post_logging
 # Out of the box, ecAudit provides the following logger backends
 # - com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
 # - com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger
+#
+# By default ecAudit will use the Slf4jAuditLogger.
 #
 # Slf4jAuditLogger: Configure you logback.xml to specify location of log files and rotation policy. The following
 # optional parameters are accepted:
