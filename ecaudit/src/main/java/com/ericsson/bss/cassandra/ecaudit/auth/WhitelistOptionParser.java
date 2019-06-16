@@ -19,11 +19,10 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
+import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.exceptions.InvalidRequestException;
-
-import static com.ericsson.bss.cassandra.ecaudit.auth.Exceptions.appendCause;
 
 class WhitelistOptionParser
 {
@@ -71,7 +70,7 @@ class WhitelistOptionParser
         }
         catch (IllegalArgumentException e)
         {
-            throw appendCause(new InvalidRequestException("Invalid whitelist option: " + e.getMessage()), e);
+            throw Exceptions.appendCause(new InvalidRequestException("Invalid whitelist option: " + e.getMessage()), e);
         }
     }
 
@@ -93,7 +92,7 @@ class WhitelistOptionParser
         }
         catch (IllegalArgumentException e)
         {
-            throw appendCause(new InvalidRequestException(String.format("Unable to parse whitelisted resource [%s]: %s", resourceName, e.getMessage())), e);
+            throw Exceptions.appendCause(new InvalidRequestException(String.format("Unable to parse whitelisted resource [%s]: %s", resourceName, e.getMessage())), e);
         }
     }
 }

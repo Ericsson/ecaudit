@@ -21,11 +21,10 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 
+import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import net.openhft.chronicle.queue.RollCycle;
 import net.openhft.chronicle.queue.RollCycles;
 import org.apache.cassandra.exceptions.ConfigurationException;
-
-import static com.ericsson.bss.cassandra.ecaudit.auth.Exceptions.appendCause;
 
 class ChronicleAuditLoggerConfig
 {
@@ -83,7 +82,7 @@ class ChronicleAuditLoggerConfig
         }
         catch (NumberFormatException e)
         {
-            throw appendCause(new ConfigurationException("Invalid chronicle logger max log size: " + parameters.get(CONFIG_MAX_LOG_SIZE)), e);
+            throw Exceptions.appendCause(new ConfigurationException("Invalid chronicle logger max log size: " + parameters.get(CONFIG_MAX_LOG_SIZE)), e);
         }
 
         if (size <= 0)

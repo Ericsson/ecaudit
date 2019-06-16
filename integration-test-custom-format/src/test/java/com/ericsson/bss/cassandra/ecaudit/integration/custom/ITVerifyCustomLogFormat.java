@@ -35,6 +35,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
@@ -47,6 +48,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -118,16 +120,16 @@ public class ITVerifyCustomLogFormat
         // Given
         String createKeyspace = "CREATE KEYSPACE school WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false";
         String createTable = "CREATE TABLE school.students (name text PRIMARY KEY, grade text)";
-        String insert = "INSERT INTO school.students (name, grade) VALUES ('Kalle', 'B')";
+        String insert = "INSERT INTO school.students (name, grade) VALUES (?, ?)";
         String update = "UPDATE school.students SET grade = 'A' WHERE name = 'Kalle'";
-
         // When
         session.execute(new SimpleStatement(createKeyspace));
         session.execute(new SimpleStatement(createTable));
         Instant now = Instant.now();
 
+        PreparedStatement preparedInsert = session.prepare(insert);
         BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
-        batch.add(new SimpleStatement(insert));
+        batch.add(preparedInsert.bind("Kalle", "B"));
         batch.add(new SimpleStatement(update));
         session.execute(batch);
 
@@ -139,8 +141,8 @@ public class ITVerifyCustomLogFormat
 
         assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(createKeyspace));
         assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(createTable));
-        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=" + UUID_REGEX + ", operation='" + Pattern.quote(insert));
-        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=" + UUID_REGEX + ", operation='" + Pattern.quote(update));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(insert) + "', batch-id=" + UUID_REGEX);
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(update) + "', batch-id=" + UUID_REGEX);
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);// With second resolution...
         String expectedTimestampString = dateTimeFormatter.format(now);

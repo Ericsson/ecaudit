@@ -22,6 +22,16 @@ Read on below to learn how to tune the logger backend and manage audit whitelist
 
 In the [audit.yaml reference](audit_yaml_reference.md) you'll find more details about different options.
 
+
+### Wrapped Authorizer Backend
+
+The ecAudit plug-in must be installed as the ```authorizer``` in the ```cassandra.yaml``` in order to capture some operations.
+The actual authorization still has to be handled by another ```IAuthorizer``` implementation.
+Cassandra provides the ```AllowAllAuthorizer``` and the ```CassandraAuthorizer``` out of the box,
+where ecAudit will use the ```CassandraAuthorizer``` by default.
+With the ```wrapped_authorizer``` setting in the ```audit.yaml``` file it is possible to configure another ```IAuthorizer``` which may be your own custom implementation.
+
+
 ### Logger Backend
 
 Two different logger backends are supported out of the box:
@@ -32,10 +42,12 @@ Two different logger backends are supported out of the box:
 * Then there is the [Chronicle Logger](chronicle_logger.md) backend which has the best performance characteristics.
   This backend stores audit records in a binary format and is best suited when handling large volumes of records.
 
+
 ### Logger Timing
 
 Logger timing specifies *when* log entries should be written, **pre-logging** (default) and **post-logging** (C* 4.0 style) are available.
 You'll find more details in the [audit.yaml reference](audit_yaml_reference.md).
+
 
 ### Audit Whitelists
 

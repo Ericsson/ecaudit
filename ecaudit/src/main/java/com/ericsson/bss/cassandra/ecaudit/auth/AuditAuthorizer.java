@@ -22,8 +22,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import org.apache.cassandra.auth.AuthenticatedUser;
-import org.apache.cassandra.auth.CassandraAuthorizer;
 import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
@@ -33,9 +33,10 @@ import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
+import org.apache.cassandra.utils.FBUtilities;
 
 /**
- * A decorator of the standard {@link CassandraAuthorizer} which always allow ALTER permission on {@link RoleResource}s.
+ * A decorator of a generic {@link IAuthorizer} which always allow ALTER permission on {@link RoleResource}s.
  *
  * This will allow one role to grant whitelist permission to another role by changing the OPTIONS attribute of the other role.
  * Other attributes such as PASSWORD may only be ALTERed if the permission actually have been assigned.
@@ -49,7 +50,14 @@ public class AuditAuthorizer implements IAuthorizer
 
     public AuditAuthorizer()
     {
-        this(new CassandraAuthorizer());
+        this(newWrappedAuthorizer(AuditConfig.getInstance()));
+    }
+
+    @VisibleForTesting
+    static IAuthorizer newWrappedAuthorizer(AuditConfig auditConfig)
+    {
+        String authorizerName = auditConfig.getWrappedAuthorizer();
+        return FBUtilities.newAuthorizer(authorizerName);
     }
 
     @VisibleForTesting
