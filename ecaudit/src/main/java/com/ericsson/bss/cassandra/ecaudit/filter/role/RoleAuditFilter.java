@@ -25,7 +25,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
-import com.ericsson.bss.cassandra.ecaudit.auth.Exceptions;
+import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;

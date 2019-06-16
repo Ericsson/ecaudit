@@ -26,6 +26,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
+import org.apache.cassandra.auth.AllowAllAuthorizer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthorizer;
@@ -40,6 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -212,6 +215,14 @@ public class TestAuditAuthorizer
         verify(mockAuthorizer).setup();
     }
 
+    @Test
+    public void testDynamicInstantiation()
+    {
+        AuditConfig auditConfig = givenConfigHasAllowAllAuthorizer();
+        IAuthorizer authorizer = AuditAuthorizer.newWrappedAuthorizer(auditConfig);
+        assertThat(authorizer).isInstanceOf(AllowAllAuthorizer.class);
+    }
+
     private Set<Permission> givenAuthorizedPermission(IAuthorizer authorizer, IResource resource)
     {
         Set<Permission> permissions = ImmutableSet.of(Permission.SELECT, Permission.MODIFY);
@@ -231,5 +242,12 @@ public class TestAuditAuthorizer
         Set<IResource> cassandraResources = ImmutableSet.of(DataResource.table("ks", "tbl"));
         doReturn(cassandraResources).when(authorizer).protectedResources();
         return cassandraResources;
+    }
+
+    private AuditConfig givenConfigHasAllowAllAuthorizer()
+    {
+        AuditConfig auditConfig = mock(AuditConfig.class);
+        when(auditConfig.getWrappedAuthorizer()).thenReturn("org.apache.cassandra.auth.AllowAllAuthorizer");
+        return auditConfig;
     }
 }
