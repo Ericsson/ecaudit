@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2018 Telefonaktiebolaget LM Ericsson
+# Copyright 2019 Telefonaktiebolaget LM Ericsson
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,19 +26,26 @@ if [ ! -f ${CCM_CONFIG}/CURRENT ]; then
 fi
 
 CCM_CLUSTER_NAME=`cat ${CCM_CONFIG}/CURRENT`
-echo "Configure Cassandra authentication/authorization in ${CCM_CLUSTER_NAME}"
+echo "Enabling 4.0 Audit with Chronicle backend into ${CCM_CLUSTER_NAME}"
 
 CLUSTER_PATH=${CCM_CONFIG}/${CCM_CLUSTER_NAME}
-
-rm -rf ${CLUSTER_PATH}/lib
-touch ${CLUSTER_PATH}/cassandra.in.sh
-sed -i "/.*ecaudit\..*/d" ${CLUSTER_PATH}/cassandra.in.sh
 
 update_cache_times() {
  sed -i "s/^$1_validity_in_ms:.*/$1_validity_in_ms: 10000/" $2
  sed -i "/^$1_update_interval_in_ms/d" $2
  sed -i "/^$1_validity_in_ms:.*/a\
 $1_update_interval_in_ms: 2000" $2
+}
+
+enable_audit() {
+ mkdir -p $2
+ sed -i '/^audit_logging_options/,/^[a-z]/{/^ /d}' $1
+ sed -i '/^audit_logging_options/a\  enabled: true' $1
+ sed -i '/^audit_logging_options/a\  logger: BinAuditLogger' $1
+ sed -i "/^audit_logging_options/a\  audit_logs_dir: $2" $1
+ sed -i '/^audit_logging_options/a\  roll_cycle: MINUTELY' $1
+ sed -i '/^audit_logging_options/a\  block: false' $1
+ sed -i '/^audit_logging_options/a\  max_log_size: 1073741824 # 1GB' $1
 }
 
 for NODE_PATH in ${CLUSTER_PATH}/node*;
@@ -49,4 +56,5 @@ do
  update_cache_times roles ${NODE_PATH}/conf/cassandra.yaml
  update_cache_times permissions ${NODE_PATH}/conf/cassandra.yaml
  update_cache_times credentials ${NODE_PATH}/conf/cassandra.yaml
+ enable_audit ${NODE_PATH}/conf/cassandra.yaml ${NODE_PATH}/logs/audit
 done
