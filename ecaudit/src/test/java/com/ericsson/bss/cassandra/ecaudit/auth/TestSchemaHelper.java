@@ -26,7 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.apache.cassandra.config.Config;
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
@@ -55,7 +55,7 @@ public class TestSchemaHelper
     @BeforeClass
     public static void beforeClass()
     {
-        Config.setClientMode(true);
+        ClientInitializer.beforeClass();
     }
 
     @Before
@@ -74,7 +74,7 @@ public class TestSchemaHelper
     @AfterClass
     public static void afterClass()
     {
-        Config.setClientMode(false);
+        ClientInitializer.afterClass();
     }
 
     @Test(timeout = (RETRY_INTERVAL_MILLIS) - 1)
