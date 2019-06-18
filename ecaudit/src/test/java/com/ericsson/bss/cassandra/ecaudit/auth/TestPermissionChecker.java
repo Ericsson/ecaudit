@@ -24,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.Permission;
@@ -51,7 +52,7 @@ public class TestPermissionChecker
     @BeforeClass
     public static void beforeClass()
     {
-        DatabaseDescriptor.clientInitialization(true);
+        ClientInitializer.beforeClass();
     }
 
     @Before
@@ -64,7 +65,7 @@ public class TestPermissionChecker
     @AfterClass
     public static void afterClass()
     {
-        DatabaseDescriptor.clientInitialization(false);
+        ClientInitializer.afterClass();
     }
 
     @Test

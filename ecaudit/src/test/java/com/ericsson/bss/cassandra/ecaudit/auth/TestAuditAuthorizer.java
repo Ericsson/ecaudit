@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AllowAllAuthorizer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
@@ -35,7 +36,6 @@ import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.PermissionDetails;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -70,7 +70,7 @@ public class TestAuditAuthorizer
     @BeforeClass
     public static void beforeClass()
     {
-        DatabaseDescriptor.clientInitialization(true);
+        ClientInitializer.beforeClass();
 
         IAuthorizer authorizer = mock(IAuthorizer.class);
         DatabaseDescriptor.setAuthorizer(authorizer);
@@ -93,7 +93,7 @@ public class TestAuditAuthorizer
     public static void afterClass()
     {
         DatabaseDescriptor.setAuthenticator(null);
-        DatabaseDescriptor.clientInitialization(false);
+        ClientInitializer.afterClass();
     }
 
     @Test

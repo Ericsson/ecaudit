@@ -30,6 +30,7 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
@@ -96,7 +97,7 @@ public class TestAuditQueryHandler
     @BeforeClass
     public static void beforeAll()
     {
-        DatabaseDescriptor.clientInitialization(true);
+        ClientInitializer.beforeClass();
         oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
     }
 
@@ -104,7 +105,7 @@ public class TestAuditQueryHandler
     public static void afterAll()
     {
         DatabaseDescriptor.setPartitionerUnsafe(oldPartitionerToRestore);
-        DatabaseDescriptor.clientInitialization(false);
+        ClientInitializer.afterClass();
     }
 
     @Before

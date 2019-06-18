@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthorizer;
@@ -71,7 +72,7 @@ public class TestAuditWhitelistManager
     @BeforeClass
     public static void beforeClass()
     {
-        DatabaseDescriptor.clientInitialization(true);
+        ClientInitializer.beforeClass();
 
         IAuthorizer authorizer = mock(IAuthorizer.class);
         DatabaseDescriptor.setAuthorizer(authorizer);
@@ -94,7 +95,7 @@ public class TestAuditWhitelistManager
     public static void afterClass()
     {
         DatabaseDescriptor.setAuthenticator(null);
-        DatabaseDescriptor.clientInitialization(false);
+        ClientInitializer.afterClass();
     }
 
     @Test

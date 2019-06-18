@@ -27,7 +27,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -45,6 +44,7 @@ import com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.ParameterizedClass;
@@ -62,6 +62,7 @@ public class TestAuditAdapterFactory
     @BeforeClass
     public static void beforeAll()
     {
+        ClientInitializer.beforeClass();
         IAuthenticator authenticator = mock(IAuthenticator.class);
         DatabaseDescriptor.setAuthenticator(authenticator);
     }
@@ -83,9 +84,9 @@ public class TestAuditAdapterFactory
     public static void afterAll()
     {
         DatabaseDescriptor.setAuthenticator(null);
+        ClientInitializer.afterClass();
     }
 
-    @Ignore // Initialization error in Cache
     @Test
     public void testLoadDefaultWithoutErrorHasExpectedType() throws Exception
     {
@@ -114,7 +115,6 @@ public class TestAuditAdapterFactory
         assertThat(filterIn(defaultAuditor)).isInstanceOf(YamlAuditFilter.class);
     }
 
-    @Ignore // Initialization error in Cache
     @Test
     public void testLoadRoleFilterWithoutErrorHasExpectedType() throws Exception
     {
@@ -129,7 +129,6 @@ public class TestAuditAdapterFactory
         assertThat(filterIn(defaultAuditor)).isInstanceOf(RoleAuditFilter.class);
     }
 
-    @Ignore // Initialization error in Cache
     @Test
     public void testLoadYamlAndRoleFilterWithoutErrorHasExpectedType() throws Exception
     {
@@ -169,7 +168,6 @@ public class TestAuditAdapterFactory
         .withMessageContaining("UNKNOWN");
     }
 
-    @Ignore // Initialization error in Cache
     @Test
     public void testLoadSlf4jLogger() throws Exception
     {
@@ -184,7 +182,6 @@ public class TestAuditAdapterFactory
         assertThat(loggerIn(defaultAuditor)).isInstanceOf(Slf4jAuditLogger.class);
     }
 
-    @Ignore // Initialization error in Cache
     @Test
     public void testLoadChronicleLogger() throws Exception
     {
@@ -223,7 +220,6 @@ public class TestAuditAdapterFactory
         .withMessageContaining("InvalidAuditLogger");
     }
 
-    @Ignore // Initialization error in Cache
     @Test
     public void testLogTimingStrategy() throws Exception
     {
