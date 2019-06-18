@@ -32,13 +32,11 @@ import org.junit.runner.RunWith;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
-import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.UnauthorizedException;
 import org.mockito.Mock;
@@ -49,7 +47,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -73,9 +70,6 @@ public class TestAuditWhitelistManager
     public static void beforeClass()
     {
         ClientInitializer.beforeClass();
-
-        IAuthorizer authorizer = mock(IAuthorizer.class);
-        DatabaseDescriptor.setAuthorizer(authorizer);
     }
 
     @Before
@@ -94,7 +88,6 @@ public class TestAuditWhitelistManager
     @AfterClass
     public static void afterClass()
     {
-        DatabaseDescriptor.setAuthenticator(null);
         ClientInitializer.afterClass();
     }
 

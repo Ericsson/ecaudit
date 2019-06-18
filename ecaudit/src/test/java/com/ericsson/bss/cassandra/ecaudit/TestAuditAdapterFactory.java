@@ -63,8 +63,6 @@ public class TestAuditAdapterFactory
     public static void beforeAll()
     {
         ClientInitializer.beforeClass();
-        IAuthenticator authenticator = mock(IAuthenticator.class);
-        DatabaseDescriptor.setAuthenticator(authenticator);
     }
 
     @Before
@@ -83,7 +81,6 @@ public class TestAuditAdapterFactory
     @AfterClass
     public static void afterAll()
     {
-        DatabaseDescriptor.setAuthenticator(null);
         ClientInitializer.afterClass();
     }
 

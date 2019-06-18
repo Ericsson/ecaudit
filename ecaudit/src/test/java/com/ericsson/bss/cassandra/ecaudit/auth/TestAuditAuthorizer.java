@@ -36,7 +36,6 @@ import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.PermissionDetails;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -71,9 +70,6 @@ public class TestAuditAuthorizer
     public static void beforeClass()
     {
         ClientInitializer.beforeClass();
-
-        IAuthorizer authorizer = mock(IAuthorizer.class);
-        DatabaseDescriptor.setAuthorizer(authorizer);
     }
 
     @Before
@@ -92,7 +88,6 @@ public class TestAuditAuthorizer
     @AfterClass
     public static void afterClass()
     {
-        DatabaseDescriptor.setAuthenticator(null);
         ClientInitializer.afterClass();
     }
 

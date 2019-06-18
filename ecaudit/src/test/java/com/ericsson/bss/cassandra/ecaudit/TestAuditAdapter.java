@@ -45,7 +45,6 @@ import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
-import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
@@ -126,9 +125,6 @@ public class TestAuditAdapter
     {
         ClientInitializer.beforeClass();
         oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
-
-        IAuthorizer authorizer = mock(IAuthorizer.class);
-        DatabaseDescriptor.setAuthorizer(authorizer);
     }
 
     @Before
@@ -151,7 +147,6 @@ public class TestAuditAdapter
     public static void afterAll()
     {
         DatabaseDescriptor.setPartitionerUnsafe(oldPartitionerToRestore);
-        DatabaseDescriptor.setAuthorizer(null);
         ClientInitializer.afterClass();
     }
 
