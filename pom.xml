@@ -37,11 +37,10 @@
     </licenses>
 
     <modules>
-        <!--<module>build-tools</module>-->
+        <module>test-utils</module>
         <module>common</module>
         <module>ecaudit</module>
         <module>eclog</module>
-        <module>test-utils</module>
         <module>integration-test-standard</module>
         <module>integration-test-custom-format</module>
         <module>integration-test-chronicle</module>

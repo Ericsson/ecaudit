@@ -68,6 +68,12 @@
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
+            <artifactId>test-utils_${artifact.flavor.version}</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
