@@ -28,13 +28,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.config.Config;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -61,7 +61,7 @@ public class TestAuditRoleManager
     @BeforeClass
     public static void beforeClass()
     {
-        Config.setClientMode(true);
+        ClientInitializer.beforeClass();
     }
 
     @Before
@@ -80,7 +80,7 @@ public class TestAuditRoleManager
     @AfterClass
     public static void afterClass()
     {
-        Config.setClientMode(false);
+        ClientInitializer.afterClass();
     }
 
     @Test

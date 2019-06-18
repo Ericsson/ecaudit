@@ -44,7 +44,7 @@ import com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
-import org.apache.cassandra.config.Config;
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -60,7 +60,7 @@ public class TestAuditAdapterFactory
     @BeforeClass
     public static void beforeAll()
     {
-        Config.setClientMode(true);
+        ClientInitializer.beforeClass();
     }
 
     @Before
@@ -79,7 +79,7 @@ public class TestAuditAdapterFactory
     @AfterClass
     public static void afterAll()
     {
-        Config.setClientMode(false);
+        ClientInitializer.afterClass();
     }
 
     @Test
