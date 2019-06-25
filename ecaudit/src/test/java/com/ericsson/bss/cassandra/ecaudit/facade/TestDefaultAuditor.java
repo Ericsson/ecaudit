@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
@@ -58,6 +59,9 @@ public class TestDefaultAuditor
     @Mock
     private AuditMetrics mockAuditMetrics;
 
+    @Mock
+    private LogTimingStrategy mockLogTimingStrategy;
+
     @Captor
     private ArgumentCaptor<Long> timingCaptor;
 
@@ -66,7 +70,7 @@ public class TestDefaultAuditor
     @Before
     public void before()
     {
-        auditor = new DefaultAuditor(mockLogger, mockFilter, mockObfuscator, mockAuditMetrics);
+        auditor = new DefaultAuditor(mockLogger, mockFilter, mockObfuscator, mockAuditMetrics, mockLogTimingStrategy);
     }
 
     @After
@@ -133,6 +137,12 @@ public class TestDefaultAuditor
 
         long timeMeasured = timingCaptor.getAllValues().stream().mapToLong(l -> l).sum();
         assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
+    }
+
+    @Test
+    public void testLogTimingStrategy()
+    {
+        assertThat(auditor.getLogTimingStrategy()).isSameAs(mockLogTimingStrategy);
     }
 
     private long timedOperation(Runnable runnable)

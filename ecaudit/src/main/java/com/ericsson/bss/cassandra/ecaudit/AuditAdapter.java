@@ -54,20 +54,16 @@ public class AuditAdapter
 
     private final Map<MD5Digest, String> idQueryCache = new ConcurrentHashMap<>();
 
-    private final LogTimingStrategy logTimingStrategy;
-
     /**
      * Constructor, see {@link AuditAdapterFactory#createAuditAdapter()}
      *
      * @param auditor             the auditor to use
      * @param entryBuilderFactory the audit entry builder factory to use
-     * @param logTimingStrategy   the logging strategy to use
      */
-    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, LogTimingStrategy logTimingStrategy)
+    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory)
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
-        this.logTimingStrategy = logTimingStrategy;
     }
 
     public static AuditAdapter getInstance()
@@ -95,7 +91,7 @@ public class AuditAdapter
      */
     public void auditRegular(String operation, ClientState state, Status status, long timestamp)
     {
-        if (logTimingStrategy.shouldLogForStatus(status))
+        if (auditor.getLogTimingStrategy().shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
                                                      .client(state.getRemoteAddress())
@@ -122,7 +118,7 @@ public class AuditAdapter
      */
     public void auditPrepared(MD5Digest id, CQLStatement statement, ClientState state, QueryOptions options, Status status, long timestamp)
     {
-        if (logTimingStrategy.shouldLogForStatus(status))
+        if (auditor.getLogTimingStrategy().shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
                                                      .client(state.getRemoteAddress())
@@ -149,7 +145,7 @@ public class AuditAdapter
      */
     public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status, long timestamp)
     {
-        if (logTimingStrategy.shouldLogForStatus(status))
+        if (auditor.getLogTimingStrategy().shouldLogForStatus(status))
         {
             AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
                                                             .client(state.getRemoteAddress())
@@ -159,7 +155,7 @@ public class AuditAdapter
                                                             .status(status)
                                                             .timestamp(timestamp);
 
-            if (status == Status.FAILED && logTimingStrategy.shouldLogFailedBatchSummary())
+            if (status == Status.FAILED && auditor.getLogTimingStrategy().shouldLogFailedBatchSummary())
             {
                 String failedBatchStatement = String.format(BATCH_FAILURE, uuid.toString());
                 auditor.audit(builder.operation(new SimpleAuditOperation(failedBatchStatement)).build());
@@ -185,7 +181,7 @@ public class AuditAdapter
      */
     public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp) throws AuthenticationException
     {
-        if (logTimingStrategy.shouldLogForStatus(status))
+        if (auditor.getLogTimingStrategy().shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                                                      .client(new InetSocketAddress(clientIp, AuditEntry.UNKNOWN_PORT))
@@ -255,5 +251,10 @@ public class AuditAdapter
         }
 
         return batchOperations;
+    }
+
+    public Auditor getAuditor()
+    {
+        return auditor;
     }
 }

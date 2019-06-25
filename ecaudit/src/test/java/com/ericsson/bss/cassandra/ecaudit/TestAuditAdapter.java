@@ -131,7 +131,8 @@ public class TestAuditAdapter
     {
         clientAddress = InetAddress.getByName(CLIENT_IP);
         clientSocketAddress = new InetSocketAddress(clientAddress, CLIENT_PORT);
-        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockLogTimingStrategy);
+        when(mockAuditor.getLogTimingStrategy()).thenReturn(mockLogTimingStrategy);
+        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory);
         when(mockState.getUser()).thenReturn(mockUser);
         when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(true);
     }

@@ -216,7 +216,7 @@ public class TestAuditAdapterFactory
     }
 
     @Test
-    public void testLogTimingStrategy() throws Exception
+    public void testLogTimingStrategy()
     {
         // Given
         AuditConfig defaultConfig = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
@@ -272,10 +272,8 @@ public class TestAuditAdapterFactory
         return (AuditObfuscator) field.get(auditor);
     }
 
-    private static LogTimingStrategy logTimingStrategyIn(AuditAdapter auditAdapter) throws Exception
+    private static LogTimingStrategy logTimingStrategyIn(AuditAdapter auditAdapter)
     {
-        Field field = AuditAdapter.class.getDeclaredField("logTimingStrategy");
-        field.setAccessible(true);
-        return (LogTimingStrategy) field.get(auditAdapter);
+        return auditAdapter.getAuditor().getLogTimingStrategy();
     }
 }

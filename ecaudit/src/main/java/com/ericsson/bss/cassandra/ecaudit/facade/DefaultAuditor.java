@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.facade;
 
 import java.util.concurrent.TimeUnit;
 
+import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
@@ -36,18 +37,20 @@ public class DefaultAuditor implements Auditor
     private final AuditFilter filter;
     private final AuditObfuscator obfuscator;
     private final AuditMetrics auditMetrics;
+    private final LogTimingStrategy logTimingStrategy;
 
-    public DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator)
+    public DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, LogTimingStrategy logTimingStrategy)
     {
-        this(logger, filter, obfuscator, new AuditMetrics());
+        this(logger, filter, obfuscator, new AuditMetrics(), logTimingStrategy);
     }
 
-    DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, AuditMetrics auditMetrics)
+    DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, AuditMetrics auditMetrics, LogTimingStrategy logTimingStrategy)
     {
         this.logger = logger;
         this.filter = filter;
         this.obfuscator = obfuscator;
         this.auditMetrics = auditMetrics;
+        this.logTimingStrategy = logTimingStrategy;
     }
 
     @Override
@@ -92,5 +95,11 @@ public class DefaultAuditor implements Auditor
             long end = System.nanoTime();
             auditMetrics.logAuditRequest(end - start, TimeUnit.NANOSECONDS);
         }
+    }
+
+    @Override
+    public LogTimingStrategy getLogTimingStrategy()
+    {
+        return logTimingStrategy;
     }
 }

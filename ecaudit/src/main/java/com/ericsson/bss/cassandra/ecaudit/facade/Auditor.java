@@ -15,6 +15,7 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.facade;
 
+import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 
 /**
@@ -36,4 +37,9 @@ public interface Auditor
      * For example, use this method to create any required keyspaces/tables.
      */
     void setup();
+
+    /**
+     * @return the log timing strategy used.
+     */
+    LogTimingStrategy getLogTimingStrategy();
 }
