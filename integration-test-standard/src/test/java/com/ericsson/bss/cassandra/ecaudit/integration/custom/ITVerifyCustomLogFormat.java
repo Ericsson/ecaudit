@@ -18,7 +18,9 @@ package com.ericsson.bss.cassandra.ecaudit.integration.custom;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,8 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
+import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
+import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
@@ -48,7 +52,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -71,12 +74,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @RunWith(MockitoJUnitRunner.class)
 public class ITVerifyCustomLogFormat
 {
+    private static final String CUSTOM_LOGGER_NAME = "ECAUDIT_CUSTOM";
+
     private static final String TIMESTAMP_REGEX = "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}";  // correnspons to "yyyy-MM-dd HH:mm:ss.SSS" timestamp
     private static final String UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
-
     private static Cluster cluster;
     private static Session session;
+    private static AuditLogger customLogger;
 
     @Captor
     private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
@@ -90,13 +95,23 @@ public class ITVerifyCustomLogFormat
         CassandraDaemonForAuditTest cdt = CassandraDaemonForAuditTest.getInstance();
         cluster = cdt.createCluster();
         session = cluster.connect();
+
+        // Configure logger with custom format
+        Map<String, String> configParameters = new HashMap<>();
+        String customLogFormat = "${TIMESTAMP}-> client=${CLIENT_IP}{?:${CLIENT_PORT}?}, coordinator=${COORDINATOR_IP}, user=${USER}, status=${STATUS}, operation='${OPERATION_NAKED}'{?, batch-id=${BATCH_ID}?}";
+        configParameters.put("log_format", customLogFormat);
+        configParameters.put("time_format", "yyyy-MM-dd HH:mm:ss.SSS");
+        configParameters.put("time_zone", "UTC");
+        customLogger = new Slf4jAuditLogger(configParameters, CUSTOM_LOGGER_NAME);
+        // Add custom logger
+        AuditAdapter.getInstance().getAuditor().addLogger(customLogger);
     }
 
     @Before
     public void before()
     {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).addAppender(mockAuditAppender);
+        loggerContext.getLogger(CUSTOM_LOGGER_NAME).addAppender(mockAuditAppender);
     }
 
     @After
@@ -104,12 +119,13 @@ public class ITVerifyCustomLogFormat
     {
         verifyNoMoreInteractions(mockAuditAppender);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
+        loggerContext.getLogger(CUSTOM_LOGGER_NAME).detachAppender(mockAuditAppender);
     }
 
     @AfterClass
     public static void afterClass()
     {
+        AuditAdapter.getInstance().getAuditor().removeLogger(customLogger);
         session.close();
         cluster.close();
     }
