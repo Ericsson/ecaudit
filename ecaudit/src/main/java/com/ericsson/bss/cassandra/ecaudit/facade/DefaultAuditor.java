@@ -15,6 +15,8 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.facade;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
@@ -26,18 +28,18 @@ import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 
 /**
  * Default implementation of {@link Auditor} which will do following task required to auditing:
- *
+ * <p>
  * - Filtering populated {@link AuditEntry} instance using {@link AuditFilter}
  * - Obfuscation on filtered using {@link AuditObfuscator}
  * - Write log entry using {@link AuditLogger}
  */
 public class DefaultAuditor implements Auditor
 {
-    private final AuditLogger logger;
+    private final List<AuditLogger> loggers = new ArrayList<>();
     private final AuditFilter filter;
     private final AuditObfuscator obfuscator;
     private final AuditMetrics auditMetrics;
-    private final LogTimingStrategy logTimingStrategy;
+    private LogTimingStrategy logTimingStrategy;
 
     public DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, LogTimingStrategy logTimingStrategy)
     {
@@ -46,7 +48,7 @@ public class DefaultAuditor implements Auditor
 
     DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, AuditMetrics auditMetrics, LogTimingStrategy logTimingStrategy)
     {
-        this.logger = logger;
+        loggers.add(logger);
         this.filter = filter;
         this.obfuscator = obfuscator;
         this.auditMetrics = auditMetrics;
@@ -88,7 +90,7 @@ public class DefaultAuditor implements Auditor
         long start = System.nanoTime();
         try
         {
-            logger.log(logEntry);
+            loggers.forEach(logger -> logger.log(logEntry));
         }
         finally
         {
@@ -101,5 +103,23 @@ public class DefaultAuditor implements Auditor
     public LogTimingStrategy getLogTimingStrategy()
     {
         return logTimingStrategy;
+    }
+
+    @Override
+    public void setLogTimingStrategy(LogTimingStrategy logTimingStrategy)
+    {
+        this.logTimingStrategy = logTimingStrategy;
+    }
+
+    @Override
+    public void addLogger(AuditLogger logger)
+    {
+        loggers.add(logger);
+    }
+
+    @Override
+    public void removeLogger(AuditLogger logger)
+    {
+        loggers.remove(logger);
     }
 }

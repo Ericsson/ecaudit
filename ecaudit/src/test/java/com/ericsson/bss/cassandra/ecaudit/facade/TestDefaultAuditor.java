@@ -39,6 +39,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -140,9 +142,53 @@ public class TestDefaultAuditor
     }
 
     @Test
-    public void testLogTimingStrategy()
+    public void testGetLogTimingStrategy()
     {
         assertThat(auditor.getLogTimingStrategy()).isSameAs(mockLogTimingStrategy);
+    }
+
+    @Test
+    public void testSetLogTimingStrategy()
+    {
+        // Given
+        LogTimingStrategy logTimingStrategy = mock(LogTimingStrategy.class);
+        // When
+        auditor.setLogTimingStrategy(logTimingStrategy);
+        // Then
+        assertThat(auditor.getLogTimingStrategy()).isSameAs(logTimingStrategy);
+    }
+
+    @Test
+    public void testAdditionalLoggerCanBeAdded()
+    {
+        // Given
+        AuditEntry logEntry = AuditEntry.newBuilder().build();
+        when(mockObfuscator.obfuscate(logEntry)).thenReturn(logEntry);
+        AuditLogger secondLogger = mock(AuditLogger.class);
+        auditor.addLogger(secondLogger);
+        // When
+        auditor.audit(logEntry);
+        // Then
+        verify(mockLogger).log(logEntry);
+        verify(secondLogger).log(logEntry);
+        reset(mockFilter, mockObfuscator, mockAuditMetrics);
+    }
+
+    @Test
+    public void testAddedLoggerCanBeRemoved()
+    {
+        // Given
+        AuditEntry logEntry = AuditEntry.newBuilder().build();
+        when(mockObfuscator.obfuscate(logEntry)).thenReturn(logEntry);
+        AuditLogger secondLogger = mock(AuditLogger.class);
+        auditor.addLogger(secondLogger);
+        auditor.removeLogger(secondLogger);
+        // When
+        auditor.audit(logEntry);
+        // Then
+        verify(mockLogger).log(logEntry);
+        verifyZeroInteractions(secondLogger);
+        reset(mockFilter, mockObfuscator, mockAuditMetrics);
     }
 
     private long timedOperation(Runnable runnable)

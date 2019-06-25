@@ -19,6 +19,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
@@ -253,9 +254,9 @@ public class TestAuditAdapterFactory
 
     private static AuditLogger loggerIn(DefaultAuditor auditor) throws Exception
     {
-        Field field = DefaultAuditor.class.getDeclaredField("logger");
+        Field field = DefaultAuditor.class.getDeclaredField("loggers");
         field.setAccessible(true);
-        return (AuditLogger) field.get(auditor);
+        return ((List<AuditLogger>) field.get(auditor)).get(0);
     }
 
     private static AuditFilter filterIn(DefaultAuditor auditor) throws Exception
