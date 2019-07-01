@@ -35,6 +35,7 @@ import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
+import com.ericsson.bss.cassandra.ecaudit.facade.TestDefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.DefaultAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.role.RoleAuditFilter;
@@ -217,7 +218,7 @@ public class TestAuditAdapterFactory
     }
 
     @Test
-    public void testLogTimingStrategy()
+    public void testLogTimingStrategy() throws Exception
     {
         // Given
         AuditConfig defaultConfig = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
@@ -273,8 +274,8 @@ public class TestAuditAdapterFactory
         return (AuditObfuscator) field.get(auditor);
     }
 
-    private static LogTimingStrategy logTimingStrategyIn(AuditAdapter auditAdapter)
+    private static LogTimingStrategy logTimingStrategyIn(AuditAdapter auditAdapter) throws Exception
     {
-        return auditAdapter.getAuditor().getLogTimingStrategy();
+        return TestDefaultAuditor.getLogTimingStrategy(auditAdapter.getAuditor());
     }
 }

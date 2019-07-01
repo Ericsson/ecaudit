@@ -91,7 +91,7 @@ public class AuditAdapter
      */
     public void auditRegular(String operation, ClientState state, Status status, long timestamp)
     {
-        if (auditor.getLogTimingStrategy().shouldLogForStatus(status))
+        if (auditor.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
                                                      .client(state.getRemoteAddress())
@@ -118,7 +118,7 @@ public class AuditAdapter
      */
     public void auditPrepared(MD5Digest id, CQLStatement statement, ClientState state, QueryOptions options, Status status, long timestamp)
     {
-        if (auditor.getLogTimingStrategy().shouldLogForStatus(status))
+        if (auditor.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
                                                      .client(state.getRemoteAddress())
@@ -145,7 +145,7 @@ public class AuditAdapter
      */
     public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status, long timestamp)
     {
-        if (auditor.getLogTimingStrategy().shouldLogForStatus(status))
+        if (auditor.shouldLogForStatus(status))
         {
             AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
                                                             .client(state.getRemoteAddress())
@@ -155,7 +155,7 @@ public class AuditAdapter
                                                             .status(status)
                                                             .timestamp(timestamp);
 
-            if (status == Status.FAILED && auditor.getLogTimingStrategy().shouldLogFailedBatchSummary())
+            if (status == Status.FAILED && auditor.shouldLogFailedBatchSummary())
             {
                 String failedBatchStatement = String.format(BATCH_FAILURE, uuid.toString());
                 auditor.audit(builder.operation(new SimpleAuditOperation(failedBatchStatement)).build());
@@ -181,7 +181,7 @@ public class AuditAdapter
      */
     public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp) throws AuthenticationException
     {
-        if (auditor.getLogTimingStrategy().shouldLogForStatus(status))
+        if (auditor.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                                                      .client(new InetSocketAddress(clientIp, AuditEntry.UNKNOWN_PORT))

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
@@ -100,9 +101,15 @@ public class DefaultAuditor implements Auditor
     }
 
     @Override
-    public LogTimingStrategy getLogTimingStrategy()
+    public boolean shouldLogForStatus(Status status)
     {
-        return logTimingStrategy;
+        return logTimingStrategy.shouldLogForStatus(status);
+    }
+
+    @Override
+    public boolean shouldLogFailedBatchSummary()
+    {
+        return logTimingStrategy.shouldLogFailedBatchSummary();
     }
 
     @Override

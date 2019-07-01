@@ -15,6 +15,7 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.facade;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -23,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
@@ -38,6 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -142,20 +145,42 @@ public class TestDefaultAuditor
     }
 
     @Test
-    public void testGetLogTimingStrategy()
+    public void testShouldLogForStatusIsForwardedToLogTimingStrategy()
     {
-        assertThat(auditor.getLogTimingStrategy()).isSameAs(mockLogTimingStrategy);
+        // Given
+        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(true, false);
+        // When
+        boolean first = auditor.shouldLogForStatus(Status.ATTEMPT);
+        boolean second = auditor.shouldLogForStatus(Status.SUCCEEDED);
+        // Then
+        assertThat(first).isTrue();
+        assertThat(second).isFalse();
+        verify(mockLogTimingStrategy).shouldLogForStatus(Status.ATTEMPT);
+        verify(mockLogTimingStrategy).shouldLogForStatus(Status.SUCCEEDED);
     }
 
     @Test
-    public void testSetLogTimingStrategy()
+    public void testShouldLogFailedBatchSummaryForwardedToLogTimingStrategy()
+    {
+        // Given
+        when(mockLogTimingStrategy.shouldLogFailedBatchSummary()).thenReturn(true, false);
+        // When
+        boolean first = auditor.shouldLogFailedBatchSummary();
+        boolean second = auditor.shouldLogFailedBatchSummary();
+        // Then
+        assertThat(first).isTrue();
+        assertThat(second).isFalse();
+    }
+
+    @Test
+    public void testSetLogTimingStrategy() throws Exception
     {
         // Given
         LogTimingStrategy logTimingStrategy = mock(LogTimingStrategy.class);
         // When
         auditor.setLogTimingStrategy(logTimingStrategy);
         // Then
-        assertThat(auditor.getLogTimingStrategy()).isSameAs(logTimingStrategy);
+        assertThat(getLogTimingStrategy(auditor)).isSameAs(logTimingStrategy);
     }
 
     @Test
@@ -210,5 +235,12 @@ public class TestDefaultAuditor
         }
 
         return System.nanoTime() - start;
+    }
+
+    public static LogTimingStrategy getLogTimingStrategy(Auditor auditor) throws Exception
+    {
+        Field field = DefaultAuditor.class.getDeclaredField("logTimingStrategy");
+        field.setAccessible(true);
+        return (LogTimingStrategy) field.get(auditor);
     }
 }
