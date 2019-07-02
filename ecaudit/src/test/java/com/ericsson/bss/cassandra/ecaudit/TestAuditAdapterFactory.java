@@ -19,6 +19,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
@@ -34,6 +35,7 @@ import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
+import com.ericsson.bss.cassandra.ecaudit.facade.TestDefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.DefaultAuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.filter.role.RoleAuditFilter;
@@ -253,9 +255,9 @@ public class TestAuditAdapterFactory
 
     private static AuditLogger loggerIn(DefaultAuditor auditor) throws Exception
     {
-        Field field = DefaultAuditor.class.getDeclaredField("logger");
+        Field field = DefaultAuditor.class.getDeclaredField("loggers");
         field.setAccessible(true);
-        return (AuditLogger) field.get(auditor);
+        return ((List<AuditLogger>) field.get(auditor)).get(0);
     }
 
     private static AuditFilter filterIn(DefaultAuditor auditor) throws Exception
@@ -274,8 +276,6 @@ public class TestAuditAdapterFactory
 
     private static LogTimingStrategy logTimingStrategyIn(AuditAdapter auditAdapter) throws Exception
     {
-        Field field = AuditAdapter.class.getDeclaredField("logTimingStrategy");
-        field.setAccessible(true);
-        return (LogTimingStrategy) field.get(auditAdapter);
+        return TestDefaultAuditor.getLogTimingStrategy(auditAdapter.getAuditor());
     }
 }

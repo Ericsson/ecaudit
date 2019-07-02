@@ -76,6 +76,12 @@ public class Slf4jAuditLogger implements AuditLogger
         this(new Slf4jAuditLoggerConfig(parameters), LoggerFactory.getLogger(AUDIT_LOGGER_NAME));
     }
 
+    @VisibleForTesting
+    public Slf4jAuditLogger(Map<String, String> parameters, String loggerName)
+    {
+        this(new Slf4jAuditLoggerConfig(parameters), LoggerFactory.getLogger(loggerName));
+    }
+
     /**
      * Test constructor.
      *

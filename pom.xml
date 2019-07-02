@@ -42,9 +42,6 @@
         <module>ecaudit</module>
         <module>eclog</module>
         <module>integration-test-standard</module>
-        <module>integration-test-custom-format</module>
-        <module>integration-test-chronicle</module>
-        <module>integration-test-post-logging</module>
         <module>integration-test-allow-all-authorizer</module>
     </modules>
 
