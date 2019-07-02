@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.integration.chronicle;
+package com.ericsson.bss.cassandra.ecaudit.integration.custom;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,9 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
@@ -35,10 +37,13 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
+import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.eclog.QueueReader;
 import com.ericsson.bss.cassandra.ecaudit.eclog.ToolOptions;
+import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
+import com.ericsson.bss.cassandra.ecaudit.logger.ChronicleAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
 import net.openhft.chronicle.queue.RollCycles;
@@ -65,8 +70,8 @@ public class ITVerifyChronicleBackend
     private static Cluster testCluster;
     private static Session testSession;
 
-
     private static QueueReader reader;
+    private static AuditLogger customLogger;
 
     @BeforeClass
     public static void beforeClass() throws Exception
@@ -105,12 +110,22 @@ public class ITVerifyChronicleBackend
         testCluster = cdt.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
 
+        Path auditDirectory = CassandraDaemonForAuditTest.getInstance().getAuditDirectory();
         ToolOptions options = ToolOptions
                               .builder()
-                              .withPath(CassandraDaemonForAuditTest.getInstance().getAuditDirectory())
+                              .withPath(auditDirectory)
                               .withRollCycle(RollCycles.TEST_SECONDLY)
                               .build();
         reader = new QueueReader(options);
+
+        // Configure custom chronicle logger
+        Map<String, String> configParameters = new HashMap<>();
+        configParameters.put("log_dir", auditDirectory.toString());
+        configParameters.put("roll_cycle", "TEST_SECONDLY");
+        configParameters.put("max_log_size", "314572800"); // 300MB
+        customLogger = new ChronicleAuditLogger(configParameters);
+        // Add custom logger
+        AuditAdapter.getInstance().getAuditor().addLogger(customLogger);
     }
 
     @Before
@@ -129,6 +144,8 @@ public class ITVerifyChronicleBackend
     @AfterClass
     public static void afterClass()
     {
+        AuditAdapter.getInstance().getAuditor().removeLogger(customLogger);
+
         testSession.close();
         testCluster.close();
 

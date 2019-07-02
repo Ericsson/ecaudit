@@ -105,8 +105,6 @@ public class TestAuditAdapter
     @Mock
     private Auditor mockAuditor;
     @Mock
-    private LogTimingStrategy mockLogTimingStrategy;
-    @Mock
     private AuditEntryBuilderFactory mockAuditEntryBuilderFactory;
     @Mock
     private BatchStatement mockBatchStatement;
@@ -132,9 +130,9 @@ public class TestAuditAdapter
     {
         clientAddress = InetAddress.getByName(CLIENT_IP);
         clientSocketAddress = new InetSocketAddress(clientAddress, CLIENT_PORT);
-        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockLogTimingStrategy);
+        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory);
         when(mockState.getUser()).thenReturn(mockUser);
-        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(true);
+        when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(true);
     }
 
     @After
@@ -193,7 +191,7 @@ public class TestAuditAdapter
     public void testProcessRegularNoLogTimeStrategy()
     {
         // Given
-        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
+        when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
         auditAdapter.auditRegular(STATEMENT, mockState, Status.ATTEMPT, TIMESTAMP);
         // Then
@@ -238,7 +236,7 @@ public class TestAuditAdapter
     public void testProcessPreparedNoLogTimeStrategy()
     {
         // Given
-        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
+        when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
         auditAdapter.auditPrepared(PREPARED_STATEMENT, mockStatement, mockState, mockOptions, Status.ATTEMPT, TIMESTAMP);
         // Then
@@ -249,7 +247,7 @@ public class TestAuditAdapter
     public void testProcessBatchWithLogSummaryStrategy()
     {
         // Given
-        when(mockLogTimingStrategy.shouldLogFailedBatchSummary()).thenReturn(true);
+        when(mockAuditor.shouldLogFailedBatchSummary()).thenReturn(true);
 
         UUID expectedBatchId = UUID.randomUUID();
         String expectedQuery = String.format("Apply batch failed: %s", expectedBatchId.toString());
@@ -347,7 +345,7 @@ public class TestAuditAdapter
     public void testProcessBatchNoLogTimeStrategy()
     {
         // Given
-        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
+        when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
         auditAdapter.auditBatch(mock(BatchStatement.class), Collections.emptyList(), mock(UUID.class), mockState, mock(BatchQueryOptions.class), Status.ATTEMPT, TIMESTAMP);
         // Then
@@ -384,7 +382,7 @@ public class TestAuditAdapter
     public void testProcessAuthNoLogTimeStrategy()
     {
         // Given
-        when(mockLogTimingStrategy.shouldLogForStatus(any(Status.class))).thenReturn(false);
+        when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
         auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP);
         // Then
