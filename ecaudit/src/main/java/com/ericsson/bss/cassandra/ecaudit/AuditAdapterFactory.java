@@ -72,14 +72,12 @@ final class AuditAdapterFactory
         AuditLogger logger = createLogger(auditConfig);
         AuditFilter filter = createFilter(auditConfig);
         PasswordObfuscator obfuscator = new PasswordObfuscator();
+        LogTimingStrategy logStrategy = getLogTimingStrategy(auditConfig);
 
-        Auditor auditor = new DefaultAuditor(logger, filter, obfuscator);
+        Auditor auditor = new DefaultAuditor(logger, filter, obfuscator, logStrategy);
         AuditEntryBuilderFactory entryBuilderFactory = new AuditEntryBuilderFactory();
 
-        LogTimingStrategy logStrategy = auditConfig.isPostLogging()
-                                      ? LogTimingStrategy.POST_LOGGING_STRATEGY
-                                      : LogTimingStrategy.PRE_LOGGING_STRATEGY;
-        return new AuditAdapter(auditor, entryBuilderFactory, logStrategy);
+        return new AuditAdapter(auditor, entryBuilderFactory);
     }
 
     /**
@@ -138,5 +136,12 @@ final class AuditAdapterFactory
             LOG.error("Unrecognized audit filter type: {}", filterType);
             throw new ConfigurationException(String.format("Unrecognized audit filter type: %s", filterType));
         }
+    }
+
+    private static LogTimingStrategy getLogTimingStrategy(AuditConfig auditConfig)
+    {
+        return auditConfig.isPostLogging()
+               ? LogTimingStrategy.POST_LOGGING_STRATEGY
+               : LogTimingStrategy.PRE_LOGGING_STRATEGY;
     }
 }

@@ -17,6 +17,15 @@ package com.ericsson.bss.cassandra.ecaudit;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 
+/**
+ * The log timing strategy says in which phase of the request logging should be performed.
+ * <ul>
+ * <li>{@link LogTimingStrategy#PRE_LOGGING_STRATEGY} - logs an ATTEMPT before the request is processed, <i>and</i>
+ * a FAILURE if the request fails.
+ * <li>{@link LogTimingStrategy#POST_LOGGING_STRATEGY} - always log one message (SUCCESS or FAILED) after the request
+ * has been processed.
+ * </ul>
+ */
 public interface LogTimingStrategy
 {
     /**

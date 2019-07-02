@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.integration.postlogging;
+package com.ericsson.bss.cassandra.ecaudit.integration.custom;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.After;
@@ -35,6 +37,9 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
+import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
+import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import org.mockito.ArgumentCaptor;
@@ -50,10 +55,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ITDataAuditPostLogging
+public class ITVerifyPostLogging
 {
+    private static final String CUSTOM_LOGGER_NAME = "ECAUDIT_CUSTOM";
     private static Cluster cluster;
     private static Session session;
+    private static AuditLogger customLogger;
 
     @Captor
     private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
@@ -68,13 +75,21 @@ public class ITDataAuditPostLogging
         cdt = CassandraDaemonForAuditTest.getInstance();
         cluster = cdt.createCluster();
         session = cluster.connect();
+
+        // Configure logger with custom/simple format
+        Map<String, String> configParameters = Collections.singletonMap("log_format", "Status=${STATUS}|User=${USER}|{?Batch-ID=${BATCH_ID}|?}Operation=${OPERATION}");
+        customLogger = new Slf4jAuditLogger(configParameters, CUSTOM_LOGGER_NAME);
+        // Add custom logger
+        AuditAdapter.getInstance().getAuditor().addLogger(customLogger);
+        // Set post logging strategy
+        AuditAdapter.getInstance().getAuditor().setLogTimingStrategy(LogTimingStrategy.POST_LOGGING_STRATEGY);
     }
 
     @Before
     public void before()
     {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).addAppender(mockAuditAppender);
+        loggerContext.getLogger(CUSTOM_LOGGER_NAME).addAppender(mockAuditAppender);
     }
 
     @After
@@ -82,12 +97,14 @@ public class ITDataAuditPostLogging
     {
         verifyNoMoreInteractions(mockAuditAppender);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
+        loggerContext.getLogger(CUSTOM_LOGGER_NAME).detachAppender(mockAuditAppender);
     }
 
     @AfterClass
     public static void afterClass()
     {
+        AuditAdapter.getInstance().getAuditor().removeLogger(customLogger);
+        AuditAdapter.getInstance().getAuditor().setLogTimingStrategy(LogTimingStrategy.PRE_LOGGING_STRATEGY);
         session.close();
         cluster.close();
     }
@@ -130,26 +147,26 @@ public class ITDataAuditPostLogging
     public void testSuccessfulStatements()
     {
         // Given
-        givenTable("school", "students");
+        givenTable("keyspace1", "table1");
         reset(mockAuditAppender);
 
         BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
-        batch.add(new SimpleStatement("INSERT INTO school.students (key, value) VALUES (42, 'Kalle')"));
-        batch.add(new SimpleStatement("UPDATE school.students SET value = 'Anka' WHERE key = 42"));
+        batch.add(new SimpleStatement("INSERT INTO keyspace1.table1 (key, value) VALUES (42, 'Kalle')"));
+        batch.add(new SimpleStatement("UPDATE keyspace1.table1 SET value = 'Anka' WHERE key = 42"));
         // When
-        session.execute(new SimpleStatement("SELECT * from school.students"));
+        session.execute(new SimpleStatement("SELECT * from keyspace1.table1"));
         session.execute(batch);
-        PreparedStatement preparedStatement = session.prepare("SELECT * FROM school.students WHERE key = ?");
+        PreparedStatement preparedStatement = session.prepare("SELECT * FROM keyspace1.table1 WHERE key = ?");
         session.execute(preparedStatement.bind(42));
         // Then
         List<String> entries = getLogEntries().stream()
                                               .map(this::replaceBatchIdWithConstant)
                                               .collect(Collectors.toList());
         assertThat(entries).containsOnly(
-            "Status=SUCCEEDED|User=cassandra|Operation=SELECT * from school.students",
-            "Status=SUCCEEDED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO school.students (key, value) VALUES (42, 'Kalle')",
-            "Status=SUCCEEDED|User=cassandra|Batch-ID=<uuid>|Operation=UPDATE school.students SET value = 'Anka' WHERE key = 42",
-            "Status=SUCCEEDED|User=cassandra|Operation=SELECT * FROM school.students WHERE key = ?[42]"
+            "Status=SUCCEEDED|User=cassandra|Operation=SELECT * from keyspace1.table1",
+            "Status=SUCCEEDED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (42, 'Kalle')",
+            "Status=SUCCEEDED|User=cassandra|Batch-ID=<uuid>|Operation=UPDATE keyspace1.table1 SET value = 'Anka' WHERE key = 42",
+            "Status=SUCCEEDED|User=cassandra|Operation=SELECT * FROM keyspace1.table1 WHERE key = ?[42]"
         );
     }
 
@@ -162,19 +179,19 @@ public class ITDataAuditPostLogging
     public void testFailedStatements()
     {
         // Given
-        givenTable("school", "students");
+        givenTable("keyspace1", "table1");
         reset(mockAuditAppender);
 
         // When
         executeAndIgnoreException(() -> session.execute(new SimpleStatement("SELECT * from NON.EXISTING_TABLE1")));
 
         BatchStatement batchInserts = new BatchStatement(BatchStatement.Type.UNLOGGED);
-        PreparedStatement preparedInsert = session.prepare("INSERT INTO school.students (key, value) VALUES (?, ?)");
+        PreparedStatement preparedInsert = session.prepare("INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)");
         batchInserts.add(preparedInsert.bind(42, "Kalle"));
         batchInserts.add(preparedInsert.bind()); // No values -> will fail!
         executeAndIgnoreException(() -> session.execute(batchInserts));
 
-        PreparedStatement preparedStatement = session.prepare("SELECT * FROM school.students WHERE key = ?");
+        PreparedStatement preparedStatement = session.prepare("SELECT * FROM keyspace1.table1 WHERE key = ?");
         executeAndIgnoreException(() -> session.execute(preparedStatement.bind())); // No values -> will fail!
         // Then
         List<String> entries = getLogEntries().stream()
@@ -182,9 +199,9 @@ public class ITDataAuditPostLogging
                                               .collect(Collectors.toList());
         assertThat(entries).containsOnly(
             "Status=FAILED|User=cassandra|Operation=SELECT * from NON.EXISTING_TABLE1",
-            "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO school.students (key, value) VALUES (?, ?)[42, 'Kalle']",
-            "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO school.students (key, value) VALUES (?, ?)[null, '']",
-            "Status=FAILED|User=cassandra|Operation=SELECT * FROM school.students WHERE key = ?[null]"
+            "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)[42, 'Kalle']",
+            "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)[null, '']",
+            "Status=FAILED|User=cassandra|Operation=SELECT * FROM keyspace1.table1 WHERE key = ?[null]"
         );
 
     }
