@@ -39,6 +39,7 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+import com.ericsson.bss.cassandra.ecaudit.entry.LazyUUID;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
@@ -260,7 +261,7 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder()).thenReturn(entryBuilder);
 
         // When
-        auditAdapter.auditBatch(mockBatchStatement, expectedBatchId, mockState, mockBatchOptions, Status.FAILED, TIMESTAMP);
+        auditAdapter.auditBatch(mockBatchStatement, LazyUUID.fromUuid(expectedBatchId), mockState, mockBatchOptions, Status.FAILED, TIMESTAMP);
 
         // Then
         AuditEntry entry = getAuditEntry();
@@ -291,7 +292,7 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.createBatchEntryBuilder()).thenReturn(entryBuilder);
 
         // When
-        auditAdapter.auditBatch(mockBatchStatement, expectedBatchId, mockState, mockBatchOptions, Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditBatch(mockBatchStatement, LazyUUID.fromUuid(expectedBatchId), mockState, mockBatchOptions, Status.ATTEMPT, TIMESTAMP);
 
         // Then
         List<AuditEntry> entries = getAuditEntries(3);
@@ -328,7 +329,7 @@ public class TestAuditAdapter
 
         // When
         auditAdapter.mapIdToQuery(PREPARED_STATEMENT_ID, PREPARED_STATEMENT);
-        auditAdapter.auditBatch(mockBatchStatement, BATCH_ID, mockState, mockBatchOptions, Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditBatch(mockBatchStatement, LazyUUID.fromUuid(BATCH_ID), mockState, mockBatchOptions, Status.ATTEMPT, TIMESTAMP);
 
         // Then
         verifyNoMoreInteractions(mockOptions);
@@ -350,7 +351,7 @@ public class TestAuditAdapter
         // Given
         when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
-        auditAdapter.auditBatch(mock(BatchStatement.class), mock(UUID.class), mockState, mock(BatchQueryOptions.class), Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditBatch(mock(BatchStatement.class), mock(LazyUUID.class), mockState, mock(BatchQueryOptions.class), Status.ATTEMPT, TIMESTAMP);
         // Then
         verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }

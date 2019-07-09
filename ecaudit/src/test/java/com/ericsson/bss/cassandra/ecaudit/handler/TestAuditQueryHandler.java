@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.handler;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -29,6 +28,7 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.LazyUUID;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
@@ -241,8 +241,8 @@ public class TestAuditQueryHandler
     public void testProcessBatchSuccessful()
     {
         queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload);
-        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(LazyUUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(LazyUUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
         verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload));
     }
 
@@ -254,9 +254,9 @@ public class TestAuditQueryHandler
         assertThatExceptionOfType(RequestExecutionException.class)
                 .isThrownBy(() -> queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload));
 
-        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(LazyUUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
         verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload));
-        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.FAILED), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), any(LazyUUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
     @Test

@@ -42,7 +42,7 @@ public class AuditEntry implements AuditRecord
     private final IResource resource;
     private final AuditOperation operation;
     private final String user;
-    private final UUID batchId;
+    private final LazyUUID batchId;
     private final Status status;
     private final Long timestamp;
 
@@ -119,7 +119,7 @@ public class AuditEntry implements AuditRecord
     @Override
     public Optional<UUID> getBatchId()
     {
-        return Optional.ofNullable(batchId);
+        return Optional.ofNullable(batchId).map(LazyUUID::getUuid);
     }
 
     @Override
@@ -158,7 +158,7 @@ public class AuditEntry implements AuditRecord
         private IResource resource;
         private AuditOperation operation;
         private String user;
-        private UUID batchId;
+        private LazyUUID batchId;
         private Status status;
         private Long timestamp;
 
@@ -222,7 +222,7 @@ public class AuditEntry implements AuditRecord
          * @param uuid the batch id to use
          * @return this builder instance
          */
-        public Builder batch(UUID uuid)
+        public Builder batch(LazyUUID uuid)
         {
             this.batchId = uuid;
             return this;
@@ -254,7 +254,7 @@ public class AuditEntry implements AuditRecord
             this.resource = entry.getResource();
             this.operation = entry.getOperation();
             this.user = entry.getUser();
-            this.batchId = entry.getBatchId().orElse(null);
+            this.batchId = entry.batchId;
             this.status = entry.getStatus();
             this.timestamp = entry.getTimestamp();
             return this;

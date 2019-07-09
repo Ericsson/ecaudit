@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.LazyUUID;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -98,7 +99,7 @@ public class TestSlf4jAuditLogger
                                     .operation(auditOperation)
                                     .status(EXPECTED_STATUS)
                                     .timestamp(EXPECTED_TIMESTAMP)
-                                    .batch(EXPECTED_BATCH_ID)
+                                    .batch(LazyUUID.fromUuid(EXPECTED_BATCH_ID))
                                     .build();
 
         logEntryWithoutBatch = AuditEntry.newBuilder()

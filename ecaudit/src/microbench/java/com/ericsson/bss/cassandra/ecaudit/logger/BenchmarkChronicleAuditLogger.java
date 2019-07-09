@@ -28,6 +28,7 @@ import com.google.common.io.Files;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.LazyUUID;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -93,7 +94,7 @@ public class BenchmarkChronicleAuditLogger
                                .client(new InetSocketAddress(InetAddress.getLocalHost(), 678))
                                .coordinator(InetAddress.getLocalHost())
                                .user("cassandra")
-                               .batch(UUID.randomUUID())
+                               .batch(LazyUUID.fromUuid(UUID.randomUUID()))
                                .status(Status.ATTEMPT)
                                .operation(new SimpleAuditOperation("SELECT * from dummy.table"))
                                .build();
