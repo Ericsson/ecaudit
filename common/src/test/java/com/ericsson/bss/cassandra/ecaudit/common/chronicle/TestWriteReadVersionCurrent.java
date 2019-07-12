@@ -66,7 +66,7 @@ public class TestWriteReadVersionCurrent
 
         writeAuditRecordToChronicle(expectedAuditRecord);
 
-        AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
+        StoredAuditRecord actualAuditRecord = readAuditRecordFromChronicle();
 
         assertThatRecordsMatch(actualAuditRecord, expectedAuditRecord);
     }
@@ -78,7 +78,7 @@ public class TestWriteReadVersionCurrent
 
         writeAuditRecordToChronicle(expectedAuditRecord);
 
-        AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
+        StoredAuditRecord actualAuditRecord = readAuditRecordFromChronicle();
 
         assertThatRecordsMatch(actualAuditRecord, expectedAuditRecord);
     }
@@ -115,13 +115,13 @@ public class TestWriteReadVersionCurrent
 
     private void writeAuditRecordToChronicle(AuditRecord auditRecord)
     {
-        WriteMarshallable writeMarshallable = new AuditRecordWriteMarshallable(auditRecord);
+        WriteMarshallable writeMarshallable = new AuditRecordWriteMarshallable(auditRecord, FieldSelector.DEFAULT_FIELDS);
 
         ExcerptAppender appender = chronicleQueue.acquireAppender();
         appender.writeDocument(writeMarshallable);
     }
 
-    private AuditRecord readAuditRecordFromChronicle()
+    private StoredAuditRecord readAuditRecordFromChronicle()
     {
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -131,14 +131,15 @@ public class TestWriteReadVersionCurrent
         return readMarshallable.getAuditRecord();
     }
 
-    private void assertThatRecordsMatch(AuditRecord actualAuditRecord, AuditRecord expectedAuditRecord)
+    private void assertThatRecordsMatch(StoredAuditRecord actualAuditRecord, AuditRecord expectedAuditRecord)
     {
         assertThat(actualAuditRecord.getBatchId()).isEqualTo(expectedAuditRecord.getBatchId());
-        assertThat(actualAuditRecord.getClientAddress()).isEqualTo(expectedAuditRecord.getClientAddress());
-        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(expectedAuditRecord.getCoordinatorAddress());
-        assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
-        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
-        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
-        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedAuditRecord.getTimestamp());
+        assertThat(actualAuditRecord.getClientAddress()).contains(expectedAuditRecord.getClientAddress().getAddress());
+        assertThat(actualAuditRecord.getClientPort()).contains(expectedAuditRecord.getClientAddress().getPort());
+        assertThat(actualAuditRecord.getCoordinatorAddress()).contains(expectedAuditRecord.getCoordinatorAddress());
+        assertThat(actualAuditRecord.getStatus()).contains(expectedAuditRecord.getStatus());
+        assertThat(actualAuditRecord.getOperation()).contains(expectedAuditRecord.getOperation().getOperationString());
+        assertThat(actualAuditRecord.getUser()).contains(expectedAuditRecord.getUser());
+        assertThat(actualAuditRecord.getTimestamp()).contains(expectedAuditRecord.getTimestamp());
     }
 }

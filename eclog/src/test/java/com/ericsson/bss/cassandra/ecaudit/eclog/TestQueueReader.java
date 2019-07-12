@@ -16,7 +16,6 @@
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
@@ -25,7 +24,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.AuditRecordReadMarshallable;
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.test.chronicle.RecordValues;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.queue.ChronicleQueue;
@@ -37,6 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
+import static com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.DEFAULT_FIELDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
@@ -91,7 +92,7 @@ public class TestQueueReader
         QueueReader reader = givenReader();
 
         assertThat(reader.hasRecordAvailable()).isTrue();
-        AuditRecord auditRecord = reader.nextRecord();
+        StoredAuditRecord auditRecord = reader.nextRecord();
         assertRecordMatchesWire(auditRecord, defaultValues);
     }
 
@@ -103,7 +104,7 @@ public class TestQueueReader
 
         verify(tailer).moveToIndex(eq(999L));
         assertThat(reader.hasRecordAvailable()).isTrue();
-        AuditRecord auditRecord = reader.nextRecord();
+        StoredAuditRecord auditRecord = reader.nextRecord();
         assertRecordMatchesWire(auditRecord, defaultValues);
     }
 
@@ -113,18 +114,18 @@ public class TestQueueReader
         givenNextRecordIs(defaultValues);
         QueueReader reader = givenReader();
 
-        AuditRecord auditRecord = reader.nextRecord();
+        StoredAuditRecord auditRecord = reader.nextRecord();
         assertRecordMatchesWire(auditRecord, defaultValues);
     }
 
     @Test
     public void testValidBatchRecord() throws UnknownHostException
     {
-        givenNextRecordIs(defaultValues.butWithType("ecaudit-batch").butWithBatchId(UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa")));
+        givenNextRecordIs(defaultValues.butWithBatchId(UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa")));
         QueueReader reader = givenReader();
 
         assertThat(reader.hasRecordAvailable()).isTrue();
-        AuditRecord auditRecord = reader.nextRecord();
+        StoredAuditRecord auditRecord = reader.nextRecord();
         assertRecordMatchesWire(auditRecord, defaultValues);
     }
 
@@ -150,6 +151,11 @@ public class TestQueueReader
         ValueIn typeValueMock = mock(ValueIn.class);
         when(typeValueMock.text()).thenReturn(recordValues.getType());
         when(wireMock.read(eq("type"))).thenReturn(typeValueMock);
+
+        int fieldsBitmap = recordValues.getBatchId() != null ? DEFAULT_FIELDS.getBitmap() : DEFAULT_FIELDS.withoutField(Field.BATCH_ID).getBitmap();
+        ValueIn fieldsValueMock = mock(ValueIn.class);
+        when(fieldsValueMock.int32()).thenReturn(fieldsBitmap);
+        when(wireMock.read(eq("fields"))).thenReturn(fieldsValueMock);
 
         ValueIn timestampValueMock = mock(ValueIn.class);
         when(timestampValueMock.int64()).thenReturn(recordValues.getTimestamp());
@@ -205,12 +211,13 @@ public class TestQueueReader
         return new QueueReader(toolOptions, queue);
     }
 
-    private void assertRecordMatchesWire(AuditRecord actualAuditRecord, RecordValues expectedValues) throws UnknownHostException
+    private void assertRecordMatchesWire(StoredAuditRecord actualAuditRecord, RecordValues expectedValues) throws UnknownHostException
     {
-        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedValues.getTimestamp());
-        assertThat(actualAuditRecord.getClientAddress()).isEqualTo(new InetSocketAddress(InetAddress.getByAddress(expectedValues.getClientAddress()), expectedValues.getClientPort()));
-        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(InetAddress.getByAddress(expectedValues.getCoordinatorAddress()));
-        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedValues.gethUser());
+        assertThat(actualAuditRecord.getTimestamp()).contains(expectedValues.getTimestamp());
+        assertThat(actualAuditRecord.getClientAddress()).contains(InetAddress.getByAddress(expectedValues.getClientAddress()));
+        assertThat(actualAuditRecord.getClientPort()).contains(expectedValues.getClientPort());
+        assertThat(actualAuditRecord.getCoordinatorAddress()).contains(InetAddress.getByAddress(expectedValues.getCoordinatorAddress()));
+        assertThat(actualAuditRecord.getUser()).contains(expectedValues.gethUser());
         if (expectedValues.getBatchId() != null)
         {
             assertThat(actualAuditRecord.getBatchId()).contains(expectedValues.getBatchId());
@@ -219,7 +226,7 @@ public class TestQueueReader
         {
             assertThat(actualAuditRecord.getBatchId()).isEmpty();
         }
-        assertThat(actualAuditRecord.getStatus().name()).isEqualTo(expectedValues.getStatus());
-        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedValues.getOperation());
+        assertThat(actualAuditRecord.getStatus()).map(Enum::name).contains(expectedValues.getStatus());
+        assertThat(actualAuditRecord.getOperation()).contains(expectedValues.getOperation());
     }
 }

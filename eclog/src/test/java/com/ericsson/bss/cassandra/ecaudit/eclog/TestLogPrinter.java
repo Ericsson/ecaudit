@@ -17,7 +17,6 @@ package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.PrintStream;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +27,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
-import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -61,7 +59,7 @@ public class TestLogPrinter
         LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = mock(QueueReader.class);
         when(reader.hasRecordAvailable()).thenReturn(true).thenReturn(false);
-        AuditRecord authRecord = mockRecord(0, "1.2.3.4", 0, "5.6.7.8", "king", Status.ATTEMPT, null, "Authentication operation");
+        StoredAuditRecord authRecord = mockRecord(0L, "1.2.3.4", null, "5.6.7.8", "king", Status.ATTEMPT, null, "Authentication operation");
         when(reader.nextRecord()).thenReturn(authRecord);
 
         printer.print(reader);
@@ -163,13 +161,13 @@ public class TestLogPrinter
         }
         hasNextStub.thenReturn(false);
 
-        List<AuditRecord> records = new ArrayList<>();
+        List<StoredAuditRecord> records = new ArrayList<>();
         for (int i = 0; i < count1 + count2; i++)
         {
-            records.add(mockRecord(i, "1.2.3.4", 222, "5.6.7.8", "king", Status.ATTEMPT, withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
+            records.add(mockRecord((long) i, "1.2.3.4", 222, "5.6.7.8", "king", Status.ATTEMPT, withBatchId ? UUID.fromString("b23534c7-93af-497f-b00c-1edaaa335caa") : null, "SELECT QUERY"));
         }
-        OngoingStubbing<AuditRecord> recordStub = when(reader.nextRecord());
-        for (AuditRecord record : records)
+        OngoingStubbing<StoredAuditRecord> recordStub = when(reader.nextRecord());
+        for (StoredAuditRecord record : records)
         {
             recordStub = recordStub.thenReturn(record);
         }
@@ -177,16 +175,17 @@ public class TestLogPrinter
         return reader;
     }
 
-    private AuditRecord mockRecord(long timestamp, String clientHost, int clientPort, String coordinatorHost, String user, Status status, UUID batchId, String operation) throws UnknownHostException
+    private StoredAuditRecord mockRecord(Long timestamp, String clientHost, Integer clientPort, String coordinatorHost, String user, Status status, UUID batchId, String operation) throws UnknownHostException
     {
-        AuditRecord record = mock(AuditRecord.class);
-        when(record.getTimestamp()).thenReturn(timestamp);
-        when(record.getClientAddress()).thenReturn(new InetSocketAddress(InetAddress.getByName(clientHost), clientPort));
-        when(record.getCoordinatorAddress()).thenReturn(InetAddress.getByName(coordinatorHost));
-        when(record.getUser()).thenReturn(user);
+        StoredAuditRecord record = mock(StoredAuditRecord.class);
+        when(record.getTimestamp()).thenReturn(Optional.ofNullable(timestamp));
+        when(record.getClientAddress()).thenReturn(Optional.ofNullable(InetAddress.getByName(clientHost)));
+        when(record.getClientPort()).thenReturn(Optional.ofNullable(clientPort));
+        when(record.getCoordinatorAddress()).thenReturn(Optional.ofNullable(InetAddress.getByName(coordinatorHost)));
+        when(record.getUser()).thenReturn(Optional.ofNullable(user));
         when(record.getBatchId()).thenReturn(Optional.ofNullable(batchId));
-        when(record.getStatus()).thenReturn(status);
-        when(record.getOperation()).thenReturn(new SimpleAuditOperation(operation));
+        when(record.getStatus()).thenReturn(Optional.ofNullable(status));
+        when(record.getOperation()).thenReturn(Optional.ofNullable(operation));
         return record;
     }
 

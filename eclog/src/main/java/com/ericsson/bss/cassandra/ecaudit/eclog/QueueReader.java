@@ -16,7 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.AuditRecordReadMarshallable;
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptTailer;
@@ -31,7 +31,7 @@ public class QueueReader
 {
     private final ExcerptTailer tailer;
 
-    private AuditRecord nextRecord;
+    private StoredAuditRecord nextRecord;
 
     public QueueReader(ToolOptions toolOptions)
     {
@@ -104,10 +104,10 @@ public class QueueReader
         }
     }
 
-    public AuditRecord nextRecord()
+    public StoredAuditRecord nextRecord()
     {
         maybeReadNext();
-        AuditRecord entry = nextRecord;
+        StoredAuditRecord entry = nextRecord;
         nextRecord = null; // NOPMD
         return entry;
     }

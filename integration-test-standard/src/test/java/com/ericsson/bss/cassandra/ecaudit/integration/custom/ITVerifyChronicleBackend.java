@@ -38,7 +38,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.eclog.QueueReader;
 import com.ericsson.bss.cassandra.ecaudit.eclog.ToolOptions;
@@ -223,27 +223,27 @@ public class ITVerifyChronicleBackend
             fail("Interrupted during delay", e);
         }
 
-        List<AuditRecord> records = getRecords();
+        List<StoredAuditRecord> records = getRecords();
         assertThat(records).hasSize(1);
 
-        AuditRecord record = records.get(0);
-        assertThat(record.getOperation().getOperationString()).isEqualTo(operation);
-        assertThat(record.getUser()).isEqualTo(username);
-        assertThat(record.getStatus()).isEqualTo(Status.ATTEMPT);
-        assertThat(record.getClientAddress().getAddress()).isEqualTo(InetAddress.getLoopbackAddress());
-        assertThat(record.getClientAddress().getPort()).isGreaterThan(0);
-        assertThat(record.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(record.getTimestamp()).isLessThanOrEqualTo(System.currentTimeMillis());
-        assertThat(record.getTimestamp()).isGreaterThan(System.currentTimeMillis() - 30_000);
+        StoredAuditRecord record = records.get(0);
+        assertThat(record.getOperation()).contains(operation);
+        assertThat(record.getUser()).contains(username);
+        assertThat(record.getStatus()).contains(Status.ATTEMPT);
+        assertThat(record.getClientAddress()).contains(InetAddress.getLoopbackAddress());
+        assertThat(record.getClientPort().get()).isGreaterThan(0);
+        assertThat(record.getCoordinatorAddress()).contains(FBUtilities.getBroadcastAddress());
+        assertThat(record.getTimestamp().get()).isLessThanOrEqualTo(System.currentTimeMillis());
+        assertThat(record.getTimestamp().get()).isGreaterThan(System.currentTimeMillis() - 30_000);
     }
 
-    private List<AuditRecord> getRecords()
+    private List<StoredAuditRecord> getRecords()
     {
-        List<AuditRecord> records = new ArrayList<>();
+        List<StoredAuditRecord> records = new ArrayList<>();
 
         while (reader.hasRecordAvailable())
         {
-            AuditRecord record = reader.nextRecord();
+            StoredAuditRecord record = reader.nextRecord();
             records.add(record);
         }
 

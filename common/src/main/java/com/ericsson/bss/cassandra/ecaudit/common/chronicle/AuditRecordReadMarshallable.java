@@ -16,14 +16,10 @@
 package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
-import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.wire.ReadMarshallable;
@@ -32,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AuditRecordReadMarshallable implements ReadMarshallable
 {
-    private AuditRecord auditRecord;
+    private StoredAuditRecord auditRecord;
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException
@@ -42,14 +38,29 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
             throw new IORuntimeException("Tried to read from wire with used marshallable");
         }
 
-        verifyVersion(wire);
+        short version = wire.read(WireTags.KEY_VERSION).int16();
+        switch (version)
+        {
+            case 0: // Legacy version
+                auditRecord = readV0(wire);
+                break;
+            case 1: // Current version:
+                auditRecord = readV1(wire);
+                break;
+            default:
+                throw new IORuntimeException("Unsupported record version: " + version);
+        }
+    }
 
-        String type = readType(wire);
+    private StoredAuditRecord readV0(WireIn wire)
+    {
+        String type = readV0Type(wire);
 
-        SimpleAuditRecord.Builder builder = SimpleAuditRecord
+        StoredAuditRecord.Builder builder = StoredAuditRecord
                                             .builder()
                                             .withTimestamp(wire.read(WireTags.KEY_TIMESTAMP).int64())
-                                            .withClientAddress(readInetSocketAddress(wire, WireTags.KEY_CLIENT_IP, WireTags.KEY_CLIENT_PORT))
+                                            .withClientAddress(readInetAddress(wire, WireTags.KEY_CLIENT_IP))
+                                            .withClientPort(wire.read(WireTags.KEY_CLIENT_PORT).int32())
                                             .withCoordinatorAddress(readInetAddress(wire, WireTags.KEY_COORDINATOR_IP))
                                             .withUser(wire.read(WireTags.KEY_USER).text());
 
@@ -58,22 +69,34 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
             builder.withBatchId(readBatchId(wire));
         }
 
-        auditRecord = builder.withStatus(readStatus(wire))
-                             .withOperation(readAuditOperation(wire))
-                             .build();
+        return builder.withStatus(readStatus(wire))
+                      .withOperation(wire.read(WireTags.KEY_OPERATION).text())
+                      .build();
     }
 
-    private void verifyVersion(WireIn wire) throws IORuntimeException
+    private StoredAuditRecord readV1(WireIn wire)
     {
-        short version = wire.read(WireTags.KEY_VERSION).int16();
+        checkV1Type(wire);
+        int bitmap = wire.read(WireTags.KEY_FIELDS).int32();
 
-        if (version != WireTags.VALUE_VERSION_CURRENT)
-        {
-            throw new IORuntimeException("Unsupported record version: " + version);
-        }
+        FieldSelector fields = FieldSelector.fromBitmap(bitmap);
+        StoredAuditRecord.Builder recordBuilder = StoredAuditRecord.builder();
+
+        // Read configurable fields
+        fields.ifSelectedRun(Field.TIMESTAMP, () -> recordBuilder.withTimestamp(wire.read(WireTags.KEY_TIMESTAMP).int64()));
+        fields.ifSelectedRun(Field.CLIENT_IP, () -> recordBuilder.withClientAddress(readInetAddress(wire, WireTags.KEY_CLIENT_IP)));
+        fields.ifSelectedRun(Field.CLIENT_PORT, () -> recordBuilder.withClientPort(wire.read(WireTags.KEY_CLIENT_PORT).int32()));
+        fields.ifSelectedRun(Field.COORDINATOR_IP, () -> recordBuilder.withCoordinatorAddress(readInetAddress(wire, WireTags.KEY_COORDINATOR_IP)));
+        fields.ifSelectedRun(Field.USER, () -> recordBuilder.withUser(wire.read(WireTags.KEY_USER).text()));
+        fields.ifSelectedRun(Field.BATCH_ID, () -> recordBuilder.withBatchId(readBatchId(wire)));
+        fields.ifSelectedRun(Field.STATUS, () -> recordBuilder.withStatus(readStatus(wire)));
+        fields.ifSelectedRun(Field.OPERATION, () -> recordBuilder.withOperation(wire.read(WireTags.KEY_OPERATION).text()));
+        fields.ifSelectedRun(Field.OPERATION_NAKED, () -> recordBuilder.withNakedOperation(wire.read(WireTags.KEY_NAKED_OPERATION).text()));
+
+        return recordBuilder.build();
     }
 
-    private String readType(WireIn wire) throws IORuntimeException
+    private String readV0Type(WireIn wire) throws IORuntimeException
     {
         String type = wire.read(WireTags.KEY_TYPE).text();
         if (!WireTags.VALUE_TYPE_BATCH_ENTRY.equals(type) && !WireTags.VALUE_TYPE_SINGLE_ENTRY.equals(type))
@@ -84,21 +107,12 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         return type;
     }
 
-    private InetSocketAddress readInetSocketAddress(WireIn wire, String ipKey, String portKey) throws IORuntimeException
+    private void checkV1Type(WireIn wire) throws IORuntimeException
     {
-        try
+        String type = wire.read(WireTags.KEY_TYPE).text();
+        if (!WireTags.VALUE_TYPE_AUDIT.equals(type))
         {
-            InetAddress inetAddress = InetAddress.getByAddress(wire.read(ipKey).bytes());
-            int port = wire.read(portKey).int32();
-            return new InetSocketAddress(inetAddress, port);
-        }
-        catch (UnknownHostException e)
-        {
-            throw new IORuntimeException("Corrupt " + ipKey + " field", e);
-        }
-        catch (IllegalArgumentException e)
-        {
-            throw new IORuntimeException("Corrupt " + portKey + " field", e);
+            throw new IORuntimeException("Unsupported record type field: " + type);
         }
     }
 
@@ -131,12 +145,7 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         }
     }
 
-    private AuditOperation readAuditOperation(WireIn wire) throws IORuntimeException
-    {
-        return new SimpleAuditOperation(wire.read(WireTags.KEY_OPERATION).text());
-    }
-
-    public AuditRecord getAuditRecord()
+    public StoredAuditRecord getAuditRecord()
     {
         if (auditRecord == null)
         {

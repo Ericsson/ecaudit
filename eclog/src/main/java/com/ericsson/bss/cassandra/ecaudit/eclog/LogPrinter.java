@@ -16,9 +16,8 @@
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.PrintStream;
-import java.net.InetSocketAddress;
 
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
 
 class LogPrinter
 {
@@ -48,20 +47,20 @@ class LogPrinter
         {
             while (isEligibleForPrint(queueReader, printedRecords))
             {
-                AuditRecord auditEntry = queueReader.nextRecord();
+                StoredAuditRecord auditEntry = queueReader.nextRecord();
 
                 StringBuilder builder = new StringBuilder();
-                builder.append(auditEntry.getTimestamp()).append('|');
-                builder.append(auditEntry.getClientAddress().getAddress().getHostAddress())
-                       .append(portIfPresent(auditEntry.getClientAddress()))
-                       .append('|');
-                builder.append(auditEntry.getCoordinatorAddress().getHostAddress()).append('|');
-                builder.append(auditEntry.getUser()).append('|');
-                builder.append(auditEntry.getStatus()).append('|');
-                auditEntry.getBatchId()
-                          .ifPresent(bid -> builder.append(bid).append('|'));
 
-                builder.append(auditEntry.getOperation().getOperationString());
+                auditEntry.getTimestamp().ifPresent(timestamp -> builder.append(timestamp).append('|'));
+                builder.append(getClient(auditEntry));
+                auditEntry.getCoordinatorAddress().ifPresent(address -> builder.append(address.getHostAddress()).append('|'));
+                auditEntry.getUser().ifPresent(user -> builder.append(user).append('|'));
+                auditEntry.getStatus().ifPresent(status -> builder.append(status).append('|'));
+                auditEntry.getBatchId().ifPresent(batchId -> builder.append(batchId).append('|'));
+                auditEntry.getOperation().ifPresent(operation -> builder.append(operation).append('|'));
+                auditEntry.getNakedOperation().ifPresent(nakedOperation -> builder.append(nakedOperation).append('|'));
+
+                builder.setLength(builder.length() - 1);
                 out.println(builder.toString());
 
                 printedRecords++;
@@ -89,17 +88,18 @@ class LogPrinter
         }
     }
 
-    private String portIfPresent(InetSocketAddress address)
+    private String getClient(StoredAuditRecord auditEntry)
     {
-        int clientPort = address.getPort();
-        if (clientPort > 0)
+        StringBuilder sb = new StringBuilder();
+
+        auditEntry.getClientAddress().ifPresent(address -> sb.append(address.getHostAddress()));
+        auditEntry.getClientPort().ifPresent(port -> sb.append(':').append(port));
+
+        if (sb.length() > 0)
         {
-            return ":" + clientPort;
+            sb.append('|');
         }
-        else
-        {
-            return "";
-        }
+        return sb.toString();
     }
 
     private boolean isEligibleForPrint(QueueReader queueReader, long printedRecords)

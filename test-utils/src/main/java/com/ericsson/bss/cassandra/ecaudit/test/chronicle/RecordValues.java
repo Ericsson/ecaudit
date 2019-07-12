@@ -22,8 +22,8 @@ import java.util.UUID;
 @SuppressWarnings("PMD")
 public class RecordValues
 {
-    private short version = 0;
-    private String type = "ecaudit-single";
+    private short version = 1;
+    private String type = "ecaudit";
     private long timestamp = 42;
     private byte[] clientAddress;
     private int clientPort = 555;

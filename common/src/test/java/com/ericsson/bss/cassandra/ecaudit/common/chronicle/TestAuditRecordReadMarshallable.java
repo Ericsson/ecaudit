@@ -25,8 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
-import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
 import com.ericsson.bss.cassandra.ecaudit.test.chronicle.RecordValues;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.wire.ValueIn;
@@ -64,7 +63,7 @@ public class TestAuditRecordReadMarshallable
 
         readMarshallable.readMarshallable(wireInMock);
 
-        AuditRecord actualAuditRecord = readMarshallable.getAuditRecord();
+        StoredAuditRecord actualAuditRecord = readMarshallable.getAuditRecord();
 
         assertThatRecordIsSame(actualAuditRecord, defaultValues);
     }
@@ -73,13 +72,12 @@ public class TestAuditRecordReadMarshallable
     public void testReadBatchBatch() throws Exception
     {
         RecordValues expectedValues = defaultValues
-                                      .butWithType("ecaudit-batch")
                                       .butWithBatchId(UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"));
         givenNextRecordIs(expectedValues);
 
         readMarshallable.readMarshallable(wireInMock);
 
-        AuditRecord actualAuditRecord = readMarshallable.getAuditRecord();
+        StoredAuditRecord actualAuditRecord = readMarshallable.getAuditRecord();
 
         assertThatRecordIsSame(actualAuditRecord, expectedValues);
     }
@@ -166,6 +164,11 @@ public class TestAuditRecordReadMarshallable
         when(typeValueMock.text()).thenReturn(values.getType());
         when(wireInMock.read(eq("type"))).thenReturn(typeValueMock);
 
+        int fieldsBitmap = values.getBatchId() != null ? FieldSelector.DEFAULT_FIELDS.getBitmap() : FieldSelector.DEFAULT_FIELDS.withoutField(Field.BATCH_ID).getBitmap();
+        ValueIn fieldsValueMock = mock(ValueIn.class);
+        when(fieldsValueMock.int32()).thenReturn(fieldsBitmap);
+        when(wireInMock.read(eq("fields"))).thenReturn(fieldsValueMock);
+
         ValueIn timestampValueMock = mock(ValueIn.class);
         when(timestampValueMock.int64()).thenReturn(values.getTimestamp());
         when(wireInMock.read(eq("timestamp"))).thenReturn(timestampValueMock);
@@ -202,15 +205,15 @@ public class TestAuditRecordReadMarshallable
         when(wireInMock.read(eq("operation"))).thenReturn(operationValueMock);
     }
 
-    private void assertThatRecordIsSame(AuditRecord actualAuditRecord, RecordValues expectedValues) throws UnknownHostException
+    private void assertThatRecordIsSame(StoredAuditRecord actualAuditRecord, RecordValues expectedValues) throws UnknownHostException
     {
         assertThat(actualAuditRecord.getBatchId()).isEqualTo(Optional.ofNullable(expectedValues.getBatchId()));
-        assertThat(actualAuditRecord.getClientAddress().getAddress()).isEqualTo(InetAddress.getByAddress(expectedValues.getClientAddress()));
-        assertThat(actualAuditRecord.getClientAddress().getPort()).isEqualTo(expectedValues.getClientPort());
-        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(InetAddress.getByAddress(expectedValues.getCoordinatorAddress()));
-        assertThat(actualAuditRecord.getStatus().name()).isEqualTo(expectedValues.getStatus());
-        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedValues.getOperation());
-        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedValues.gethUser());
-        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedValues.getTimestamp());
+        assertThat(actualAuditRecord.getClientAddress()).contains(InetAddress.getByAddress(expectedValues.getClientAddress()));
+        assertThat(actualAuditRecord.getClientPort()).contains(expectedValues.getClientPort());
+        assertThat(actualAuditRecord.getCoordinatorAddress()).contains(InetAddress.getByAddress(expectedValues.getCoordinatorAddress()));
+        assertThat(actualAuditRecord.getStatus().map(String::valueOf)).contains(expectedValues.getStatus());
+        assertThat(actualAuditRecord.getOperation()).contains(expectedValues.getOperation());
+        assertThat(actualAuditRecord.getUser()).contains(expectedValues.gethUser());
+        assertThat(actualAuditRecord.getTimestamp()).contains(expectedValues.getTimestamp());
     }
 }

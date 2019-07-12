@@ -78,6 +78,10 @@ log_timing_strategy: pre_logging
 # - roll_cycle   - Frequency of log file roll cycle. Supported values are MINUTELY, HOURLY, and DAILY. Default is
 #                  HOURLY.
 # - max_log_size - Rotate oldest file when maximum size (in bytes) of log files is reached. Default is 16GB.
+# - fields       - The fields that will be written to the binary log file. Supported fields are CLIENT_IP, CLIENT_PORT,
+#                  COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION, OPERATION_NAKED, and TIMESTAMP.
+#                  Default is CLIENT_IP, CLIENT_PORT, COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION and TIMESTAMP
+#                  fields.
 #
 logger_backend:
     - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
