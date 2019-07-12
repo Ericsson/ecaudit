@@ -37,6 +37,7 @@ public class TestLazyUUID
         // Then
         assertThat(uuid).isNotNull().isSameAs(lazyUUID.getUuid());
     }
+
     @Test
     public void testThatTimeBasedUuidIsCreated()
     {
