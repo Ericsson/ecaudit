@@ -65,11 +65,6 @@ The most notable being:
   Cassandra 4.0 is storing audit records as one single formatted line.
   ecAudit is storing individual parameters and is doing formatting before printing lines.
 
-* Cassandra 4.0 will always generate the log record after the fact that the operation either completed or failed.
-  ecAudit will generate log record before executing the operation (with STATUS=ATTEMPT)
-  and generate failure record if the operation fails (with STATUS=FAILED).
-  This is being addressed in [#24](https://github.com/Ericsson/ecaudit/issues/24) which will make behavior configurable in ecAudit.
-
 * Cassandra 4.0 uses settings in the ```cassandra.yaml``` to configure basic whitelists.
   ecAudit uses role options in CQL and/or settings in the audit.yaml file to manage whitelists.
   [CASSANDRA-14471](https://issues.apache.org/jira/browse/CASSANDRA-14471) is attempting to close this gap.
