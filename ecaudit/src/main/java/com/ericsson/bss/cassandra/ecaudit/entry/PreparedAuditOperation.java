@@ -22,7 +22,8 @@ import java.util.Queue;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
-import org.apache.cassandra.transport.Server;
+import org.apache.cassandra.db.marshal.AsciiType;
+import org.apache.cassandra.db.marshal.UTF8Type;
 
 /**
  * Wraps a prepared statement and the {@link QueryOptions} of an operation.
@@ -88,7 +89,15 @@ public class PreparedAuditOperation implements AuditOperation
         Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
         for (ColumnSpecification column : options.getColumnSpecifications())
         {
-            String value = column.type.asCQL3Type().toCQLLiteral(values.remove(), Server.CURRENT_VERSION);
+            String value;
+            if (column.type instanceof UTF8Type || column.type instanceof AsciiType)
+            {
+                value = "'" + column.type.getString(values.remove()) + "'";
+            }
+            else
+            {
+                value = column.type.getString(values.remove());
+            }
 
             fullStatement.append(value).append(", ");
         }

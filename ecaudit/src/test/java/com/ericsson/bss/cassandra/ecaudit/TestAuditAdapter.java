@@ -121,7 +121,7 @@ public class TestAuditAdapter
     public static void beforeAll()
     {
         ClientInitializer.beforeClass();
-        oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
+        //oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
     }
 
     @Before
@@ -143,7 +143,7 @@ public class TestAuditAdapter
     @AfterClass
     public static void afterAll()
     {
-        DatabaseDescriptor.setPartitionerUnsafe(oldPartitionerToRestore);
+        //DatabaseDescriptor.setPartitionerUnsafe(oldPartitionerToRestore);
         ClientInitializer.afterClass();
     }
 
@@ -366,11 +366,11 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder()).thenReturn(auditBuilder);
 
         // When
-        auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP);
 
         // Then
         AuditEntry entry = getAuditEntry();
-        assertThat(entry.getClientAddress()).isEqualTo(new InetSocketAddress(clientAddress, CLIENT_AUTH_PORT));
+        assertThat(entry.getClientAddress()).isNull();
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedOperation);
@@ -387,7 +387,7 @@ public class TestAuditAdapter
         // Given
         when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
-        auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP);
         // Then
         verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
@@ -401,7 +401,7 @@ public class TestAuditAdapter
         doThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 3, 4, true)).when(mockAuditor).audit(any(AuditEntry.class));
 
         assertThatExceptionOfType(AuthenticationException.class)
-        .isThrownBy(() -> auditAdapter.auditAuth(USER, clientAddress, Status.ATTEMPT, TIMESTAMP));
+        .isThrownBy(() -> auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP));
     }
 
     @Test

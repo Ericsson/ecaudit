@@ -101,7 +101,7 @@ public class Slf4jAuditLogger implements AuditLogger
     static Map<String, Function<AuditEntry, Object>> getAvailableFieldFunctionMap(Slf4jAuditLoggerConfig auditConfig)
     {
         return ImmutableMap.<String, Function<AuditEntry, Object>>builder()
-               .put("CLIENT_IP", entry -> entry.getClientAddress().getAddress().getHostAddress())
+               .put("CLIENT_IP", entry -> getIpOrNull(entry.getClientAddress()))
                .put("CLIENT_PORT", entry -> getPortOrNull(entry.getClientAddress()))
                .put("COORDINATOR_IP", entry -> entry.getCoordinatorAddress().getHostAddress())
                .put("USER", AuditEntry::getUser)
@@ -114,9 +114,15 @@ public class Slf4jAuditLogger implements AuditLogger
     }
 
     @Nullable
+    private static String getIpOrNull(InetSocketAddress address)
+    {
+        return address != null ? address.getAddress().getHostAddress() : null;
+    }
+
+    @Nullable
     private static Integer getPortOrNull(InetSocketAddress address)
     {
-        return address.getPort() != AuditEntry.UNKNOWN_PORT ? address.getPort() : null;
+        return address != null && address.getPort() != AuditEntry.UNKNOWN_PORT ? address.getPort() : null;
     }
 
     static Function<AuditEntry, Object> getTimeFunction(Slf4jAuditLoggerConfig auditConfig)

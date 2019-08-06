@@ -393,41 +393,6 @@ public class ITDataAudit
     }
 
     @Test
-    public void simpleCreateViewIsLogged()
-    {
-        givenTable("dataks", "tbl53");
-        String username = givenSuperuserWithMinimalWhitelist();
-
-        testSession.execute(new SimpleStatement("CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.view53 AS " +
-                                                "SELECT value " +
-                                                "FROM dataks.tbl53 " +
-                                                "WHERE value IS NOT NULL AND key IS NOT NULL " +
-                                                "PRIMARY KEY (value, key)"));
-
-        thenAuditLogContainEntryForUser("CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.view53 AS " +
-                                        "SELECT value " +
-                                        "FROM dataks.tbl53 " +
-                                        "WHERE value IS NOT NULL AND key IS NOT NULL " +
-                                        "PRIMARY KEY (value, key)", username);
-    }
-
-    @Test
-    public void simpleCreateViewIsWhitelisted()
-    {
-        givenTable("dataks", "tbl54");
-        String username = givenSuperuserWithMinimalWhitelist();
-        whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataks/tbl54");
-
-        testSession.execute(new SimpleStatement("CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.view54 AS " +
-                                                "SELECT value " +
-                                                "FROM dataks.tbl54 " +
-                                                "WHERE value IS NOT NULL AND key IS NOT NULL " +
-                                                "PRIMARY KEY (value, key)"));
-
-        thenAuditLogContainNothingForUser();
-    }
-
-    @Test
     public void simpleDropKsIsLogged()
     {
         givenKeyspace("dataksdropks");
@@ -497,29 +462,6 @@ public class ITDataAudit
     }
 
     @Test
-    public void simpleDropViewIsLogged()
-    {
-        givenView("dataks", "tbl764", "view764");
-        String username = givenSuperuserWithMinimalWhitelist();
-
-        testSession.execute(new SimpleStatement("DROP MATERIALIZED VIEW IF EXISTS dataks.view764"));
-
-        thenAuditLogContainEntryForUser("DROP MATERIALIZED VIEW IF EXISTS dataks.view764", username);
-    }
-
-    @Test
-    public void simpleDropViewIsWhitelisted()
-    {
-        givenView("dataks", "tbl765", "view765");
-        String username = givenSuperuserWithMinimalWhitelist();
-        whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataks/tbl765");
-
-        testSession.execute(new SimpleStatement("DROP MATERIALIZED VIEW IF EXISTS dataks.view765"));
-
-        thenAuditLogContainNothingForUser();
-    }
-
-    @Test
     public void simpleAlterKsIsLogged()
     {
         givenKeyspace("dataksalterks");
@@ -561,29 +503,6 @@ public class ITDataAudit
         whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataksaltertable/tbl2");
 
         testSession.execute(new SimpleStatement("ALTER TABLE dataksaltertable.tbl2 WITH gc_grace_seconds = 0"));
-
-        thenAuditLogContainNothingForUser();
-    }
-
-    @Test
-    public void simpleAlterViewIsLogged()
-    {
-        givenView("dataksalterview", "tbl1", "view1");
-        String username = givenSuperuserWithMinimalWhitelist();
-
-        testSession.execute(new SimpleStatement("ALTER MATERIALIZED VIEW dataksalterview.view1 WITH gc_grace_seconds = 1"));
-
-        thenAuditLogContainEntryForUser("ALTER MATERIALIZED VIEW dataksalterview.view1 WITH gc_grace_seconds = 1", username);
-    }
-
-    @Test
-    public void simpleAlterViewIsWhitelisted()
-    {
-        givenView("dataksalterview", "tbl2", "view2");
-        String username = givenSuperuserWithMinimalWhitelist();
-        whenRoleIsWhitelistedForOperationOnResource(username, "alter", "data/dataksalterview/tbl2");
-
-        testSession.execute(new SimpleStatement("ALTER MATERIALIZED VIEW dataksalterview.view2 WITH gc_grace_seconds = 1"));
 
         thenAuditLogContainNothingForUser();
     }

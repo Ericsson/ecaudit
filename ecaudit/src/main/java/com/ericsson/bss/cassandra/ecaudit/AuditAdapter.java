@@ -15,8 +15,6 @@
  */
 package com.ericsson.bss.cassandra.ecaudit;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -174,17 +172,15 @@ public class AuditAdapter
      * Audit an authentication attempt.
      *
      * @param username  the user to authenticate
-     * @param clientIp  the address of the client that tries to authenticate
      * @param status    the status of the operation
      * @param timestamp the system timestamp for the request
      * @throws AuthenticationException if the audit operation could not be performed
      */
-    public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp) throws AuthenticationException
+    public void auditAuth(String username, Status status, long timestamp) throws AuthenticationException
     {
         if (auditor.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
-                                                     .client(new InetSocketAddress(clientIp, AuditEntry.UNKNOWN_PORT))
                                                      .coordinator(FBUtilities.getBroadcastAddress())
                                                      .user(username)
                                                      .status(status)

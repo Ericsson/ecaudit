@@ -73,6 +73,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
     {
         setupConfiguration();
         cassandraDaemon = new CassandraDaemon(true);
+        //cassandraDaemon.init(null);
     }
 
     /**
@@ -109,7 +110,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     private void activate()
     {
-        if (!cassandraDaemon.setupCompleted() && !cassandraDaemon.nativeServer.isRunning())
+        if (!cassandraDaemon.setupCompleted() /*&& !cassandraDaemon.nativeServer.isRunning()*/)
         {
             Runtime.getRuntime().addShutdownHook(new Thread(this::deactivate));
             cassandraDaemon.activate();

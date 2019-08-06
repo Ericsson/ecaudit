@@ -34,6 +34,7 @@ import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
 import org.apache.cassandra.config.CFMetaData;
+import org.apache.cassandra.config.KSMetaData;
 import org.apache.cassandra.config.Schema;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.QueryOptions;
@@ -45,7 +46,6 @@ import org.apache.cassandra.cql3.statements.UpdateStatement;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.RequestValidationException;
-import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.serializers.SetSerializer;
 import org.apache.cassandra.serializers.UTF8Serializer;
 import org.apache.cassandra.service.MigrationManager;
@@ -61,7 +61,7 @@ public class WhitelistDataAccess
     private static final Logger LOG = LoggerFactory.getLogger(WhitelistDataAccess.class);
 
     private static final long SCHEMA_ALIGNMENT_DELAY_MS = Long.getLong("ecaudit.schema_alignment_delay_ms", 120_000L);
-    private static final SetSerializer<String> SET_SERIALIZER = SetSerializer.getInstance(UTF8Serializer.instance, UTF8Type.instance);
+    private static final SetSerializer<String> SET_SERIALIZER = SetSerializer.getInstance(UTF8Serializer.instance);
 
     private boolean setupCompleted = false;
 
@@ -217,13 +217,13 @@ public class WhitelistDataAccess
 
     private synchronized void maybeCreateTable()
     {
-        KeyspaceMetadata expected = AuditAuthKeyspace.metadata();
-        KeyspaceMetadata defined = Schema.instance.getKSMetaData(expected.name);
+        KSMetaData expected = AuditAuthKeyspace.metadata();
+        KSMetaData defined = Schema.instance.getKSMetaData(expected.name);
 
         boolean changesAnnounced = false;
-        for (CFMetaData expectedTable : expected.tables)
+        for (CFMetaData expectedTable : expected.cfMetaData().values())
         {
-            CFMetaData definedTable = defined.tables.get(expectedTable.cfName).orElse(null);
+            CFMetaData definedTable = defined.cfMetaData().get(expectedTable.cfName);
             if (definedTable == null || !definedTable.equals(expectedTable))
             {
                 MigrationManager.forceAnnounceNewColumnFamily(expectedTable);
