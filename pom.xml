@@ -18,7 +18,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-    <artifactId>parent_c3.0.11</artifactId>
+    <artifactId>parent_c2.2.14</artifactId>
     <version>2.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -50,8 +50,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <cassandra.version>3.0.11</cassandra.version>
-        <artifact.flavor.version>c3.0.11</artifact.flavor.version>
+        <cassandra.version>2.2.14</cassandra.version>
+        <artifact.flavor.version>c2.2.14</artifact.flavor.version>
 
         <pmd-config-url>pmd-rules.xml</pmd-config-url>
 
