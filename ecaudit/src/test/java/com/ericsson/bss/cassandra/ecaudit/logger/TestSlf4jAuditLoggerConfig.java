@@ -40,7 +40,7 @@ public class TestSlf4jAuditLoggerConfig
 
         Slf4jAuditLoggerConfig config = new Slf4jAuditLoggerConfig(options);
 
-        assertThat(config.getLogFormat()).isEqualTo("client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'");
+        assertThat(config.getLogFormat()).isEqualTo("{?client:'${CLIENT_IP}'|?}user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'");
         assertThat(config.getTimeFormatter()).isEmpty();
     }
 

@@ -92,7 +92,7 @@ public class ITVerifyAudit
         session = cluster.connect();
 
         session.execute(new SimpleStatement(
-        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }"));
+        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system' }"));
 
         session.execute(new SimpleStatement(
         "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
@@ -201,7 +201,7 @@ public class ITVerifyAudit
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(Collectors.toList()))
                         .contains(
-                                "client:'127.0.0.1'|user:'ecuser'|status:'ATTEMPT'|operation:'Authentication attempt'");
+                                "user:'ecuser'|status:'ATTEMPT'|operation:'Authentication attempt'");
     }
 
     @Test
@@ -238,8 +238,8 @@ public class ITVerifyAudit
                     .map(ILoggingEvent::getFormattedMessage)
                     .collect(Collectors.toList()))
                             .contains(
-                                    "client:'127.0.0.1'|user:'unknown'|status:'ATTEMPT'|operation:'Authentication attempt'",
-                                    "client:'127.0.0.1'|user:'unknown'|status:'FAILED'|operation:'Authentication failed'");
+                                    "user:'unknown'|status:'ATTEMPT'|operation:'Authentication attempt'",
+                                    "user:'unknown'|status:'FAILED'|operation:'Authentication failed'");
         }
     }
 
@@ -611,7 +611,7 @@ public class ITVerifyAudit
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(Collectors.toList()))
                         .contains(
-                                "client:'127.0.0.1'|user:'yser2'|status:'ATTEMPT'|operation:'Authentication attempt'");
+                                "user:'yser2'|status:'ATTEMPT'|operation:'Authentication attempt'");
     }
 
     private List<String> expectedAttempts(List<String> statements)

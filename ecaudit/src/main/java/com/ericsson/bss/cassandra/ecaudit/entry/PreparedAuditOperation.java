@@ -16,14 +16,19 @@
 package com.ericsson.bss.cassandra.ecaudit.entry;
 
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Queue;
+import java.util.TimeZone;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.db.marshal.AsciiType;
+import org.apache.cassandra.db.marshal.TimestampType;
 import org.apache.cassandra.db.marshal.UTF8Type;
+import org.apache.cassandra.serializers.TimestampSerializer;
 
 /**
  * Wraps a prepared statement and the {@link QueryOptions} of an operation.
@@ -89,14 +94,27 @@ public class PreparedAuditOperation implements AuditOperation
         Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
         for (ColumnSpecification column : options.getColumnSpecifications())
         {
-            String value;
+            ByteBuffer serializedValue = values.remove();
+            String value = null;
             if (column.type instanceof UTF8Type || column.type instanceof AsciiType)
             {
-                value = "'" + column.type.getString(values.remove()) + "'";
+                value = "'" + column.type.getString(serializedValue) + "'";
             }
             else
             {
-                value = column.type.getString(values.remove());
+                if (serializedValue.hasRemaining())
+                {
+                    if (column.type instanceof TimestampType)
+                    {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault(Locale.Category.FORMAT));
+                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                        value = sdf.format(TimestampSerializer.instance.deserialize(serializedValue));
+                    }
+                    else
+                    {
+                        value = column.type.getString(serializedValue);
+                    }
+                }
             }
 
             fullStatement.append(value).append(", ");

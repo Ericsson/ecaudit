@@ -29,7 +29,7 @@ class Slf4jAuditLoggerConfig
     private static final String CONFIG_TIME_FORMAT = "time_format";
     private static final String CONFIG_TIME_ZONE = "time_zone";
 
-    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+    private static final String DEFAULT_LOG_FORMAT = "{?client:'${CLIENT_IP}'|?}user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
 
     private final String logFormat;
     private final DateTimeFormatter timeFormatter;
