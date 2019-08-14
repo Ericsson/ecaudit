@@ -24,6 +24,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.LoggerFactory;
@@ -176,7 +177,7 @@ public class ITVerifyPostLogging
     }
 
     @Test
-    public void testFailedStatements()
+    public void testFailedSimpleStatements()
     {
         // Given
         givenTable("keyspace1", "table1");
@@ -184,26 +185,62 @@ public class ITVerifyPostLogging
 
         // When
         executeAndIgnoreException(() -> session.execute(new SimpleStatement("SELECT * from NON.EXISTING_TABLE1")));
+        executeAndIgnoreException(() -> session.execute(new SimpleStatement("INSERT INTO keyspace1.table1 (key, value) VALUES (42)")));
 
+        // Then
+        List<String> entries = getLogEntries().stream()
+                                              .map(this::replaceBatchIdWithConstant)
+                                              .collect(Collectors.toList());
+        assertThat(entries).containsOnly(
+        "Status=FAILED|User=cassandra|Operation=SELECT * from NON.EXISTING_TABLE1",
+        "Status=FAILED|User=cassandra|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (42)"
+        );
+    }
+
+    @Ignore("Rejected on client side by the 2.1.10 driver version")
+    @Test
+    public void testFailedBatchStatements()
+    {
+        // Given
+        givenTable("keyspace1", "table1");
+        reset(mockAuditAppender);
+
+        // When
         BatchStatement batchInserts = new BatchStatement(BatchStatement.Type.UNLOGGED);
         PreparedStatement preparedInsert = session.prepare("INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)");
         batchInserts.add(preparedInsert.bind(42, "Kalle"));
         batchInserts.add(preparedInsert.bind()); // No values -> will fail!
         executeAndIgnoreException(() -> session.execute(batchInserts));
 
-        PreparedStatement preparedStatement = session.prepare("SELECT * FROM keyspace1.table1 WHERE key = ?");
-        executeAndIgnoreException(() -> session.execute(preparedStatement.bind())); // No values -> will fail!
         // Then
         List<String> entries = getLogEntries().stream()
                                               .map(this::replaceBatchIdWithConstant)
                                               .collect(Collectors.toList());
         assertThat(entries).containsOnly(
-            "Status=FAILED|User=cassandra|Operation=SELECT * from NON.EXISTING_TABLE1",
-            "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)[42, 'Kalle']",
-            "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)[null, '']",
-            "Status=FAILED|User=cassandra|Operation=SELECT * FROM keyspace1.table1 WHERE key = ?[null]"
+        "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)[42, 'Kalle']",
+        "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)[null, '']"
         );
+    }
 
+    @Ignore("Rejected on client side by the 2.1.10 driver version")
+    @Test
+    public void testFailedPreparedStatement()
+    {
+        // Given
+        givenTable("keyspace1", "table1");
+        reset(mockAuditAppender);
+
+        // When
+        PreparedStatement preparedStatement = session.prepare("SELECT * FROM keyspace1.table1 WHERE key = ?");
+        executeAndIgnoreException(() -> session.execute(preparedStatement.bind())); // No values -> will fail!
+
+        // Then
+        List<String> entries = getLogEntries().stream()
+                                              .map(this::replaceBatchIdWithConstant)
+                                              .collect(Collectors.toList());
+        assertThat(entries).containsOnly(
+        "Status=FAILED|User=cassandra|Operation=SELECT * FROM keyspace1.table1 WHERE key = ?[null]"
+        );
     }
 
     private void givenTable(String keyspace, String table)

@@ -32,7 +32,7 @@ import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.exceptions.ServerError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import org.mockito.ArgumentCaptor;
@@ -106,7 +106,7 @@ public class ITAllowAllAuthorizer
         givenTable("company", "engineers");
         reset(mockAuditAppender);
 
-        assertThatExceptionOfType(ServerError.class).isThrownBy(() -> session.execute("GRANT SELECT ON TABLE company.engineers TO cassandra"));
+        assertThatExceptionOfType(NoHostAvailableException.class).isThrownBy(() -> session.execute("GRANT SELECT ON TABLE company.engineers TO cassandra"));
 
         assertThat(getLogEntries()).containsOnly(
         "client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'GRANT SELECT ON TABLE company.engineers TO cassandra'",
