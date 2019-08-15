@@ -21,12 +21,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.entry.LazyUUID;
 import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
@@ -135,6 +135,7 @@ public class AuditAdapter
 
     /**
      * Audit a batch statement.
+     *
      * @param statement the batch statement to audit
      * @param uuid      to identify the batch
      * @param state     the client state accompanying the statement
@@ -142,7 +143,7 @@ public class AuditAdapter
      * @param status    the status of the operation
      * @param timestamp the system timestamp for the request
      */
-    public void auditBatch(BatchStatement statement, LazyUUID uuid, ClientState state, BatchQueryOptions options, Status status, long timestamp)
+    public void auditBatch(BatchStatement statement, UUID uuid, ClientState state, BatchQueryOptions options, Status status, long timestamp)
     {
         if (auditor.shouldLogForStatus(status))
         {
@@ -156,7 +157,7 @@ public class AuditAdapter
 
             if (status == Status.FAILED && auditor.shouldLogFailedBatchSummary())
             {
-                String failedBatchStatement = String.format(BATCH_FAILURE, uuid.getUuid());
+                String failedBatchStatement = String.format(BATCH_FAILURE, uuid.toString());
                 auditor.audit(builder.operation(new SimpleAuditOperation(failedBatchStatement)).build());
             }
             else

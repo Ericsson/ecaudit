@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.handler;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.UUID;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -24,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
-import com.ericsson.bss.cassandra.ecaudit.entry.LazyUUID;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
@@ -39,6 +39,7 @@ import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.transport.messages.ResultMessage.Prepared;
 import org.apache.cassandra.utils.MD5Digest;
+import org.apache.cassandra.utils.UUIDGen;
 
 /**
  * An implementation of {@link QueryHandler} that performs audit logging on queries.
@@ -150,7 +151,7 @@ public class AuditQueryHandler implements QueryHandler
     public ResultMessage processBatch(BatchStatement statement, QueryState state, BatchQueryOptions options,
                                       Map<String, ByteBuffer> customPayload) throws RequestExecutionException, RequestValidationException
     {
-        LazyUUID uuid = new LazyUUID();
+        UUID uuid = UUIDGen.getTimeUUID();
         long timestamp = System.currentTimeMillis();
         auditAdapter.auditBatch(statement, uuid, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try

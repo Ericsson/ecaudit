@@ -29,7 +29,6 @@ import org.junit.runner.RunWith;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
-import com.ericsson.bss.cassandra.ecaudit.entry.LazyUUID;
 import net.openhft.chronicle.wire.ValueOut;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.WriteMarshallable;
@@ -86,7 +85,7 @@ public class TestChronicleAuditLogger
     @Test
     public void batchStatement() throws Exception
     {
-        AuditEntry expectedAuditEntry = likeGenericRecord().batch(new LazyUUID()).build();
+        AuditEntry expectedAuditEntry = likeGenericRecord().batch(UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969")).build();
 
         logger.log(expectedAuditEntry);
 

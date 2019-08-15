@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.entry;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,10 +30,6 @@ import org.apache.cassandra.auth.Permission;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests the {@link AuditEntry} class.
@@ -62,7 +57,7 @@ public class TestAuditEntry
                                           .resource(RESOURCE)
                                           .operation(OPERATION)
                                           .user(USER)
-                                          .batch(LazyUUID.fromUuid(BATCH))
+                                          .batch(BATCH)
                                           .status(STATUS)
                                           .timestamp(TIMESTAMP)
                                           .build();
@@ -78,22 +73,5 @@ public class TestAuditEntry
         assertThat(auditEntry.getBatchId()).isEqualTo(newEntry.getBatchId()).contains(BATCH);
         assertThat(auditEntry.getStatus()).isSameAs(newEntry.getStatus()).isSameAs(STATUS);
         assertThat(auditEntry.getTimestamp()).isSameAs(newEntry.getTimestamp()).isSameAs(TIMESTAMP);
-    }
-
-    @Test
-    public void testThatBatchUuidIsNotCreatedUntilGetBatchIdIsCalled()
-    {
-        // Given
-        LazyUUID lazyUUID = mock(LazyUUID.class);
-        when(lazyUUID.getUuid()).thenReturn(BATCH);
-        AuditEntry auditEntry = AuditEntry.newBuilder()
-                                          .batch(lazyUUID)
-                                          .build();
-        verify(lazyUUID, never()).getUuid();
-        // When
-        Optional<UUID> batchId = auditEntry.getBatchId();
-        // Then
-        assertThat(batchId).contains(BATCH);
-        verify(lazyUUID).getUuid();
     }
 }
