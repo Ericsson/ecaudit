@@ -1,7 +1,7 @@
 # Changes
 
 ## Version 2.2.0
-* Improve batch-id (UUID) performance #109
+* Improve batch-id (UUID) performance #108
 
 ## Version 2.1.0
 * Make configuration updateable from tests - #98
