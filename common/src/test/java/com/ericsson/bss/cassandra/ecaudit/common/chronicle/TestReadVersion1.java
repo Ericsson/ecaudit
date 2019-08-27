@@ -32,7 +32,7 @@ import net.openhft.chronicle.queue.ExcerptTailer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Test reading records stored in the binary log file produced by {@link WriteTestDataUtil} using entry type 1 with the following data:
+ * Test reading records stored in the binary log file produced by {@link WriteTestDataUtil} using entry version 1 with the following data:
  * <ul>
  *   <li> CLIENT_IP = 0.1.2.3
  *   <li> CLIENT_PORT = 777
