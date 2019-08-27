@@ -17,7 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.PrintStream;
 
-import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 
 class LogPrinter
 {
@@ -60,7 +60,10 @@ class LogPrinter
                 auditEntry.getOperation().ifPresent(operation -> builder.append(operation).append('|'));
                 auditEntry.getNakedOperation().ifPresent(nakedOperation -> builder.append(nakedOperation).append('|'));
 
-                builder.setLength(builder.length() - 1);
+                if (builder.length() > 0)
+                {
+                    builder.setLength(builder.length() - 1);
+                }
                 out.println(builder.toString());
 
                 printedRecords++;

@@ -165,7 +165,7 @@ public class TestChronicleAuditLoggerConfig
     }
 
     @Test
-    public void testInvalidFieldsCycle()
+    public void testInvalidFieldsConfig()
     {
         Map<String, String> options = ImmutableMap.of("log_dir", "/tmp",
                                                       "fields", "ErrorZ");
@@ -174,11 +174,5 @@ public class TestChronicleAuditLoggerConfig
         .isThrownBy(() -> new ChronicleAuditLoggerConfig(options))
         .withMessageContaining("fields")
         .withMessageContaining("ErrorZ");
-    }
-
-    @Test
-    public void testDefaultFields()
-    {
-        assertThat(FieldSelector.DEFAULT_FIELDS.getBitmap()).isEqualTo(383);
     }
 }

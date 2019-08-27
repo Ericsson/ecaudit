@@ -38,7 +38,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.eclog.QueueReader;
 import com.ericsson.bss.cassandra.ecaudit.eclog.ToolOptions;
@@ -228,6 +228,7 @@ public class ITVerifyChronicleBackend
 
         StoredAuditRecord record = records.get(0);
         assertThat(record.getOperation()).contains(operation);
+        assertThat(record.getNakedOperation()).isEmpty();
         assertThat(record.getUser()).contains(username);
         assertThat(record.getStatus()).contains(Status.ATTEMPT);
         assertThat(record.getClientAddress()).contains(InetAddress.getLoopbackAddress());

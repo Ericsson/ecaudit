@@ -26,6 +26,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.test.chronicle.RecordValues;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.wire.ValueIn;
@@ -211,8 +213,9 @@ public class TestAuditRecordReadMarshallable
         assertThat(actualAuditRecord.getClientAddress()).contains(InetAddress.getByAddress(expectedValues.getClientAddress()));
         assertThat(actualAuditRecord.getClientPort()).contains(expectedValues.getClientPort());
         assertThat(actualAuditRecord.getCoordinatorAddress()).contains(InetAddress.getByAddress(expectedValues.getCoordinatorAddress()));
-        assertThat(actualAuditRecord.getStatus().map(String::valueOf)).contains(expectedValues.getStatus());
+        assertThat(actualAuditRecord.getStatus().map(Status::name)).contains(expectedValues.getStatus());
         assertThat(actualAuditRecord.getOperation()).contains(expectedValues.getOperation());
+        assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
         assertThat(actualAuditRecord.getUser()).contains(expectedValues.gethUser());
         assertThat(actualAuditRecord.getTimestamp()).contains(expectedValues.getTimestamp());
     }

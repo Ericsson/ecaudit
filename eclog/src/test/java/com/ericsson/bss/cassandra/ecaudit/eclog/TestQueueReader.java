@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.AuditRecordReadMarshallable;
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
-import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.test.chronicle.RecordValues;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.queue.ChronicleQueue;
@@ -228,5 +228,6 @@ public class TestQueueReader
         }
         assertThat(actualAuditRecord.getStatus()).map(Enum::name).contains(expectedValues.getStatus());
         assertThat(actualAuditRecord.getOperation()).contains(expectedValues.getOperation());
+        assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
     }
 }

@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.wire.ReadMarshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -41,10 +42,10 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         short version = wire.read(WireTags.KEY_VERSION).int16();
         switch (version)
         {
-            case 0: // Legacy version
+            case WireTags.VALUE_VERSION_0:
                 auditRecord = readV0(wire);
                 break;
-            case 1: // Current version:
+            case WireTags.VALUE_VERSION_CURRENT:
                 auditRecord = readV1(wire);
                 break;
             default:

@@ -24,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptTailer;
@@ -69,6 +70,7 @@ public class TestReadVersion0
         assertThat(actualAuditRecord.getClientPort()).contains(777);
         assertThat(actualAuditRecord.getStatus()).contains(Status.FAILED);
         assertThat(actualAuditRecord.getOperation()).contains("SELECT SOMETHING");
+        assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
         assertThat(actualAuditRecord.getUser()).contains("bob");
         assertThat(actualAuditRecord.getTimestamp()).contains(1554188832323L);
     }
@@ -82,6 +84,7 @@ public class TestReadVersion0
         assertThat(actualAuditRecord.getClientPort()).contains(777);
         assertThat(actualAuditRecord.getStatus()).contains(Status.ATTEMPT);
         assertThat(actualAuditRecord.getOperation()).contains("SELECT SOMETHING");
+        assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
         assertThat(actualAuditRecord.getUser()).contains("bob");
         assertThat(actualAuditRecord.getTimestamp()).contains(1554188832013L);
     }

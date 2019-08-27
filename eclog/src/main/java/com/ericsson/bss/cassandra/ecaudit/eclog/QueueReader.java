@@ -16,7 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.AuditRecordReadMarshallable;
-import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptTailer;

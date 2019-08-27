@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
+package com.ericsson.bss.cassandra.ecaudit.common.record;
 
 import java.net.InetAddress;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 
 /**
  * Audit record that have been re-read into memory from storage.

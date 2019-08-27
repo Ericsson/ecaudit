@@ -30,6 +30,7 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
@@ -139,6 +140,7 @@ public class TestWriteReadVersionCurrent
         assertThat(actualAuditRecord.getCoordinatorAddress()).contains(expectedAuditRecord.getCoordinatorAddress());
         assertThat(actualAuditRecord.getStatus()).contains(expectedAuditRecord.getStatus());
         assertThat(actualAuditRecord.getOperation()).contains(expectedAuditRecord.getOperation().getOperationString());
+        assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
         assertThat(actualAuditRecord.getUser()).contains(expectedAuditRecord.getUser());
         assertThat(actualAuditRecord.getTimestamp()).contains(expectedAuditRecord.getTimestamp());
     }

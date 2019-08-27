@@ -27,7 +27,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ericsson.bss.cassandra.ecaudit.common.chronicle.StoredAuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -139,6 +139,21 @@ public class TestLogPrinter
         QueueReader reader = givenRecords(false, 5, 10);
 
         printer.print(reader);
+    }
+
+    @Test(timeout = 5000)
+    public void testEmptyRecord()
+    {
+        ToolOptions options = ToolOptions.builder().build();
+        LogPrinter printer = givenPrinter(options, 10);
+        QueueReader reader = mock(QueueReader.class);
+        when(reader.hasRecordAvailable()).thenReturn(true).thenReturn(false);
+        StoredAuditRecord emptyRecord = mock(StoredAuditRecord.class);
+        when(reader.nextRecord()).thenReturn(emptyRecord);
+
+        printer.print(reader);
+
+        verify(stream).println(eq(""));
     }
 
     private LogPrinter givenPrinter(ToolOptions options, long pollIntervalMs)
