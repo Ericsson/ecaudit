@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.2.0
+* Configurable fields in Chronicle backend #101
 * Improve batch-id (UUID) performance #108
 
 ## Version 2.1.0

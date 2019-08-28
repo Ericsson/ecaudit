@@ -18,9 +18,13 @@ package com.ericsson.bss.cassandra.ecaudit.logger;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.base.Splitter;
+
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector;
 import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import net.openhft.chronicle.queue.RollCycle;
 import net.openhft.chronicle.queue.RollCycles;
@@ -31,17 +35,21 @@ class ChronicleAuditLoggerConfig
     private static final String CONFIG_LOG_DIR = "log_dir";
     private static final String CONFIG_ROLL_CYCLE = "roll_cycle";
     private static final String CONFIG_MAX_LOG_SIZE = "max_log_size";
+    private static final String CONFIG_FIELDS = "fields";
     private static final long DEFAULT_MAX_LOG_SIZE = 16L * 1024L * 1024L * 1024L; // 16 GB
 
     private final Path logPath;
     private final RollCycle rollCycle;
     private final long maxLogSize;
+    private final FieldSelector fieldSelector;
+
 
     ChronicleAuditLoggerConfig(Map<String, String> parameters)
     {
         logPath = resolveLogPath(parameters);
         rollCycle = resolveRollCycle(parameters);
         maxLogSize = resolveMaxLogSize(parameters);
+        fieldSelector = resolveFields(parameters);
     }
 
     private static Path resolveLogPath(Map<String, String> parameters)
@@ -101,6 +109,28 @@ class ChronicleAuditLoggerConfig
         }
     }
 
+    private FieldSelector resolveFields(Map<String, String> parameters)
+    {
+        String fieldsString = parameters.getOrDefault(CONFIG_FIELDS, "");
+
+        List<String> fields = Splitter.on(",")
+                                      .trimResults()
+                                      .omitEmptyStrings()
+                                      .splitToList(fieldsString);
+        if (fields.isEmpty())
+        {
+            return FieldSelector.DEFAULT_FIELDS;
+        }
+        try
+        {
+            return FieldSelector.fromFields(fields);
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new ConfigurationException("Invalid chronicle logger fields: " + fieldsString, e);
+        }
+    }
+
     Path getLogPath()
     {
         return logPath;
@@ -114,5 +144,10 @@ class ChronicleAuditLoggerConfig
     long getMaxLogSize()
     {
         return maxLogSize;
+    }
+
+    public FieldSelector getFields()
+    {
+        return fieldSelector;
     }
 }

@@ -19,6 +19,7 @@ class WireTags
 {
     static final String KEY_VERSION = "version";
     static final String KEY_TYPE = "type";
+    static final String KEY_FIELDS = "fields";
     static final String KEY_TIMESTAMP = "timestamp";
     static final String KEY_CLIENT_IP = "client_ip";
     static final String KEY_CLIENT_PORT = "client_port";
@@ -27,8 +28,12 @@ class WireTags
     static final String KEY_BATCH_ID = "batchId";
     static final String KEY_STATUS = "status";
     static final String KEY_OPERATION = "operation";
+    static final String KEY_NAKED_OPERATION = "naked_operation";
 
-    static final short VALUE_VERSION_CURRENT = 0;
+    static final short VALUE_VERSION_0 = 0;
+    static final short VALUE_VERSION_1 = 1;
+    static final short VALUE_VERSION_CURRENT = VALUE_VERSION_1;
     static final String VALUE_TYPE_BATCH_ENTRY = "ecaudit-batch";
     static final String VALUE_TYPE_SINGLE_ENTRY = "ecaudit-single";
+    static final String VALUE_TYPE_AUDIT = "ecaudit";
 }

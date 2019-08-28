@@ -26,9 +26,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import net.openhft.chronicle.wire.ValueOut;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.WriteMarshallable;
@@ -62,7 +64,7 @@ public class TestChronicleAuditLogger
     @Before
     public void before()
     {
-        logger = new ChronicleAuditLogger(mockWriter);
+        logger = new ChronicleAuditLogger(mockWriter, FieldSelector.DEFAULT_FIELDS);
     }
 
     @After
@@ -128,15 +130,20 @@ public class TestChronicleAuditLogger
         writeMarshallable.writeMarshallable(mockWire);
 
         verify(mockWire).write(eq("version"));
-        verify(mockValue).int16(eq((short) 0));
+        verify(mockValue).int16(eq((short) 1));
         verify(mockWire).write(eq("type"));
+        verify(mockValue).text(eq("ecaudit"));
+        verify(mockWire).write(eq("fields"));
+
         if (expectedAuditEntry.getBatchId().isPresent())
         {
-            verify(mockValue).text(eq("ecaudit-batch"));
+            int bitmap = FieldSelector.DEFAULT_FIELDS.getBitmap();
+            verify(mockValue).int32(eq(bitmap));
         }
         else
         {
-            verify(mockValue).text(eq("ecaudit-single"));
+            int bitmapWithoutBatch = FieldSelector.DEFAULT_FIELDS.withoutField(Field.BATCH_ID).getBitmap();
+            verify(mockValue).int32(eq(bitmapWithoutBatch));
         }
 
         verify(mockWire).write(eq("timestamp"));

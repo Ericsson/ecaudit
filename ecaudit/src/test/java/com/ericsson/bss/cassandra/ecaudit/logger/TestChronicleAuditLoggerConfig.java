@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
 import net.openhft.chronicle.queue.RollCycles;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
@@ -121,5 +123,56 @@ public class TestChronicleAuditLoggerConfig
 
         assertThat(config.getLogPath().toString()).isEqualTo("/tmp");
         assertThat(config.getMaxLogSize()).isEqualTo(1024L);
+    }
+
+    @Test
+    public void testDefaultFieldsConfig()
+    {
+        Map<String, String> options = ImmutableMap.of("log_dir", "/tmp");
+
+        ChronicleAuditLoggerConfig config = new ChronicleAuditLoggerConfig(options);
+
+        FieldSelector fields = config.getFields();
+        assertThat(fields.isSelected(Field.CLIENT_IP)).isTrue();
+        assertThat(fields.isSelected(Field.CLIENT_PORT)).isTrue();
+        assertThat(fields.isSelected(Field.COORDINATOR_IP)).isTrue();
+        assertThat(fields.isSelected(Field.USER)).isTrue();
+        assertThat(fields.isSelected(Field.BATCH_ID)).isTrue();
+        assertThat(fields.isSelected(Field.STATUS)).isTrue();
+        assertThat(fields.isSelected(Field.OPERATION)).isTrue();
+        assertThat(fields.isSelected(Field.OPERATION_NAKED)).isFalse();
+        assertThat(fields.isSelected(Field.TIMESTAMP)).isTrue();
+    }
+
+    @Test
+    public void testCustomFieldsConfig()
+    {
+        Map<String, String> options = ImmutableMap.of("log_dir", "/tmp",
+                                                      "fields", ", CLIENT_IP, , USER, STATUS,");
+
+        ChronicleAuditLoggerConfig config = new ChronicleAuditLoggerConfig(options);
+
+        FieldSelector fields = config.getFields();
+        assertThat(fields.isSelected(Field.CLIENT_IP)).isTrue();
+        assertThat(fields.isSelected(Field.CLIENT_PORT)).isFalse();
+        assertThat(fields.isSelected(Field.COORDINATOR_IP)).isFalse();
+        assertThat(fields.isSelected(Field.USER)).isTrue();
+        assertThat(fields.isSelected(Field.BATCH_ID)).isFalse();
+        assertThat(fields.isSelected(Field.STATUS)).isTrue();
+        assertThat(fields.isSelected(Field.OPERATION)).isFalse();
+        assertThat(fields.isSelected(Field.OPERATION_NAKED)).isFalse();
+        assertThat(fields.isSelected(Field.TIMESTAMP)).isFalse();
+    }
+
+    @Test
+    public void testInvalidFieldsConfig()
+    {
+        Map<String, String> options = ImmutableMap.of("log_dir", "/tmp",
+                                                      "fields", "ErrorZ");
+
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(() -> new ChronicleAuditLoggerConfig(options))
+        .withMessageContaining("fields")
+        .withMessageContaining("ErrorZ");
     }
 }
