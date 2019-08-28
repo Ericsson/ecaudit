@@ -73,7 +73,6 @@ public class CassandraDaemonForAuditTest // NOSONAR
     {
         setupConfiguration();
         cassandraDaemon = new CassandraDaemon(true);
-        //cassandraDaemon.init(null);
     }
 
     /**

@@ -121,7 +121,6 @@ public class TestAuditAdapter
     public static void beforeAll()
     {
         ClientInitializer.beforeClass();
-        //oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
     }
 
     @Before
@@ -143,7 +142,6 @@ public class TestAuditAdapter
     @AfterClass
     public static void afterAll()
     {
-        //DatabaseDescriptor.setPartitionerUnsafe(oldPartitionerToRestore);
         ClientInitializer.afterClass();
     }
 

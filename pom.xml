@@ -18,7 +18,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-    <artifactId>parent_c2.2.14</artifactId>
+    <artifactId>parent_c2.2</artifactId>
     <version>2.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -51,7 +51,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <cassandra.version>2.2.14</cassandra.version>
-        <artifact.flavor.version>c2.2.14</artifact.flavor.version>
+        <artifact.flavor.version>c2.2</artifact.flavor.version>
 
         <pmd-config-url>pmd-rules.xml</pmd-config-url>
 
@@ -66,6 +66,7 @@
         <junit.version>4.12</junit.version>
         <mockito.version>2.24.5</mockito.version>
         <jmh.version>1.21</jmh.version>
+        <junitparams.version>1.1.1</junitparams.version>
 
         <com.mycila.license-maven-plugin.version>3.0</com.mycila.license-maven-plugin.version>
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.8.0</org.apache.maven.plugins.maven-compiler-plugin.version>
@@ -87,12 +88,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>16.0.1</version>
-                <scope>provided</scope>
-            </dependency>
             <dependency>
                 <groupId>org.apache.cassandra</groupId>
                 <artifactId>cassandra-all</artifactId>
@@ -162,6 +157,12 @@
                 <groupId>org.openjdk.jmh</groupId>
                 <artifactId>jmh-generator-annprocess</artifactId>
                 <version>${jmh.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>pl.pragmatists</groupId>
+                <artifactId>JUnitParams</artifactId>
+                <version>${junitparams.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
