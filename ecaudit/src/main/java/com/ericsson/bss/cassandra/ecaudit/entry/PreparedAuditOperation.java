@@ -20,7 +20,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.utils.c2_2.ColumnDataPrinter;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 
@@ -88,7 +87,7 @@ public class PreparedAuditOperation implements AuditOperation
         Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
         for (ColumnSpecification column : options.getColumnSpecifications())
         {
-            String value = ColumnDataPrinter.toCQLLiteral(values.remove(), column);
+            String value = CqlLiteralVersionAdapter.toCQLLiteral(values.remove(), column);
 
             fullStatement.append(value).append(", ");
         }

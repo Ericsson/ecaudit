@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.utils.c2_2;
+package com.ericsson.bss.cassandra.ecaudit.entry;
 
 import java.nio.ByteBuffer;
 
@@ -32,10 +32,10 @@ import org.apache.cassandra.db.marshal.UTF8Type;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests the {@link ColumnDataPrinter} class.
+ * Tests the {@link CqlLiteralVersionAdapter} class.
  */
 @RunWith(JUnitParamsRunner.class)
-public class TestColumnDataPrinter
+public class TestCqlLiteralVersionAdapter
 {
     private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.allocateDirect(0);
 
@@ -46,7 +46,7 @@ public class TestColumnDataPrinter
         // Given
         ColumnSpecification col = new ColumnSpecification("ks", "cf", null, type);
         // When
-        String literal = ColumnDataPrinter.toCQLLiteral(value, col);
+        String literal = CqlLiteralVersionAdapter.toCQLLiteral(value, col);
         // Then
         assertThat(literal).isEqualTo(expected);
     }
@@ -54,12 +54,11 @@ public class TestColumnDataPrinter
     public Object[][] testToCQLLiteral_parameters()
     {
         return new Object[][]{
+            { UTF8Type.instance, EMPTY_BUFFER, null },
             { UTF8Type.instance, UTF8Type.instance.fromString("Kalle"), "'Kalle'" },
             { AsciiType.instance, AsciiType.instance.fromString("Anka"), "'Anka'" },
             { TimestampType.instance, TimestampType.instance.fromTimeInMillis(42), "1970-01-01T00:00:00.042Z" }, // 42 ms after EPOCH
             { BooleanType.instance, BooleanType.instance.fromString("True"), "true" },
-            { UTF8Type.instance, EMPTY_BUFFER, "''" },
-            { TimestampType.instance, EMPTY_BUFFER, null },
         };
     }
 }

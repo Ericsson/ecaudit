@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.utils.c2_2;
+package com.ericsson.bss.cassandra.ecaudit.entry;
 
 import java.nio.ByteBuffer;
 import java.text.DateFormat;
@@ -28,40 +28,44 @@ import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.serializers.TimestampSerializer;
 
 /**
- * This class is only needed in the c2.2 branch.
- * Contains logic for printing column data, which is missing in C* 2.2
+ * This logic is broken out into an adapter, since the functionality available in different cassandra versions
+ * differs a lot.
  */
-public final class ColumnDataPrinter
+public final class CqlLiteralVersionAdapter
 {
     private static final DateFormat DATE_FORMAT = createDateFormat();
 
-    private ColumnDataPrinter()
+    private CqlLiteralVersionAdapter()
     {
         // Utility class
     }
 
     public static String toCQLLiteral(ByteBuffer serializedValue, ColumnSpecification column)
     {
-        String value = null;
-        if (column.type instanceof UTF8Type || column.type instanceof AsciiType)
+        if (!serializedValue.hasRemaining())
         {
-            value = "'" + column.type.getString(serializedValue) + "'";
+            return null;
         }
-        else
+        if (isStringType(column))
         {
-            if (serializedValue.hasRemaining())
-            {
-                if (column.type instanceof TimestampType)
-                {
-                    value = DATE_FORMAT.format(TimestampSerializer.instance.deserialize(serializedValue));
-                }
-                else
-                {
-                    value = column.type.getString(serializedValue);
-                }
-            }
+            return "'" + column.type.getString(serializedValue) + "'";
         }
-        return value;
+        if (isTimestampType(column))
+        {
+            return DATE_FORMAT.format(TimestampSerializer.instance.deserialize(serializedValue));
+        }
+
+        return column.type.getString(serializedValue);
+    }
+
+    private static boolean isStringType(ColumnSpecification column)
+    {
+        return column.type instanceof UTF8Type || column.type instanceof AsciiType;
+    }
+
+    private static boolean isTimestampType(ColumnSpecification column)
+    {
+        return column.type instanceof TimestampType;
     }
 
     private static DateFormat createDateFormat()

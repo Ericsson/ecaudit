@@ -30,14 +30,12 @@ import org.junit.runner.RunWith;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.QueryHandler;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.statements.BatchStatement;
 import org.apache.cassandra.cql3.statements.ParsedStatement;
-import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.UnavailableException;
 import org.apache.cassandra.service.ClientState;
@@ -46,7 +44,6 @@ import org.apache.cassandra.transport.messages.ResultMessage.Prepared;
 import org.apache.cassandra.utils.MD5Digest;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -90,19 +87,15 @@ public class TestAuditQueryHandler
 
     private AuditQueryHandler queryHandler;
 
-    private static IPartitioner oldPartitionerToRestore;
-
     @BeforeClass
     public static void beforeAll()
     {
         ClientInitializer.beforeClass();
-        //oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
     }
 
     @AfterClass
     public static void afterAll()
     {
-        //DatabaseDescriptor.setPartitionerUnsafe(oldPartitionerToRestore);
         ClientInitializer.afterClass();
     }
 
