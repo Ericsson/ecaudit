@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.AuditRecordWriteMarshallable;
+import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 
 public class ChronicleAuditLogger implements AuditLogger
@@ -29,23 +30,26 @@ public class ChronicleAuditLogger implements AuditLogger
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleAuditLogger.class);
 
     private final ChronicleWriter writer;
+    private final FieldSelector configuredFields;
 
     public ChronicleAuditLogger(Map<String, String> parameters)
     {
         ChronicleAuditLoggerConfig config = new ChronicleAuditLoggerConfig(parameters);
         writer = new ChronicleWriter(config);
+        configuredFields = config.getFields();
     }
 
     @VisibleForTesting
-    ChronicleAuditLogger(ChronicleWriter writer)
+    ChronicleAuditLogger(ChronicleWriter writer, FieldSelector configuredFields)
     {
         this.writer = writer;
+        this.configuredFields = configuredFields;
     }
 
     @Override
     public void log(AuditEntry logEntry)
     {
-        AuditRecordWriteMarshallable auditRecordWriteMarshallable = new AuditRecordWriteMarshallable(logEntry);
+        AuditRecordWriteMarshallable auditRecordWriteMarshallable = new AuditRecordWriteMarshallable(logEntry, configuredFields);
         try
         {
             writer.put(auditRecordWriteMarshallable);

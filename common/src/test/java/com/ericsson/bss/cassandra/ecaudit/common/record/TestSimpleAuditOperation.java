@@ -17,6 +17,9 @@ package com.ericsson.bss.cassandra.ecaudit.common.record;
 
 import org.junit.Test;
 
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSimpleAuditOperation

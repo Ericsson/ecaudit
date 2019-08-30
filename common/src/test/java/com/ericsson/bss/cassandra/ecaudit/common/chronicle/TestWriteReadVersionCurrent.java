@@ -30,6 +30,7 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
@@ -66,7 +67,7 @@ public class TestWriteReadVersionCurrent
 
         writeAuditRecordToChronicle(expectedAuditRecord);
 
-        AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
+        StoredAuditRecord actualAuditRecord = readAuditRecordFromChronicle();
 
         assertThatRecordsMatch(actualAuditRecord, expectedAuditRecord);
     }
@@ -78,7 +79,7 @@ public class TestWriteReadVersionCurrent
 
         writeAuditRecordToChronicle(expectedAuditRecord);
 
-        AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
+        StoredAuditRecord actualAuditRecord = readAuditRecordFromChronicle();
 
         assertThatRecordsMatch(actualAuditRecord, expectedAuditRecord);
     }
@@ -101,6 +102,18 @@ public class TestWriteReadVersionCurrent
         .withMessage("Tried to read from wire with used marshallable");
     }
 
+    @Test
+    public void testGetFieldsAvailableInRecord()
+    {
+        AuditRecord recordWithoutClientIPAndBatchId = SimpleAuditRecord.builder().build();
+
+        FieldSelector fields = AuditRecordWriteMarshallable.getFieldsAvailableInRecord(recordWithoutClientIPAndBatchId, FieldSelector.ALL_FIELDS);
+
+        assertThat(fields.isSelected(FieldSelector.Field.CLIENT_IP)).isFalse();
+        assertThat(fields.isSelected(FieldSelector.Field.CLIENT_PORT)).isFalse();
+        assertThat(fields.isSelected(FieldSelector.Field.BATCH_ID)).isFalse();
+    }
+
     private SimpleAuditRecord.Builder likeGenericRecord() throws UnknownHostException
     {
         return SimpleAuditRecord
@@ -115,13 +128,13 @@ public class TestWriteReadVersionCurrent
 
     private void writeAuditRecordToChronicle(AuditRecord auditRecord)
     {
-        WriteMarshallable writeMarshallable = new AuditRecordWriteMarshallable(auditRecord);
+        WriteMarshallable writeMarshallable = new AuditRecordWriteMarshallable(auditRecord, FieldSelector.DEFAULT_FIELDS);
 
         ExcerptAppender appender = chronicleQueue.acquireAppender();
         appender.writeDocument(writeMarshallable);
     }
 
-    private AuditRecord readAuditRecordFromChronicle()
+    private StoredAuditRecord readAuditRecordFromChronicle()
     {
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 
@@ -131,14 +144,16 @@ public class TestWriteReadVersionCurrent
         return readMarshallable.getAuditRecord();
     }
 
-    private void assertThatRecordsMatch(AuditRecord actualAuditRecord, AuditRecord expectedAuditRecord)
+    private void assertThatRecordsMatch(StoredAuditRecord actualAuditRecord, AuditRecord expectedAuditRecord)
     {
         assertThat(actualAuditRecord.getBatchId()).isEqualTo(expectedAuditRecord.getBatchId());
-        assertThat(actualAuditRecord.getClientAddress()).isEqualTo(expectedAuditRecord.getClientAddress());
-        assertThat(actualAuditRecord.getCoordinatorAddress()).isEqualTo(expectedAuditRecord.getCoordinatorAddress());
-        assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
-        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
-        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
-        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedAuditRecord.getTimestamp());
+        assertThat(actualAuditRecord.getClientAddress()).contains(expectedAuditRecord.getClientAddress().getAddress());
+        assertThat(actualAuditRecord.getClientPort()).contains(expectedAuditRecord.getClientAddress().getPort());
+        assertThat(actualAuditRecord.getCoordinatorAddress()).contains(expectedAuditRecord.getCoordinatorAddress());
+        assertThat(actualAuditRecord.getStatus()).contains(expectedAuditRecord.getStatus());
+        assertThat(actualAuditRecord.getOperation()).contains(expectedAuditRecord.getOperation().getOperationString());
+        assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
+        assertThat(actualAuditRecord.getUser()).contains(expectedAuditRecord.getUser());
+        assertThat(actualAuditRecord.getTimestamp()).contains(expectedAuditRecord.getTimestamp());
     }
 }
