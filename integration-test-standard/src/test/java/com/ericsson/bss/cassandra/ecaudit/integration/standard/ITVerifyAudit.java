@@ -36,7 +36,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.LocalDate;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
@@ -92,7 +91,7 @@ public class ITVerifyAudit
         session = cluster.connect();
 
         session.execute(new SimpleStatement(
-        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }"));
+        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system' }"));
 
         session.execute(new SimpleStatement(
         "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
@@ -201,7 +200,7 @@ public class ITVerifyAudit
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(Collectors.toList()))
                         .contains(
-                                "client:'127.0.0.1'|user:'ecuser'|status:'ATTEMPT'|operation:'Authentication attempt'");
+                                "user:'ecuser'|status:'ATTEMPT'|operation:'Authentication attempt'");
     }
 
     @Test
@@ -238,8 +237,8 @@ public class ITVerifyAudit
                     .map(ILoggingEvent::getFormattedMessage)
                     .collect(Collectors.toList()))
                             .contains(
-                                    "client:'127.0.0.1'|user:'unknown'|status:'ATTEMPT'|operation:'Authentication attempt'",
-                                    "client:'127.0.0.1'|user:'unknown'|status:'FAILED'|operation:'Authentication failed'");
+                                    "user:'unknown'|status:'ATTEMPT'|operation:'Authentication attempt'",
+                                    "user:'unknown'|status:'FAILED'|operation:'Authentication failed'");
         }
     }
 
@@ -360,21 +359,21 @@ public class ITVerifyAudit
     {
         PreparedStatement preparedStatement = session
                 .prepare("INSERT INTO ecks.ectypetbl "
-                        + "(partk, v0, v1, v2, v4, v5, v9, v13, v15)"
+                        + "(partk, v0, v1, v2, v4, v9, v13, v15)"
                         + " VALUES "
-                        + "(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                        + "(?, ?, ?, ?, ?, ?, ?, ?)");
 
         String expectedStatement = "INSERT INTO ecks.ectypetbl "
-                + "(partk, v0, v1, v2, v4, v5, v9, v13, v15)"
+                + "(partk, v0, v1, v2, v4, v9, v13, v15)"
                 + " VALUES "
-                + "(?, ?, ?, ?, ?, ?, ?, ?, ?)[1, 'text', 'ascii', 123123123123123123, true, 1976-02-25, 8.8.8.8, 2004-05-29T14:29:00.000Z, 'varchar']";
+                + "(?, ?, ?, ?, ?, ?, ?, ?)[1, 'text', 'ascii', 123123123123123123, true, 8.8.8.8, 2004-05-29T14:29:00.000Z, 'varchar']";
         // TODO: Are these bugs in Cassandra?
         // Was expecting "v5 date" to get quotes
         // Was expecting "v9 inet" to get quotes
         // Was expecting "v13 timestamp" to get quotes
 
         session.execute(preparedStatement.bind(1, "text", "ascii", 123123123123123123L,
-                                               Boolean.TRUE, LocalDate.fromYearMonthDay(1976, 2, 25), InetAddress.getByName("8.8.8.8"),
+                                               Boolean.TRUE, InetAddress.getByName("8.8.8.8"),
                                                Date.from(Instant.parse("2004-05-29T14:29:00.000Z")), "varchar"));
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
@@ -611,7 +610,7 @@ public class ITVerifyAudit
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(Collectors.toList()))
                         .contains(
-                                "client:'127.0.0.1'|user:'yser2'|status:'ATTEMPT'|operation:'Authentication attempt'");
+                                "user:'yser2'|status:'ATTEMPT'|operation:'Authentication attempt'");
     }
 
     private List<String> expectedAttempts(List<String> statements)

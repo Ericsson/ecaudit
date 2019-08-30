@@ -42,7 +42,7 @@ public class TestWhitelistDataAccess
     {
         // Given
         Set<Permission> operations = Sets.newHashSet(Permission.SELECT, Permission.MODIFY);
-        SetSerializer<String> stringSetSerializer = SetSerializer.getInstance(AsciiSerializer.instance, AsciiType.instance);
+        SetSerializer<String> stringSetSerializer = SetSerializer.getInstance(AsciiSerializer.instance);
         // When
         List<ByteBuffer> values = WhitelistDataAccess.getSerializedUpdateValues("Role1", "Resource1", operations);
         // Then

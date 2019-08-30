@@ -15,7 +15,6 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -39,7 +38,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static com.ericsson.bss.cassandra.ecaudit.handler.TestAuditQueryHandler.isCloseToNow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.doReturn;
@@ -107,13 +105,12 @@ public class TestAuditPasswordAuthenticator
     }
 
     @Test
-    public void testLogOnRuntimeException() throws Exception
+    public void testLogOnRuntimeException()
     {
-        InetAddress clientAddress = InetAddress.getLocalHost();
-        when(mockAuthenticator.newSaslNegotiator(any(InetAddress.class))).thenReturn(mockNegotiator);
+        when(mockAuthenticator.newSaslNegotiator()).thenReturn(mockNegotiator);
         whenGetAuthUserThrowRuntimeException();
 
-        SaslNegotiator negotiator = authenticator.newSaslNegotiator(clientAddress);
+        SaslNegotiator negotiator = authenticator.newSaslNegotiator();
 
         byte[] clientResponse = createClientResponse("username", "secretpassword");
         negotiator.evaluateResponse(clientResponse);
@@ -121,18 +118,17 @@ public class TestAuditPasswordAuthenticator
         assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(negotiator::getAuthenticatedUser);
 
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
     @Test
-    public void testLogOnFailure() throws Exception
+    public void testLogOnFailure()
     {
-        InetAddress clientAddress = InetAddress.getLocalHost();
-        when(mockAuthenticator.newSaslNegotiator(any(InetAddress.class))).thenReturn(mockNegotiator);
+        when(mockAuthenticator.newSaslNegotiator()).thenReturn(mockNegotiator);
         whenGetAuthUserThrowAuthException();
 
-        SaslNegotiator negotiator = authenticator.newSaslNegotiator(clientAddress);
+        SaslNegotiator negotiator = authenticator.newSaslNegotiator();
 
         byte[] clientResponse = createClientResponse("username", "secretpassword");
         negotiator.evaluateResponse(clientResponse);
@@ -140,33 +136,30 @@ public class TestAuditPasswordAuthenticator
         assertThatExceptionOfType(AuthenticationException.class)
         .isThrownBy(negotiator::getAuthenticatedUser);
 
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(clientAddress), eq(Status.FAILED), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
     @Test
-    public void testLogOnSuccess() throws Exception
+    public void testLogOnSuccess()
     {
-        InetAddress clientAddress = InetAddress.getLocalHost();
-        when(mockAuthenticator.newSaslNegotiator(any(InetAddress.class))).thenReturn(mockNegotiator);
+        when(mockAuthenticator.newSaslNegotiator()).thenReturn(mockNegotiator);
 
-        SaslNegotiator negotiator = authenticator.newSaslNegotiator(clientAddress);
+        SaslNegotiator negotiator = authenticator.newSaslNegotiator();
 
         byte[] clientResponse = createClientResponse("user", "password");
         negotiator.evaluateResponse(clientResponse);
 
         negotiator.getAuthenticatedUser();
-        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(clientAddress), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(clientAddress), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
     }
 
-    @SuppressWarnings("unchecked")
     private void whenGetAuthUserThrowRuntimeException()
     {
         when(mockNegotiator.getAuthenticatedUser()).thenThrow(RuntimeException.class);
     }
 
-    @SuppressWarnings("unchecked")
     private void whenGetAuthUserThrowAuthException()
     {
         when(mockNegotiator.getAuthenticatedUser()).thenThrow(AuthenticationException.class);

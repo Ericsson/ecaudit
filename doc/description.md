@@ -19,7 +19,7 @@ Passwords which appear in an audit record will be obfuscated.
 
 | Field Label | Field Value                                                       | Mandatory Field |
 | ----------- | ----------------------------------------------------------------- | --------------- |
-| client      | Client IP address                                                 | yes             |
+| client      | Client IP address                                                 | yes (*1)        |
 | user        | Username of the authenticated user                                | yes             |
 | batchId     | Internal identifier shared by all statements in a batch operation | no              |
 | status      | Value is either ATTEMPT or FAILED                                 | yes             |
@@ -27,6 +27,7 @@ Passwords which appear in an audit record will be obfuscated.
 | timestamp   | The system timestamp of the request                               | yes             |
 | coordinator | The coordinator address (host address)                            | yes             |
 
+* (1) In ecAudit_c2.2 the client IP will not be present in authentication records.
 
 ### Examples
 

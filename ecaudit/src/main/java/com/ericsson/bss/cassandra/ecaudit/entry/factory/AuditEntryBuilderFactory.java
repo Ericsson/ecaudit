@@ -35,7 +35,6 @@ import org.apache.cassandra.cql3.statements.AlterKeyspaceStatement;
 import org.apache.cassandra.cql3.statements.AlterRoleStatement;
 import org.apache.cassandra.cql3.statements.AlterTableStatement;
 import org.apache.cassandra.cql3.statements.AlterTypeStatement;
-import org.apache.cassandra.cql3.statements.AlterViewStatement;
 import org.apache.cassandra.cql3.statements.AuthenticationStatement;
 import org.apache.cassandra.cql3.statements.AuthorizationStatement;
 import org.apache.cassandra.cql3.statements.BatchStatement;
@@ -48,7 +47,6 @@ import org.apache.cassandra.cql3.statements.CreateRoleStatement;
 import org.apache.cassandra.cql3.statements.CreateTableStatement;
 import org.apache.cassandra.cql3.statements.CreateTriggerStatement;
 import org.apache.cassandra.cql3.statements.CreateTypeStatement;
-import org.apache.cassandra.cql3.statements.CreateViewStatement;
 import org.apache.cassandra.cql3.statements.DropAggregateStatement;
 import org.apache.cassandra.cql3.statements.DropFunctionStatement;
 import org.apache.cassandra.cql3.statements.DropIndexStatement;
@@ -57,7 +55,6 @@ import org.apache.cassandra.cql3.statements.DropRoleStatement;
 import org.apache.cassandra.cql3.statements.DropTableStatement;
 import org.apache.cassandra.cql3.statements.DropTriggerStatement;
 import org.apache.cassandra.cql3.statements.DropTypeStatement;
-import org.apache.cassandra.cql3.statements.DropViewStatement;
 import org.apache.cassandra.cql3.statements.ListPermissionsStatement;
 import org.apache.cassandra.cql3.statements.ListRolesStatement;
 import org.apache.cassandra.cql3.statements.ModificationStatement;
@@ -442,19 +439,6 @@ public class AuditEntryBuilderFactory
             return createDropTableEntryBuilder((DropTableStatement) statement);
         }
 
-        if (statement instanceof CreateViewStatement)
-        {
-            return createCreateViewEntryBuilder((CreateViewStatement) statement);
-        }
-        if (statement instanceof AlterViewStatement)
-        {
-            return createAlterViewEntryBuilder((AlterViewStatement) statement);
-        }
-        if (statement instanceof DropViewStatement)
-        {
-            return createDropViewEntryBuilder((DropViewStatement) statement);
-        }
-
         if (statement instanceof CreateTypeStatement)
         {
             return createCreateTypeEntryBuilder((CreateTypeStatement) statement);
@@ -548,27 +532,6 @@ public class AuditEntryBuilderFactory
         return AuditEntry.newBuilder()
                          .permissions(DROP_PERMISSIONS)
                          .resource(DataResource.table(statement.keyspace(), statement.columnFamily()));
-    }
-
-    private Builder createCreateViewEntryBuilder(CreateViewStatement statement)
-    {
-        return AuditEntry.newBuilder()
-                         .permissions(ALTER_PERMISSIONS)
-                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
-    }
-
-    private Builder createAlterViewEntryBuilder(AlterViewStatement statement)
-    {
-        return AuditEntry.newBuilder()
-                         .permissions(ALTER_PERMISSIONS)
-                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
-    }
-
-    private Builder createDropViewEntryBuilder(DropViewStatement statement)
-    {
-        return AuditEntry.newBuilder()
-                         .permissions(ALTER_PERMISSIONS)
-                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
     }
 
     private Builder createCreateTypeEntryBuilder(CreateTypeStatement statement)

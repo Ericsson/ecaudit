@@ -24,22 +24,16 @@ import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.FunctionResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.config.CFMetaData;
-import org.apache.cassandra.cql3.CFName;
 import org.apache.cassandra.cql3.CQL3Type;
 import org.apache.cassandra.cql3.functions.FunctionName;
-import org.apache.cassandra.cql3.statements.AlterViewStatement;
 import org.apache.cassandra.cql3.statements.AuthenticationStatement;
 import org.apache.cassandra.cql3.statements.AuthorizationStatement;
 import org.apache.cassandra.cql3.statements.CreateAggregateStatement;
 import org.apache.cassandra.cql3.statements.CreateFunctionStatement;
-import org.apache.cassandra.cql3.statements.CreateViewStatement;
 import org.apache.cassandra.cql3.statements.DropAggregateStatement;
 import org.apache.cassandra.cql3.statements.DropFunctionStatement;
-import org.apache.cassandra.cql3.statements.DropViewStatement;
 import org.apache.cassandra.cql3.statements.PermissionsManagementStatement;
 import org.apache.cassandra.cql3.statements.UseStatement;
-import org.apache.cassandra.db.view.View;
 
 class StatementResourceAdapter
 {
@@ -107,45 +101,6 @@ class StatementResourceAdapter
         catch (IllegalAccessException e)
         {
             throw new CassandraAuditException(FAILED_TO_RESOLVE_RESOURCE, e);
-        }
-    }
-
-    DataResource resolveBaseTableResource(CreateViewStatement statement)
-    {
-        try
-        {
-            CFName baseName  = (CFName) FieldUtils.readField(statement, "baseName", true);
-            return DataResource.table(statement.keyspace(), baseName.getColumnFamily());
-        }
-        catch (IllegalAccessException e)
-        {
-            throw new CassandraAuditException("Failed to resolve base table of view " + statement.keyspace() + "." + statement.columnFamily(), e);
-        }
-    }
-
-    DataResource resolveBaseTableResource(AlterViewStatement statement)
-    {
-        CFMetaData baseTable = View.findBaseTable(statement.keyspace(), statement.columnFamily());
-        if (baseTable != null)
-        {
-            return DataResource.table(statement.keyspace(), baseTable.cfName);
-        }
-        else
-        {
-            return DataResource.keyspace(statement.keyspace());
-        }
-    }
-
-    DataResource resolveBaseTableResource(DropViewStatement statement)
-    {
-        CFMetaData baseTable = View.findBaseTable(statement.keyspace(), statement.columnFamily());
-        if (baseTable != null)
-        {
-            return DataResource.table(statement.keyspace(), baseTable.cfName);
-        }
-        else
-        {
-            return DataResource.keyspace(statement.keyspace());
         }
     }
 

@@ -15,13 +15,15 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.config.CFMetaData;
-import org.apache.cassandra.schema.KeyspaceMetadata;
-import org.apache.cassandra.schema.KeyspaceParams;
-import org.apache.cassandra.schema.Tables;
+import org.apache.cassandra.config.KSMetaData;
+import org.apache.cassandra.locator.SimpleStrategy;
 
 final class AuditAuthKeyspace
 {
@@ -45,8 +47,8 @@ final class AuditAuthKeyspace
               .comment(WHITELIST_TABLE_DESCRIPTION)
               .gcGraceSeconds(WHITELIST_TABLE_GC_GRACE_SECONDS);
 
-    static KeyspaceMetadata metadata()
+    static KSMetaData metadata()
     {
-        return KeyspaceMetadata.create(AuthKeyspace.NAME, KeyspaceParams.simple(1), Tables.of(CREATE_ROLE_AUDIT_WHITELISTS));
+        return new KSMetaData(AuthKeyspace.NAME, SimpleStrategy.class, ImmutableMap.of("replication_factor", "1"), true, Collections.singletonList(CREATE_ROLE_AUDIT_WHITELISTS));
     }
 }

@@ -15,7 +15,6 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
@@ -88,10 +87,10 @@ public class AuditPasswordAuthenticator implements IAuthenticator
     }
 
     @Override
-    public SaslNegotiator newSaslNegotiator(InetAddress clientAddress)
+    public SaslNegotiator newSaslNegotiator()
     {
-        LOG.debug("Setting up SASL negotiation with {}", clientAddress);
-        return new AuditPlainTextSaslAuthenticator(clientAddress, wrappedAuthenticator.newSaslNegotiator(clientAddress));
+        LOG.debug("Setting up SASL negotiation with client peer");
+        return new AuditPlainTextSaslAuthenticator(wrappedAuthenticator.newSaslNegotiator());
     }
 
     @Override
@@ -102,14 +101,12 @@ public class AuditPasswordAuthenticator implements IAuthenticator
 
     private class AuditPlainTextSaslAuthenticator implements SaslNegotiator
     {
-        private final InetAddress clientAddress;
         private final SaslNegotiator saslNegotiator;
 
         private String decodedUsername;
 
-        AuditPlainTextSaslAuthenticator(InetAddress clientAddress, SaslNegotiator saslNegotiator)
+        AuditPlainTextSaslAuthenticator(SaslNegotiator saslNegotiator)
         {
-            this.clientAddress = clientAddress;
             this.saslNegotiator = saslNegotiator;
         }
 
@@ -130,16 +127,16 @@ public class AuditPasswordAuthenticator implements IAuthenticator
         public AuthenticatedUser getAuthenticatedUser() throws AuthenticationException
         {
             long timestamp = System.currentTimeMillis();
-            auditAdapter.auditAuth(decodedUsername, clientAddress, Status.ATTEMPT, timestamp);
+            auditAdapter.auditAuth(decodedUsername, Status.ATTEMPT, timestamp);
             try
             {
                 AuthenticatedUser result = saslNegotiator.getAuthenticatedUser();
-                auditAdapter.auditAuth(decodedUsername, clientAddress, Status.SUCCEEDED, timestamp);
+                auditAdapter.auditAuth(decodedUsername, Status.SUCCEEDED, timestamp);
                 return result;
             }
             catch (RuntimeException e)
             {
-                auditAdapter.auditAuth(decodedUsername, clientAddress, Status.FAILED, timestamp);
+                auditAdapter.auditAuth(decodedUsername, Status.FAILED, timestamp);
                 throw e;
             }
         }
