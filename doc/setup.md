@@ -5,6 +5,12 @@ In this setup guide you'll find pointers to the installation procedure as well a
 When upgrading ecAudit to a new version, always consider special [upgrade instructions](../UPGRADING.md) which may apply.
 
 
+## Prerequisites
+
+ecAudit requires a Java 8 compatible JVM.
+Note that even though Cassandra 2.2.x supports Java 7, ecAudit still requires java 8!
+
+
 ## Installation
 
 ecAudit is integrating with Apache Cassandra using some of its many plug-in points.
