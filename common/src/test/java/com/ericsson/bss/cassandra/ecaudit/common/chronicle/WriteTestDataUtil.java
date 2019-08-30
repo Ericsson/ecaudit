@@ -20,20 +20,24 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.UUID;
 
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
-import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptAppender;
 
+import static java.util.Arrays.asList;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * Util for creating chronicle test data used for verifying backwards compatibility.
  * Should be used when the chronicle data version ({@link WireTags#VALUE_VERSION_CURRENT}) is stepped.
  * <p>
  * Create the chronicle test data by updating the <b>version</b> and <b>data</b> below and run the main method,
- * then create a new unit test for that version (similar to {@link TestReadVersion0}).
+ * then create a new unit test for that version (similar to {@link TestReadVersion1}).
  * <p>
  * Both the created resource files and the new test case should be checked into git.
  */
@@ -44,24 +48,15 @@ public class WriteTestDataUtil
         String version = "X"; // Set the version here!
 
         // Data
-        AuditRecord singleRecord = SimpleAuditRecord.builder()
-                                                    .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 777))
-                                                    .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
-                                                    .withStatus(Status.FAILED)
-                                                    .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
-                                                    .withUser("bob")
-                                                    .withTimestamp(1554188832323L)
-                                                    .build();
-
-        AuditRecord batchRecord = SimpleAuditRecord.builder()
-                                                   .withBatchId(UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"))
-                                                   .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 777))
-                                                   .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
-                                                   .withStatus(Status.ATTEMPT)
-                                                   .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
-                                                   .withUser("bob")
-                                                   .withTimestamp(1554188832013L)
-                                                   .build();
+        AuditRecord record = SimpleAuditRecord.builder()
+                                              .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 777))
+                                              .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
+                                              .withUser("bob")
+                                              .withBatchId(UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"))
+                                              .withStatus(Status.SUCCEEDED)
+                                              .withOperation(mockOperation("SELECT SOMETHING", "SELECT SOMETHING NAKED"))
+                                              .withTimestamp(1554188832013L)
+                                              .build();
 
         // Write Data to Queue
         ChronicleQueue chronicleQueue = ChronicleQueueBuilder
@@ -70,9 +65,19 @@ public class WriteTestDataUtil
                                         .build();
         ExcerptAppender appender = chronicleQueue.acquireAppender();
 
-        appender.writeDocument(new AuditRecordWriteMarshallable(singleRecord));
-        appender.writeDocument(new AuditRecordWriteMarshallable(batchRecord));
+        appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.DEFAULT_FIELDS));
+        appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.NO_FIELDS));
+        appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.ALL_FIELDS));
+        appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.fromFields(asList("USER", "OPERATION_NAKED", "STATUS")))); // Custom fields
 
         chronicleQueue.close();
+    }
+
+    private static AuditOperation mockOperation(String operation, String nakedOperation)
+    {
+        AuditOperation operationMock = mock(AuditOperation.class);
+        when(operationMock.getOperationString()).thenReturn(operation);
+        when(operationMock.getNakedOperationString()).thenReturn(nakedOperation);
+        return operationMock;
     }
 }

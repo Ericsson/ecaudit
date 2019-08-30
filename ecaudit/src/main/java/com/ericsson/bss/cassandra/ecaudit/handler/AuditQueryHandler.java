@@ -41,6 +41,7 @@ import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.transport.messages.ResultMessage.Prepared;
 import org.apache.cassandra.utils.MD5Digest;
+import org.apache.cassandra.utils.UUIDGen;
 
 /**
  * An implementation of {@link QueryHandler} that performs audit logging on queries.
@@ -182,7 +183,7 @@ public class AuditQueryHandler implements QueryHandler
                                                 QueryState state, BatchQueryOptions options, Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
     throws RequestExecutionException, RequestValidationException
     {
-        UUID uuid = UUID.randomUUID();
+        UUID uuid = UUIDGen.getTimeUUID();
         long timestamp = System.currentTimeMillis();
         auditAdapter.auditBatch(statement, rawCqlStatements, uuid, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try

@@ -17,17 +17,14 @@ package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
 
 import java.io.File;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
-import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptTailer;
@@ -66,52 +63,33 @@ public class TestReadVersion0
 
     private void readSingle() throws Exception
     {
-        AuditRecord expectedAuditRecord = SimpleAuditRecord
-                                          .builder()
-                                          .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 777))
-                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
-                                          .withStatus(Status.FAILED)
-                                          .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
-                                          .withUser("bob")
-                                          .withTimestamp(1554188832323L)
-                                          .build();
-
-        AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
+        StoredAuditRecord actualAuditRecord = readAuditRecordFromChronicle();
 
         assertThat(actualAuditRecord.getBatchId()).isEmpty();
-        assertThat(actualAuditRecord.getClientAddress().getAddress()).isEqualTo(expectedAuditRecord.getClientAddress().getAddress());
-        assertThat(actualAuditRecord.getClientAddress().getPort()).isEqualTo(expectedAuditRecord.getClientAddress().getPort());
-        assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
-        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
-        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
-        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedAuditRecord.getTimestamp());
+        assertThat(actualAuditRecord.getClientAddress()).contains(InetAddress.getByName("0.1.2.3"));
+        assertThat(actualAuditRecord.getClientPort()).contains(777);
+        assertThat(actualAuditRecord.getStatus()).contains(Status.FAILED);
+        assertThat(actualAuditRecord.getOperation()).contains("SELECT SOMETHING");
+        assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
+        assertThat(actualAuditRecord.getUser()).contains("bob");
+        assertThat(actualAuditRecord.getTimestamp()).contains(1554188832323L);
     }
 
     private void readBatch() throws Exception
     {
-        AuditRecord expectedAuditRecord = SimpleAuditRecord
-                                          .builder()
-                                          .withBatchId(UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"))
-                                          .withClientAddress(new InetSocketAddress(InetAddress.getByName("0.1.2.3"), 777))
-                                          .withCoordinatorAddress(InetAddress.getByName("4.5.6.7"))
-                                          .withStatus(Status.ATTEMPT)
-                                          .withOperation(new SimpleAuditOperation("SELECT SOMETHING"))
-                                          .withUser("bob")
-                                          .withTimestamp(1554188832013L)
-                                          .build();
+        StoredAuditRecord actualAuditRecord = readAuditRecordFromChronicle();
 
-        AuditRecord actualAuditRecord = readAuditRecordFromChronicle();
-
-        assertThat(actualAuditRecord.getBatchId()).isEqualTo(expectedAuditRecord.getBatchId());
-        assertThat(actualAuditRecord.getClientAddress().getAddress()).isEqualTo(expectedAuditRecord.getClientAddress().getAddress());
-        assertThat(actualAuditRecord.getClientAddress().getPort()).isEqualTo(expectedAuditRecord.getClientAddress().getPort());
-        assertThat(actualAuditRecord.getStatus()).isEqualTo(expectedAuditRecord.getStatus());
-        assertThat(actualAuditRecord.getOperation().getOperationString()).isEqualTo(expectedAuditRecord.getOperation().getOperationString());
-        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
-        assertThat(actualAuditRecord.getTimestamp()).isEqualTo(expectedAuditRecord.getTimestamp());
+        assertThat(actualAuditRecord.getBatchId()).contains(UUID.fromString("bd92aeb1-3373-4d6a-b65a-0d60295f66c9"));
+        assertThat(actualAuditRecord.getClientAddress()).contains(InetAddress.getByName("0.1.2.3"));
+        assertThat(actualAuditRecord.getClientPort()).contains(777);
+        assertThat(actualAuditRecord.getStatus()).contains(Status.ATTEMPT);
+        assertThat(actualAuditRecord.getOperation()).contains("SELECT SOMETHING");
+        assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
+        assertThat(actualAuditRecord.getUser()).contains("bob");
+        assertThat(actualAuditRecord.getTimestamp()).contains(1554188832013L);
     }
 
-    private AuditRecord readAuditRecordFromChronicle()
+    private StoredAuditRecord readAuditRecordFromChronicle()
     {
         AuditRecordReadMarshallable readMarshallable = new AuditRecordReadMarshallable();
 

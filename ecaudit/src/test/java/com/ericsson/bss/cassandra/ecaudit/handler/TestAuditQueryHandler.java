@@ -45,7 +45,9 @@ import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.messages.ResultMessage.Prepared;
 import org.apache.cassandra.utils.MD5Digest;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -56,6 +58,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -89,6 +92,9 @@ public class TestAuditQueryHandler
 
     @Mock
     private AuditAdapter mockAdapter;
+
+    @Captor
+    private ArgumentCaptor<UUID> uuidCaptor;
 
     private AuditQueryHandler queryHandler;
 
@@ -301,6 +307,15 @@ public class TestAuditQueryHandler
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), eq(Arrays.asList(query, query)), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
         verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), anyLong());
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), eq(Arrays.asList(query, query)), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.FAILED), longThat(isCloseToNow()));
+    }
+
+    @Test
+    public void testTimeBaseUuidIsCreatedForBatchId()
+    {
+        queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, System.nanoTime());
+        verify(mockAdapter).auditBatch(any(), any(), uuidCaptor.capture(), any(), any(), eq(Status.ATTEMPT), anyLong());
+        reset(mockAdapter, mockHandler);
+        assertThat(uuidCaptor.getValue().version()).as("UUID version should be time-based").isEqualTo(1);
     }
 
     @Test
