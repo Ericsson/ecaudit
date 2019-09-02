@@ -44,7 +44,7 @@ public final class CqlLiteralVersionAdapter
     {
         if (!serializedValue.hasRemaining())
         {
-            return null;
+            return noValueString(column);
         }
         if (isStringType(column))
         {
@@ -56,6 +56,11 @@ public final class CqlLiteralVersionAdapter
         }
 
         return column.type.getString(serializedValue);
+    }
+
+    private static String noValueString(ColumnSpecification column)
+    {
+        return isStringType(column) ? "''" : "null";
     }
 
     private static boolean isStringType(ColumnSpecification column)

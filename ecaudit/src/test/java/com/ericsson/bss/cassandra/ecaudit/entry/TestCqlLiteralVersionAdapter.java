@@ -54,7 +54,8 @@ public class TestCqlLiteralVersionAdapter
     public Object[][] testToCQLLiteral_parameters()
     {
         return new Object[][]{
-            { UTF8Type.instance, EMPTY_BUFFER, null },
+            { UTF8Type.instance, EMPTY_BUFFER, "''" },
+            { TimestampType.instance, EMPTY_BUFFER, "null" },
             { UTF8Type.instance, UTF8Type.instance.fromString("Kalle"), "'Kalle'" },
             { AsciiType.instance, AsciiType.instance.fromString("Anka"), "'Anka'" },
             { TimestampType.instance, TimestampType.instance.fromTimeInMillis(42), "1970-01-01T00:00:00.042Z" }, // 42 ms after EPOCH
