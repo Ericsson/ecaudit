@@ -102,6 +102,18 @@ public class TestWriteReadVersionCurrent
         .withMessage("Tried to read from wire with used marshallable");
     }
 
+    @Test
+    public void testGetFieldsAvailableInRecord()
+    {
+        AuditRecord recordWithoutClientIPAndBatchId = SimpleAuditRecord.builder().build();
+
+        FieldSelector fields = AuditRecordWriteMarshallable.getFieldsAvailableInRecord(recordWithoutClientIPAndBatchId, FieldSelector.ALL_FIELDS);
+
+        assertThat(fields.isSelected(FieldSelector.Field.CLIENT_IP)).isFalse();
+        assertThat(fields.isSelected(FieldSelector.Field.CLIENT_PORT)).isFalse();
+        assertThat(fields.isSelected(FieldSelector.Field.BATCH_ID)).isFalse();
+    }
+
     private SimpleAuditRecord.Builder likeGenericRecord() throws UnknownHostException
     {
         return SimpleAuditRecord
