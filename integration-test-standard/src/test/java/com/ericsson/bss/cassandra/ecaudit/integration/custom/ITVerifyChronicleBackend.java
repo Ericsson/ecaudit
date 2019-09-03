@@ -37,9 +37,10 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.eclog.QueueReader;
 import com.ericsson.bss.cassandra.ecaudit.eclog.ToolOptions;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
@@ -48,10 +49,12 @@ import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTes
 import net.jcip.annotations.NotThreadSafe;
 import net.openhft.chronicle.queue.RollCycles;
 import org.apache.cassandra.utils.FBUtilities;
+import org.assertj.core.data.Offset;
 import org.assertj.core.data.Percentage;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 
 @NotThreadSafe
@@ -164,6 +167,31 @@ public class ITVerifyChronicleBackend
     }
 
     @Test
+    public void testFailedAuthenticationRequest()
+    {
+        assertThatExceptionOfType(AuthenticationException.class)
+        .isThrownBy(() -> cdt.createCluster("user", "password").connect())
+        .withMessageContaining("Authentication error");
+
+        List<StoredAuditRecord> records = waitAndGetRecords();
+        assertThat(records).hasSize(2);
+        assertAuthRecord(records.get(0), "user", Status.ATTEMPT, "Authentication attempt");
+        assertAuthRecord(records.get(1), "user", Status.FAILED, "Authentication failed");
+    }
+
+    private void assertAuthRecord(StoredAuditRecord record, String expectedUser, Status expectedStatus, String expectedOperation)
+    {
+        assertThat(record.getTimestamp().get()).isCloseTo(System.currentTimeMillis(), Offset.offset(30_000L));
+        assertThat(record.getClientAddress()).contains(InetAddress.getLoopbackAddress());
+        assertThat(record.getClientPort()).contains(0); // Port unknown in Authentication request
+        assertThat(record.getCoordinatorAddress()).contains(FBUtilities.getBroadcastAddress());
+        assertThat(record.getUser()).contains(expectedUser);
+        assertThat(record.getStatus()).contains(expectedStatus);
+        assertThat(record.getOperation()).contains(expectedOperation);
+        assertThat(record.getNakedOperation()).isEmpty();
+    }
+
+    @Test
     public void simpleUpdateIsLogged()
     {
         givenTable("ks1", "tbl");
@@ -213,17 +241,7 @@ public class ITVerifyChronicleBackend
 
     private void thenChronicleLogContainEntryForUser(String operation, String username)
     {
-        try
-        {
-            Thread.sleep(100);
-        }
-        catch (InterruptedException e)
-        {
-            Thread.currentThread().interrupt();
-            fail("Interrupted during delay", e);
-        }
-
-        List<StoredAuditRecord> records = getRecords();
+        List<StoredAuditRecord> records = waitAndGetRecords();
         assertThat(records).hasSize(1);
 
         StoredAuditRecord record = records.get(0);
@@ -236,6 +254,21 @@ public class ITVerifyChronicleBackend
         assertThat(record.getCoordinatorAddress()).contains(FBUtilities.getBroadcastAddress());
         assertThat(record.getTimestamp().get()).isLessThanOrEqualTo(System.currentTimeMillis());
         assertThat(record.getTimestamp().get()).isGreaterThan(System.currentTimeMillis() - 30_000);
+    }
+
+    private List<StoredAuditRecord> waitAndGetRecords()
+    {
+        try
+        {
+            Thread.sleep(100);
+        }
+        catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
+            fail("Interrupted during delay", e);
+        }
+
+        return getRecords();
     }
 
     private List<StoredAuditRecord> getRecords()

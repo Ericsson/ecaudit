@@ -20,14 +20,16 @@ on to more resent release branches (if any) and then finally into the master bra
 
 This way feature compatibility will be maintained on the different flavours of ecAudit.
 
-At the moment the oldest maintained release branch is ```release/c3.0.11```
+At the moment the oldest maintained release branch is ```release/c2.2```
+which is tracking the latest release of Cassandra 2.2.x.
+Then comes ```release/c3.0.11```
 which is building with Cassandra 3.0.11 specifically.
 Then comes ```release/3.0```
 which is tracking the latest release of Cassandra 3.0.x.
 The ```master``` branch is tracking the latest release of Cassandra 3.11.x.
 
-Pull Requests with new features should typically target ```release/3.0.11```.
-Merge order is then ```PR``` -> ```release/3.0.11``` -> ```release/3.0``` -> ```master```
+Pull Requests with new features should typically target ```release/c2.2```.
+Merge order is then ```PR``` -> ```release/c2.2``` -> ```release/c3.0.11``` -> ```release/c3.0``` -> ```master```
 
 
 ## Design Environment
