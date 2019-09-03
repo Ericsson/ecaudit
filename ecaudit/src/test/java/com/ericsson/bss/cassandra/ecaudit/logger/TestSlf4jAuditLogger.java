@@ -23,14 +23,20 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -38,18 +44,17 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestSlf4jAuditLogger
 {
     private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
-    private static final String DEFAULT_LOG_TEMPLATE = "client:'{}'|user:'{}'{}{}{}|status:'{}'|operation:'{}'";
     private static final String EXPECTED_STATEMENT = "insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']";
     private static final String EXPECTED_STATEMENT_NAKED = "insert into ks.tbl (key, val) values (?, ?)";
     private static final String EXPECTED_CLIENT_ADDRESS = "127.0.0.1";
@@ -57,31 +62,19 @@ public class TestSlf4jAuditLogger
     private static final String EXPECTED_COORDINATOR_ADDRESS = "127.0.0.2";
     private static final String EXPECTED_USER = "user";
     private static final Status EXPECTED_STATUS = Status.ATTEMPT;
-    private static final UUID EXPECTED_BATCH_ID = UUID.randomUUID();
+    private static final UUID EXPECTED_BATCH_ID = UUID.fromString("12345678-aaaa-bbbb-cccc-123456789abc");
     private static final Long EXPECTED_TIMESTAMP = 42L;
-
+    private static final String CUSTOM_LOGGER_NAME = "TEST_LOGGER";
+    private static final Logger LOG = LoggerFactory.getLogger(CUSTOM_LOGGER_NAME);
 
     private static AuditEntry logEntryWithAll;
     private static AuditEntry logEntryWithoutBatch;
     private static AuditEntry logEntryWithoutClientPort;
 
     @Mock
-    private Logger loggerMock;
+    private Appender<ILoggingEvent> mockAuditAppender;
     @Captor
-    private ArgumentCaptor arg1;
-    @Captor
-    private ArgumentCaptor arg2;
-    @Captor
-    private ArgumentCaptor arg3;
-    @Captor
-    private ArgumentCaptor arg4;
-    @Captor
-    private ArgumentCaptor arg5;
-    @Captor
-    private ArgumentCaptor arg6;
-    @Captor
-    private ArgumentCaptor arg7;
-
+    private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
 
     @BeforeClass
     public static void setup()
@@ -112,29 +105,29 @@ public class TestSlf4jAuditLogger
                                               .build();
     }
 
+    @Before
+    public void before()
+    {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.getLogger(CUSTOM_LOGGER_NAME).addAppender(mockAuditAppender);
+    }
+
+    @After
+    public void after()
+    {
+        verifyNoMoreInteractions(mockAuditAppender);
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.getLogger(CUSTOM_LOGGER_NAME).detachAppender(mockAuditAppender);
+    }
+
     @Test
     public void testDefaultFormatAuditEntryNoBatch()
     {
         Slf4jAuditLogger logger = loggerWithConfig(DEFAULT_LOG_FORMAT);
         logger.log(logEntryWithoutBatch);
 
-        // Capture and perform validation
-        verify(loggerMock, times(1)).info(eq(DEFAULT_LOG_TEMPLATE),
-                                          arg1.capture(),
-                                          arg2.capture(),
-                                          arg3.capture(),
-                                          arg4.capture(),
-                                          arg5.capture(),
-                                          arg6.capture(),
-                                          arg7.capture());
-
-        assertThat(arg1.getValue().toString()).isEqualTo(EXPECTED_CLIENT_ADDRESS);
-        assertThat(arg2.getValue().toString()).isEqualTo(EXPECTED_USER);
-        assertThat(arg3.getValue().toString()).isEqualTo(""); // Optional field - left part - empty
-        assertThat(arg4.getValue().toString()).isEqualTo(""); // Optional field - value - empty
-        assertThat(arg5.getValue().toString()).isEqualTo(""); // Optional field - right part - empty
-        assertThat(arg6.getValue().toString()).isEqualTo(EXPECTED_STATUS.toString());
-        assertThat(arg7.getValue().toString()).isEqualTo(EXPECTED_STATEMENT);
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("client:'127.0.0.1'|user:'user'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
     }
 
     @Test
@@ -143,67 +136,28 @@ public class TestSlf4jAuditLogger
         Slf4jAuditLogger logger = loggerWithConfig(DEFAULT_LOG_FORMAT);
         logger.log(logEntryWithAll);
 
-        // Capture and perform validation
-        verify(loggerMock, times(1)).info(eq(DEFAULT_LOG_TEMPLATE),
-                                          arg1.capture(),
-                                          arg2.capture(),
-                                          arg3.capture(),
-                                          arg4.capture(),
-                                          arg5.capture(),
-                                          arg6.capture(),
-                                          arg7.capture());
-
-        assertThat(arg1.getValue().toString()).isEqualTo(EXPECTED_CLIENT_ADDRESS);
-        assertThat(arg2.getValue().toString()).isEqualTo(EXPECTED_USER);
-        assertThat(arg3.getValue().toString()).isEqualTo("|batchId:'");                 // Optional field - left part
-        assertThat(arg4.getValue().toString()).isEqualTo(EXPECTED_BATCH_ID.toString()); // Optional field - value
-        assertThat(arg5.getValue().toString()).isEqualTo("'");                          // Optional field - right part
-        assertThat(arg6.getValue().toString()).isEqualTo(EXPECTED_STATUS.toString());
-        assertThat(arg7.getValue().toString()).isEqualTo(EXPECTED_STATEMENT);
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
     }
 
     @Test
     public void testCustomLogFormat()
     {
-        Slf4jAuditLogger logger = loggerWithConfig("User = ${USER}, Status = {${STATUS}}, Query = ${OPERATION}");
+        Slf4jAuditLogger logger = loggerWithConfig("User = ${USER}, Status = {${STATUS}}, Query = ${OPERATION_NAKED}");
         logger.log(logEntryWithoutBatch);
 
-        // Capture and perform validation
-        verify(loggerMock, times(1)).info(eq("User = {}, Status = {{}}, Query = {}"),
-                                          arg1.capture(),
-                                          arg2.capture(),
-                                          arg3.capture());
-
-        assertThat(arg1.getValue().toString()).isEqualTo(EXPECTED_USER);
-        assertThat(arg2.getValue().toString()).isEqualTo(EXPECTED_STATUS.toString());
-        assertThat(arg3.getValue().toString()).isEqualTo(EXPECTED_STATEMENT);
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("User = user, Status = {ATTEMPT}, Query = insert into ks.tbl (key, val) values (?, ?)");
     }
 
     @Test
-    public void testGetDescriptionIfValuePresentWithoutValue()
+    public void testAnchorCharactersAreEscapedWhenUsedInLogFormat()
     {
-        Function<Object, String> f = Slf4jAuditLogger.getDescriptionIfValuePresent("Hello");
-        assertThat(f.apply(null)).isEmpty();
-    }
+        Slf4jAuditLogger logger = loggerWithConfig("{}User=${USER}{}Status=${STATUS}");
+        logger.log(logEntryWithoutBatch);
 
-    @Test
-    public void testGetDescriptionIfValuePresentWithValue()
-    {
-        Function<Object, String> f = Slf4jAuditLogger.getDescriptionIfValuePresent("Hello");
-        assertThat(f.apply(new Object())).isEqualTo("Hello");
-    }
-
-    @Test
-    public void testGetValueOrEmptyStringWithoutValue()
-    {
-        assertThat(Slf4jAuditLogger.getValueOrEmptyString(null)).isEqualTo("");
-    }
-
-    @Test
-    public void testGetValueOrEmptyStringWithValue()
-    {
-        Object value = new Object();
-        assertThat(Slf4jAuditLogger.getValueOrEmptyString(value)).isSameAs(value);
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("{}User=user{}Status=ATTEMPT");
     }
 
     @Test
@@ -254,25 +208,17 @@ public class TestSlf4jAuditLogger
     }
 
     @Test
-    public void testThatConfigurationExceptionIsThrownWhenFieldIsMissing()
+    public void testInvalidConfig()
     {
-        Slf4jAuditLogger slf4jAuditLogger = loggerWithConfig("");
-        assertThatThrownBy(() -> slf4jAuditLogger.getFieldFunctions("Value = ${NON_EXISTING}"))
-        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format field: NON_EXISTING");
-    }
-
-    @Test
-    public void testThatConfigurationExceptionIsThrownWhenOptionalFieldIsMissing()
-    {
-        Slf4jAuditLogger slf4jAuditLogger = loggerWithConfig("");
-        assertThatThrownBy(() -> slf4jAuditLogger.getFieldFunctions("{? optional ${NON_EXISTING2} ?}"))
-        .isInstanceOf(ConfigurationException.class).hasMessage("Unknown log format field: NON_EXISTING2");
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(() -> loggerWithConfig("value=${INVALID}"))
+        .withMessage("Unknown log format field: INVALID");
     }
 
     private Slf4jAuditLogger loggerWithConfig(String format)
     {
         Slf4jAuditLoggerConfig mockConfig = mockAuditConfig(format);
-        return new Slf4jAuditLogger(mockConfig, loggerMock);
+        return new Slf4jAuditLogger(mockConfig, LOG);
     }
 
     private Slf4jAuditLoggerConfig mockAuditConfig(String logFormat)
@@ -280,5 +226,11 @@ public class TestSlf4jAuditLogger
         Slf4jAuditLoggerConfig mockConfig = mock(Slf4jAuditLoggerConfig.class);
         when(mockConfig.getLogFormat()).thenReturn(logFormat);
         return mockConfig;
+    }
+
+    private String getSlf4jLogMessage()
+    {
+        verify(mockAuditAppender, atLeast(1)).doAppend(loggingEventCaptor.capture());
+        return loggingEventCaptor.getValue().getFormattedMessage();
     }
 }
