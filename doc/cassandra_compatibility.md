@@ -40,6 +40,16 @@ Users should consider to upgrade to one of the latest Cassandra releases togethe
 | 2.0.0 -> latest | Cassandra 3.0.11 | Cassandra 3.0.11 |
 
 
+## ecaudit_c2.2
+
+This flavor is built with the latest version of the Apache Cassandra 2.2.x series.
+The table below list the Cassandra version used while building each ecAudit release and indicate compatibility with other Cassandra versions.
+
+| ecAudit Version | Compiled With    | Compatible With                  |
+| --------------- | ---------------- | -------------------------------- |
+| 2.2.0 -> latest | Cassandra 2.2.14 | Cassandra 2.2.14                 |
+
+
 ## Feature compatibility
 
 The ecAudit versions across flavors are feature compatible as far as it makes sense.
@@ -117,17 +127,18 @@ The following fields are optional in Cassandra 4.0 and may be missing in some re
 
 Comparing record fields between Cassandra 4.0 and ecAudit:
 
-| Cassandra 4.0 | ecAudit     | Comment |
-| ------------- | ----------- | -------------------------------------------------------------------------------------- |
-| user          | USER        |                                                                                        |
-| host          | COORDINATOR | C* 4.0 will print \<IP\>:\<port\>, while ecAudit only print \<IP\>                     |
-| source        | CLIENT      | C* 4.0 will print \[\<hostname\>\]/\<IP\> (including the '/'), while ecAudit only print \<IP\> |
-| port          | -           | Not present in ecAudit, addressed in [#90](https://github.com/Ericsson/ecaudit/issues/90) |
-| batch         | BATCH_ID    | Correlation ID for entries in separated batches                                        |
-| timestamp     | TIMESTAMP   |                                                                                        |
-| type          | -           | Not present in ecAudit                                                                 |
-| category      | -           | Not present in ecAudit                                                                 |
-| ks            | -           | Not present in ecAudit                                                                 |
-| scope         | -           | Not present in ecAudit                                                                 |
-| operation     | OPERATION   |                                                                                        |
-| -             | STATUS      | Not present in Cassandra                                                               |
+| Cassandra 4.0 | ecAudit         | Comment |
+| ------------- | --------------- | -------------------------------------------------------------------------------------- |
+| user          | USER            |                                                                                        |
+| host          | COORDINATOR     | C* 4.0 will print \<IP\>:\<port\>, while ecAudit only print \<IP\>                     |
+| source        | CLIENT          | C* 4.0 will print \[\<hostname\>\]/\<IP\> (including the '/'), while ecAudit only print \<IP\> |
+| port          | -               | Not present in ecAudit, addressed in [#90](https://github.com/Ericsson/ecaudit/issues/90) |
+| batch         | BATCH_ID        | Correlation ID for entries in separated batches                                        |
+| timestamp     | TIMESTAMP       |                                                                                        |
+| type          | -               | Not present in ecAudit                                                                 |
+| category      | -               | Not present in ecAudit                                                                 |
+| ks            | -               | Not present in ecAudit                                                                 |
+| scope         | -               | Not present in ecAudit                                                                 |
+| operation     | OPERATION_NAKED | operation, without bound values appended to prepared statements                        |
+| -             | OPERATION       | operation, with bound values appended to prepared statements. Not present in Cassandra |
+| -             | STATUS          | Not present in Cassandra                                                               |
