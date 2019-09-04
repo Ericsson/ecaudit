@@ -47,7 +47,7 @@ The table below list the Cassandra version used while building each ecAudit rele
 
 | ecAudit Version | Compiled With    | Compatible With                  |
 | --------------- | ---------------- | -------------------------------- |
-| 2.2.0 -> latest | Cassandra 2.2.14 | Cassandra 2.2.14                 |
+| 2.2.0 -> latest | Cassandra 2.2.14 | Cassandra 2.2.8, 2.2.9, 2.2.10, 2.2.11, 2.2.12, 2.2.13, 2.2.14 |
 
 
 ## Feature compatibility
