@@ -6,7 +6,7 @@ Follow these instructions to install ecAudit in each node of your Cassandra clus
 ## Deploy Plug-In Jar File
 
 Place the ecAudit jar file in your ```$CASSANDRA_HOME/lib/``` directory.
-Get the official releases from [Maven Central](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0.11%22).
+Get the official releases from [Maven Central](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c2.2%22).
 
 
 ## Enable Plug-In

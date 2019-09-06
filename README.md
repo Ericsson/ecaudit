@@ -1,9 +1,9 @@
 # ecAudit
 
-[![build](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c3.0.11)](https://travis-ci.org/Ericsson/ecaudit)
-[![coverage](https://coveralls.io/repos/github/Ericsson/ecaudit/badge.svg?branch=release/c3.0.11)](https://coveralls.io/github/Ericsson/ecaudit?branch=release%2Fc3.0.11)
+[![build](https://travis-ci.org/Ericsson/ecaudit.svg?branch=release/c2.2)](https://travis-ci.org/Ericsson/ecaudit)
+[![coverage](https://coveralls.io/repos/github/Ericsson/ecaudit/badge.svg?branch=release/c2.2)](https://coveralls.io/github/Ericsson/ecaudit?branch=release%2Fc2.2)
 
-With ecAudit you get auditing and query logger functionality for Apache Cassandra 3.0 and 3.11.
+With ecAudit you get auditing and query logger functionality for Apache Cassandra 2.2, 3.0 and 3.11.
 
 Features include:
 * Detailed audit records for CQL operations and login attempts

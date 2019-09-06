@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.2.0
+* Backport ecAudit to Cassandra 2.2.x #111
 * Configurable fields in Chronicle backend #101
 * Improve batch-id (UUID) performance #108
 
