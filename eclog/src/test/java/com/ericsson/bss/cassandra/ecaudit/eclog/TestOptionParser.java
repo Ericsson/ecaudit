@@ -350,6 +350,18 @@ public class TestOptionParser
                                     .withHelp(true));
     }
 
+    @Test
+    public void withConfigAndDirectory() throws ParseException
+    {
+        String[] argv = givenInputOptions("-c", "./config.yaml", "./dir");
+
+        ToolOptions options = parser.parse(argv);
+
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withConfig(Paths.get("./config.yaml")));
+    }
+
     private String[] givenInputOptions(String... options)
     {
         return options;
@@ -370,5 +382,6 @@ public class TestOptionParser
         assertThat(actualOptions.limit()).isEqualTo(expectedOptions.limit());
         assertThat(actualOptions.tail()).isEqualTo(expectedOptions.tail());
         assertThat(actualOptions.help()).isEqualTo(expectedOptions.help());
+        assertThat(actualOptions.config()).isEqualTo(expectedOptions.config());
     }
 }

@@ -23,6 +23,7 @@ import net.openhft.chronicle.queue.RollCycles;
 public class ToolOptions
 {
     private final Path path;
+    private final Path config;
     private final Long limit;
     private final Long tail;
     private final boolean follow;
@@ -32,6 +33,7 @@ public class ToolOptions
     private ToolOptions(Builder builder)
     {
         this.path = builder.path;
+        this.config = builder.config;
         this.limit = builder.limit;
         this.tail = builder.tail;
         this.follow = builder.follow;
@@ -42,6 +44,11 @@ public class ToolOptions
     public Path path()
     {
         return path;
+    }
+
+    public Optional<Path> config()
+    {
+        return Optional.ofNullable(config);
     }
 
     public Optional<Long> limit()
@@ -77,6 +84,7 @@ public class ToolOptions
     public static class Builder
     {
         private Path path;
+        private Path config;
         private Long limit;
         private Long tail;
         private boolean follow = false;
@@ -86,6 +94,12 @@ public class ToolOptions
         public Builder withPath(Path path)
         {
             this.path = path;
+            return this;
+        }
+
+        public Builder withConfig(Path config)
+        {
+            this.config = config;
             return this;
         }
 

@@ -18,17 +18,25 @@ package com.ericsson.bss.cassandra.ecaudit.eclog;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
+import com.ericsson.bss.cassandra.ecaudit.eclog.config.EcLogYamlConfig;
+import org.jetbrains.annotations.NotNull;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.OngoingStubbing;
@@ -43,6 +51,9 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestLogPrinter
 {
+    private static final Path DEFAULT_PATH = Paths.get(".");
+    private static final StoredAuditRecord FULL_RECORD = mockRecord(123L, "1.2.3.4", 42, "5.6.7.8", "king", Status.ATTEMPT, UUID.fromString("12345678-aaaa-bbbb-cccc-123456789abc"), "select something");
+
     @Mock
     private PrintStream stream;
 
@@ -53,14 +64,12 @@ public class TestLogPrinter
     }
 
     @Test(timeout = 5000)
-    public void testAuthRecord() throws UnknownHostException
+    public void testAuthRecord()
     {
-        ToolOptions options = ToolOptions.builder().build();
+        ToolOptions options = ToolOptions.builder().withPath(DEFAULT_PATH).build();
         LogPrinter printer = givenPrinter(options, 10);
-        QueueReader reader = mock(QueueReader.class);
-        when(reader.hasRecordAvailable()).thenReturn(true).thenReturn(false);
         StoredAuditRecord authRecord = mockRecord(0L, "1.2.3.4", null, "5.6.7.8", "king", Status.ATTEMPT, null, "Authentication operation");
-        when(reader.nextRecord()).thenReturn(authRecord);
+        QueueReader reader = givenReaderWithSingleRecord(authRecord);
 
         printer.print(reader);
 
@@ -68,9 +77,9 @@ public class TestLogPrinter
     }
 
     @Test(timeout = 5000)
-    public void testFiveRecords() throws UnknownHostException
+    public void testFiveRecords()
     {
-        ToolOptions options = ToolOptions.builder().build();
+        ToolOptions options = ToolOptions.builder().withPath(DEFAULT_PATH).build();
         LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(false, 5, 0);
 
@@ -80,9 +89,9 @@ public class TestLogPrinter
     }
 
     @Test(timeout = 5000)
-    public void testFiveBatchRecords() throws UnknownHostException
+    public void testFiveBatchRecords()
     {
-        ToolOptions options = ToolOptions.builder().build();
+        ToolOptions options = ToolOptions.builder().withPath(DEFAULT_PATH).build();
         LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(true, 5, 0);
 
@@ -92,9 +101,9 @@ public class TestLogPrinter
     }
 
     @Test(timeout = 5000)
-    public void testFivePlusFiveWithoutFollowWillSkipFiveLastRecords() throws UnknownHostException
+    public void testFivePlusFiveWithoutFollowWillSkipFiveLastRecords()
     {
-        ToolOptions options = ToolOptions.builder().build();
+        ToolOptions options = ToolOptions.builder().withPath(DEFAULT_PATH).build();
         LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(false, 5, 5);
 
@@ -104,9 +113,9 @@ public class TestLogPrinter
     }
 
     @Test(timeout = 5000)
-    public void testFivePlusTenWithFollowAndLimitRecords() throws UnknownHostException
+    public void testFivePlusTenWithFollowAndLimitRecords()
     {
-        ToolOptions options = ToolOptions.builder().withFollow(true).withLimit(10).build();
+        ToolOptions options = ToolOptions.builder().withPath(DEFAULT_PATH).withFollow(true).withLimit(10).build();
         LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(false, 5, 10);
 
@@ -116,9 +125,9 @@ public class TestLogPrinter
     }
 
     @Test(timeout = 5000)
-    public void testFivePlusFiveWithFollowHasPollDelay() throws UnknownHostException
+    public void testFivePlusFiveWithFollowHasPollDelay()
     {
-        ToolOptions options = ToolOptions.builder().withFollow(true).withLimit(10).build();
+        ToolOptions options = ToolOptions.builder().withPath(DEFAULT_PATH).withFollow(true).withLimit(10).build();
         LogPrinter printer = givenPrinter(options, 200);
         QueueReader reader = givenRecords(false, 5, 5);
 
@@ -127,14 +136,14 @@ public class TestLogPrinter
         long end = System.currentTimeMillis();
 
         verifySingleRecordsFromStartOfSequence(10);
-        
+
         assertThat(end).isGreaterThanOrEqualTo(start + 200L);
     }
 
     @Test(timeout = 5000)
-    public void testFivePlusTenWithFollowAndLimitToZeroRecords() throws UnknownHostException
+    public void testFivePlusTenWithFollowAndLimitToZeroRecords()
     {
-        ToolOptions options = ToolOptions.builder().withFollow(true).withLimit(0).build();
+        ToolOptions options = ToolOptions.builder().withPath(DEFAULT_PATH).withFollow(true).withLimit(0).build();
         LogPrinter printer = givenPrinter(options, 10);
         QueueReader reader = givenRecords(false, 5, 10);
 
@@ -144,24 +153,108 @@ public class TestLogPrinter
     @Test(timeout = 5000)
     public void testEmptyRecord()
     {
-        ToolOptions options = ToolOptions.builder().build();
+        ToolOptions options = ToolOptions.builder().withPath(DEFAULT_PATH).build();
         LogPrinter printer = givenPrinter(options, 10);
-        QueueReader reader = mock(QueueReader.class);
-        when(reader.hasRecordAvailable()).thenReturn(true).thenReturn(false);
         StoredAuditRecord emptyRecord = mock(StoredAuditRecord.class);
-        when(reader.nextRecord()).thenReturn(emptyRecord);
+        QueueReader reader = givenReaderWithSingleRecord(emptyRecord);
 
         printer.print(reader);
 
         verify(stream).println(eq(""));
     }
 
-    private LogPrinter givenPrinter(ToolOptions options, long pollIntervalMs)
+    @Test(timeout = 5000)
+    public void testCustomFormatWithAllFields()
     {
-        return new LogPrinter(options, stream, pollIntervalMs);
+        String allFields = "{?timestamp:${TIMESTAMP}?}{?|client:${CLIENT_IP}?}{?:${CLIENT_PORT}?}{?|coordinator:${COORDINATOR_IP}?}{?|user:${USER}?}{?|batchId:${BATCH_ID}?}{?|status:${STATUS}?}{?|operation:'${OPERATION}'?}{?|operation-naked:'${OPERATION_NAKED}'?}";
+        EcLogYamlConfig config = mockConfig(allFields);
+        LogPrinter printer = givenPrinterWithConfig(config);
+        QueueReader reader = givenReaderWithSingleRecord(FULL_RECORD);
+
+        printer.print(reader);
+
+        verify(stream).println(eq("timestamp:123|client:1.2.3.4:42|coordinator:5.6.7.8|user:king|batchId:12345678-aaaa-bbbb-cccc-123456789abc|status:ATTEMPT|operation:'select something'|operation-naked:'select something - naked'"));
     }
 
-    private QueueReader givenRecords(boolean withBatchId, int count1, int count2) throws UnknownHostException
+    @Test(timeout = 5000)
+    public void testCustomTimeFormat()
+    {
+        EcLogYamlConfig config = mockConfig("Timestamp = ${TIMESTAMP}, User = ${USER}, Status = ${STATUS}, Query = '${OPERATION}'");
+        when(config.getTimeFormatter()).thenReturn(Optional.of(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneOffset.UTC)));
+        LogPrinter printer = givenPrinterWithConfig(config);
+        QueueReader reader = givenReaderWithSingleRecord(FULL_RECORD);
+
+        printer.print(reader);
+
+        verify(stream).println(eq("Timestamp = 1970-01-01T00:00:00.123, User = king, Status = ATTEMPT, Query = 'select something'"));
+    }
+
+    @Test
+    public void testAvailableFieldFunctions()
+    {
+        EcLogYamlConfig configMock = mock(EcLogYamlConfig.class);
+        Map<String, Function<StoredAuditRecord, Object>> availableFieldFunctions = LogPrinter.getAvailableFieldFunctionMap(configMock);
+        StoredAuditRecord emptyRecord = StoredAuditRecord.builder().build();
+
+        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "TIMESTAMP");
+
+
+        assertThat(availableFieldFunctions.get("CLIENT_IP").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("CLIENT_IP").apply(FULL_RECORD)).isEqualTo("1.2.3.4");
+
+        assertThat(availableFieldFunctions.get("CLIENT_PORT").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("CLIENT_PORT").apply(FULL_RECORD)).isEqualTo(42);
+
+        assertThat(availableFieldFunctions.get("COORDINATOR_IP").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("COORDINATOR_IP").apply(FULL_RECORD)).isEqualTo("5.6.7.8");
+
+        assertThat(availableFieldFunctions.get("USER").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("USER").apply(FULL_RECORD)).isEqualTo("king");
+
+        assertThat(availableFieldFunctions.get("BATCH_ID").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("BATCH_ID").apply(FULL_RECORD)).isEqualTo(UUID.fromString("12345678-aaaa-bbbb-cccc-123456789abc"));
+
+        assertThat(availableFieldFunctions.get("STATUS").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("STATUS").apply(FULL_RECORD)).isEqualTo(Status.ATTEMPT);
+
+        assertThat(availableFieldFunctions.get("OPERATION").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("OPERATION").apply(FULL_RECORD)).isEqualTo("select something");
+
+        assertThat(availableFieldFunctions.get("OPERATION_NAKED").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("OPERATION_NAKED").apply(FULL_RECORD)).isEqualTo("select something - naked");
+
+        assertThat(availableFieldFunctions.get("TIMESTAMP").apply(emptyRecord)).isNull();
+        assertThat(availableFieldFunctions.get("TIMESTAMP").apply(FULL_RECORD)).isEqualTo("123");
+    }
+
+    @NotNull
+    private QueueReader givenReaderWithSingleRecord(StoredAuditRecord authRecord)
+    {
+        QueueReader reader = mock(QueueReader.class);
+        when(reader.hasRecordAvailable()).thenReturn(true).thenReturn(false);
+        when(reader.nextRecord()).thenReturn(authRecord);
+        return reader;
+    }
+
+    @NotNull
+    private EcLogYamlConfig mockConfig(String t)
+    {
+        EcLogYamlConfig config = mock(EcLogYamlConfig.class);
+        when(config.getLogFormat()).thenReturn(t);
+        return config;
+    }
+
+    private LogPrinter givenPrinter(ToolOptions options, long pollIntervalMs)
+    {
+        return new LogPrinter(options, stream, pollIntervalMs, new EcLogYamlConfig());
+    }
+
+    private LogPrinter givenPrinterWithConfig(EcLogYamlConfig config)
+    {
+        return new LogPrinter(ToolOptions.builder().withPath(DEFAULT_PATH).build(), stream, 10, config);
+    }
+
+    private QueueReader givenRecords(boolean withBatchId, int count1, int count2)
     {
         QueueReader reader = mock(QueueReader.class);
         OngoingStubbing<Boolean> hasNextStub = when(reader.hasRecordAvailable());
@@ -190,18 +283,31 @@ public class TestLogPrinter
         return reader;
     }
 
-    private StoredAuditRecord mockRecord(Long timestamp, String clientHost, Integer clientPort, String coordinatorHost, String user, Status status, UUID batchId, String operation) throws UnknownHostException
+    private static StoredAuditRecord mockRecord(Long timestamp, String clientHost, Integer clientPort, String coordinatorHost, String user, Status status, UUID batchId, String operation)
     {
         StoredAuditRecord record = mock(StoredAuditRecord.class);
         when(record.getTimestamp()).thenReturn(Optional.ofNullable(timestamp));
-        when(record.getClientAddress()).thenReturn(Optional.ofNullable(InetAddress.getByName(clientHost)));
+        when(record.getClientAddress()).thenReturn(Optional.ofNullable(createAddress(clientHost)));
         when(record.getClientPort()).thenReturn(Optional.ofNullable(clientPort));
-        when(record.getCoordinatorAddress()).thenReturn(Optional.ofNullable(InetAddress.getByName(coordinatorHost)));
+        when(record.getCoordinatorAddress()).thenReturn(Optional.ofNullable(createAddress(coordinatorHost)));
         when(record.getUser()).thenReturn(Optional.ofNullable(user));
         when(record.getBatchId()).thenReturn(Optional.ofNullable(batchId));
         when(record.getStatus()).thenReturn(Optional.ofNullable(status));
         when(record.getOperation()).thenReturn(Optional.ofNullable(operation));
+        when(record.getNakedOperation()).thenReturn(Optional.ofNullable(operation).map(op -> op + " - naked"));
         return record;
+    }
+
+    private static InetAddress createAddress(String hostname)
+    {
+        try
+        {
+            return InetAddress.getByName(hostname);
+        }
+        catch (UnknownHostException e)
+        {
+            throw new AssertionError("Error creating address", e);
+        }
     }
 
     private void verifySingleRecordsFromStartOfSequence(int count)

@@ -47,3 +47,26 @@ The binary Chronicle log files can be viewed with the provided ```eclog``` tool.
 $ java -jar eclog.jar <log-dir>
 ```
 
+The default output looks like this:
+```
+1554188832013|127.0.0.32:777|123.45.67.89|bob|SUCCEEDED|SELECT * FROM students
+1554188832323|133.1.1.34:5443|123.45.67.90|cassandra|ATTEMPT|bd92aeb1-3373-4d6a-b65a-0d60295f66c9|INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']
+```
+
+The log output format can be configured, in a similar way as for SLF4J logger, by providing a ```ecLog.yaml``` configuration file.
+The log file can be specified by the command line argument ```-c``` or placed in either the working directory or together with the Chronicle log files.
+
+The configuration format/fields are the same as for SLF4J, see [Custom Log Message Format](slf4j_logger.md#custom-log-message-format).
+Conditional formatting is also supported.
+
+With a config like this:
+```YAML
+log_format: "${TIMESTAMP} -> Client=${CLIENT_IP}, User=${USER}, Status=${STATUS}, Operation=${OPERATION}"
+time_format: "yyyy-MM-dd HH:mm:ss.SSS z"
+time_zone: "UTC"
+```
+The output will look like this:
+```
+2019-04-02 07:07:12.013 UTC -> Client=127.0.0.32, User=bob, Status=SUCCEEDED, Operation=SELECT * FROM students
+2019-04-02 07:07:12.323 UTC -> Client=133.1.1.34, User=cassandra, Status=ATTEMPT, Operation=INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']
+```
