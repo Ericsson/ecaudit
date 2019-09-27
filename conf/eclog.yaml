@@ -1,0 +1,31 @@
+#
+# Copyright 2019 Telefonaktiebolaget LM Ericsson
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Configuration file for eclog
+# This configuration file can be specified by a command line argument with running eclog, or placed in either the
+# working directory or together with the binary log files.
+
+# Format of the audit record printed by eclog. Fields can be configured with bash-style parameter substitution.
+# Supported parameters are ${CLIENT_IP}, ${CLIENT_PORT}, ${COORDINATOR_IP}, ${USER}, ${BATCH_ID}, ${STATUS},
+# ${OPERATION}, ${OPERATION_NAKED}, and ${TIMESTAMP}.
+log_format: "${TIMESTAMP} -> Client=${CLIENT_IP}{?:${CLIENT_PORT}?}, User=${USER}, Status=${STATUS}, Operation=${OPERATION}"
+
+# Format of the ${TIMESTAMP} field as defined by the Java DateTimeFormatter. By default this field will be
+# unformatted and get printed as milliseconds since epoch of 1970-01-01Z.
+time_format: "yyyy-MM-dd HH:mm:ss z"
+
+# Time zone of the formatted ${TIMESTAMP}, using system default if unspecified.
+time_zone: "UTC"

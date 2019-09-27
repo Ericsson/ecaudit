@@ -30,7 +30,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 public final class EcLogYamlConfigLoader
 {
     private static final EcLogYamlConfig DEFAULT_CONFIG = new EcLogYamlConfig();
-    private static final String FILE_NAME = "ecLog.yaml";
+    private static final String FILE_NAME = "eclog.yaml";
 
     private EcLogYamlConfigLoader()
     {

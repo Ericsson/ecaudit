@@ -15,6 +15,7 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -119,10 +120,21 @@ class OptionParser
         }
     }
 
-    private Optional<Path> parseConfigPathOption(CommandLine cmd)
+    private Optional<Path> parseConfigPathOption(CommandLine cmd) throws ParseException
     {
-        return Optional.ofNullable(cmd.getOptionValue(CONFIG_OPTION))
-                       .map(Paths::get);
+        if (cmd.hasOption(CONFIG_OPTION))
+        {
+            Path path = Paths.get(cmd.getOptionValue(CONFIG_OPTION));
+            if (!Files.isReadable(path))
+            {
+                throw new ParseException("Unable to read config file: " + path);
+            }
+            return Optional.of(path);
+        }
+        else
+        {
+            return Optional.empty();
+        }
     }
 
     private Path parsePath(CommandLine cmd) throws ParseException

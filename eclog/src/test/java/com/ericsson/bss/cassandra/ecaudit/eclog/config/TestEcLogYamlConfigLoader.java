@@ -36,7 +36,7 @@ public class TestEcLogYamlConfigLoader
     private static final Path CUSTOM_FILE = Paths.get("/custom/config.yaml");
     private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
 
-    private static final String EXPECTED_FILE_NAME = "ecLog.yaml";
+    private static final String EXPECTED_FILE_NAME = "eclog.yaml";
     private static final Path CONFIG_FILE_DIR = Paths.get("src/test/resources/");
     private static final Path CONFIG_FILE = CONFIG_FILE_DIR.resolve(EXPECTED_FILE_NAME);
 
@@ -95,15 +95,6 @@ public class TestEcLogYamlConfigLoader
         EcLogYamlConfig config = EcLogYamlConfigLoader.loadConfigFromUrl(path);
 
         assertDefaultConfig(config);
-    }
-
-    @Test
-    public void testLoadConfigFromInvalidUrl()
-    {
-        Path path = Paths.get("invalid_path");
-        assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> EcLogYamlConfigLoader.loadConfigFromUrl(path))
-        .withMessage("Invalid configuration file: invalid_path");
     }
 
     @Test

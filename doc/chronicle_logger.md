@@ -53,7 +53,7 @@ The default output looks like this:
 1554188832323|133.1.1.34:5443|123.45.67.90|cassandra|ATTEMPT|bd92aeb1-3373-4d6a-b65a-0d60295f66c9|INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']
 ```
 
-The log output format can be configured, in a similar way as for SLF4J logger, by providing a ```ecLog.yaml``` configuration file.
+The log output format can be configured, in a similar way as for SLF4J logger, by providing a ```eclog.yaml``` configuration file.
 The log file can be specified by the command line argument ```-c``` or placed in either the working directory or together with the Chronicle log files.
 
 The configuration format/fields are the same as for SLF4J, see [Custom Log Message Format](slf4j_logger.md#custom-log-message-format).

@@ -53,6 +53,7 @@ public class TestLogPrinter
 {
     private static final Path DEFAULT_PATH = Paths.get(".");
     private static final StoredAuditRecord FULL_RECORD = mockRecord(123L, "1.2.3.4", 42, "5.6.7.8", "king", Status.ATTEMPT, UUID.fromString("12345678-aaaa-bbbb-cccc-123456789abc"), "select something");
+    private static final String ALL_FIELDS_OPTIONAL = "{?timestamp:${TIMESTAMP}?}{?|client:${CLIENT_IP}?}{?:${CLIENT_PORT}?}{?|coordinator:${COORDINATOR_IP}?}{?|user:${USER}?}{?|batchId:${BATCH_ID}?}{?|status:${STATUS}?}{?|operation:'${OPERATION}'?}{?|operation-naked:'${OPERATION_NAKED}'?}";
 
     @Mock
     private PrintStream stream;
@@ -166,8 +167,7 @@ public class TestLogPrinter
     @Test(timeout = 5000)
     public void testCustomFormatWithAllFields()
     {
-        String allFields = "{?timestamp:${TIMESTAMP}?}{?|client:${CLIENT_IP}?}{?:${CLIENT_PORT}?}{?|coordinator:${COORDINATOR_IP}?}{?|user:${USER}?}{?|batchId:${BATCH_ID}?}{?|status:${STATUS}?}{?|operation:'${OPERATION}'?}{?|operation-naked:'${OPERATION_NAKED}'?}";
-        EcLogYamlConfig config = mockConfig(allFields);
+        EcLogYamlConfig config = mockConfig(ALL_FIELDS_OPTIONAL);
         LogPrinter printer = givenPrinterWithConfig(config);
         QueueReader reader = givenReaderWithSingleRecord(FULL_RECORD);
 
@@ -187,6 +187,20 @@ public class TestLogPrinter
         printer.print(reader);
 
         verify(stream).println(eq("Timestamp = 1970-01-01T00:00:00.123, User = king, Status = ATTEMPT, Query = 'select something'"));
+    }
+
+    @Test(timeout = 5000)
+    public void testCustomOptionalFields()
+    {
+        EcLogYamlConfig config = mockConfig(ALL_FIELDS_OPTIONAL);
+        StoredAuditRecord record = mock(StoredAuditRecord.class);
+        when(record.getUser()).thenReturn(Optional.ofNullable("king"));
+        LogPrinter printer = givenPrinterWithConfig(config);
+        QueueReader reader = givenReaderWithSingleRecord(record);
+
+        printer.print(reader);
+
+        verify(stream).println(eq("|user:king"));
     }
 
     @Test
@@ -237,10 +251,10 @@ public class TestLogPrinter
     }
 
     @NotNull
-    private EcLogYamlConfig mockConfig(String t)
+    private EcLogYamlConfig mockConfig(String format)
     {
         EcLogYamlConfig config = mock(EcLogYamlConfig.class);
-        when(config.getLogFormat()).thenReturn(t);
+        when(config.getLogFormat()).thenReturn(format);
         return config;
     }
 
