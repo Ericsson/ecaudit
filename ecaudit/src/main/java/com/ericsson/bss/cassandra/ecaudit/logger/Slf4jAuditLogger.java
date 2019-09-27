@@ -69,16 +69,15 @@ public class Slf4jAuditLogger implements AuditLogger
     Slf4jAuditLogger(Slf4jAuditLoggerConfig auditConfig, Logger logger)
     {
         auditLogger = logger;
-        String logFormat = auditConfig.getLogFormat();
-        formatter = createLogMessageFormatter(auditConfig, logFormat);
+        formatter = createLogMessageFormatter(auditConfig);
     }
 
-    private LogMessageFormatter<AuditEntry> createLogMessageFormatter(Slf4jAuditLoggerConfig auditConfig, String logFormat)
+    private LogMessageFormatter<AuditEntry> createLogMessageFormatter(Slf4jAuditLoggerConfig auditConfig)
     {
         try
         {
             return LogMessageFormatter.<AuditEntry>builder()
-                   .format(logFormat)
+                   .format(auditConfig.getLogFormat())
                    .anchor("{}")
                    .escape("\\{\\}", "\\\\{}")
                    .availableFields(getAvailableFieldFunctionMap(auditConfig))

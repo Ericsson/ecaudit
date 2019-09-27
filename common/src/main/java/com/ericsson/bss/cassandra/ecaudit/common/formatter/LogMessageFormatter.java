@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  * <li>"user:Duke, client:1.2.3.4"</li>
  * </ul>
  *
- * @param <T> The type of long entries the log message formatter should operate on.
+ * @param <T> The type of log entries the log message formatter should operate on.
  */
 public class LogMessageFormatter<T>
 {
