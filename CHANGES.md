@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.3.0
+* Configurable format of printed records with eclog tool #102
+
 ## Version 2.2.0
 * Backport ecAudit to Cassandra 2.2.x #111
 * Configurable fields in Chronicle backend #101
