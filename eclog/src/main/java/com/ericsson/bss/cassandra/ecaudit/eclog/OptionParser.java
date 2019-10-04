@@ -15,6 +15,7 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -43,6 +44,8 @@ class OptionParser
     private static final String ROLL_CYCLE_OPTION = "roll-cycle";
     private static final String HELP_OPTION_SHORT = "h";
     private static final String HELP_OPTION = "help";
+    private static final String CONFIG_OPTION_SHORT = "c";
+    private static final String CONFIG_OPTION = "config";
 
     ToolOptions parse(String... argv) throws ParseException
     {
@@ -61,6 +64,7 @@ class OptionParser
         parseLongOption(cmd, LIMIT_OPTION).ifPresent(optionsBuilder::withLimit);
         parseLongOption(cmd, TAIL_OPTION).ifPresent(optionsBuilder::withTail);
         parseRollCycleOption(cmd).ifPresent(optionsBuilder::withRollCycle);
+        parseConfigPathOption(cmd).ifPresent(optionsBuilder::withConfig);
         optionsBuilder.withPath(parsePath(cmd));
 
         if (noFollowOrExplicitLimit(cmd))
@@ -116,6 +120,23 @@ class OptionParser
         }
     }
 
+    private Optional<Path> parseConfigPathOption(CommandLine cmd) throws ParseException
+    {
+        if (cmd.hasOption(CONFIG_OPTION))
+        {
+            Path path = Paths.get(cmd.getOptionValue(CONFIG_OPTION));
+            if (!Files.isReadable(path))
+            {
+                throw new ParseException("Unable to read config file: " + path);
+            }
+            return Optional.of(path);
+        }
+        else
+        {
+            return Optional.empty();
+        }
+    }
+
     private Path parsePath(CommandLine cmd) throws ParseException
     {
         String[] args = cmd.getArgs();
@@ -149,6 +170,7 @@ class OptionParser
         options.addOption(new Option(FOLLOW_OPTION_SHORT, FOLLOW_OPTION, false, "Upon reaching the end of the log continue indefinitely waiting for more records"));
         options.addOption(new Option(ROLL_CYCLE_OPTION_SHORT, ROLL_CYCLE_OPTION, true, "How often the log file was rolled. May be necessary for Chronicle to correctly parse file names. (MINUTELY, HOURLY, DAILY)."));
         options.addOption(new Option(HELP_OPTION_SHORT, HELP_OPTION, false, "Display this help message"));
+        options.addOption(new Option(CONFIG_OPTION_SHORT, CONFIG_OPTION, true, "Path to an optional configuration file"));
 
         return options;
     }
