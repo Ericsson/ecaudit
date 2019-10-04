@@ -16,6 +16,8 @@
 package com.ericsson.bss.cassandra.ecaudit.eclog;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Paths;
 
@@ -350,6 +352,31 @@ public class TestOptionParser
                                     .withHelp(true));
     }
 
+    @Test
+    public void withConfigAndDirectory() throws ParseException, IOException
+    {
+        File tempFile = File.createTempFile("config", ".yaml");
+        tempFile.deleteOnExit();
+
+        String[] argv = givenInputOptions("-c", tempFile.getPath(), "./dir");
+
+        ToolOptions options = parser.parse(argv);
+
+        assertEqualOptions(options, expected()
+                                    .withPath(Paths.get("./dir"))
+                                    .withConfig(Paths.get(tempFile.getPath())));
+    }
+
+    @Test
+    public void withInvalidConfigFile()
+    {
+        String[] argv = givenInputOptions("-c", "invalid_filename");
+
+        assertThatExceptionOfType(ParseException.class)
+        .isThrownBy(() -> parser.parse(argv))
+        .withMessageContaining("Unable to read config file: invalid_filename");
+    }
+
     private String[] givenInputOptions(String... options)
     {
         return options;
@@ -370,5 +397,6 @@ public class TestOptionParser
         assertThat(actualOptions.limit()).isEqualTo(expectedOptions.limit());
         assertThat(actualOptions.tail()).isEqualTo(expectedOptions.tail());
         assertThat(actualOptions.help()).isEqualTo(expectedOptions.help());
+        assertThat(actualOptions.config()).isEqualTo(expectedOptions.config());
     }
 }
