@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
+import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
@@ -36,6 +37,7 @@ import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
 import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.exceptions.ConfigurationException;
+import org.apache.cassandra.utils.FBUtilities;
 
 /**
  * Factory class for creating configured instances of AuditAdapter.
@@ -77,7 +79,9 @@ final class AuditAdapterFactory
         Auditor auditor = new DefaultAuditor(logger, filter, obfuscator, logStrategy);
         AuditEntryBuilderFactory entryBuilderFactory = new AuditEntryBuilderFactory();
 
-        return new AuditAdapter(auditor, entryBuilderFactory);
+        ColumnObfuscator columnObfuscator = createColumnObfuscator(auditConfig);
+
+        return new AuditAdapter(auditor, entryBuilderFactory, columnObfuscator);
     }
 
     /**
@@ -143,5 +147,16 @@ final class AuditAdapterFactory
         return auditConfig.isPostLogging()
                ? LogTimingStrategy.POST_LOGGING_STRATEGY
                : LogTimingStrategy.PRE_LOGGING_STRATEGY;
+    }
+
+    private static ColumnObfuscator createColumnObfuscator(AuditConfig auditConfig)
+    {
+        String obfuscatorClassName = auditConfig.getColumnObfuscator();
+        if (!obfuscatorClassName.contains("."))
+        {
+            String packageName = ColumnObfuscator.class.getPackage().getName();
+            obfuscatorClassName = packageName + "." + obfuscatorClassName;
+        }
+        return FBUtilities.construct(obfuscatorClassName, "ColumnObfuscator");
     }
 }

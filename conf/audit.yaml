@@ -89,3 +89,24 @@ logger_backend:
 #      - log_format: "{?client:'${CLIENT_IP}'|?}user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'"
 #        time_format:
 #        time_zone:
+
+
+# The column obfuscator determines how column values should be logged for prepared statements (i.e. bound values).
+# The obfuscator is applied to all prepared statements regardless of which table is used.
+#
+# - ShowAllObfuscator           -> Will not obfuscate. Prints all values for prepared statements.
+#
+# - HideBlobsObfuscator         -> Will obfuscate all blob values. Values will be replaced by a "<blob>"-tag in the log.
+#                                  Collection types containing blobs will also be replaced, e.g. "<list<blob>>".
+#                                  This obfuscator can be useful since blobs can be very big and perhaps not that useful
+#                                  to log.
+#
+# Note - The obfuscator only impacts to the log message if the OPERATION field is logged (see log_format above).
+# If OPERATION_NAKED is selected then no bound values will be logged.
+#
+# A custom column obfuscator can be plugged in by setting the full name of an obfuscator class implementing the
+# ColumnObfuscator interface.
+#
+# By default the ShowAllObfuscator will be used.
+#
+column_obfuscator: ShowAllObfuscator

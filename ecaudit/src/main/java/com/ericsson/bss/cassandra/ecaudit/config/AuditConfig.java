@@ -76,6 +76,13 @@ public class AuditConfig
         return yamlConfig.getWrappedAuthorizer();
     }
 
+    public String getColumnObfuscator()
+    {
+        loadConfigIfNeeded();
+
+        return yamlConfig.getColumnObfuscator();
+    }
+
     private synchronized void loadConfigIfNeeded()
     {
         if (yamlConfig == null)

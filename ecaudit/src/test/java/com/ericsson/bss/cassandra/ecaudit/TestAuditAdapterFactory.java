@@ -18,9 +18,11 @@ package com.ericsson.bss.cassandra.ecaudit;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
@@ -33,6 +35,8 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
+import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ShowAllObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.TestDefaultAuditor;
@@ -48,6 +52,7 @@ import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.PasswordObfuscator;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.config.ParameterizedClass;
+import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -232,6 +237,37 @@ public class TestAuditAdapterFactory
         assertThat(logTimingStrategyIn(adapterWithPostLogging)).isSameAs(LogTimingStrategy.POST_LOGGING_STRATEGY);
     }
 
+    @Test
+    public void testCreateColumnObfuscatorThrows()
+    {
+        // Given
+        AuditConfig config = givenAuditConfigWithColumnObfuscator("com.obfuscator.InvalidObfuscatorClass");
+        // Then throw
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(() -> AuditAdapterFactory.createAuditAdapter(config))
+        .withMessageContaining("Unable to find ColumnObfuscator class")
+        .withMessageContaining("com.obfuscator.InvalidObfuscatorClass");
+    }
+
+    @Test
+    public void testCreateCustomColumnObfuscator() throws Exception
+    {
+        // Given
+        AuditConfig config = givenAuditConfigWithColumnObfuscator(CustomTestObfuscator.class.getName());
+        // When
+        AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter(config);
+        // Then
+        assertThat(columnObfuscatorIn(adapter)).isInstanceOf(CustomTestObfuscator.class);
+    }
+
+    public static class CustomTestObfuscator implements ColumnObfuscator
+    {
+
+        public Optional<String> obfuscate(ColumnSpecification column, ByteBuffer value)
+        {
+            return Optional.empty();
+        }
+    }
     private static String getPathToTestResourceFile()
     {
         URL url = TestAuditAdapterFactory.class.getResource("/mock_configuration.yaml");
@@ -243,6 +279,7 @@ public class TestAuditAdapterFactory
         ParameterizedClass parameterizedClass = new ParameterizedClass(s, parameters);
         AuditConfig auditConfig = mock(AuditConfig.class);
         when(auditConfig.getLoggerBackendParameters()).thenReturn(parameterizedClass);
+        when(auditConfig.getColumnObfuscator()).thenReturn(ShowAllObfuscator.class.getName());
         return auditConfig;
     }
 
@@ -277,5 +314,19 @@ public class TestAuditAdapterFactory
     private static LogTimingStrategy logTimingStrategyIn(AuditAdapter auditAdapter) throws Exception
     {
         return TestDefaultAuditor.getLogTimingStrategy(auditAdapter.getAuditor());
+    }
+
+    private AuditConfig givenAuditConfigWithColumnObfuscator(String obfuscatorName)
+    {
+        AuditConfig config = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
+        when(config.getColumnObfuscator()).thenReturn(obfuscatorName);
+        return config;
+    }
+
+    private static ColumnObfuscator columnObfuscatorIn(AuditAdapter adapter) throws Exception
+    {
+        Field field = AuditAdapter.class.getDeclaredField("columnObfuscator");
+        field.setAccessible(true);
+        return (ColumnObfuscator) field.get(adapter);
     }
 }
