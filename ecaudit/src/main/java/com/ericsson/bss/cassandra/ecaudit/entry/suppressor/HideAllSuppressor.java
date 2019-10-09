@@ -25,6 +25,6 @@ public class HideAllSuppressor implements ColumnSuppressor
     @Override
     public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
     {
-        return Optional.of("<" + column.type.asCQL3Type() + ">"); // All values should be obfuscated
+        return Optional.of("<" + column.type.asCQL3Type() + ">"); // All values should be suppressed
     }
 }

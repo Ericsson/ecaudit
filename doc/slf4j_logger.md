@@ -84,17 +84,17 @@ Which will generate logs entries like this (assuming Logback pattern does not co
 2019-02-28 15:18:14.091-> client=127.0.0.1, user=cassandra, status=ATTEMPT, batch-id=6f3cae9b-f1f1-4a4c-baa2-ed168ee79f9d, operation='INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[2, '2', 'valid']'
 ```
 
-### Column Obfuscator
+### Column Suppressor
 
-A column obfuscator defining how column values should be logged for prepared statements. Using one of the non-default column obfuscators
+A column suppressor defining how column values should be logged for prepared statements. Using one of the non-default column suppressors
 can be useful to avoid logging sensitive or less useful information, e.g. large blobs.
 
-For more information about the available column obfuscators, see the ```audit.yaml``` reference documentation.
-Use the example below will obfuscate/hide blobs values from being logged.
+For more information about the available column suppressors, see the ```audit.yaml``` reference documentation.
+Use the example below will suppress/hide blobs values from being logged.
 ```YAML
-column_obfuscator: HideBlobsObfuscator
+column_suppressor: HideBlobsSuppressor
 ```
-It is also possible to plugin a custom obfuscator.
+It is also possible to plugin a custom suppressor.
 
 ## Configure Logback
 

@@ -42,11 +42,11 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestPreparedAuditOperation
 {
-    private static final ColumnSuppressor OBFUSCATOR = new ShowAllSuppressor();
+    private static final ColumnSuppressor SHOW_ALL_SUPPRESSOR = new ShowAllSuppressor();
     @Mock
     private QueryOptions mockOptions;
     @Mock
-    private ColumnSuppressor mockObfuscator;
+    private ColumnSuppressor mockSuppressor;
 
     @Test
     public void testThatValuesAreBound()
@@ -62,7 +62,7 @@ public class TestPreparedAuditOperation
         when(mockOptions.getValues()).thenReturn(values);
 
         PreparedAuditOperation auditOperation;
-        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, OBFUSCATOR);
+        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, SHOW_ALL_SUPPRESSOR);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
         assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
@@ -82,7 +82,7 @@ public class TestPreparedAuditOperation
         when(mockOptions.getValues()).thenReturn(values);
 
         PreparedAuditOperation auditOperation;
-        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, OBFUSCATOR);
+        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, SHOW_ALL_SUPPRESSOR);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
         assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
@@ -102,7 +102,7 @@ public class TestPreparedAuditOperation
         when(mockOptions.getValues()).thenReturn(values);
 
         PreparedAuditOperation auditOperation;
-        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, OBFUSCATOR);
+        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, SHOW_ALL_SUPPRESSOR);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
         assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
@@ -116,7 +116,7 @@ public class TestPreparedAuditOperation
         when(mockOptions.hasColumnSpecifications()).thenReturn(false);
 
         PreparedAuditOperation auditOperation;
-        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, OBFUSCATOR);
+        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, SHOW_ALL_SUPPRESSOR);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(preparedStatement);
         assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
@@ -126,7 +126,7 @@ public class TestPreparedAuditOperation
     }
 
     @Test
-    public void testObfuscator()
+    public void testSuppressor()
     {
         String preparedStatement = "insert into ks1.t1 (k1, k2, k3) values (?, ?, ?)";
         String expectedStatement = "insert into ks1.t1 (k1, k2, k3) values (?, ?, ?)[<ob1>, 'text2', <ob3>]";
@@ -138,11 +138,11 @@ public class TestPreparedAuditOperation
         when(mockOptions.getColumnSpecifications()).thenReturn(columns);
         when(mockOptions.getValues()).thenReturn(values);
 
-        when(mockObfuscator.suppress(eq(columns.get(0)), eq(values.get(0)))).thenReturn(Optional.of("<ob1>"));
-        when(mockObfuscator.suppress(eq(columns.get(1)), eq(values.get(1)))).thenReturn(Optional.empty());
-        when(mockObfuscator.suppress(eq(columns.get(2)), eq(values.get(2)))).thenReturn(Optional.of("<ob3>"));
+        when(mockSuppressor.suppress(eq(columns.get(0)), eq(values.get(0)))).thenReturn(Optional.of("<ob1>"));
+        when(mockSuppressor.suppress(eq(columns.get(1)), eq(values.get(1)))).thenReturn(Optional.empty());
+        when(mockSuppressor.suppress(eq(columns.get(2)), eq(values.get(2)))).thenReturn(Optional.of("<ob3>"));
 
-        PreparedAuditOperation auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, mockObfuscator);
+        PreparedAuditOperation auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, mockSuppressor);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
     }

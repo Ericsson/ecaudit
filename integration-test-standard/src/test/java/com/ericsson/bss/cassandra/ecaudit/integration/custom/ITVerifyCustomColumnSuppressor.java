@@ -125,7 +125,7 @@ public class ITVerifyCustomColumnSuppressor
     }
 
     @Test
-    public void testShowAllObfuscator()
+    public void testShowAllSuppressor()
     {
         // Given
         setColumnSuppressor(new ShowAllSuppressor());
@@ -137,7 +137,7 @@ public class ITVerifyCustomColumnSuppressor
     }
 
     @Test
-    public void testHideBlobsObfuscator()
+    public void testHideBlobsSuppressor()
     {
         // Given
         setColumnSuppressor(new HideBlobsSuppressor());
@@ -149,7 +149,7 @@ public class ITVerifyCustomColumnSuppressor
     }
 
     @Test
-    public void testPrimaryKeysOnlyObfuscator()
+    public void testPrimaryKeysOnlySuppressor()
     {
         // Given
         setColumnSuppressor(new PrimaryKeysOnlySuppressor());
@@ -161,7 +161,7 @@ public class ITVerifyCustomColumnSuppressor
     }
 
     @Test
-    public void testPartitionKeysOnlyObfuscator()
+    public void testPartitionKeysOnlySuppressor()
     {
         // Given
         setColumnSuppressor(new PartitionKeysOnlySuppressor());
@@ -173,7 +173,7 @@ public class ITVerifyCustomColumnSuppressor
     }
 
     @Test
-    public void testHideAllObfuscator()
+    public void testHideAllSuppressor()
     {
         // Given
         setColumnSuppressor(new HideAllSuppressor());
@@ -212,8 +212,8 @@ public class ITVerifyCustomColumnSuppressor
         return buffer.flip();
     }
 
-    private void setColumnSuppressor(ColumnSuppressor obfuscator)
+    private void setColumnSuppressor(ColumnSuppressor suppressor)
     {
-        AuditAdapter.getInstance().setColumnSuppressor(obfuscator);
+        AuditAdapter.getInstance().setColumnSuppressor(suppressor);
     }
 }

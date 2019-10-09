@@ -21,8 +21,6 @@ import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.apache.cassandra.cql3.ColumnSpecification;
-import org.apache.cassandra.db.marshal.UTF8Type;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -30,24 +28,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
- * Tests the {@link HideAllSuppressor} class.
+ * Tests the {@link ShowAllSuppressor} class.
  */
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class TestHideAllObfuscator
+public class TestShowAllSuppressor
 {
     @Mock
     ByteBuffer valueMock;
 
     @Test
-    public void testObfuscatorAlwaysReturnsType()
+    public void testSuppressorNeverSuppresses()
     {
         // Given
-        ColumnSpecification columnSpecification = new ColumnSpecification("ks", "cf", null, UTF8Type.instance);
-        ColumnSuppressor obfuscator = new HideAllSuppressor();
+        ColumnSuppressor suppressor = new ShowAllSuppressor();
         // When
-        Optional<String> result = obfuscator.suppress(columnSpecification, valueMock);
+        Optional<String> result = suppressor.suppress(null, valueMock);
         // Then
-        assertThat(result).contains("<text>");
+        assertThat(result).isEmpty();
         verifyZeroInteractions(valueMock);
     }
 }

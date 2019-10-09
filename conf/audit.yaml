@@ -94,17 +94,17 @@ logger_backend:
 # The column suppressor determines how column values should be logged for prepared statements (i.e. bound values).
 # The suppressor is applied to all prepared statements regardless of which table is used.
 #
-# - ShowAllSuppressor           -> Will not obfuscate. Prints all values for prepared statements.
+# - ShowAllSuppressor           -> Will not suppress. Prints all values for prepared statements.
 #
-# - HideAllSuppressor           -> Will obfuscate all values by replacing the values with its type, e.g. <int>, <text>
+# - HideAllSuppressor           -> Will suppress all values by replacing the values with its type, e.g. <int>, <text>
 #
-# - HideBlobsSuppressor         -> Will obfuscate all blob values. Values will be replaced by a "<blob>"-tag in the log.
+# - HideBlobsSuppressor         -> Will suppress all blob values. Values will be replaced by a "<blob>"-tag in the log.
 #                                  Collection types containing blobs will also be replaced, e.g. "<list<blob>>".
 #                                  This suppressor can be useful since blobs can be very big and perhaps not that useful
 #                                  to log.
 #
 # - PartitionKeysOnlySuppressor -> Will only print values for the partition key(s) in prepared statements. Other columns
-#                                  will be obfuscated. This suppressor can be useful to avoid logging sensitive or less
+#                                  will be suppressed. This suppressor can be useful to avoid logging sensitive or less
 #                                  useful information.
 #
 # - PrimaryKeysOnlySuppressor   -> Similar to partition_keys_only above, but here only the primary keys (partition keys

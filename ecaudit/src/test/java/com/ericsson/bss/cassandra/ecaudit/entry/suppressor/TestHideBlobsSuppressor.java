@@ -39,7 +39,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
  * Tests the {@link HideBlobsSuppressor} class.
  */
 @RunWith(JUnitParamsRunner.class)
-public class TestHideBlobsObfuscator
+public class TestHideBlobsSuppressor
 {
     private static final ColumnSpecification BLOB_COLUMN = createColumn(BytesType.instance);
     private static final ColumnSpecification BLOB_LIST_COLUMN = createColumn(listOf(BytesType.instance));
@@ -58,9 +58,9 @@ public class TestHideBlobsObfuscator
     {
         // Given
         ByteBuffer valueMock = Mockito.mock(ByteBuffer.class);
-        ColumnSuppressor obfuscator = new HideBlobsSuppressor();
+        ColumnSuppressor suppressor = new HideBlobsSuppressor();
         // When
-        Optional<String> result = obfuscator.suppress(column, valueMock);
+        Optional<String> result = suppressor.suppress(column, valueMock);
         // Then
         assertThat(result).contains(expectedString);
         verifyZeroInteractions(valueMock);
@@ -83,9 +83,9 @@ public class TestHideBlobsObfuscator
     {
         // Given
         ByteBuffer valueMock = Mockito.mock(ByteBuffer.class);
-        ColumnSuppressor obfuscator = new HideBlobsSuppressor();
+        ColumnSuppressor suppressor = new HideBlobsSuppressor();
         // When
-        Optional<String> result = obfuscator.suppress(column, valueMock);
+        Optional<String> result = suppressor.suppress(column, valueMock);
         // Then
         assertThat(result).isEmpty();
         verifyZeroInteractions(valueMock);

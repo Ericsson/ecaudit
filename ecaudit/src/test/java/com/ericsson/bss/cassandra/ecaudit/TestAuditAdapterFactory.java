@@ -241,12 +241,12 @@ public class TestAuditAdapterFactory
     public void testCreateColumnSuppressorThrows()
     {
         // Given
-        AuditConfig config = givenAuditConfigWithColumnSuppressor("com.obfuscator.InvalidSuppressorClass");
+        AuditConfig config = givenAuditConfigWithColumnSuppressor("com.suppressor.InvalidSuppressorClass");
         // Then throw
         assertThatExceptionOfType(ConfigurationException.class)
         .isThrownBy(() -> AuditAdapterFactory.createAuditAdapter(config))
         .withMessageContaining("Unable to find ColumnSuppressor class")
-        .withMessageContaining("com.obfuscator.InvalidSuppressorClass");
+        .withMessageContaining("com.suppressor.InvalidSuppressorClass");
     }
 
     @Test
@@ -316,10 +316,10 @@ public class TestAuditAdapterFactory
         return TestDefaultAuditor.getLogTimingStrategy(auditAdapter.getAuditor());
     }
 
-    private AuditConfig givenAuditConfigWithColumnSuppressor(String obfuscatorName)
+    private AuditConfig givenAuditConfigWithColumnSuppressor(String suppressorName)
     {
         AuditConfig config = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
-        when(config.getColumnSuppressor()).thenReturn(obfuscatorName);
+        when(config.getColumnSuppressor()).thenReturn(suppressorName);
         return config;
     }
 

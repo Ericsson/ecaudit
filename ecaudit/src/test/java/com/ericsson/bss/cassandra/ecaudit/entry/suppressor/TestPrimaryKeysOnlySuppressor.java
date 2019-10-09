@@ -36,7 +36,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
  * Tests the {@link PrimaryKeysOnlySuppressor} class.
  */
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class TestPrimaryKeysOnlyObfuscator
+public class TestPrimaryKeysOnlySuppressor
 {
     private static final ColumnSpecification CLUSTER_KEY_COLUMN = new ColumnDefinition("ks", "cf", mock(ColumnIdentifier.class), UTF8Type.instance, null, null, null, 1, ColumnDefinition.Kind.CLUSTERING_COLUMN);
     private static final ColumnSpecification PARTITION_KEY_COLUMN = new ColumnDefinition("ks", "cf", mock(ColumnIdentifier.class), UTF8Type.instance, null, null, null, 1, ColumnDefinition.Kind.PARTITION_KEY);
@@ -46,36 +46,36 @@ public class TestPrimaryKeysOnlyObfuscator
     ByteBuffer valueMock;
 
     @Test
-    public void testPartitionKeyIsNotObfuscated()
+    public void testPartitionKeyIsNotSuppressed()
     {
         // Given
-        ColumnSuppressor obfuscator = new PrimaryKeysOnlySuppressor();
+        ColumnSuppressor suppressor = new PrimaryKeysOnlySuppressor();
         // When
-        Optional<String> result = obfuscator.suppress(PARTITION_KEY_COLUMN, valueMock);
+        Optional<String> result = suppressor.suppress(PARTITION_KEY_COLUMN, valueMock);
         // Then
         assertThat(result).isEmpty();
         verifyZeroInteractions(valueMock);
     }
 
     @Test
-    public void testClusterKeyIsNotObfuscated()
+    public void testClusterKeyIsNotSuppressed()
     {
         // Given
-        ColumnSuppressor obfuscator = new PrimaryKeysOnlySuppressor();
+        ColumnSuppressor suppressor = new PrimaryKeysOnlySuppressor();
         // When
-        Optional<String> result = obfuscator.suppress(CLUSTER_KEY_COLUMN, valueMock);
+        Optional<String> result = suppressor.suppress(CLUSTER_KEY_COLUMN, valueMock);
         // Then
         assertThat(result).isEmpty();
         verifyZeroInteractions(valueMock);
     }
 
     @Test
-    public void testNonKeyIsObfuscated()
+    public void testNonKeyIsSuppressed()
     {
         // Given
-        ColumnSuppressor obfuscator = new PrimaryKeysOnlySuppressor();
+        ColumnSuppressor suppressor = new PrimaryKeysOnlySuppressor();
         // When
-        Optional<String> result = obfuscator.suppress(NON_KEY_COLUMN, valueMock);
+        Optional<String> result = suppressor.suppress(NON_KEY_COLUMN, valueMock);
         // Then
         assertThat(result).contains("<text>");
         verifyZeroInteractions(valueMock);

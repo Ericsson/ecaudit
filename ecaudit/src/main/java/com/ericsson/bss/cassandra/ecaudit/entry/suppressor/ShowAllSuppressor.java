@@ -25,6 +25,6 @@ public class ShowAllSuppressor implements ColumnSuppressor
     @Override
     public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
     {
-        return Optional.empty(); // No values should be obfuscated
+        return Optional.empty(); // No values should be suppressed
     }
 }
