@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
@@ -79,9 +79,9 @@ final class AuditAdapterFactory
         Auditor auditor = new DefaultAuditor(logger, filter, obfuscator, logStrategy);
         AuditEntryBuilderFactory entryBuilderFactory = new AuditEntryBuilderFactory();
 
-        ColumnObfuscator columnObfuscator = createColumnObfuscator(auditConfig);
+        ColumnSuppressor columnSuppressor = createColumnSuppressor(auditConfig);
 
-        return new AuditAdapter(auditor, entryBuilderFactory, columnObfuscator);
+        return new AuditAdapter(auditor, entryBuilderFactory, columnSuppressor);
     }
 
     /**
@@ -149,14 +149,14 @@ final class AuditAdapterFactory
                : LogTimingStrategy.PRE_LOGGING_STRATEGY;
     }
 
-    private static ColumnObfuscator createColumnObfuscator(AuditConfig auditConfig)
+    private static ColumnSuppressor createColumnSuppressor(AuditConfig auditConfig)
     {
-        String obfuscatorClassName = auditConfig.getColumnObfuscator();
-        if (!obfuscatorClassName.contains("."))
+        String suppressorClassName = auditConfig.getColumnSuppressor();
+        if (!suppressorClassName.contains("."))
         {
-            String packageName = ColumnObfuscator.class.getPackage().getName();
-            obfuscatorClassName = packageName + "." + obfuscatorClassName;
+            String packageName = ColumnSuppressor.class.getPackage().getName();
+            suppressorClassName = packageName + "." + suppressorClassName;
         }
-        return FBUtilities.construct(obfuscatorClassName, "ColumnObfuscator");
+        return FBUtilities.construct(suppressorClassName, "ColumnSuppressor");
     }
 }

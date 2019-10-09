@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry.obfuscator;
+package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -21,6 +21,8 @@ import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.apache.cassandra.cql3.ColumnSpecification;
+import org.apache.cassandra.db.marshal.UTF8Type;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -28,23 +30,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
- * Tests the {@link ShowAllObfuscator} class.
+ * Tests the {@link HideAllSuppressor} class.
  */
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class TestShowAllObfuscator
+public class TestHideAllObfuscator
 {
     @Mock
     ByteBuffer valueMock;
 
     @Test
-    public void testObfuscatorNeverObfuscates()
+    public void testObfuscatorAlwaysReturnsType()
     {
         // Given
-        ColumnObfuscator obfuscator = new ShowAllObfuscator();
+        ColumnSpecification columnSpecification = new ColumnSpecification("ks", "cf", null, UTF8Type.instance);
+        ColumnSuppressor obfuscator = new HideAllSuppressor();
         // When
-        Optional<String> result = obfuscator.obfuscate(null, valueMock);
+        Optional<String> result = obfuscator.suppress(columnSpecification, valueMock);
         // Then
-        assertThat(result).isEmpty();
+        assertThat(result).contains("<text>");
         verifyZeroInteractions(valueMock);
     }
 }

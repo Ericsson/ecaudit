@@ -35,8 +35,8 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ShowAllObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ShowAllSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.TestDefaultAuditor;
@@ -238,32 +238,32 @@ public class TestAuditAdapterFactory
     }
 
     @Test
-    public void testCreateColumnObfuscatorThrows()
+    public void testCreateColumnSuppressorThrows()
     {
         // Given
-        AuditConfig config = givenAuditConfigWithColumnObfuscator("com.obfuscator.InvalidObfuscatorClass");
+        AuditConfig config = givenAuditConfigWithColumnSuppressor("com.obfuscator.InvalidSuppressorClass");
         // Then throw
         assertThatExceptionOfType(ConfigurationException.class)
         .isThrownBy(() -> AuditAdapterFactory.createAuditAdapter(config))
-        .withMessageContaining("Unable to find ColumnObfuscator class")
-        .withMessageContaining("com.obfuscator.InvalidObfuscatorClass");
+        .withMessageContaining("Unable to find ColumnSuppressor class")
+        .withMessageContaining("com.obfuscator.InvalidSuppressorClass");
     }
 
     @Test
-    public void testCreateCustomColumnObfuscator() throws Exception
+    public void testCreateCustomColumnSuppressor() throws Exception
     {
         // Given
-        AuditConfig config = givenAuditConfigWithColumnObfuscator(CustomTestObfuscator.class.getName());
+        AuditConfig config = givenAuditConfigWithColumnSuppressor(CustomTestSuppressor.class.getName());
         // When
         AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter(config);
         // Then
-        assertThat(columnObfuscatorIn(adapter)).isInstanceOf(CustomTestObfuscator.class);
+        assertThat(columnSuppressorIn(adapter)).isInstanceOf(CustomTestSuppressor.class);
     }
 
-    public static class CustomTestObfuscator implements ColumnObfuscator
+    public static class CustomTestSuppressor implements ColumnSuppressor
     {
 
-        public Optional<String> obfuscate(ColumnSpecification column, ByteBuffer value)
+        public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
         {
             return Optional.empty();
         }
@@ -279,7 +279,7 @@ public class TestAuditAdapterFactory
         ParameterizedClass parameterizedClass = new ParameterizedClass(s, parameters);
         AuditConfig auditConfig = mock(AuditConfig.class);
         when(auditConfig.getLoggerBackendParameters()).thenReturn(parameterizedClass);
-        when(auditConfig.getColumnObfuscator()).thenReturn(ShowAllObfuscator.class.getName());
+        when(auditConfig.getColumnSuppressor()).thenReturn(ShowAllSuppressor.class.getName());
         return auditConfig;
     }
 
@@ -316,17 +316,17 @@ public class TestAuditAdapterFactory
         return TestDefaultAuditor.getLogTimingStrategy(auditAdapter.getAuditor());
     }
 
-    private AuditConfig givenAuditConfigWithColumnObfuscator(String obfuscatorName)
+    private AuditConfig givenAuditConfigWithColumnSuppressor(String obfuscatorName)
     {
         AuditConfig config = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
-        when(config.getColumnObfuscator()).thenReturn(obfuscatorName);
+        when(config.getColumnSuppressor()).thenReturn(obfuscatorName);
         return config;
     }
 
-    private static ColumnObfuscator columnObfuscatorIn(AuditAdapter adapter) throws Exception
+    private static ColumnSuppressor columnSuppressorIn(AuditAdapter adapter) throws Exception
     {
-        Field field = AuditAdapter.class.getDeclaredField("columnObfuscator");
+        Field field = AuditAdapter.class.getDeclaredField("columnSuppressor");
         field.setAccessible(true);
-        return (ColumnObfuscator) field.get(adapter);
+        return (ColumnSuppressor) field.get(adapter);
     }
 }

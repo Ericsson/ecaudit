@@ -20,7 +20,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 
@@ -38,7 +38,7 @@ public class PreparedAuditOperation implements AuditOperation
     private final String preparedStatement;
     private final QueryOptions options;
     private String effectiveStatement; // lazy initialization
-    private final ColumnObfuscator columnObfuscator;
+    private final ColumnSuppressor columnSuppressor;
 
     /**
      * Construct a new prepared audit operation based on the prepared statement and options.
@@ -47,14 +47,14 @@ public class PreparedAuditOperation implements AuditOperation
      *            the prepared statement
      * @param options
      *            the query options of an operation
-     * @param columnObfuscator
-     *            the column obfuscator to process bound values
+     * @param columnSuppressor
+     *            the column suppressor to process bound values
      */
-    public PreparedAuditOperation(String preparedStatement, QueryOptions options, ColumnObfuscator columnObfuscator)
+    public PreparedAuditOperation(String preparedStatement, QueryOptions options, ColumnSuppressor columnSuppressor)
     {
         this.preparedStatement = preparedStatement;
         this.options = options;
-        this.columnObfuscator = columnObfuscator;
+        this.columnSuppressor = columnSuppressor;
     }
 
     @Override
@@ -93,7 +93,7 @@ public class PreparedAuditOperation implements AuditOperation
         for (ColumnSpecification column : options.getColumnSpecifications())
         {
             ByteBuffer value = values.remove();
-            String valueString = columnObfuscator.obfuscate(column, value)
+            String valueString = columnSuppressor.suppress(column, value)
                                                  .orElseGet(() -> CqlLiteralVersionAdapter.toCQLLiteral(value, column));
             fullStatement.append(valueString).append(", ");
         }

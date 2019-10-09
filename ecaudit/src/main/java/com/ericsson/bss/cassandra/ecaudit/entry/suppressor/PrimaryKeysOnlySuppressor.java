@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry.obfuscator;
+package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
+import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.cql3.ColumnSpecification;
 
-/**
- * Column obfuscator used to handle prepared statement bound values.
- */
-public interface ColumnObfuscator
+public class PrimaryKeysOnlySuppressor implements ColumnSuppressor
 {
-    /**
-     * Creates an obfuscated string that represent the column value only IF the column should be obfuscated.
-     *
-     * @param column the column to check
-     * @param value  the value that may be obfuscated
-     * @return the obfuscated string representation of the column value, or {@link Optional#empty()} if the value
-     * should not be obfuscated.
-     */
-    Optional<String> obfuscate(ColumnSpecification column, ByteBuffer value);
+    @Override
+    public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
+    {
+        return isPrimaryKey(column)
+               ? Optional.empty()
+               : Optional.of("<" + column.type.asCQL3Type() + ">");
+    }
+
+    private static boolean isPrimaryKey(ColumnSpecification column)
+    {
+        return column instanceof ColumnDefinition && ((ColumnDefinition) column).isPrimaryKeyColumn();
+    }
 }

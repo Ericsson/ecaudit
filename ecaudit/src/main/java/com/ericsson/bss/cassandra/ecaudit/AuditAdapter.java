@@ -29,7 +29,7 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import org.apache.cassandra.cql3.BatchQueryOptions;
@@ -52,7 +52,7 @@ public class AuditAdapter
 
     private final Auditor auditor;
     private final AuditEntryBuilderFactory entryBuilderFactory;
-    private ColumnObfuscator columnObfuscator;
+    private ColumnSuppressor columnSuppressor;
 
     private final Map<MD5Digest, String> idQueryCache = new ConcurrentHashMap<>();
 
@@ -61,13 +61,13 @@ public class AuditAdapter
      *
      * @param auditor             the auditor to use
      * @param entryBuilderFactory the audit entry builder factory to use
-     * @param columnObfuscator    the column obfuscator
+     * @param columnSuppressor    the column suppressor
      */
-    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, ColumnObfuscator columnObfuscator)
+    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, ColumnSuppressor columnSuppressor)
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
-        this.columnObfuscator = columnObfuscator;
+        this.columnSuppressor = columnSuppressor;
     }
 
     public static AuditAdapter getInstance()
@@ -128,7 +128,7 @@ public class AuditAdapter
                                                      .client(state.getRemoteAddress())
                                                      .coordinator(FBUtilities.getBroadcastAddress())
                                                      .user(state.getUser().getName())
-                                                     .operation(new PreparedAuditOperation(idQueryCache.get(id), options, columnObfuscator))
+                                                     .operation(new PreparedAuditOperation(idQueryCache.get(id), options, columnSuppressor))
                                                      .status(status)
                                                      .timestamp(timestamp)
                                                      .build();
@@ -240,7 +240,7 @@ public class AuditAdapter
             if (queryOrId instanceof MD5Digest)
             {
                 entryBuilderFactory.updateBatchEntryBuilder(builder, batchStatement.getStatements().get(statementIndex));
-                builder.operation(new PreparedAuditOperation(idQueryCache.get(queryOrId), options.forStatement(statementIndex), columnObfuscator));
+                builder.operation(new PreparedAuditOperation(idQueryCache.get(queryOrId), options.forStatement(statementIndex), columnSuppressor));
                 batchOperations.add(builder.build());
             }
             else
@@ -261,8 +261,8 @@ public class AuditAdapter
     }
 
     @VisibleForTesting
-    public void setColumnObfuscator(ColumnObfuscator columnObfuscator)
+    public void setColumnSuppressor(ColumnSuppressor columnSuppressor)
     {
-        this.columnObfuscator = columnObfuscator;
+        this.columnSuppressor = columnSuppressor;
     }
 }

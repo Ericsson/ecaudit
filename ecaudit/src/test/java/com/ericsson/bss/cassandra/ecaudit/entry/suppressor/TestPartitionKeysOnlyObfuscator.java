@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry.obfuscator;
+package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -33,10 +33,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
- * Tests the {@link PrimaryKeysOnlyObfuscator} class.
+ * Tests the {@link PartitionKeysOnlySuppressor} class.
  */
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class TestPrimaryKeysOnlyObfuscator
+public class TestPartitionKeysOnlyObfuscator
 {
     private static final ColumnSpecification CLUSTER_KEY_COLUMN = new ColumnDefinition("ks", "cf", mock(ColumnIdentifier.class), UTF8Type.instance, null, null, null, 1, ColumnDefinition.Kind.CLUSTERING_COLUMN);
     private static final ColumnSpecification PARTITION_KEY_COLUMN = new ColumnDefinition("ks", "cf", mock(ColumnIdentifier.class), UTF8Type.instance, null, null, null, 1, ColumnDefinition.Kind.PARTITION_KEY);
@@ -49,23 +49,23 @@ public class TestPrimaryKeysOnlyObfuscator
     public void testPartitionKeyIsNotObfuscated()
     {
         // Given
-        ColumnObfuscator obfuscator = new PrimaryKeysOnlyObfuscator();
+        ColumnSuppressor obfuscator = new PartitionKeysOnlySuppressor();
         // When
-        Optional<String> result = obfuscator.obfuscate(PARTITION_KEY_COLUMN, valueMock);
+        Optional<String> result = obfuscator.suppress(PARTITION_KEY_COLUMN, valueMock);
         // Then
         assertThat(result).isEmpty();
         verifyZeroInteractions(valueMock);
     }
 
     @Test
-    public void testClusterKeyIsNotObfuscated()
+    public void testClusterKeyIsObfuscated()
     {
         // Given
-        ColumnObfuscator obfuscator = new PrimaryKeysOnlyObfuscator();
+        ColumnSuppressor obfuscator = new PartitionKeysOnlySuppressor();
         // When
-        Optional<String> result = obfuscator.obfuscate(CLUSTER_KEY_COLUMN, valueMock);
+        Optional<String> result = obfuscator.suppress(CLUSTER_KEY_COLUMN, valueMock);
         // Then
-        assertThat(result).isEmpty();
+        assertThat(result).contains("<text>");
         verifyZeroInteractions(valueMock);
     }
 
@@ -73,9 +73,9 @@ public class TestPrimaryKeysOnlyObfuscator
     public void testNonKeyIsObfuscated()
     {
         // Given
-        ColumnObfuscator obfuscator = new PrimaryKeysOnlyObfuscator();
+        ColumnSuppressor obfuscator = new PartitionKeysOnlySuppressor();
         // When
-        Optional<String> result = obfuscator.obfuscate(NON_KEY_COLUMN, valueMock);
+        Optional<String> result = obfuscator.suppress(NON_KEY_COLUMN, valueMock);
         // Then
         assertThat(result).contains("<text>");
         verifyZeroInteractions(valueMock);

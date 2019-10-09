@@ -24,8 +24,8 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ShowAllObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ShowAllSuppressor;
 import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
@@ -42,11 +42,11 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestPreparedAuditOperation
 {
-    private static final ColumnObfuscator OBFUSCATOR = new ShowAllObfuscator();
+    private static final ColumnSuppressor OBFUSCATOR = new ShowAllSuppressor();
     @Mock
     private QueryOptions mockOptions;
     @Mock
-    private ColumnObfuscator mockObfuscator;
+    private ColumnSuppressor mockObfuscator;
 
     @Test
     public void testThatValuesAreBound()
@@ -138,9 +138,9 @@ public class TestPreparedAuditOperation
         when(mockOptions.getColumnSpecifications()).thenReturn(columns);
         when(mockOptions.getValues()).thenReturn(values);
 
-        when(mockObfuscator.obfuscate(eq(columns.get(0)), eq(values.get(0)))).thenReturn(Optional.of("<ob1>"));
-        when(mockObfuscator.obfuscate(eq(columns.get(1)), eq(values.get(1)))).thenReturn(Optional.empty());
-        when(mockObfuscator.obfuscate(eq(columns.get(2)), eq(values.get(2)))).thenReturn(Optional.of("<ob3>"));
+        when(mockObfuscator.suppress(eq(columns.get(0)), eq(values.get(0)))).thenReturn(Optional.of("<ob1>"));
+        when(mockObfuscator.suppress(eq(columns.get(1)), eq(values.get(1)))).thenReturn(Optional.empty());
+        when(mockObfuscator.suppress(eq(columns.get(2)), eq(values.get(2)))).thenReturn(Optional.of("<ob3>"));
 
         PreparedAuditOperation auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, mockObfuscator);
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry.obfuscator;
+package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
- * Tests the {@link HideBlobsObfuscator} class.
+ * Tests the {@link HideBlobsSuppressor} class.
  */
 @RunWith(JUnitParamsRunner.class)
 public class TestHideBlobsObfuscator
@@ -58,9 +58,9 @@ public class TestHideBlobsObfuscator
     {
         // Given
         ByteBuffer valueMock = Mockito.mock(ByteBuffer.class);
-        ColumnObfuscator obfuscator = new HideBlobsObfuscator();
+        ColumnSuppressor obfuscator = new HideBlobsSuppressor();
         // When
-        Optional<String> result = obfuscator.obfuscate(column, valueMock);
+        Optional<String> result = obfuscator.suppress(column, valueMock);
         // Then
         assertThat(result).contains(expectedString);
         verifyZeroInteractions(valueMock);
@@ -83,9 +83,9 @@ public class TestHideBlobsObfuscator
     {
         // Given
         ByteBuffer valueMock = Mockito.mock(ByteBuffer.class);
-        ColumnObfuscator obfuscator = new HideBlobsObfuscator();
+        ColumnSuppressor obfuscator = new HideBlobsSuppressor();
         // When
-        Optional<String> result = obfuscator.obfuscate(column, valueMock);
+        Optional<String> result = obfuscator.suppress(column, valueMock);
         // Then
         assertThat(result).isEmpty();
         verifyZeroInteractions(valueMock);

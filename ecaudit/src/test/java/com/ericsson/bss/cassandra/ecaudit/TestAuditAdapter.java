@@ -40,13 +40,12 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.Permission;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.ColumnIdentifier;
@@ -64,7 +63,6 @@ import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MD5Digest;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Collections.singletonList;
@@ -111,7 +109,7 @@ public class TestAuditAdapter
     @Mock
     private BatchQueryOptions mockBatchOptions;
     @Mock
-    private ColumnObfuscator mockColumnObfuscator;
+    private ColumnSuppressor mockColumnSuppressor;
 
     private InetAddress clientAddress;
     private InetSocketAddress clientSocketAddress;
@@ -131,7 +129,7 @@ public class TestAuditAdapter
     {
         clientAddress = InetAddress.getByName(CLIENT_IP);
         clientSocketAddress = new InetSocketAddress(clientAddress, CLIENT_PORT);
-        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockColumnObfuscator);
+        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockColumnSuppressor);
         when(mockState.getUser()).thenReturn(mockUser);
         when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(true);
     }

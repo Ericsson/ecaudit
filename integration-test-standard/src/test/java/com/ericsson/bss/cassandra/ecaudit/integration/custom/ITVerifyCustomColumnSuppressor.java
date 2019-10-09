@@ -17,7 +17,6 @@ package com.ericsson.bss.cassandra.ecaudit.integration.custom;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,12 +37,12 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ColumnObfuscator;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.HideAllObfuscator;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.HideBlobsObfuscator;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.PartitionKeysOnlyObfuscator;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.PrimaryKeysOnlyObfuscator;
-import com.ericsson.bss.cassandra.ecaudit.entry.obfuscator.ShowAllObfuscator;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.HideAllSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.HideBlobsSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.PartitionKeysOnlySuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.PrimaryKeysOnlySuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ShowAllSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
@@ -59,7 +58,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
- * This test class provides a functional integration test for custom column obfuscator log format with Cassandra itself.
+ * This test class provides a functional integration test for custom column suppressor log format with Cassandra itself.
  * <p>
  * The format configuration is read when the plugin is started and has to be setup before the embedded Cassandra
  * is started. Therefor this test class cannot be run in the same process as the other integration tests (having
@@ -71,7 +70,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  */
 @NotThreadSafe
 @RunWith(MockitoJUnitRunner.class)
-public class ITVerifyCustomColumnObfuscator
+public class ITVerifyCustomColumnSuppressor
 {
     private static final String CUSTOM_LOGGER_NAME = "ECAUDIT_CUSTOM";
     private static final String KEYSPACE = "CREATE KEYSPACE ks1 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false";
@@ -129,63 +128,63 @@ public class ITVerifyCustomColumnObfuscator
     public void testShowAllObfuscator()
     {
         // Given
-        setColumnObfuscator(new ShowAllObfuscator());
+        setColumnSuppressor(new ShowAllSuppressor());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getSingleLogEntry()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                                  "['PartKey1', 42, 'ClusterKey', 0x00000001000000020000000300000004, 43]");
+        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
+                                             "['PartKey1', 42, 'ClusterKey', 0x00000001000000020000000300000004, 43]");
     }
 
     @Test
     public void testHideBlobsObfuscator()
     {
         // Given
-        setColumnObfuscator(new HideBlobsObfuscator());
+        setColumnSuppressor(new HideBlobsSuppressor());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getSingleLogEntry()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                                  "['PartKey1', 42, 'ClusterKey', <blob>, 43]");
+        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
+                                             "['PartKey1', 42, 'ClusterKey', <blob>, 43]");
     }
 
     @Test
     public void testPrimaryKeysOnlyObfuscator()
     {
         // Given
-        setColumnObfuscator(new PrimaryKeysOnlyObfuscator());
+        setColumnSuppressor(new PrimaryKeysOnlySuppressor());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getSingleLogEntry()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                                  "['PartKey1', 42, 'ClusterKey', <blob>, <int>]");
+        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
+                                             "['PartKey1', 42, 'ClusterKey', <blob>, <int>]");
     }
 
     @Test
     public void testPartitionKeysOnlyObfuscator()
     {
         // Given
-        setColumnObfuscator(new PartitionKeysOnlyObfuscator());
+        setColumnSuppressor(new PartitionKeysOnlySuppressor());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getSingleLogEntry()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                                  "['PartKey1', 42, <text>, <blob>, <int>]");
+        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
+                                             "['PartKey1', 42, <text>, <blob>, <int>]");
     }
 
     @Test
     public void testHideAllObfuscator()
     {
         // Given
-        setColumnObfuscator(new HideAllObfuscator());
+        setColumnSuppressor(new HideAllSuppressor());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getSingleLogEntry()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                                  "[<text>, <int>, <text>, <blob>, <int>]");
+        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
+                                             "[<text>, <int>, <text>, <blob>, <int>]");
     }
 
-    private List<String> getSingleLogEntry()
+    private List<String> getLogEntries()
     {
         verify(mockAuditAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
         return loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage).collect(Collectors.toList());
@@ -213,8 +212,8 @@ public class ITVerifyCustomColumnObfuscator
         return buffer.flip();
     }
 
-    private void setColumnObfuscator(ColumnObfuscator obfuscator)
+    private void setColumnSuppressor(ColumnSuppressor obfuscator)
     {
-        AuditAdapter.getInstance().setColumnObfuscator(obfuscator);
+        AuditAdapter.getInstance().setColumnSuppressor(obfuscator);
     }
 }

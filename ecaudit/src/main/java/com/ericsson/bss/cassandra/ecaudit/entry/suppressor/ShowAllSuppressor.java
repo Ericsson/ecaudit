@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry.obfuscator;
+package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
-import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.cql3.ColumnSpecification;
 
-public class PartitionKeysOnlyObfuscator implements ColumnObfuscator
+public class ShowAllSuppressor implements ColumnSuppressor
 {
     @Override
-    public Optional<String> obfuscate(ColumnSpecification column, ByteBuffer value)
+    public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
     {
-        return isPartitionKey(column)
-               ? Optional.empty()
-               : Optional.of("<" + column.type.asCQL3Type() + ">");
-    }
-
-    private static boolean isPartitionKey(ColumnSpecification column)
-    {
-        return column instanceof ColumnDefinition && ((ColumnDefinition) column).isPartitionKey();
+        return Optional.empty(); // No values should be obfuscated
     }
 }

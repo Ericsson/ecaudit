@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.entry.obfuscator;
+package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -22,10 +22,10 @@ import org.apache.cassandra.cql3.CQL3Type;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.db.marshal.AbstractType;
 
-public class HideBlobsObfuscator implements ColumnObfuscator
+public class HideBlobsSuppressor implements ColumnSuppressor
 {
     @Override
-    public Optional<String> obfuscate(ColumnSpecification column, ByteBuffer value)
+    public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
     {
         return isBlobType(column.type) || isCollectionContainingBlobType(column.type)
                ? Optional.of("<" + column.type.asCQL3Type() + ">")
