@@ -96,10 +96,19 @@ logger_backend:
 #
 # - ShowAllObfuscator           -> Will not obfuscate. Prints all values for prepared statements.
 #
+# - HideAllObfuscator           -> Will obfuscate all values by replacing the values with its type, e.g. <int>, <text>
+#
 # - HideBlobsObfuscator         -> Will obfuscate all blob values. Values will be replaced by a "<blob>"-tag in the log.
 #                                  Collection types containing blobs will also be replaced, e.g. "<list<blob>>".
 #                                  This obfuscator can be useful since blobs can be very big and perhaps not that useful
 #                                  to log.
+#
+# - PartitionKeysOnlyObfuscator -> Will only print values for the partition key(s) in prepared statements. Other columns
+#                                  will be obfuscated. This obfuscator can be useful to avoid logging sensitive or less
+#                                  useful information.
+#
+# - PrimaryKeysOnlyObfuscator   -> Similar to partition_keys_only above, but here only the primary keys (partition keys
+#                                  and clustering keys) are printed.
 #
 # Note - The obfuscator only impacts to the log message if the OPERATION field is logged (see log_format above).
 # If OPERATION_NAKED is selected then no bound values will be logged.
