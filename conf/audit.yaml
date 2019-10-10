@@ -91,31 +91,31 @@ logger_backend:
 #        time_zone:
 
 
-# The column suppressor determines how column values should be logged for prepared statements (i.e. bound values).
+# The bound value suppressor determines how bound values should be logged for prepared statements.
 # The suppressor is applied to all prepared statements regardless of which table is used.
 #
-# - ShowAllSuppressor           -> Will not suppress. Prints all values for prepared statements.
+# - SuppressNothing              -> Will not suppress. Prints all values for prepared statements.
 #
-# - HideAllSuppressor           -> Will suppress all values by replacing the values with its type, e.g. <int>, <text>
+# - SuppressEverything           -> Will suppress all values by replacing the values with its type, e.g. <int>, <text>
 #
-# - HideBlobsSuppressor         -> Will suppress all blob values. Values will be replaced by a "<blob>"-tag in the log.
-#                                  Collection types containing blobs will also be replaced, e.g. "<list<blob>>".
-#                                  This suppressor can be useful since blobs can be very big and perhaps not that useful
-#                                  to log.
+# - SuppressorBlobs              -> Will suppress all blob values. Values will be replaced by a "<blob>"-tag in the log.
+#                                   Collection types containing blobs will also be replaced, e.g. "<list<blob>>".
+#                                   This suppressor can be useful since blobs can be very big and perhaps not that useful
+#                                   to log.
 #
-# - PartitionKeysOnlySuppressor -> Will only print values for the partition key(s) in prepared statements. Other columns
-#                                  will be suppressed. This suppressor can be useful to avoid logging sensitive or less
-#                                  useful information.
+# - SuppressRegular              -> Suppress values for columns of regular kind. This suppressor can be useful to avoid
+#                                   logging sensitive or less useful information.
 #
-# - PrimaryKeysOnlySuppressor   -> Similar to partition_keys_only above, but here only the primary keys (partition keys
-#                                  and clustering keys) are printed.
+# - SuppressClusteringAndRegular -> Suppress values for columns of regular or clustering kind, but partition key(s) will
+#                                   be logged. This suppressor can be useful to avoid logging sensitive or less useful
+#                                   information.
 #
-# Note - The suppressor only impacts to the log message if the OPERATION field is logged (see log_format above).
+# Note - The suppressor only impacts the log message if the OPERATION field is logged (see log_format above).
 # If OPERATION_NAKED is selected then no bound values will be logged.
 #
-# A custom column suppressor can be plugged in by setting the full name of an suppressor class implementing the
-# ColumnSuppressor interface.
+# A custom bound value suppressor can be plugged in by setting the full name of an suppressor class implementing the
+# BoundValueSuppressor interface.
 #
-# By default the ShowAllSuppressor will be used.
+# By default the SuppressNothing will be used.
 #
-column_suppressor: ShowAllSuppressor
+# bound_value_suppressor: SuppressorBlobs

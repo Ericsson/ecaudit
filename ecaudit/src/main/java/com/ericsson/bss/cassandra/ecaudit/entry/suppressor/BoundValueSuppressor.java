@@ -18,21 +18,20 @@ package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
-import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.cql3.ColumnSpecification;
 
-public class PrimaryKeysOnlySuppressor implements ColumnSuppressor
+/**
+ * Used to suppress prepared statement bound values.
+ */
+public interface BoundValueSuppressor
 {
-    @Override
-    public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
-    {
-        return isPrimaryKey(column)
-               ? Optional.empty()
-               : Optional.of("<" + column.type.asCQL3Type() + ">");
-    }
-
-    private static boolean isPrimaryKey(ColumnSpecification column)
-    {
-        return column instanceof ColumnDefinition && ((ColumnDefinition) column).isPrimaryKeyColumn();
-    }
+    /**
+     * Creates an suppressed string representation of the bound value only IF the column should be suppressed.
+     *
+     * @param column the column to check
+     * @param value  the value that may be suppressed
+     * @return the suppressed string representation of the bound value, or {@link Optional#empty()} if the value
+     * should not be suppressed.
+     */
+    Optional<String> suppress(ColumnSpecification column, ByteBuffer value);
 }

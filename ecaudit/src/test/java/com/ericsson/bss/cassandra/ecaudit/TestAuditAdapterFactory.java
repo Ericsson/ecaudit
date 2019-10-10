@@ -35,8 +35,8 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ShowAllSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressNothing;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.TestDefaultAuditor;
@@ -238,29 +238,29 @@ public class TestAuditAdapterFactory
     }
 
     @Test
-    public void testCreateColumnSuppressorThrows()
+    public void testCreateBoundValueSuppressorThrows()
     {
         // Given
-        AuditConfig config = givenAuditConfigWithColumnSuppressor("com.suppressor.InvalidSuppressorClass");
+        AuditConfig config = givenAuditConfigWithBoundValueSuppressor("com.suppressor.InvalidSuppressorClass");
         // Then throw
         assertThatExceptionOfType(ConfigurationException.class)
         .isThrownBy(() -> AuditAdapterFactory.createAuditAdapter(config))
-        .withMessageContaining("Unable to find ColumnSuppressor class")
+        .withMessageContaining("Unable to find BoundValueSuppressor class")
         .withMessageContaining("com.suppressor.InvalidSuppressorClass");
     }
 
     @Test
-    public void testCreateCustomColumnSuppressor() throws Exception
+    public void testCreateCustomBoundValueSuppressor() throws Exception
     {
         // Given
-        AuditConfig config = givenAuditConfigWithColumnSuppressor(CustomTestSuppressor.class.getName());
+        AuditConfig config = givenAuditConfigWithBoundValueSuppressor(CustomTestSuppressor.class.getName());
         // When
         AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter(config);
         // Then
-        assertThat(columnSuppressorIn(adapter)).isInstanceOf(CustomTestSuppressor.class);
+        assertThat(boundValueSuppressorIn(adapter)).isInstanceOf(CustomTestSuppressor.class);
     }
 
-    public static class CustomTestSuppressor implements ColumnSuppressor
+    public static class CustomTestSuppressor implements BoundValueSuppressor
     {
 
         public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
@@ -279,7 +279,7 @@ public class TestAuditAdapterFactory
         ParameterizedClass parameterizedClass = new ParameterizedClass(s, parameters);
         AuditConfig auditConfig = mock(AuditConfig.class);
         when(auditConfig.getLoggerBackendParameters()).thenReturn(parameterizedClass);
-        when(auditConfig.getColumnSuppressor()).thenReturn(ShowAllSuppressor.class.getName());
+        when(auditConfig.getBoundValueSuppressor()).thenReturn(SuppressNothing.class.getName());
         return auditConfig;
     }
 
@@ -316,17 +316,17 @@ public class TestAuditAdapterFactory
         return TestDefaultAuditor.getLogTimingStrategy(auditAdapter.getAuditor());
     }
 
-    private AuditConfig givenAuditConfigWithColumnSuppressor(String suppressorName)
+    private AuditConfig givenAuditConfigWithBoundValueSuppressor(String suppressorName)
     {
         AuditConfig config = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
-        when(config.getColumnSuppressor()).thenReturn(suppressorName);
+        when(config.getBoundValueSuppressor()).thenReturn(suppressorName);
         return config;
     }
 
-    private static ColumnSuppressor columnSuppressorIn(AuditAdapter adapter) throws Exception
+    private static BoundValueSuppressor boundValueSuppressorIn(AuditAdapter adapter) throws Exception
     {
-        Field field = AuditAdapter.class.getDeclaredField("columnSuppressor");
+        Field field = AuditAdapter.class.getDeclaredField("boundValueSuppressor");
         field.setAccessible(true);
-        return (ColumnSuppressor) field.get(adapter);
+        return (BoundValueSuppressor) field.get(adapter);
     }
 }

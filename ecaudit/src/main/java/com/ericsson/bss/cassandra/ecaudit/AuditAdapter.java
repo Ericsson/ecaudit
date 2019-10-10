@@ -29,7 +29,7 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import org.apache.cassandra.cql3.BatchQueryOptions;
@@ -52,7 +52,7 @@ public class AuditAdapter
 
     private final Auditor auditor;
     private final AuditEntryBuilderFactory entryBuilderFactory;
-    private ColumnSuppressor columnSuppressor;
+    private BoundValueSuppressor boundValueSuppressor;
 
     private final Map<MD5Digest, String> idQueryCache = new ConcurrentHashMap<>();
 
@@ -61,13 +61,13 @@ public class AuditAdapter
      *
      * @param auditor             the auditor to use
      * @param entryBuilderFactory the audit entry builder factory to use
-     * @param columnSuppressor    the column suppressor
+     * @param boundValueSuppressor the bound value suppressor
      */
-    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, ColumnSuppressor columnSuppressor)
+    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, BoundValueSuppressor boundValueSuppressor)
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
-        this.columnSuppressor = columnSuppressor;
+        this.boundValueSuppressor = boundValueSuppressor;
     }
 
     public static AuditAdapter getInstance()
@@ -128,7 +128,7 @@ public class AuditAdapter
                                                      .client(state.getRemoteAddress())
                                                      .coordinator(FBUtilities.getBroadcastAddress())
                                                      .user(state.getUser().getName())
-                                                     .operation(new PreparedAuditOperation(idQueryCache.get(id), options, columnSuppressor))
+                                                     .operation(new PreparedAuditOperation(idQueryCache.get(id), options, boundValueSuppressor))
                                                      .status(status)
                                                      .timestamp(timestamp)
                                                      .build();
@@ -240,7 +240,7 @@ public class AuditAdapter
             if (queryOrId instanceof MD5Digest)
             {
                 entryBuilderFactory.updateBatchEntryBuilder(builder, batchStatement.getStatements().get(statementIndex));
-                builder.operation(new PreparedAuditOperation(idQueryCache.get(queryOrId), options.forStatement(statementIndex), columnSuppressor));
+                builder.operation(new PreparedAuditOperation(idQueryCache.get(queryOrId), options.forStatement(statementIndex), boundValueSuppressor));
                 batchOperations.add(builder.build());
             }
             else
@@ -261,8 +261,14 @@ public class AuditAdapter
     }
 
     @VisibleForTesting
-    public void setColumnSuppressor(ColumnSuppressor columnSuppressor)
+    public void setBoundValueSuppressor(BoundValueSuppressor boundValueSuppressor)
     {
-        this.columnSuppressor = columnSuppressor;
+        this.boundValueSuppressor = boundValueSuppressor;
+    }
+
+    @VisibleForTesting
+    public BoundValueSuppressor  getBoundValueSuppressor()
+    {
+        return boundValueSuppressor;
     }
 }

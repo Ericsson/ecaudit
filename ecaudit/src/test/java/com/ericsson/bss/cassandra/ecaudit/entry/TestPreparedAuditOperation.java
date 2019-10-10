@@ -24,8 +24,8 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ShowAllSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressNothing;
 import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
@@ -42,11 +42,11 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestPreparedAuditOperation
 {
-    private static final ColumnSuppressor SHOW_ALL_SUPPRESSOR = new ShowAllSuppressor();
+    private static final BoundValueSuppressor SHOW_ALL_SUPPRESSOR = new SuppressNothing();
     @Mock
     private QueryOptions mockOptions;
     @Mock
-    private ColumnSuppressor mockSuppressor;
+    private BoundValueSuppressor mockSuppressor;
 
     @Test
     public void testThatValuesAreBound()

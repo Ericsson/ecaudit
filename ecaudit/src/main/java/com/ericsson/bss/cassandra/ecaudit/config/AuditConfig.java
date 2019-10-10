@@ -76,11 +76,11 @@ public class AuditConfig
         return yamlConfig.getWrappedAuthorizer();
     }
 
-    public String getColumnSuppressor()
+    public String getBoundValueSuppressor()
     {
         loadConfigIfNeeded();
 
-        return yamlConfig.getColumnSuppressor();
+        return yamlConfig.getBoundValueSuppressor();
     }
 
     private synchronized void loadConfigIfNeeded()

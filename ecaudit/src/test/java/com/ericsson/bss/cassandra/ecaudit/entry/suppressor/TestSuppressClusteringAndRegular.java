@@ -21,26 +21,25 @@ import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.apache.cassandra.config.ColumnDefinition;
-import org.apache.cassandra.cql3.ColumnIdentifier;
+import org.apache.cassandra.config.ColumnDefinition.Kind;
 import org.apache.cassandra.cql3.ColumnSpecification;
+import org.apache.cassandra.db.marshal.Int32Type;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
- * Tests the {@link PrimaryKeysOnlySuppressor} class.
+ * Tests the {@link SuppressClusteringAndRegular} class.
  */
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class TestPrimaryKeysOnlySuppressor
+public class TestSuppressClusteringAndRegular
 {
-    private static final ColumnSpecification CLUSTER_KEY_COLUMN = new ColumnDefinition("ks", "cf", mock(ColumnIdentifier.class), UTF8Type.instance, null, null, null, 1, ColumnDefinition.Kind.CLUSTERING_COLUMN);
-    private static final ColumnSpecification PARTITION_KEY_COLUMN = new ColumnDefinition("ks", "cf", mock(ColumnIdentifier.class), UTF8Type.instance, null, null, null, 1, ColumnDefinition.Kind.PARTITION_KEY);
-    private static final ColumnSpecification NON_KEY_COLUMN = new ColumnSpecification("ks", "cf", null, UTF8Type.instance);
+    private static final ColumnSpecification CLUSTER_KEY_COLUMN = TestSuppressEverything.createColumnDefinition(Int32Type.instance, Kind.CLUSTERING_COLUMN);
+    private static final ColumnSpecification PARTITION_KEY_COLUMN = TestSuppressEverything.createColumnDefinition(UTF8Type.instance, Kind.PARTITION_KEY);
+    private static final ColumnSpecification REGULAR_COLUMN = TestSuppressEverything.createColumnDefinition(UTF8Type.instance, Kind.REGULAR);
 
     @Mock
     ByteBuffer valueMock;
@@ -49,7 +48,7 @@ public class TestPrimaryKeysOnlySuppressor
     public void testPartitionKeyIsNotSuppressed()
     {
         // Given
-        ColumnSuppressor suppressor = new PrimaryKeysOnlySuppressor();
+        BoundValueSuppressor suppressor = new SuppressClusteringAndRegular();
         // When
         Optional<String> result = suppressor.suppress(PARTITION_KEY_COLUMN, valueMock);
         // Then
@@ -61,21 +60,21 @@ public class TestPrimaryKeysOnlySuppressor
     public void testClusterKeyIsNotSuppressed()
     {
         // Given
-        ColumnSuppressor suppressor = new PrimaryKeysOnlySuppressor();
+        BoundValueSuppressor suppressor = new SuppressClusteringAndRegular();
         // When
         Optional<String> result = suppressor.suppress(CLUSTER_KEY_COLUMN, valueMock);
         // Then
-        assertThat(result).isEmpty();
+        assertThat(result).contains("<int>");
         verifyZeroInteractions(valueMock);
     }
 
     @Test
-    public void testNonKeyIsSuppressed()
+    public void testRegularIsSuppressed()
     {
         // Given
-        ColumnSuppressor suppressor = new PrimaryKeysOnlySuppressor();
+        BoundValueSuppressor suppressor = new SuppressClusteringAndRegular();
         // When
-        Optional<String> result = suppressor.suppress(NON_KEY_COLUMN, valueMock);
+        Optional<String> result = suppressor.suppress(REGULAR_COLUMN, valueMock);
         // Then
         assertThat(result).contains("<text>");
         verifyZeroInteractions(valueMock);

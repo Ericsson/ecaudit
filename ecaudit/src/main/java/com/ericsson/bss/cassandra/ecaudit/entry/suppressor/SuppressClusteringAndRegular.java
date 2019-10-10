@@ -18,27 +18,24 @@ package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
-import org.apache.cassandra.cql3.CQL3Type;
+import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.cql3.ColumnSpecification;
-import org.apache.cassandra.db.marshal.AbstractType;
 
-public class HideBlobsSuppressor implements ColumnSuppressor
+import static com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressEverything.suppressWithType;
+
+public class SuppressClusteringAndRegular implements BoundValueSuppressor
 {
     @Override
     public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
     {
-        return isBlobType(column.type) || isCollectionContainingBlobType(column.type)
-               ? Optional.of("<" + column.type.asCQL3Type() + ">")
+        return isClusteringOrRegular(column)
+               ? Optional.of(suppressWithType(column))
                : Optional.empty();
     }
 
-    private static boolean isBlobType(AbstractType<?> type)
+    private static boolean isClusteringOrRegular(ColumnSpecification column)
     {
-        return type.asCQL3Type() == CQL3Type.Native.BLOB;
-    }
-
-    private static boolean isCollectionContainingBlobType(AbstractType<?> type)
-    {
-        return type.isCollection() && type.asCQL3Type().toString().contains("blob");
+        return column instanceof ColumnDefinition
+               && (((ColumnDefinition) column).isClusteringColumn() || ((ColumnDefinition) column).isRegular());
     }
 }

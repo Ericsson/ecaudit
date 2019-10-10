@@ -20,7 +20,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 
@@ -38,7 +38,7 @@ public class PreparedAuditOperation implements AuditOperation
     private final String preparedStatement;
     private final QueryOptions options;
     private String effectiveStatement; // lazy initialization
-    private final ColumnSuppressor columnSuppressor;
+    private final BoundValueSuppressor boundValueSuppressor;
 
     /**
      * Construct a new prepared audit operation based on the prepared statement and options.
@@ -47,14 +47,14 @@ public class PreparedAuditOperation implements AuditOperation
      *            the prepared statement
      * @param options
      *            the query options of an operation
-     * @param columnSuppressor
-     *            the column suppressor to process bound values
+     * @param boundValueSuppressor
+     *            the suppressor to process bound values
      */
-    public PreparedAuditOperation(String preparedStatement, QueryOptions options, ColumnSuppressor columnSuppressor)
+    public PreparedAuditOperation(String preparedStatement, QueryOptions options, BoundValueSuppressor boundValueSuppressor)
     {
         this.preparedStatement = preparedStatement;
         this.options = options;
-        this.columnSuppressor = columnSuppressor;
+        this.boundValueSuppressor = boundValueSuppressor;
     }
 
     @Override
@@ -93,8 +93,8 @@ public class PreparedAuditOperation implements AuditOperation
         for (ColumnSpecification column : options.getColumnSpecifications())
         {
             ByteBuffer value = values.remove();
-            String valueString = columnSuppressor.suppress(column, value)
-                                                 .orElseGet(() -> CqlLiteralVersionAdapter.toCQLLiteral(value, column));
+            String valueString = boundValueSuppressor.suppress(column, value)
+                                                     .orElseGet(() -> CqlLiteralVersionAdapter.toCQLLiteral(value, column));
             fullStatement.append(valueString).append(", ");
         }
 

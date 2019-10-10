@@ -18,20 +18,23 @@ package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
+import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.cql3.ColumnSpecification;
 
-/**
- * Used to suppress prepared statement bound values.
- */
-public interface ColumnSuppressor
+import static com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressEverything.suppressWithType;
+
+public class SuppressRegular implements BoundValueSuppressor
 {
-    /**
-     * Creates an suppressed string representation of the column value only IF the column should be suppressed.
-     *
-     * @param column the column to check
-     * @param value  the value that may be suppressed
-     * @return the suppressed string representation of the column value, or {@link Optional#empty()} if the value
-     * should not be suppressed.
-     */
-    Optional<String> suppress(ColumnSpecification column, ByteBuffer value);
+    @Override
+    public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
+    {
+        return isRegularKey(column)
+               ? Optional.of(suppressWithType(column))
+               : Optional.empty();
+    }
+
+    private static boolean isRegularKey(ColumnSpecification column)
+    {
+        return column instanceof ColumnDefinition && ((ColumnDefinition) column).isRegular();
+    }
 }

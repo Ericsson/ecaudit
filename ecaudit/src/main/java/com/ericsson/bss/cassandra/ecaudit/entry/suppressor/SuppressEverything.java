@@ -20,11 +20,20 @@ import java.util.Optional;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
 
-public class ShowAllSuppressor implements ColumnSuppressor
+public class SuppressEverything implements BoundValueSuppressor
 {
     @Override
     public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
     {
-        return Optional.empty(); // No values should be suppressed
+        return Optional.of(suppressWithType(column)); // All values should be suppressed
+    }
+
+    /**
+     * @param column the column specification
+     * @return the string representation of the suppressed column type
+     */
+    static final String suppressWithType(ColumnSpecification column)
+    {
+        return "<" + column.type.asCQL3Type() + ">";
     }
 }

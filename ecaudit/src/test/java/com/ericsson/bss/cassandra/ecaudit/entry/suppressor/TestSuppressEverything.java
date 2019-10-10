@@ -21,19 +21,25 @@ import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.apache.cassandra.config.ColumnDefinition;
+import org.apache.cassandra.config.ColumnDefinition.Kind;
+import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.ColumnSpecification;
+import org.apache.cassandra.db.marshal.AbstractType;
+import org.apache.cassandra.db.marshal.Int32Type;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
- * Tests the {@link HideAllSuppressor} class.
+ * Tests the {@link SuppressEverything} class.
  */
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class TestHideAllSuppressor
+public class TestSuppressEverything
 {
     @Mock
     ByteBuffer valueMock;
@@ -42,12 +48,21 @@ public class TestHideAllSuppressor
     public void testSuppressorAlwaysReturnsType()
     {
         // Given
-        ColumnSpecification columnSpecification = new ColumnSpecification("ks", "cf", null, UTF8Type.instance);
-        ColumnSuppressor suppressor = new HideAllSuppressor();
+        ColumnSpecification textColumn = createColumnDefinition(UTF8Type.instance, Kind.PARTITION_KEY);
+        ColumnSpecification integerColumn = createColumnDefinition(Int32Type.instance, Kind.REGULAR);
+
+        BoundValueSuppressor suppressor = new SuppressEverything();
         // When
-        Optional<String> result = suppressor.suppress(columnSpecification, valueMock);
+        Optional<String> textResult = suppressor.suppress(textColumn, valueMock);
+        Optional<String> integerResult = suppressor.suppress(integerColumn, valueMock);
         // Then
-        assertThat(result).contains("<text>");
+        assertThat(textResult).contains("<text>");
+        assertThat(integerResult).contains("<int>");
         verifyZeroInteractions(valueMock);
+    }
+
+    static final ColumnDefinition createColumnDefinition(AbstractType<?> type, Kind kind)
+    {
+        return new ColumnDefinition("ks", "cf", mock(ColumnIdentifier.class), type, null, null, null, 1, kind);
     }
 }

@@ -28,10 +28,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
- * Tests the {@link ShowAllSuppressor} class.
+ * Tests the {@link SuppressNothing} class.
  */
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class TestShowAllSuppressor
+public class TestSuppressNothing
 {
     @Mock
     ByteBuffer valueMock;
@@ -40,7 +40,7 @@ public class TestShowAllSuppressor
     public void testSuppressorNeverSuppresses()
     {
         // Given
-        ColumnSuppressor suppressor = new ShowAllSuppressor();
+        BoundValueSuppressor suppressor = new SuppressNothing();
         // When
         Optional<String> result = suppressor.suppress(null, valueMock);
         // Then

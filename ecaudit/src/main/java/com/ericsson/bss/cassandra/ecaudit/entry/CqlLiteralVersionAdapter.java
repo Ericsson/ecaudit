@@ -21,10 +21,9 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import org.apache.cassandra.cql3.CQL3Type;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.db.marshal.AsciiType;
-import org.apache.cassandra.db.marshal.BytesType;
-import org.apache.cassandra.db.marshal.TimestampType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.serializers.TimestampSerializer;
 
@@ -47,19 +46,22 @@ public final class CqlLiteralVersionAdapter
         {
             return noValueString(column);
         }
-        if (isStringType(column))
+        if (column.type.asCQL3Type() instanceof CQL3Type.Native)
         {
-            return "'" + column.type.getString(serializedValue) + "'";
+            switch ((CQL3Type.Native) column.type.asCQL3Type())
+            {
+                case ASCII:
+                case VARCHAR:
+                case TEXT:
+                    return "'" + column.type.getString(serializedValue) + "'";
+                case TIMESTAMP:
+                    return DATE_FORMAT.format(TimestampSerializer.instance.deserialize(serializedValue));
+                case BLOB:
+                    return "0x" + column.type.getString(serializedValue);
+                default:
+                    break;
+            }
         }
-        if (isTimestampType(column))
-        {
-            return DATE_FORMAT.format(TimestampSerializer.instance.deserialize(serializedValue));
-        }
-        if (isBlobType(column))
-        {
-            return "0x" + column.type.getString(serializedValue);
-        }
-
         return column.type.getString(serializedValue);
     }
 
@@ -73,20 +75,10 @@ public final class CqlLiteralVersionAdapter
         return column.type instanceof UTF8Type || column.type instanceof AsciiType;
     }
 
-    private static boolean isTimestampType(ColumnSpecification column)
-    {
-        return column.type instanceof TimestampType;
-    }
-
-    private static boolean isBlobType(ColumnSpecification column)
-    {
-        return column.type instanceof BytesType;
-    }
-
     private static DateFormat createDateFormat()
     {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault(Locale.Category.FORMAT));
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return  dateFormat;
+        return dateFormat;
     }
 }

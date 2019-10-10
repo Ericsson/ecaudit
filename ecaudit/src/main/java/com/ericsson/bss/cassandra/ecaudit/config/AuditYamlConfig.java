@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ShowAllSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressNothing;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import org.apache.cassandra.config.ParameterizedClass;
 
@@ -32,7 +32,7 @@ public final class AuditYamlConfig
     private static final List<String> DEFAULT_WHITELIST = Collections.emptyList();
     private static final ParameterizedClass DEFAULT_LOGGER_BACKEND = new ParameterizedClass(Slf4jAuditLogger.class.getCanonicalName(), Collections.emptyMap());
     private static final String DEFAULT_WRAPPED_AUTHORIZER = "org.apache.cassandra.auth.CassandraAuthorizer";
-    private static final String DEFAULT_COLUMN_SUPPRESSOR = ShowAllSuppressor.class.getName();
+    private static final String DEFAULT_BOUND_VALUE_SUPPRESSOR = SuppressNothing.class.getName();
 
     private boolean fromFile = true;
 
@@ -42,7 +42,7 @@ public final class AuditYamlConfig
     public ParameterizedClass logger_backend;
     public LoggerTiming log_timing_strategy;
     public String wrapped_authorizer;
-    public String column_suppressor;
+    public String bound_value_suppressor;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -103,8 +103,8 @@ public final class AuditYamlConfig
         return wrapped_authorizer != null ? wrapped_authorizer : DEFAULT_WRAPPED_AUTHORIZER;
     }
 
-    String getColumnSuppressor()
+    String getBoundValueSuppressor()
     {
-        return column_suppressor != null ? column_suppressor : DEFAULT_COLUMN_SUPPRESSOR;
+        return bound_value_suppressor != null ? bound_value_suppressor : DEFAULT_BOUND_VALUE_SUPPRESSOR;
     }
 }

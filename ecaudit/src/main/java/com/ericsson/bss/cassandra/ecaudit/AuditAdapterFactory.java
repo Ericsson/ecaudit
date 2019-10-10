@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
@@ -79,9 +79,9 @@ final class AuditAdapterFactory
         Auditor auditor = new DefaultAuditor(logger, filter, obfuscator, logStrategy);
         AuditEntryBuilderFactory entryBuilderFactory = new AuditEntryBuilderFactory();
 
-        ColumnSuppressor columnSuppressor = createColumnSuppressor(auditConfig);
+        BoundValueSuppressor boundValueSuppressor = createBoundValueSuppressor(auditConfig);
 
-        return new AuditAdapter(auditor, entryBuilderFactory, columnSuppressor);
+        return new AuditAdapter(auditor, entryBuilderFactory, boundValueSuppressor);
     }
 
     /**
@@ -149,14 +149,14 @@ final class AuditAdapterFactory
                : LogTimingStrategy.PRE_LOGGING_STRATEGY;
     }
 
-    private static ColumnSuppressor createColumnSuppressor(AuditConfig auditConfig)
+    private static BoundValueSuppressor createBoundValueSuppressor(AuditConfig auditConfig)
     {
-        String suppressorClassName = auditConfig.getColumnSuppressor();
+        String suppressorClassName = auditConfig.getBoundValueSuppressor();
         if (!suppressorClassName.contains("."))
         {
-            String packageName = ColumnSuppressor.class.getPackage().getName();
+            String packageName = BoundValueSuppressor.class.getPackage().getName();
             suppressorClassName = packageName + "." + suppressorClassName;
         }
-        return FBUtilities.construct(suppressorClassName, "ColumnSuppressor");
+        return FBUtilities.construct(suppressorClassName, "BoundValueSuppressor");
     }
 }

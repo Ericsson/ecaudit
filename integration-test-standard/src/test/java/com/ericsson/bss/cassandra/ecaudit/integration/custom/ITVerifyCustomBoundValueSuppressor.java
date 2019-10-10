@@ -17,9 +17,8 @@ package com.ericsson.bss.cassandra.ecaudit.integration.custom;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -33,16 +32,19 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.TupleType;
+import com.datastax.driver.core.UserType;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ColumnSuppressor;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.HideAllSuppressor;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.HideBlobsSuppressor;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.PartitionKeysOnlySuppressor;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.PrimaryKeysOnlySuppressor;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.ShowAllSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressBlobs;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressClusteringAndRegular;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressEverything;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressNothing;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressRegular;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
@@ -55,10 +57,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
- * This test class provides a functional integration test for custom column suppressor log format with Cassandra itself.
+ * This test class provides a functional integration test for custom bound value suppressor log format with Cassandra itself.
  * <p>
  * The format configuration is read when the plugin is started and has to be setup before the embedded Cassandra
  * is started. Therefor this test class cannot be run in the same process as the other integration tests (having
@@ -70,15 +71,19 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  */
 @NotThreadSafe
 @RunWith(MockitoJUnitRunner.class)
-public class ITVerifyCustomColumnSuppressor
+public class ITVerifyCustomBoundValueSuppressor
 {
     private static final String CUSTOM_LOGGER_NAME = "ECAUDIT_CUSTOM";
     private static final String KEYSPACE = "CREATE KEYSPACE ks1 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false";
-    private static final String TABLE = "CREATE TABLE ks1.t1 (key1 text, key2 int, val1 text, val2 blob, val4 int, PRIMARY KEY((key1, key2), val1))";
+    private static final String UDT = "CREATE TYPE ks1.mytype (mykey text, myval blob)";
+    private static final String TABLE = "CREATE TABLE ks1.t1 (key1 text, key2 int, key3 text, val1 blob, val2 list<blob>, val3 map<int, frozen<list<blob>>>, val4 int, val5 tuple<text, blob>, val6 frozen<ks1.mytype>, PRIMARY KEY((key1, key2), key3))";
+    private static final String INSERT = "INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static Cluster cluster;
     private static Session session;
     private static AuditLogger customLogger;
+
+    private static BoundValueSuppressor defaultSuppressor;
 
     @Captor
     private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
@@ -94,11 +99,14 @@ public class ITVerifyCustomColumnSuppressor
         session = cluster.connect();
 
         session.execute(new SimpleStatement(KEYSPACE));
+        session.execute(new SimpleStatement(UDT));
         session.execute(new SimpleStatement(TABLE));
 
         // Configure logger with custom format with only operation
         customLogger = new Slf4jAuditLogger(Collections.singletonMap("log_format", "operation=${OPERATION}"), CUSTOM_LOGGER_NAME);
         AuditAdapter.getInstance().getAuditor().addLogger(customLogger);
+
+        defaultSuppressor = getBoundValueSuppressor();
     }
 
     @Before
@@ -111,7 +119,6 @@ public class ITVerifyCustomColumnSuppressor
     @After
     public void after()
     {
-        verifyNoMoreInteractions(mockAuditAppender);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.getLogger(CUSTOM_LOGGER_NAME).detachAppender(mockAuditAppender);
     }
@@ -122,84 +129,95 @@ public class ITVerifyCustomColumnSuppressor
         AuditAdapter.getInstance().getAuditor().removeLogger(customLogger);
         session.close();
         cluster.close();
+        setBoundValueSuppressor(defaultSuppressor);
     }
 
     @Test
-    public void testShowAllSuppressor()
+    public void testSuppressNothing()
     {
         // Given
-        setColumnSuppressor(new ShowAllSuppressor());
+        setBoundValueSuppressor(new SuppressNothing());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                             "['PartKey1', 42, 'ClusterKey', 0x00000001000000020000000300000004, 43]");
+        assertThat(getLogEntry()).matches("\\Qoperation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\\E" +
+                                          "\\['PartKey1', 42, 'ClusterKey', .*, .*, .*, 43, .*, .*\\]"); // Complex datatype values are not printed nice in c2.2 - user regexp to match
     }
 
     @Test
-    public void testHideBlobsSuppressor()
+    public void testSuppressBlobs()
     {
         // Given
-        setColumnSuppressor(new HideBlobsSuppressor());
+        setBoundValueSuppressor(new SuppressBlobs());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                             "['PartKey1', 42, 'ClusterKey', <blob>, 43]");
+        assertThat(getLogEntry()).isEqualTo("operation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" +
+                                            "['PartKey1', 42, 'ClusterKey', <blob>, <list<blob>>, <map<int, frozen<list<blob>>>>, 43, <tuple<text, blob>>, <mytype>]");
     }
 
     @Test
-    public void testPrimaryKeysOnlySuppressor()
+    public void testSuppressRegular()
     {
         // Given
-        setColumnSuppressor(new PrimaryKeysOnlySuppressor());
+        setBoundValueSuppressor(new SuppressRegular());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                             "['PartKey1', 42, 'ClusterKey', <blob>, <int>]");
+        assertThat(getLogEntry()).isEqualTo("operation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" +
+                                            "['PartKey1', 42, 'ClusterKey', <blob>, <list<blob>>, <map<int, frozen<list<blob>>>>, <int>, <tuple<text, blob>>, <mytype>]");
     }
 
     @Test
-    public void testPartitionKeysOnlySuppressor()
+    public void testSuppressClusteringAndRegular()
     {
         // Given
-        setColumnSuppressor(new PartitionKeysOnlySuppressor());
+        setBoundValueSuppressor(new SuppressClusteringAndRegular());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                             "['PartKey1', 42, <text>, <blob>, <int>]");
+        assertThat(getLogEntry()).isEqualTo("operation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" +
+                                            "['PartKey1', 42, <text>, <blob>, <list<blob>>, <map<int, frozen<list<blob>>>>, <int>, <tuple<text, blob>>, <mytype>]");
     }
 
     @Test
-    public void testHideAllSuppressor()
+    public void testSuppressEverything()
     {
         // Given
-        setColumnSuppressor(new HideAllSuppressor());
+        setBoundValueSuppressor(new SuppressEverything());
         // When
         executePreparedStatement();
         // Then
-        assertThat(getLogEntries()).contains("operation=INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)" +
-                                             "[<text>, <int>, <text>, <blob>, <int>]");
+        assertThat(getLogEntry()).isEqualTo("operation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" +
+                                            "[<text>, <int>, <text>, <blob>, <list<blob>>, <map<int, frozen<list<blob>>>>, <int>, <tuple<text, blob>>, <mytype>]");
     }
 
-    private List<String> getLogEntries()
+    private String getLogEntry()
     {
         verify(mockAuditAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
-        return loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage).collect(Collectors.toList());
+        return loggingEventCaptor.getAllValues()
+                                 .stream()
+                                 .map(ILoggingEvent::getFormattedMessage)
+                                 .filter(s -> s.contains(INSERT))
+                                 .findFirst().get();
     }
 
     private void executePreparedStatement()
     {
-        String insert = "INSERT INTO ks1.t1 (key1, key2, val1, val2, val4) VALUES (?, ?, ?, ?, ?)";
+        TupleType tupleType = TupleType.of(DataType.text(), DataType.blob());
+        UserType udt = session.getCluster().getMetadata().getKeyspace("ks1").getUserType("mytype");
 
-        PreparedStatement preparedInsert = session.prepare(insert);
+        PreparedStatement preparedInsert = session.prepare(INSERT);
         session.execute(preparedInsert.bind("PartKey1",
                                             42,
                                             "ClusterKey",
                                             createBlob(16),
-                                            43));
+                                            Arrays.asList(createBlob(4), createBlob(8)),
+                                            Collections.singletonMap(99, Arrays.asList(createBlob(4), createBlob(4))),
+                                            43,
+                                            tupleType.newValue("Hello", createBlob(4)),
+                                            udt.newValue().setString("mykey", "Kalle").setBytes("myval", (ByteBuffer)createBlob(16))
+                                            ));
     }
 
     private Buffer createBlob(int capacityInBytes)
@@ -212,8 +230,13 @@ public class ITVerifyCustomColumnSuppressor
         return buffer.flip();
     }
 
-    private void setColumnSuppressor(ColumnSuppressor suppressor)
+    private static void setBoundValueSuppressor(BoundValueSuppressor suppressor)
     {
-        AuditAdapter.getInstance().setColumnSuppressor(suppressor);
+        AuditAdapter.getInstance().setBoundValueSuppressor(suppressor);
+    }
+
+    private static BoundValueSuppressor getBoundValueSuppressor()
+    {
+        return AuditAdapter.getInstance().getBoundValueSuppressor();
     }
 }
