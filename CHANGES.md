@@ -1,6 +1,8 @@
 # Changes
 
 ## Version 2.3.0
+* Log only keys #125
+* Avoid logging BLOB values #126
 * Configurable format of printed records with eclog tool #102
 
 ## Version 2.2.0
