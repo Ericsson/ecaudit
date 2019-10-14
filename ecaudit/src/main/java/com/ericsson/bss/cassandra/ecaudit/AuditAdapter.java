@@ -261,13 +261,13 @@ public class AuditAdapter
     }
 
     @VisibleForTesting
-    public void setBoundValueSuppressor(BoundValueSuppressor boundValueSuppressor)
+    public void setBoundValueSuppressor(BoundValueSuppressor suppressor)
     {
-        this.boundValueSuppressor = boundValueSuppressor;
+        this.boundValueSuppressor = suppressor;
     }
 
     @VisibleForTesting
-    public BoundValueSuppressor  getBoundValueSuppressor()
+    public BoundValueSuppressor getBoundValueSuppressor()
     {
         return boundValueSuppressor;
     }

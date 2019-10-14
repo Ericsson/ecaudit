@@ -41,21 +41,19 @@ public class SuppressBlobs implements BoundValueSuppressor
 
     private boolean containsBlob(AbstractType<?> type)
     {
-        CQL3Type cql3Type = type.asCQL3Type();
-        if (cql3Type instanceof CQL3Type.Native)
+        if (type.asCQL3Type() instanceof CQL3Type.Native)
         {
-            return cql3Type == CQL3Type.Native.BLOB;
+            return type.asCQL3Type() == CQL3Type.Native.BLOB;
         }
-
         if (type instanceof CollectionType)
         {
             return collectionContainsBlob((CollectionType) type);
         }
-        if (type instanceof TupleType)
+        if (type instanceof TupleType) // UDT is subtype of TupleTyp
         {
             return tupleContainsBlob((TupleType) type);
         }
-        return false;
+        return true;
     }
 
     private boolean collectionContainsBlob(CollectionType type)

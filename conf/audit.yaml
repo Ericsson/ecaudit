@@ -94,17 +94,18 @@ logger_backend:
 # The bound value suppressor determines how bound values should be logged for prepared statements.
 # The suppressor is applied to all prepared statements regardless of which table is used.
 #
-# - SuppressNothing              -> Will not suppress. Prints all values for prepared statements.
+# - SuppressNothing              -> Will not suppress. logs all values for prepared statements.
 #
 # - SuppressEverything           -> Will suppress all values by replacing the values with its type, e.g. <int>, <text>
 #
-# - SuppressorBlobs              -> Will suppress all blob values. Values will be replaced by a "<blob>"-tag in the log.
+# - SuppressBlobs                -> Will suppress all blob values. Values will be replaced by a "<blob>"-tag in the log.
 #                                   Collection types containing blobs will also be replaced, e.g. "<list<blob>>".
 #                                   This suppressor can be useful since blobs can be very big and perhaps not that useful
 #                                   to log.
 #
-# - SuppressRegular              -> Suppress values for columns of regular kind. This suppressor can be useful to avoid
-#                                   logging sensitive or less useful information.
+# - SuppressRegular              -> Suppress values for columns of regular kind. Values for primary keys (partition keys
+#                                   and clustering keys) are logged. This suppressor can be useful to avoid logging
+#                                   sensitive or less useful information.
 #
 # - SuppressClusteringAndRegular -> Suppress values for columns of regular or clustering kind, but partition key(s) will
 #                                   be logged. This suppressor can be useful to avoid logging sensitive or less useful

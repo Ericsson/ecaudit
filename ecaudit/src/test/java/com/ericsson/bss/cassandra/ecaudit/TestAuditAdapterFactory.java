@@ -250,19 +250,18 @@ public class TestAuditAdapterFactory
     }
 
     @Test
-    public void testCreateCustomBoundValueSuppressor() throws Exception
+    public void testCreateCustomBoundValueSuppressor()
     {
         // Given
         AuditConfig config = givenAuditConfigWithBoundValueSuppressor(CustomTestSuppressor.class.getName());
         // When
         AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter(config);
         // Then
-        assertThat(boundValueSuppressorIn(adapter)).isInstanceOf(CustomTestSuppressor.class);
+        assertThat(adapter.getBoundValueSuppressor()).isInstanceOf(CustomTestSuppressor.class);
     }
 
     public static class CustomTestSuppressor implements BoundValueSuppressor
     {
-
         public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
         {
             return Optional.empty();
@@ -321,12 +320,5 @@ public class TestAuditAdapterFactory
         AuditConfig config = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
         when(config.getBoundValueSuppressor()).thenReturn(suppressorName);
         return config;
-    }
-
-    private static BoundValueSuppressor boundValueSuppressorIn(AuditAdapter adapter) throws Exception
-    {
-        Field field = AuditAdapter.class.getDeclaredField("boundValueSuppressor");
-        field.setAccessible(true);
-        return (BoundValueSuppressor) field.get(adapter);
     }
 }

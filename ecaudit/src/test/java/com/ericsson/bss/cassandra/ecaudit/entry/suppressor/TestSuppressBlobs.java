@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.apache.cassandra.cql3.CQL3Type;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.BytesType;
@@ -32,10 +33,11 @@ import org.apache.cassandra.db.marshal.MapType;
 import org.apache.cassandra.db.marshal.SetType;
 import org.apache.cassandra.db.marshal.TupleType;
 import org.apache.cassandra.db.marshal.UTF8Type;
-import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests the {@link SuppressBlobs} class.
@@ -50,6 +52,7 @@ public class TestSuppressBlobs
     private static final ColumnSpecification BLOB_TEXT_MAP_COLUMN = createColumn(mapOf(BytesType.instance, UTF8Type.instance));
     private static final ColumnSpecification TEXT_BLOB_MAP_COLUMN = createColumn(mapOf(UTF8Type.instance, BytesType.instance));
     private static final ColumnSpecification TEXT_BLOB_TUPLE_COLUMN = createColumn(tupleOf(UTF8Type.instance, BytesType.instance));
+    private static final ColumnSpecification CUSTOM_TYPE_COLUMN = createColumn(customType());
 
     private static final ColumnSpecification TEXT_COLUMN = createColumn(UTF8Type.instance);
     private static final ColumnSpecification TEXT_LIST_COLUMN = createColumn(listOf(UTF8Type.instance));
@@ -62,7 +65,7 @@ public class TestSuppressBlobs
     public void testBlobsAreHidden(ColumnSpecification column, String expectedString)
     {
         // Given
-        ByteBuffer valueMock = Mockito.mock(ByteBuffer.class);
+        ByteBuffer valueMock = mock(ByteBuffer.class);
         BoundValueSuppressor suppressor = new SuppressBlobs();
         // When
         Optional<String> result = suppressor.suppress(column, valueMock);
@@ -81,6 +84,7 @@ public class TestSuppressBlobs
         { BLOB_TEXT_MAP_COLUMN, "<map<blob, text>>" },
         { TEXT_BLOB_MAP_COLUMN, "<map<text, blob>>" },
         { TEXT_BLOB_TUPLE_COLUMN, "<tuple<text, blob>>" },
+        { CUSTOM_TYPE_COLUMN, "<'org.apache.cassandra.db.marshal.BytesType'>" },
         };
     }
 
@@ -89,7 +93,7 @@ public class TestSuppressBlobs
     public void testNonBlobsColumns(ColumnSpecification column)
     {
         // Given
-        ByteBuffer valueMock = Mockito.mock(ByteBuffer.class);
+        ByteBuffer valueMock = mock(ByteBuffer.class);
         BoundValueSuppressor suppressor = new SuppressBlobs();
         // When
         Optional<String> result = suppressor.suppress(column, valueMock);
@@ -127,6 +131,13 @@ public class TestSuppressBlobs
     private static <K, V> MapType<K, V> mapOf(AbstractType<K> keyType, AbstractType<V> valueType)
     {
         return MapType.getInstance(keyType, valueType, true);
+    }
+
+    private static AbstractType<?> customType()
+    {
+        AbstractType customType = mock(AbstractType.class);
+        when(customType.asCQL3Type()).thenReturn(new CQL3Type.Custom(BytesType.instance));
+        return customType;
     }
 
     private static TupleType tupleOf(AbstractType<?> ...types)
