@@ -23,7 +23,7 @@ public abstract class AbstractSuppressor implements BoundValueSuppressor
      * @param column the column specification
      * @return the string representation of the suppressed column type
      */
-    String suppressWithType(ColumnSpecification column)
+    protected String suppressWithType(ColumnSpecification column)
     {
         return "<" + column.type.asCQL3Type() + ">";
     }
