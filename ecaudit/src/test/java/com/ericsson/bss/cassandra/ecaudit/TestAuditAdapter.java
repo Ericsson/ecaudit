@@ -55,7 +55,6 @@ import org.apache.cassandra.cql3.statements.BatchStatement;
 import org.apache.cassandra.cql3.statements.ModificationStatement;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.marshal.UTF8Type;
-import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.service.ClientState;
@@ -84,7 +83,6 @@ public class TestAuditAdapter
     private static final String USER = "user";
     private static final String CLIENT_IP = "127.0.0.1";
     private static final int CLIENT_PORT = 565;
-    private static final int CLIENT_AUTH_PORT = 0;
     private static final String STATEMENT = "select * from ks.tbl";
     private static final String PREPARED_STATEMENT = "insert into ts.ks (id, value) values (?, ?)";
     private static final MD5Digest PREPARED_STATEMENT_ID = MD5Digest.compute(PREPARED_STATEMENT);
@@ -111,12 +109,8 @@ public class TestAuditAdapter
     @Mock
     private BoundValueSuppressor mockBoundValueSuppressor;
 
-    private InetAddress clientAddress;
     private InetSocketAddress clientSocketAddress;
-
     private AuditAdapter auditAdapter;
-
-    private static IPartitioner oldPartitionerToRestore;
 
     @BeforeClass
     public static void beforeAll()
@@ -127,7 +121,7 @@ public class TestAuditAdapter
     @Before
     public void before() throws UnknownHostException
     {
-        clientAddress = InetAddress.getByName(CLIENT_IP);
+        InetAddress clientAddress = InetAddress.getByName(CLIENT_IP);
         clientSocketAddress = new InetSocketAddress(clientAddress, CLIENT_PORT);
         auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockBoundValueSuppressor);
         when(mockState.getUser()).thenReturn(mockUser);
