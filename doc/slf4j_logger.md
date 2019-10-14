@@ -92,7 +92,7 @@ can be useful to avoid logging sensitive or less useful information, e.g. large 
 For more information about the available suppressors, see the ```audit.yaml``` reference documentation.
 The example below will suppress/hide blobs values from being logged.
 ```YAML
-column_suppressor: HideBlobsSuppressor
+bound_value_suppressor: SuppressBlobs
 ```
 It is also possible to plugin a custom suppressor.
 

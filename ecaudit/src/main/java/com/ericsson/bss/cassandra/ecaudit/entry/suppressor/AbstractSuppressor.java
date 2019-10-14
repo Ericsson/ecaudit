@@ -15,16 +15,16 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
-import java.nio.ByteBuffer;
-import java.util.Optional;
-
 import org.apache.cassandra.cql3.ColumnSpecification;
 
-public class SuppressEverything extends AbstractSuppressor
+public abstract class AbstractSuppressor implements BoundValueSuppressor
 {
-    @Override
-    public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
+    /**
+     * @param column the column specification
+     * @return the string representation of the suppressed column type
+     */
+    String suppressWithType(ColumnSpecification column)
     {
-        return Optional.of(suppressWithType(column)); // All values should be suppressed
+        return "<" + column.type.asCQL3Type() + ">";
     }
 }

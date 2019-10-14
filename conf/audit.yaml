@@ -117,6 +117,6 @@ logger_backend:
 # A custom bound value suppressor can be plugged in by setting the full name of an suppressor class implementing the
 # BoundValueSuppressor interface.
 #
-# By default the SuppressNothing will be used.
+# By default SuppressNothing will be used.
 #
-# bound_value_suppressor: SuppressorBlobs
+# bound_value_suppressor: SuppressBlobs

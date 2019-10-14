@@ -21,9 +21,7 @@ import java.util.Optional;
 import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.cql3.ColumnSpecification;
 
-import static com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressEverything.suppressWithType;
-
-public class SuppressRegular implements BoundValueSuppressor
+public class SuppressRegular extends AbstractSuppressor
 {
     @Override
     public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)

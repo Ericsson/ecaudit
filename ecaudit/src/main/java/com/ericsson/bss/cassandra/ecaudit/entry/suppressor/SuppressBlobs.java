@@ -27,9 +27,7 @@ import org.apache.cassandra.db.marshal.MapType;
 import org.apache.cassandra.db.marshal.SetType;
 import org.apache.cassandra.db.marshal.TupleType;
 
-import static com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressEverything.suppressWithType;
-
-public class SuppressBlobs implements BoundValueSuppressor
+public class SuppressBlobs extends AbstractSuppressor
 {
     @Override
     public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
@@ -67,7 +65,7 @@ public class SuppressBlobs implements BoundValueSuppressor
             case MAP:
                 return mapContainsBlob((MapType) type);
             default:
-                throw new IllegalArgumentException("Invalid collection type");
+                throw new IllegalArgumentException("Invalid collection type: " + type.kind);
         }
     }
 
