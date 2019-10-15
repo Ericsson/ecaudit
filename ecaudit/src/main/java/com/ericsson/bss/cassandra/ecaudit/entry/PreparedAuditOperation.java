@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 
@@ -37,6 +38,7 @@ public class PreparedAuditOperation implements AuditOperation
     private final String preparedStatement;
     private final QueryOptions options;
     private String effectiveStatement; // lazy initialization
+    private final BoundValueSuppressor boundValueSuppressor;
 
     /**
      * Construct a new prepared audit operation based on the prepared statement and options.
@@ -45,11 +47,14 @@ public class PreparedAuditOperation implements AuditOperation
      *            the prepared statement
      * @param options
      *            the query options of an operation
+     * @param boundValueSuppressor
+     *            the suppressor to process bound values
      */
-    public PreparedAuditOperation(String preparedStatement, QueryOptions options)
+    public PreparedAuditOperation(String preparedStatement, QueryOptions options, BoundValueSuppressor boundValueSuppressor)
     {
         this.preparedStatement = preparedStatement;
         this.options = options;
+        this.boundValueSuppressor = boundValueSuppressor;
     }
 
     @Override
@@ -87,9 +92,10 @@ public class PreparedAuditOperation implements AuditOperation
         Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
         for (ColumnSpecification column : options.getColumnSpecifications())
         {
-            String value = CqlLiteralVersionAdapter.toCQLLiteral(values.remove(), column);
-
-            fullStatement.append(value).append(", ");
+            ByteBuffer value = values.remove();
+            String valueString = boundValueSuppressor.suppress(column, value)
+                                                     .orElseGet(() -> CqlLiteralVersionAdapter.toCQLLiteral(value, column));
+            fullStatement.append(valueString).append(", ");
         }
 
         fullStatement.setLength(fullStatement.length() - 1);
