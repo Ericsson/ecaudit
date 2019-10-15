@@ -18,10 +18,12 @@ package com.ericsson.bss.cassandra.ecaudit.utils;
 
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.regex.Pattern;
 
 public final class Strings
 {
-    static final char FROZEN_START = '#';
+    private static final Pattern FROZEN_PATTERN = Pattern.compile("frozen<");
+    private static final char FROZEN_START = '#';
 
     private Strings()
     {
@@ -38,7 +40,7 @@ public final class Strings
      */
     public static String removeFrozenBrackets(String input)
     {
-        String unfrozen = input.replaceAll("frozen<", String.valueOf(FROZEN_START));
+        String unfrozen = FROZEN_PATTERN.matcher(input).replaceAll(String.valueOf(FROZEN_START));
         if (input.length() == unfrozen.length())
         {
             return input; // input is not frozen
