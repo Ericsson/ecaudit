@@ -18,9 +18,11 @@ package com.ericsson.bss.cassandra.ecaudit;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
@@ -33,6 +35,8 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditYamlConfigurationLoader;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressNothing;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.DefaultAuditor;
 import com.ericsson.bss.cassandra.ecaudit.facade.TestDefaultAuditor;
@@ -50,6 +54,7 @@ import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.ParameterizedClass;
+import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -234,6 +239,36 @@ public class TestAuditAdapterFactory
         assertThat(logTimingStrategyIn(adapterWithPostLogging)).isSameAs(LogTimingStrategy.POST_LOGGING_STRATEGY);
     }
 
+    @Test
+    public void testCreateBoundValueSuppressorThrows()
+    {
+        // Given
+        AuditConfig config = givenAuditConfigWithBoundValueSuppressor("com.suppressor.InvalidSuppressorClass");
+        // Then throw
+        assertThatExceptionOfType(ConfigurationException.class)
+        .isThrownBy(() -> AuditAdapterFactory.createAuditAdapter(config))
+        .withMessageContaining("Unable to find BoundValueSuppressor class")
+        .withMessageContaining("com.suppressor.InvalidSuppressorClass");
+    }
+
+    @Test
+    public void testCreateCustomBoundValueSuppressor()
+    {
+        // Given
+        AuditConfig config = givenAuditConfigWithBoundValueSuppressor(CustomTestSuppressor.class.getName());
+        // When
+        AuditAdapter adapter = AuditAdapterFactory.createAuditAdapter(config);
+        // Then
+        assertThat(adapter.getBoundValueSuppressor()).isInstanceOf(CustomTestSuppressor.class);
+    }
+
+    public static class CustomTestSuppressor implements BoundValueSuppressor
+    {
+        public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
+        {
+            return Optional.empty();
+        }
+    }
     private static String getPathToTestResourceFile()
     {
         URL url = TestAuditAdapterFactory.class.getResource("/mock_configuration.yaml");
@@ -245,6 +280,7 @@ public class TestAuditAdapterFactory
         ParameterizedClass parameterizedClass = new ParameterizedClass(s, parameters);
         AuditConfig auditConfig = mock(AuditConfig.class);
         when(auditConfig.getLoggerBackendParameters()).thenReturn(parameterizedClass);
+        when(auditConfig.getBoundValueSuppressor()).thenReturn(SuppressNothing.class.getName());
         return auditConfig;
     }
 
@@ -279,5 +315,12 @@ public class TestAuditAdapterFactory
     private static LogTimingStrategy logTimingStrategyIn(AuditAdapter auditAdapter) throws Exception
     {
         return TestDefaultAuditor.getLogTimingStrategy(auditAdapter.getAuditor());
+    }
+
+    private AuditConfig givenAuditConfigWithBoundValueSuppressor(String suppressorName)
+    {
+        AuditConfig config = givenAuditConfig("com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger", Collections.emptyMap());
+        when(config.getBoundValueSuppressor()).thenReturn(suppressorName);
+        return config;
     }
 }

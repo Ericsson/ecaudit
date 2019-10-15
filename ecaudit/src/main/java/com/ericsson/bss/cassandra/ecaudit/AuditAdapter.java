@@ -22,11 +22,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import org.apache.cassandra.cql3.BatchQueryOptions;
@@ -49,17 +52,20 @@ public class AuditAdapter
 
     private final Auditor auditor;
     private final AuditEntryBuilderFactory entryBuilderFactory;
+    private BoundValueSuppressor boundValueSuppressor;
 
     /**
      * Constructor, see {@link AuditAdapterFactory#createAuditAdapter()}
      *
      * @param auditor             the auditor to use
      * @param entryBuilderFactory the audit entry builder factory to use
+     * @param boundValueSuppressor the bound value suppressor
      */
-    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory)
+    AuditAdapter(Auditor auditor, AuditEntryBuilderFactory entryBuilderFactory, BoundValueSuppressor boundValueSuppressor)
     {
         this.auditor = auditor;
         this.entryBuilderFactory = entryBuilderFactory;
+        this.boundValueSuppressor = boundValueSuppressor;
     }
 
     public static AuditAdapter getInstance()
@@ -120,7 +126,7 @@ public class AuditAdapter
                                                      .client(state.getRemoteAddress())
                                                      .coordinator(FBUtilities.getBroadcastAddress())
                                                      .user(state.getUser().getName())
-                                                     .operation(new PreparedAuditOperation(rawStatement, options))
+                                                     .operation(new PreparedAuditOperation(rawStatement, options, boundValueSuppressor))
                                                      .status(status)
                                                      .timestamp(timestamp)
                                                      .build();
@@ -227,7 +233,7 @@ public class AuditAdapter
             if (queryOrId instanceof MD5Digest)
             {
                 entryBuilderFactory.updateBatchEntryBuilder(builder, batchStatement.getStatements().get(statementIndex));
-                builder.operation(new PreparedAuditOperation(rawStatements.get(rawStatementIndex++), options.forStatement(statementIndex)));
+                builder.operation(new PreparedAuditOperation(rawStatements.get(rawStatementIndex++), options.forStatement(statementIndex), boundValueSuppressor));
                 batchOperations.add(builder.build());
             }
             else
@@ -245,5 +251,17 @@ public class AuditAdapter
     public Auditor getAuditor()
     {
         return auditor;
+    }
+
+    @VisibleForTesting
+    public void setBoundValueSuppressor(BoundValueSuppressor suppressor)
+    {
+        this.boundValueSuppressor = suppressor;
+    }
+
+    @VisibleForTesting
+    public BoundValueSuppressor getBoundValueSuppressor()
+    {
+        return boundValueSuppressor;
     }
 }

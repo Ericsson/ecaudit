@@ -18,11 +18,14 @@ package com.ericsson.bss.cassandra.ecaudit.entry;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressNothing;
 import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
@@ -31,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,24 +42,27 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestPreparedAuditOperation
 {
+    private static final BoundValueSuppressor SHOW_ALL_SUPPRESSOR = new SuppressNothing();
     @Mock
     private QueryOptions mockOptions;
+    @Mock
+    private BoundValueSuppressor mockSuppressor;
 
     @Test
     public void testThatValuesAreBound()
     {
         String preparedStatement = "select value1, value2 from ks.cf where pk = ? and ck = ?";
-        String expectedStatement = "select value1, value2 from ks.cf where pk = ? and ck = ?['text', 'text']";
+        String expectedStatement = "select value1, value2 from ks.cf where pk = ? and ck = ?['text1', 'text2']";
 
-        List<ByteBuffer> values = createValues("text", "text");
-        ImmutableList<ColumnSpecification> columns = createTextColumns("text", "text");
+        List<ByteBuffer> values = createValues("text1", "text2");
+        ImmutableList<ColumnSpecification> columns = createTextColumns("col1", "col2");
 
         when(mockOptions.hasColumnSpecifications()).thenReturn(true);
         when(mockOptions.getColumnSpecifications()).thenReturn(columns);
         when(mockOptions.getValues()).thenReturn(values);
 
         PreparedAuditOperation auditOperation;
-        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);
+        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, SHOW_ALL_SUPPRESSOR);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
         assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
@@ -65,17 +72,17 @@ public class TestPreparedAuditOperation
     public void testThatValuesAreBoundWithFixedValues()
     {
         String preparedStatement = "select value1, value2 from ks.cf where pk = ? and ck = 'text'";
-        String expectedStatement = "select value1, value2 from ks.cf where pk = ? and ck = 'text'['text']";
+        String expectedStatement = "select value1, value2 from ks.cf where pk = ? and ck = 'text'['text1']";
 
-        List<ByteBuffer> values = createValues("text");
-        ImmutableList<ColumnSpecification> columns = createTextColumns("text");
+        List<ByteBuffer> values = createValues("text1");
+        ImmutableList<ColumnSpecification> columns = createTextColumns("col1");
 
         when(mockOptions.hasColumnSpecifications()).thenReturn(true);
         when(mockOptions.getColumnSpecifications()).thenReturn(columns);
         when(mockOptions.getValues()).thenReturn(values);
 
         PreparedAuditOperation auditOperation;
-        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);
+        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, SHOW_ALL_SUPPRESSOR);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
         assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
@@ -95,7 +102,7 @@ public class TestPreparedAuditOperation
         when(mockOptions.getValues()).thenReturn(values);
 
         PreparedAuditOperation auditOperation;
-        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);
+        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, SHOW_ALL_SUPPRESSOR);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
         assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
@@ -109,13 +116,35 @@ public class TestPreparedAuditOperation
         when(mockOptions.hasColumnSpecifications()).thenReturn(false);
 
         PreparedAuditOperation auditOperation;
-        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions);
+        auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, SHOW_ALL_SUPPRESSOR);
 
         assertThat(auditOperation.getOperationString()).isEqualTo(preparedStatement);
         assertThat(auditOperation.getNakedOperationString()).isEqualTo(preparedStatement);
 
         verify(mockOptions, times(1)).hasColumnSpecifications();
         verify(mockOptions, times(0)).getColumnSpecifications();
+    }
+
+    @Test
+    public void testSuppressor()
+    {
+        String preparedStatement = "insert into ks1.t1 (k1, k2, k3) values (?, ?, ?)";
+        String expectedStatement = "insert into ks1.t1 (k1, k2, k3) values (?, ?, ?)[<ob1>, 'text2', <ob3>]";
+
+        List<ByteBuffer> values = createValues("text1", "text2", "text3");
+        ImmutableList<ColumnSpecification> columns = createTextColumns("col1", "col2", "col3");
+
+        when(mockOptions.hasColumnSpecifications()).thenReturn(true);
+        when(mockOptions.getColumnSpecifications()).thenReturn(columns);
+        when(mockOptions.getValues()).thenReturn(values);
+
+        when(mockSuppressor.suppress(eq(columns.get(0)), eq(values.get(0)))).thenReturn(Optional.of("<ob1>"));
+        when(mockSuppressor.suppress(eq(columns.get(1)), eq(values.get(1)))).thenReturn(Optional.empty());
+        when(mockSuppressor.suppress(eq(columns.get(2)), eq(values.get(2)))).thenReturn(Optional.of("<ob3>"));
+
+        PreparedAuditOperation auditOperation = new PreparedAuditOperation(preparedStatement, mockOptions, mockSuppressor);
+
+        assertThat(auditOperation.getOperationString()).isEqualTo(expectedStatement);
     }
 
     private List<ByteBuffer> createValues(String... values)
