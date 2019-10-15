@@ -153,7 +153,7 @@ public class ITVerifyCustomBoundValueSuppressor
         executePreparedStatement();
         // Then
         assertThat(getLogEntry()).isEqualTo("operation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" +
-                                            "['PartKey1', 42, 'ClusterKey', <blob>, <list<blob>>, <map<int, frozen<list<blob>>>>, 43, <tuple<text, blob>>, <mytype>]");
+                                            "['PartKey1', 42, 'ClusterKey', <blob>, <list<blob>>, <map<int, list<blob>>>, 43, <tuple<text, blob>>, <mytype>]");
     }
 
     @Test
@@ -165,7 +165,7 @@ public class ITVerifyCustomBoundValueSuppressor
         executePreparedStatement();
         // Then
         assertThat(getLogEntry()).isEqualTo("operation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" +
-                                            "['PartKey1', 42, 'ClusterKey', <blob>, <list<blob>>, <map<int, frozen<list<blob>>>>, <int>, <tuple<text, blob>>, <mytype>]");
+                                            "['PartKey1', 42, 'ClusterKey', <blob>, <list<blob>>, <map<int, list<blob>>>, <int>, <tuple<text, blob>>, <mytype>]");
     }
 
     @Test
@@ -177,7 +177,7 @@ public class ITVerifyCustomBoundValueSuppressor
         executePreparedStatement();
         // Then
         assertThat(getLogEntry()).isEqualTo("operation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" +
-                                            "['PartKey1', 42, <text>, <blob>, <list<blob>>, <map<int, frozen<list<blob>>>>, <int>, <tuple<text, blob>>, <mytype>]");
+                                            "['PartKey1', 42, <text>, <blob>, <list<blob>>, <map<int, list<blob>>>, <int>, <tuple<text, blob>>, <mytype>]");
     }
 
     @Test
@@ -189,7 +189,7 @@ public class ITVerifyCustomBoundValueSuppressor
         executePreparedStatement();
         // Then
         assertThat(getLogEntry()).isEqualTo("operation=INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" +
-                                            "[<text>, <int>, <text>, <blob>, <list<blob>>, <map<int, frozen<list<blob>>>>, <int>, <tuple<text, blob>>, <mytype>]");
+                                            "[<text>, <int>, <text>, <blob>, <list<blob>>, <map<int, list<blob>>>, <int>, <tuple<text, blob>>, <mytype>]");
     }
 
     private String getLogEntry()

@@ -21,9 +21,7 @@ import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.config.ColumnDefinition.Kind;
-import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.mockito.Mock;
@@ -31,7 +29,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.ericsson.bss.cassandra.ecaudit.entry.suppressor.TestSuppressEverything.createColumnDefinition;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**

@@ -53,6 +53,7 @@ public class TestSuppressBlobs
     private static final ColumnSpecification TEXT_BLOB_MAP_COLUMN = createColumn(mapOf(UTF8Type.instance, BytesType.instance));
     private static final ColumnSpecification TEXT_BLOB_TUPLE_COLUMN = createColumn(tupleOf(UTF8Type.instance, BytesType.instance));
     private static final ColumnSpecification CUSTOM_TYPE_COLUMN = createColumn(customType());
+    private static final ColumnSpecification TEXT_BLOB_LIST_MAP_COLUMN = createColumn(mapOf(UTF8Type.instance, listOf(BytesType.instance)));
 
     private static final ColumnSpecification TEXT_COLUMN = createColumn(UTF8Type.instance);
     private static final ColumnSpecification TEXT_LIST_COLUMN = createColumn(listOf(UTF8Type.instance));
@@ -85,6 +86,7 @@ public class TestSuppressBlobs
         { TEXT_BLOB_MAP_COLUMN, "<map<text, blob>>" },
         { TEXT_BLOB_TUPLE_COLUMN, "<tuple<text, blob>>" },
         { CUSTOM_TYPE_COLUMN, "<'org.apache.cassandra.db.marshal.BytesType'>" },
+        { TEXT_BLOB_LIST_MAP_COLUMN, "<map<text, list<blob>>>" },
         };
     }
 
@@ -120,7 +122,7 @@ public class TestSuppressBlobs
 
     private static <T> ListType<T> listOf(AbstractType<T> type)
     {
-        return ListType.getInstance(type, true);
+        return ListType.getInstance(type, false);
     }
 
     private static <T> SetType<T> setOf(AbstractType<T> type)
@@ -130,7 +132,7 @@ public class TestSuppressBlobs
 
     private static <K, V> MapType<K, V> mapOf(AbstractType<K> keyType, AbstractType<V> valueType)
     {
-        return MapType.getInstance(keyType, valueType, true);
+        return MapType.getInstance(keyType, valueType, false);
     }
 
     private static AbstractType<?> customType()
