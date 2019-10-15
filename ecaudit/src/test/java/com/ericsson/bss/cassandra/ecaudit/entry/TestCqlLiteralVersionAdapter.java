@@ -26,6 +26,7 @@ import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.AsciiType;
 import org.apache.cassandra.db.marshal.BooleanType;
+import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.db.marshal.TimestampType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 
@@ -60,6 +61,7 @@ public class TestCqlLiteralVersionAdapter
             { AsciiType.instance, AsciiType.instance.fromString("Anka"), "'Anka'" },
             { TimestampType.instance, TimestampType.instance.fromTimeInMillis(42), "1970-01-01T00:00:00.042Z" }, // 42 ms after EPOCH
             { BooleanType.instance, BooleanType.instance.fromString("True"), "true" },
+            { BytesType.instance, BytesType.instance.fromString("AABBCCDD"), "0xaabbccdd" },
         };
     }
 }

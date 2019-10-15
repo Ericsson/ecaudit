@@ -40,6 +40,7 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
@@ -109,6 +110,8 @@ public class TestAuditAdapter
     private BatchStatement mockBatchStatement;
     @Mock
     private BatchQueryOptions mockBatchOptions;
+    @Mock
+    private BoundValueSuppressor mockBoundValueSuppressor;
 
     private InetAddress clientAddress;
     private InetSocketAddress clientSocketAddress;
@@ -129,7 +132,7 @@ public class TestAuditAdapter
     {
         clientAddress = InetAddress.getByName(CLIENT_IP);
         clientSocketAddress = new InetSocketAddress(clientAddress, CLIENT_PORT);
-        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory);
+        auditAdapter = new AuditAdapter(mockAuditor, mockAuditEntryBuilderFactory, mockBoundValueSuppressor);
         when(mockState.getUser()).thenReturn(mockUser);
         when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(true);
     }

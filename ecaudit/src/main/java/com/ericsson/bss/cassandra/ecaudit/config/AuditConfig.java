@@ -76,6 +76,13 @@ public class AuditConfig
         return yamlConfig.getWrappedAuthorizer();
     }
 
+    public String getBoundValueSuppressor()
+    {
+        loadConfigIfNeeded();
+
+        return yamlConfig.getBoundValueSuppressor();
+    }
+
     private synchronized void loadConfigIfNeeded()
     {
         if (yamlConfig == null)
