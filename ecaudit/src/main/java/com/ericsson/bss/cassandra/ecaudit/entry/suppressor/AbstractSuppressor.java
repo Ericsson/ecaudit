@@ -17,6 +17,8 @@ package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
 
+import static com.ericsson.bss.cassandra.ecaudit.utils.Strings.removeFrozenBrackets;
+
 public abstract class AbstractSuppressor implements BoundValueSuppressor
 {
     /**
@@ -25,6 +27,6 @@ public abstract class AbstractSuppressor implements BoundValueSuppressor
      */
     protected String suppressWithType(ColumnSpecification column)
     {
-        return "<" + column.type.asCQL3Type() + ">";
+        return "<" + removeFrozenBrackets(column.type.asCQL3Type().toString()) + ">";
     }
 }
