@@ -99,14 +99,11 @@ class SchemaHelper
     private String tryGetSchemaId(InetAddress address)
     {
         EndpointState endpointState = gossiper.getEndpointStateForEndpoint(address);
-        if (endpointState != null)
-        {
-            return endpointState.getApplicationState(ApplicationState.SCHEMA).value;
-        }
-        else
+        if (endpointState == null)
         {
             return null;
         }
+        return endpointState.getApplicationState(ApplicationState.SCHEMA).value;
     }
 
     private boolean isRemoteEndpoint(InetAddress memberAddress)

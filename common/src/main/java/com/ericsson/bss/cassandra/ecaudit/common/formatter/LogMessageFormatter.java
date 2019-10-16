@@ -75,18 +75,18 @@ public class LogMessageFormatter<T>
         while (matcher.find())
         {
             String normalField = matcher.group(1);
-            if (normalField != null)
-            {
-                Function<T, Object> fieldFunction = getFieldFunctionOrThrow(normalField, builder);
-                fieldFunctions.add(fieldFunction.andThen(String::valueOf));
-            }
-            else // Optional field
+            if (normalField == null) // Optional field
             {
                 String descriptionLeft = matcher.group(2);
                 String optionalField = matcher.group(3);
                 String descriptionRight = matcher.group(4);
                 Function<T, Object> fieldFunction = getFieldFunctionOrThrow(optionalField, builder);
                 fieldFunctions.add(fieldFunction.andThen(getOptionalDescriptionAndValueIfPresent(descriptionLeft, descriptionRight)));
+            }
+            else // Normal field
+            {
+                Function<T, Object> fieldFunction = getFieldFunctionOrThrow(normalField, builder);
+                fieldFunctions.add(fieldFunction.andThen(String::valueOf));
             }
         }
         return fieldFunctions;
