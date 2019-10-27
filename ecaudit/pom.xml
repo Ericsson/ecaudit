@@ -40,12 +40,6 @@
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
             <artifactId>common_${artifact.flavor.version}</artifactId>
             <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- Test dependencies -->
         <dependency>
