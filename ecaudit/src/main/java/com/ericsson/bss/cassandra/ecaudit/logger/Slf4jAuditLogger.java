@@ -107,7 +107,7 @@ public class Slf4jAuditLogger implements AuditLogger
     @Nullable
     private static Integer getPortOrNull(InetSocketAddress address)
     {
-        return address.getPort() != AuditEntry.UNKNOWN_PORT ? address.getPort() : null;
+        return address.getPort() == AuditEntry.UNKNOWN_PORT ? null : address.getPort();
     }
 
     static Function<AuditEntry, Object> getTimeFunction(Slf4jAuditLoggerConfig auditConfig)

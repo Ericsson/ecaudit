@@ -16,9 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.Sets;

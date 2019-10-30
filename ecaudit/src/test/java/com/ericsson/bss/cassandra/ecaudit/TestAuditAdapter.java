@@ -115,7 +115,6 @@ public class TestAuditAdapter
 
     private InetAddress clientAddress;
     private InetSocketAddress clientSocketAddress;
-
     private AuditAdapter auditAdapter;
 
     private static IPartitioner oldPartitionerToRestore;
