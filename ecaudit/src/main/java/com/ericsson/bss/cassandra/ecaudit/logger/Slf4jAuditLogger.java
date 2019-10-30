@@ -107,13 +107,13 @@ public class Slf4jAuditLogger implements AuditLogger
     @Nullable
     private static String getIpOrNull(InetSocketAddress address)
     {
-        return address != null ? address.getAddress().getHostAddress() : null;
+        return address == null ? null : address.getAddress().getHostAddress();
     }
 
     @Nullable
     private static Integer getPortOrNull(InetSocketAddress address)
     {
-        return address != null && address.getPort() != AuditEntry.UNKNOWN_PORT ? address.getPort() : null;
+        return address == null || address.getPort() == AuditEntry.UNKNOWN_PORT ? null : address.getPort();
     }
 
     static Function<AuditEntry, Object> getTimeFunction(Slf4jAuditLoggerConfig auditConfig)

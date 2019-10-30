@@ -633,16 +633,6 @@ public class ITDataAudit
         "CREATE INDEX IF NOT EXISTS " + index + " ON " + keyspace + "." + table + " (value)"));
     }
 
-    private void givenView(String keyspace, String table, String view)
-    {
-        givenTable(keyspace, table);
-        superSession.execute(new SimpleStatement("CREATE MATERIALIZED VIEW IF NOT EXISTS " + keyspace + "." + view + " AS " +
-                                                 "SELECT value " +
-                                                 "FROM " + keyspace + "." + table + " " +
-                                                 "WHERE value IS NOT NULL AND key IS NOT NULL " +
-                                                 "PRIMARY KEY (value, key)"));
-    }
-
     private void givenType(String keyspace, String type)
     {
         givenKeyspace(keyspace);

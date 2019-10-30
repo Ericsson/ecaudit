@@ -149,30 +149,20 @@ public class AuditPasswordAuthenticator implements IAuthenticator
         private String decodeUserNameFromSasl(byte[] bytes) throws AuthenticationException
         {
             boolean passConsumed = false;
-            byte[] user = null;
             int end = bytes.length;
             for (int i = bytes.length - 1; i >= 0; i--)
             {
                 if (bytes[i] == 0 /* null */)
                 {
-                    if (!passConsumed)
+                    if (passConsumed)
                     {
-                        passConsumed = true;
+                        return new String(Arrays.copyOfRange(bytes, i + 1, end), StandardCharsets.UTF_8);
                     }
-                    else if (user == null)
-                    {
-                        user = Arrays.copyOfRange(bytes, i + 1, end);
-                    }
+                    passConsumed = true;
                     end = i;
                 }
             }
-
-            if (user == null)
-            {
-                throw new AuthenticationException("Authentication ID must not be null");
-            }
-
-            return new String(user, StandardCharsets.UTF_8);
+            throw new AuthenticationException("Authentication ID must not be null");
         }
     }
 

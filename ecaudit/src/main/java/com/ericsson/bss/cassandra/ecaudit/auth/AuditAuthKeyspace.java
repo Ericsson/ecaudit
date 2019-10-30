@@ -27,11 +27,6 @@ import org.apache.cassandra.locator.SimpleStrategy;
 
 final class AuditAuthKeyspace
 {
-    private AuditAuthKeyspace()
-    {
-        // Utility class
-    }
-
     static final String WHITELIST_TABLE_NAME_V1 = "role_audit_whitelists";
     static final String WHITELIST_TABLE_NAME_V2 = "role_audit_whitelists_v2";
     private static final String WHITELIST_TABLE_SCHEMA = "CREATE TABLE " + WHITELIST_TABLE_NAME_V2 + " ("
@@ -41,11 +36,15 @@ final class AuditAuthKeyspace
                                                          + "PRIMARY KEY(role, resource))";
     private static final String WHITELIST_TABLE_DESCRIPTION = "audit whitelist assigned to db roles";
     private static final int WHITELIST_TABLE_GC_GRACE_SECONDS = (int) TimeUnit.DAYS.toSeconds(90);
-
     private static final CFMetaData CREATE_ROLE_AUDIT_WHITELISTS =
     CFMetaData.compile(WHITELIST_TABLE_SCHEMA, AuthKeyspace.NAME)
               .comment(WHITELIST_TABLE_DESCRIPTION)
               .gcGraceSeconds(WHITELIST_TABLE_GC_GRACE_SECONDS);
+
+    private AuditAuthKeyspace()
+    {
+        // Utility class
+    }
 
     static KSMetaData metadata()
     {

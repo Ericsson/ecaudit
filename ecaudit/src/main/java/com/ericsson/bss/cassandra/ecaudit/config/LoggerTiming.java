@@ -15,6 +15,7 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.config;
 
+@SuppressWarnings("PMD.FieldNamingConventions")
 public enum LoggerTiming
 {
     // Enum values in lower case - to match log_timing_strategy config values

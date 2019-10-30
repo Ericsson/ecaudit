@@ -38,9 +38,9 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
                                ? configuredFields
                                : configuredFields.withoutField(Field.BATCH_ID);
 
-        return auditRecord.getClientAddress() != null
-               ? fields
-               : fields.withoutField(Field.CLIENT_IP).withoutField(Field.CLIENT_PORT);
+        return auditRecord.getClientAddress() == null
+               ? fields.withoutField(Field.CLIENT_IP).withoutField(Field.CLIENT_PORT)
+               : fields;
     }
 
     @Override
