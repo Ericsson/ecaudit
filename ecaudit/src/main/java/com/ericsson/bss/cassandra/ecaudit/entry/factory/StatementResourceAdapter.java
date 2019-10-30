@@ -126,26 +126,26 @@ class StatementResourceAdapter
     DataResource resolveBaseTableResource(AlterViewStatement statement)
     {
         CFMetaData baseTable = View.findBaseTable(statement.keyspace(), statement.columnFamily());
-        if (baseTable != null)
+        if (baseTable == null)
         {
-            return DataResource.table(statement.keyspace(), baseTable.cfName);
+            return DataResource.keyspace(statement.keyspace());
         }
         else
         {
-            return DataResource.keyspace(statement.keyspace());
+            return DataResource.table(statement.keyspace(), baseTable.cfName);
         }
     }
 
     DataResource resolveBaseTableResource(DropViewStatement statement)
     {
         CFMetaData baseTable = View.findBaseTable(statement.keyspace(), statement.columnFamily());
-        if (baseTable != null)
+        if (baseTable == null)
         {
-            return DataResource.table(statement.keyspace(), baseTable.cfName);
+            return DataResource.keyspace(statement.keyspace());
         }
         else
         {
-            return DataResource.keyspace(statement.keyspace());
+            return DataResource.table(statement.keyspace(), baseTable.cfName);
         }
     }
 

@@ -74,6 +74,7 @@ public class SuppressBlobs extends AbstractSuppressor
         return containsBlob(type.getElementsType());
     }
 
+    @SuppressWarnings("PMD.LinguisticNaming")
     private boolean setContainsBlob(SetType type)
     {
         return containsBlob(type.getElementsType());

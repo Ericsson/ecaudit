@@ -44,4 +44,30 @@
         <exclude name="DataflowAnomalyAnalysis" />
         <exclude name="AvoidFieldNameMatchingMethodName" />
     </rule>
+
+    <rule ref="category/java/performance.xml">
+        <exclude name="AvoidUsingShortType" />
+        <exclude name="AvoidInstantiatingObjectsInLoops" />
+        <exclude name="UseStringBufferForStringAppends" />
+        <exclude name="RedundantFieldInitializer" />
+    </rule>
+
+
+    <rule ref="category/java/codestyle.xml">
+        <exclude name="LocalVariableCouldBeFinal" />
+        <exclude name="MethodArgumentCouldBeFinal" />
+        <exclude name="CommentDefaultAccessModifier" />
+        <exclude name="DefaultPackage" />
+        <exclude name="ShortVariable" />
+        <exclude name="LongVariable" />
+        <exclude name="AtLeastOneConstructor" />
+        <exclude name="OnlyOneReturn" />
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/ClassNamingConventions">
+        <properties>
+            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]*"/>
+        </properties>
+    </rule>
+
 </ruleset>

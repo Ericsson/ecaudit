@@ -17,12 +17,10 @@ package com.ericsson.bss.cassandra.ecaudit.utils;
 
 import org.junit.Test;
 
-import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 public class TestExceptions

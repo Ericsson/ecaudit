@@ -262,6 +262,7 @@ public class TestAuditAdapterFactory
 
     public static class CustomTestSuppressor implements BoundValueSuppressor
     {
+        @Override
         public Optional<String> suppress(ColumnSpecification column, ByteBuffer value)
         {
             return Optional.empty();

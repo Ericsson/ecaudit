@@ -63,9 +63,9 @@ public final class EcLogYamlConfigLoader
         {
             String fileAsString = new String(Files.readAllBytes(filePath));
             EcLogYamlConfig auditYamlConfig = (EcLogYamlConfig) yaml.load(fileAsString);
-            return auditYamlConfig != null
-                   ? auditYamlConfig
-                   : new EcLogYamlConfig(); // File is valid but empty
+            return auditYamlConfig == null
+                   ? new EcLogYamlConfig() // File is valid but empty
+                   : auditYamlConfig;
         }
         catch (YAMLException | IOException e)
         {
