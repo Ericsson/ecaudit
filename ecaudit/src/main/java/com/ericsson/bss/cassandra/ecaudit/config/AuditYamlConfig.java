@@ -27,6 +27,7 @@ import org.apache.cassandra.config.ParameterizedClass;
 /**
  * Data class for configuration
  */
+@SuppressWarnings("PMD.FieldNamingConventions")
 public final class AuditYamlConfig
 {
     private static final List<String> DEFAULT_WHITELIST = Collections.emptyList();
@@ -63,7 +64,7 @@ public final class AuditYamlConfig
      */
     List<String> getWhitelist()
     {
-        return whitelist != null ? Collections.unmodifiableList(whitelist) : DEFAULT_WHITELIST;
+        return whitelist == null ? DEFAULT_WHITELIST : Collections.unmodifiableList(whitelist);
     }
 
     ParameterizedClass getLoggerBackendParameters()
@@ -72,7 +73,7 @@ public final class AuditYamlConfig
         // - ParameterizedClass is mutable
         // - The original map of options may contain a mix of Integers and Strings
         //   Converting it all to Strings makes life easier for plug-ins when parsing options
-        return logger_backend != null ? deepToStringCopy(logger_backend) : deepToStringCopy(DEFAULT_LOGGER_BACKEND);
+        return logger_backend == null ? deepToStringCopy(DEFAULT_LOGGER_BACKEND) : deepToStringCopy(logger_backend);
     }
 
     private ParameterizedClass deepToStringCopy(ParameterizedClass original)
@@ -100,11 +101,11 @@ public final class AuditYamlConfig
 
     String getWrappedAuthorizer()
     {
-        return wrapped_authorizer != null ? wrapped_authorizer : DEFAULT_WRAPPED_AUTHORIZER;
+        return wrapped_authorizer == null ? DEFAULT_WRAPPED_AUTHORIZER : wrapped_authorizer;
     }
 
     String getBoundValueSuppressor()
     {
-        return bound_value_suppressor != null ? bound_value_suppressor : DEFAULT_BOUND_VALUE_SUPPRESSOR;
+        return bound_value_suppressor == null ? DEFAULT_BOUND_VALUE_SUPPRESSOR : bound_value_suppressor;
     }
 }

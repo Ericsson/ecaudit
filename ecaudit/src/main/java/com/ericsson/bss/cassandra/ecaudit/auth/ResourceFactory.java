@@ -29,11 +29,6 @@ import org.apache.cassandra.auth.RoleResource;
 
 final class ResourceFactory
 {
-    private ResourceFactory()
-    {
-        // Utility class
-    }
-
     private static final String DATA_ROOT = "data";
     private static final String ROLES_ROOT = "roles";
     private static final String CONNECTIONS_ROOT = "connections";
@@ -41,6 +36,11 @@ final class ResourceFactory
 
     private static final String SEPARATOR = "/";
     private static final Pattern VALID_NAME_PATTERN = Pattern.compile("\\w+");
+
+    private ResourceFactory()
+    {
+        // Utility class
+    }
 
     static Set<IResource> toResourceSet(String... resourceNames)
     {

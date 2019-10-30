@@ -97,7 +97,7 @@ final class AuditAdapterFactory
         try
         {
             Class<?> loggerBackendClass = Class.forName(auditLoggerParameters.class_name);
-            Map<String, String> parameters = auditLoggerParameters.parameters != null ? auditLoggerParameters.parameters : Collections.emptyMap();
+            Map<String, String> parameters = auditLoggerParameters.parameters == null ? Collections.emptyMap() : auditLoggerParameters.parameters;
             return (AuditLogger) loggerBackendClass.getConstructor(Map.class).newInstance(parameters);
         }
         catch (InvocationTargetException e)

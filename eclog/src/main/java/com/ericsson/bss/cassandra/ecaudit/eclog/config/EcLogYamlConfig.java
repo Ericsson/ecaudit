@@ -20,9 +20,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+@SuppressWarnings("PMD.FieldNamingConventions")
 public class EcLogYamlConfig
 {
-    static String DEFAULT_FORMAT = "{?${TIMESTAMP}?}{?|${CLIENT_IP}?}{?:${CLIENT_PORT}?}{?|${COORDINATOR_IP}?}{?|${USER}?}{?|${STATUS}?}{?|${BATCH_ID}?}{?|${OPERATION}?}";
+    static final String DEFAULT_FORMAT = "{?${TIMESTAMP}?}{?|${CLIENT_IP}?}{?:${CLIENT_PORT}?}{?|${COORDINATOR_IP}?}{?|${USER}?}{?|${STATUS}?}{?|${BATCH_ID}?}{?|${OPERATION}?}";
 
     // Configuration parameters - has to be public for SnakeYaml to inject values
     public String log_format;
@@ -31,7 +32,7 @@ public class EcLogYamlConfig
 
     public String getLogFormat()
     {
-        return log_format != null ? log_format : DEFAULT_FORMAT;
+        return log_format == null ? DEFAULT_FORMAT : log_format;
     }
 
     public Optional<DateTimeFormatter> getTimeFormatter()
