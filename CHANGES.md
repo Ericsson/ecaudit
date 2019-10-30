@@ -1,6 +1,9 @@
 # Changes
 
 ## Version 2.3.0
+* Build with Cassandra 3.11.5 (only flavor ecaudit_c3.11)
+* Build with Cassandra 3.0.19 (only flavor ecaudit_c3.0)
+* Build with Cassandra 2.2.15 (only flavor ecaudit_c2.2)
 * Log only keys #125
 * Avoid logging BLOB values #126
 * Configurable format of printed records with eclog tool #102
