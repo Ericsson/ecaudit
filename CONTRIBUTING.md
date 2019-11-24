@@ -11,14 +11,14 @@ and discuss your improvement with the project maintainers.
 Below you'll find a few things to be aware of when you're working with this project.
 
 
-## Flavours
+## Flavors
 
-Since there are different flavours of ecAudit for different Cassandra versions,
+Since there are different flavors of ecAudit for different Cassandra versions,
 new patch sets should be created on the oldest maintained release branch.
 Once incorporated on the release branch the patch set will be merged forward
 on to more resent release branches (if any) and then finally into the master branch.
 
-This way feature compatibility will be maintained on the different flavours of ecAudit.
+This way feature compatibility will be maintained on the different flavors of ecAudit.
 
 At the moment the oldest maintained release branch is ```release/c2.2```
 which is tracking the latest release of Cassandra 2.2.x.
@@ -30,6 +30,10 @@ The ```master``` branch is tracking the latest release of Cassandra 3.11.x.
 
 Pull Requests with new features should typically target ```release/c2.2```.
 Merge order is then ```PR``` -> ```release/c2.2``` -> ```release/c3.0.11``` -> ```release/c3.0``` -> ```master```
+
+It is encouraged to encapsulate differences between flavors in Flavor Adapters.
+This simplifies maintenance and merging between flavors.
+Examples are the FieldFilterFlavorAdapter and the CqlLiteralFlavorAdapter.
 
 
 ## Design Environment

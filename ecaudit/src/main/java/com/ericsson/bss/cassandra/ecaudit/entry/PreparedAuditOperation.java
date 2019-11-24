@@ -94,7 +94,7 @@ public class PreparedAuditOperation implements AuditOperation
         {
             ByteBuffer value = values.remove();
             String valueString = boundValueSuppressor.suppress(column, value)
-                                                     .orElseGet(() -> CqlLiteralVersionAdapter.toCQLLiteral(value, column));
+                                                     .orElseGet(() -> CqlLiteralFlavorAdapter.toCQLLiteral(value, column));
             fullStatement.append(valueString).append(", ");
         }
 

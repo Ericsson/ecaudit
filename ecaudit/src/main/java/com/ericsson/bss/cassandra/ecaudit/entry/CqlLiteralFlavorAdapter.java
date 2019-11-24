@@ -21,17 +21,19 @@ import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.transport.ProtocolVersion;
 
 /**
- * This logic is broken out into an adapter, since the functionality available in different cassandra versions
- * differs a lot.
+ * This logic is extracted to a flavor specific adapter.
+ *
+ * ecAudit comes in different flavors, one for each supported Cassandra version.
+ * Flavor adapters encapsulates differences between flavors and simplifies maintenance.
  */
-public final class CqlLiteralVersionAdapter
+final class CqlLiteralFlavorAdapter
 {
-    private CqlLiteralVersionAdapter()
+    private CqlLiteralFlavorAdapter()
     {
         // Utility class
     }
 
-    public static String toCQLLiteral(ByteBuffer serializedValue, ColumnSpecification column)
+    static String toCQLLiteral(ByteBuffer serializedValue, ColumnSpecification column)
     {
         return column.type.asCQL3Type().toCQLLiteral(serializedValue, ProtocolVersion.CURRENT);
     }
