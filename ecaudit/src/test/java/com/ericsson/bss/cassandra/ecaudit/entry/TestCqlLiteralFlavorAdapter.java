@@ -33,10 +33,10 @@ import org.apache.cassandra.db.marshal.UTF8Type;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests the {@link CqlLiteralVersionAdapter} class.
+ * Tests the {@link CqlLiteralFlavorAdapter} class.
  */
 @RunWith(JUnitParamsRunner.class)
-public class TestCqlLiteralVersionAdapter
+public class TestCqlLiteralFlavorAdapter
 {
     private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.allocateDirect(0);
 
@@ -47,7 +47,7 @@ public class TestCqlLiteralVersionAdapter
         // Given
         ColumnSpecification col = new ColumnSpecification("ks", "cf", null, type);
         // When
-        String literal = CqlLiteralVersionAdapter.toCQLLiteral(value, col);
+        String literal = CqlLiteralFlavorAdapter.toCQLLiteral(value, col);
         // Then
         assertThat(literal).isEqualTo(expected);
     }
