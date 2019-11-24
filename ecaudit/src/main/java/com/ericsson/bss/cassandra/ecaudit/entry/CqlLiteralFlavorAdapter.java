@@ -28,19 +28,21 @@ import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.serializers.TimestampSerializer;
 
 /**
- * This logic is broken out into an adapter, since the functionality available in different cassandra versions
- * differs a lot.
+ * This logic is extracted to a flavor specific adapter.
+ *
+ * ecAudit comes in different flavors, one for each supported Cassandra version.
+ * Flavor adapters encapsulates differences between flavors and simplifies maintenance.
  */
-public final class CqlLiteralVersionAdapter
+final class CqlLiteralFlavorAdapter
 {
     private static final DateFormat DATE_FORMAT = createDateFormat();
 
-    private CqlLiteralVersionAdapter()
+    private CqlLiteralFlavorAdapter()
     {
         // Utility class
     }
 
-    public static String toCQLLiteral(ByteBuffer serializedValue, ColumnSpecification column)
+    static String toCQLLiteral(ByteBuffer serializedValue, ColumnSpecification column)
     {
         if (!serializedValue.hasRemaining())
         {

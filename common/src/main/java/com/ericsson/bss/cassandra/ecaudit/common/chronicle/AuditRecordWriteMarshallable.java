@@ -29,18 +29,7 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
     public AuditRecordWriteMarshallable(AuditRecord auditRecord, FieldSelector configuredFields)
     {
         this.auditRecord = auditRecord;
-        this.actualFields = getFieldsAvailableInRecord(auditRecord, configuredFields);
-    }
-
-    final static FieldSelector getFieldsAvailableInRecord(AuditRecord auditRecord, FieldSelector configuredFields)
-    {
-        FieldSelector fields = auditRecord.getBatchId().isPresent()
-                               ? configuredFields
-                               : configuredFields.withoutField(Field.BATCH_ID);
-
-        return auditRecord.getClientAddress() == null
-               ? fields.withoutField(Field.CLIENT_IP).withoutField(Field.CLIENT_PORT)
-               : fields;
+        this.actualFields = FieldFilterFlavorAdapter.getFieldsAvailableInRecord(auditRecord, configuredFields);
     }
 
     @Override
