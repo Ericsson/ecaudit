@@ -23,7 +23,7 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 public class DefaultAuditFilter implements AuditFilter {
 
     @Override
-    public boolean isFiltered(AuditEntry logEntry) {
+    public boolean isWhitelisted(AuditEntry logEntry) {
         return false;
     }
 

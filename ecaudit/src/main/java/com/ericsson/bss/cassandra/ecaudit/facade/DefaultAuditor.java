@@ -77,7 +77,7 @@ public class DefaultAuditor implements Auditor
         long start = System.nanoTime();
         try
         {
-            return !filter.isFiltered(logEntry);
+            return !filter.isWhitelisted(logEntry);
         }
         finally
         {

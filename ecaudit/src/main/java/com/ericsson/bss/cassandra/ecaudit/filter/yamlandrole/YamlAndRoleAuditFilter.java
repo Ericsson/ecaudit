@@ -46,9 +46,9 @@ public class YamlAndRoleAuditFilter implements AuditFilter
     }
 
     @Override
-    public boolean isFiltered(AuditEntry logEntry)
+    public boolean isWhitelisted(AuditEntry logEntry)
     {
-        return yamlFilter.isFiltered(logEntry) || roleFilter.isFiltered(logEntry);
+        return yamlFilter.isWhitelisted(logEntry) || roleFilter.isWhitelisted(logEntry);
     }
 
     @Override
