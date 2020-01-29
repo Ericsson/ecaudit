@@ -77,11 +77,11 @@ public class RoleAuditFilter implements AuditFilter
      * @return true if the operation is white-listed, false otherwise
      */
     @Override
-    public boolean isFiltered(AuditEntry logEntry)
+    public boolean isWhitelisted(AuditEntry logEntry)
     {
         try
         {
-            return isFilteredUnchecked(logEntry);
+            return isWhitelistedUnchecked(logEntry);
         }
         catch (UncheckedExecutionException e)
         {
@@ -89,7 +89,7 @@ public class RoleAuditFilter implements AuditFilter
         }
     }
 
-    private boolean isFilteredUnchecked(AuditEntry logEntry)
+    private boolean isWhitelistedUnchecked(AuditEntry logEntry)
     {
         Set<RoleResource> roles = getRoles(logEntry.getUser());
         List<? extends IResource> operationResourceChain = Resources.chain(logEntry.getResource());

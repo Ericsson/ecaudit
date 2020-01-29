@@ -23,13 +23,13 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 public interface AuditFilter {
 
     /**
-     * Return a boolean indicating whether the given log entry is to be exempt from audit logging (i.e. it is filtered).
+     * Return a boolean indicating whether the given log entry is to be exempt from audit logging (i.e. it is whitelisted).
      *
      * @param logEntry
      *            the log entry to check if filtered
      * @return true if the log entry is exempt from audit
      */
-    boolean isFiltered(AuditEntry logEntry);
+    boolean isWhitelisted(AuditEntry logEntry);
 
     /**
      * Setup is called once upon system startup to initialize the AuditFilter.
