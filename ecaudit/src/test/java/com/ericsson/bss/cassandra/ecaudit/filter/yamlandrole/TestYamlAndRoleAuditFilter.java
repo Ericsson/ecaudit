@@ -62,34 +62,34 @@ public class TestYamlAndRoleAuditFilter
     @Test
     public void testFilteredByBothResultInFiltered()
     {
-        when(yamlFilter.isFiltered(eq(auditEntry))).thenReturn(true);
+        when(yamlFilter.isWhitelisted(eq(auditEntry))).thenReturn(true);
 
-        assertThat(combinedFilter.isFiltered(auditEntry)).isEqualTo(true);
+        assertThat(combinedFilter.isWhitelisted(auditEntry)).isEqualTo(true);
     }
 
     @Test
     public void testFilteredByYamlOnlyResultInFiltered()
     {
-        when(yamlFilter.isFiltered(eq(auditEntry))).thenReturn(true);
+        when(yamlFilter.isWhitelisted(eq(auditEntry))).thenReturn(true);
 
-        assertThat(combinedFilter.isFiltered(auditEntry)).isEqualTo(true);
+        assertThat(combinedFilter.isWhitelisted(auditEntry)).isEqualTo(true);
     }
 
     @Test
     public void testFilteredByRoleOnlyResultInFiltered()
     {
-        when(yamlFilter.isFiltered(eq(auditEntry))).thenReturn(false);
-        when(roleFilter.isFiltered(eq(auditEntry))).thenReturn(true);
+        when(yamlFilter.isWhitelisted(eq(auditEntry))).thenReturn(false);
+        when(roleFilter.isWhitelisted(eq(auditEntry))).thenReturn(true);
 
-        assertThat(combinedFilter.isFiltered(auditEntry)).isEqualTo(true);
+        assertThat(combinedFilter.isWhitelisted(auditEntry)).isEqualTo(true);
     }
 
     @Test
     public void testFilteredByNoneResultInNotFiltered()
     {
-        when(yamlFilter.isFiltered(eq(auditEntry))).thenReturn(false);
-        when(roleFilter.isFiltered(eq(auditEntry))).thenReturn(false);
+        when(yamlFilter.isWhitelisted(eq(auditEntry))).thenReturn(false);
+        when(roleFilter.isWhitelisted(eq(auditEntry))).thenReturn(false);
 
-        assertThat(combinedFilter.isFiltered(auditEntry)).isEqualTo(false);
+        assertThat(combinedFilter.isWhitelisted(auditEntry)).isEqualTo(false);
     }
 }

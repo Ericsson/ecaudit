@@ -93,7 +93,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -103,7 +103,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -113,7 +113,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -123,7 +123,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.MODIFY), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -134,7 +134,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Sets.newHashSet(Permission.SELECT, Permission.MODIFY), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -145,7 +145,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Sets.newHashSet(Permission.SELECT, Permission.MODIFY), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -155,7 +155,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/other_tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isFalse();
+        assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
 
     @Test
@@ -165,7 +165,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -175,7 +175,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.EXECUTE), ConnectionResource.root());
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -184,7 +184,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.EXECUTE), ConnectionResource.root());
 
-        assertThat(filter.isFiltered(auditEntry)).isFalse();
+        assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
 
     @Test
@@ -193,7 +193,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.MODIFY), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isFalse();
+        assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
 
     @Test
@@ -204,7 +204,7 @@ public class TestRoleAuditFilter
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
         assertThatExceptionOfType(CassandraException.class)
-        .isThrownBy(() -> filter.isFiltered(auditEntry));
+        .isThrownBy(() -> filter.isWhitelisted(auditEntry));
     }
 
     private void givenRolesOfRequest(String... roleNames)
