@@ -48,6 +48,7 @@ format_for_it () {
  sed -i 's/^rpc_port:.*/rpc_port: ###rpc_port###/' $2
  sed -i 's/^num_tokens:.*/num_tokens: 1/' $2
  sed -i 's/^enable_user_defined_functions:.*/enable_user_defined_functions: true/' $2
+ sed -i 's/^auto_snapshot:.*/auto_snapshot: false/' $2
 }
 
 for IT_TARGET in ${SCRIPT_PATH}/../integration-test-*/src/test/resources/cassandra.yaml;
