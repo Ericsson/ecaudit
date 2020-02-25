@@ -166,6 +166,36 @@ public class TestResourceFactory
     }
 
     @Test
+    public void testGrantsRoot()
+    {
+        IResource resource = ResourceFactory.toResource("grants");
+        assertThat(resource).isSameAs(GrantResource.root());
+    }
+
+    @Test
+    public void testGrantsWrappedResource()
+    {
+        IResource resource = ResourceFactory.toResource("grants/data/ks/table");
+        assertThat(resource.getName()).isEqualTo("grants/data/ks/table");
+        assertThat(resource).isInstanceOf(GrantResource.class);
+    }
+
+    @Test
+    public void testGrantsFail()
+    {
+        assertThatIllegalArgumentException()
+        .isThrownBy(() -> ResourceFactory.toResource("grants/invalid"));
+    }
+
+    @Test
+    public void testRecursiveGrantsFail()
+    {
+        assertThatIllegalArgumentException()
+        .isThrownBy(() -> ResourceFactory.toResource("grants/grants/data/ks/table"))
+        .withMessageContaining("Invalid resource type: grants/grants/data/ks/table, recursive grants not allowed");
+    }
+
+    @Test
     public void testInvalidResourceType()
     {
         assertThatIllegalArgumentException()
