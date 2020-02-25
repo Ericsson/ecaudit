@@ -76,7 +76,7 @@ import static org.mockito.Mockito.verify;
 public class ITVerifyCustomBoundValueSuppressor
 {
     private static final String CUSTOM_LOGGER_NAME = "ECAUDIT_CUSTOM";
-    private static final String KEYSPACE = "CREATE KEYSPACE ks1 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false";
+    private static final String KEYSPACE = "CREATE KEYSPACE IF NOT EXISTS ks1 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false";
     private static final String UDT = "CREATE TYPE ks1.mytype (mykey text, myval blob)";
     private static final String TABLE = "CREATE TABLE ks1.t1 (key1 text, key2 int, key3 text, val1 blob, val2 list<blob>, val3 map<int, frozen<list<blob>>>, val4 int, val5 tuple<text, blob>, val6 frozen<ks1.mytype>, PRIMARY KEY((key1, key2), key3))";
     private static final String INSERT = "INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";

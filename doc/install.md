@@ -20,7 +20,7 @@ Change the following settings in your ```cassandra.yaml```.
 ```
 authenticator: com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator
 authorizer: com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer
-role_manager:  com.ericsson.bss.cassandra.ecaudit.auth.AuditRoleManager
+role_manager: com.ericsson.bss.cassandra.ecaudit.auth.AuditRoleManager
 ```
 
 The AuditPasswordAuthenticator, AuditAuthorizer and AuditRoleManager extends the standard PasswordAuthenticator, CassandraAuthorizer and CassandraRoleManager respectively.
