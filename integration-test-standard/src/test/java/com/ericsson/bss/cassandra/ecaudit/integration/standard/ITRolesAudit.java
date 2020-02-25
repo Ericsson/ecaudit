@@ -30,17 +30,17 @@ import junitparams.Parameters;
 @RunWith(JUnitParamsRunner.class)
 public class ITRolesAudit
 {
-    private static CassandraAuditTester cat = new CassandraAuditTester("superrole");
+    private static CassandraAuditTester cat = new CassandraAuditTester();
 
-    private static String testUser;
+    private static String testUsername;
     private static Cluster testCluster;
     private static Session testSession;
 
     @BeforeClass
     public static void beforeClass()
     {
-        testUser = cat.createUniqueSuperUser();
-        testCluster = cat.createCluster(testUser, "secret");
+        testUsername = cat.createUniqueSuperUser();
+        testCluster = cat.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
     }
 
@@ -48,7 +48,7 @@ public class ITRolesAudit
     public void before()
     {
         cat.before();
-        cat.resetTestUserWithMinimalWhitelist(testUser);
+        cat.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @After
@@ -95,7 +95,7 @@ public class ITRolesAudit
         // When
         testSession.execute(statement);
         // Then
-        cat.expectAuditLogContainEntryForUser(statement, testUser);
+        cat.expectAuditLogContainEntryForUser(statement, testUsername);
     }
 
     @Test
@@ -103,7 +103,7 @@ public class ITRolesAudit
     public void statementIsWhitelisted(String statement, String operation, String resource)
     {
         // Given
-        cat.whitelistRoleForOperationOnResource(testUser, operation, resource);
+        cat.whitelistRoleForOperationOnResource(testUsername, operation, resource);
         // When
         testSession.execute(statement);
         // Then

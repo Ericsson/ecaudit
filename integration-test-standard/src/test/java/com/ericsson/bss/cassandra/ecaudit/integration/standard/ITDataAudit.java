@@ -35,17 +35,17 @@ import static java.util.Arrays.asList;
 @RunWith(JUnitParamsRunner.class)
 public class ITDataAudit
 {
-    private static CassandraAuditTester cat = new CassandraAuditTester("superdata");
+    private static CassandraAuditTester cat = new CassandraAuditTester();
 
-    private static String testUser;
+    private static String testUsername;
     private static Cluster testCluster;
     private static Session testSession;
 
     @BeforeClass
     public static void beforeClass()
     {
-        testUser = cat.createUniqueSuperUser();
-        testCluster = cat.createCluster(testUser, "secret");
+        testUsername = cat.createUniqueSuperUser();
+        testCluster = cat.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
     }
 
@@ -53,7 +53,7 @@ public class ITDataAudit
     public void before()
     {
         cat.before();
-        cat.resetTestUserWithMinimalWhitelist(testUser);
+        cat.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @After
@@ -61,7 +61,6 @@ public class ITDataAudit
     {
         cat.after();
     }
-
 
     @AfterClass
     public static void afterClass()
@@ -104,7 +103,7 @@ public class ITDataAudit
         // When
         testSession.execute(statement);
         // Then
-        cat.expectAuditLogContainEntryForUser(statement, testUser);
+        cat.expectAuditLogContainEntryForUser(statement, testUsername);
     }
 
     @Test
@@ -112,7 +111,7 @@ public class ITDataAudit
     public void simpleStatementIsWhitelisted(String statement, String operation, String resource)
     {
         // Given
-        cat.whitelistRoleForOperationOnResource(testUser, operation, resource);
+        cat.whitelistRoleForOperationOnResource(testUsername, operation, resource);
         // When
         testSession.execute(statement);
         // Then
@@ -141,7 +140,7 @@ public class ITDataAudit
         PreparedStatement preparedStatement = testSession.prepare(statement);
         testSession.execute(preparedStatement.bind(value.toArray()));
         // Then
-        cat.expectAuditLogContainEntryForUser(expectedTrace, testUser);
+        cat.expectAuditLogContainEntryForUser(expectedTrace, testUsername);
     }
 
     @Test
@@ -151,7 +150,7 @@ public class ITDataAudit
     {
         // Given
         givenTable("dataks", "tbl");
-        cat.whitelistRoleForOperationOnResource(testUser, operation, resource);
+        cat.whitelistRoleForOperationOnResource(testUsername, operation, resource);
         // When
         PreparedStatement preparedStatement = testSession.prepare(statement);
         testSession.execute(preparedStatement.bind(value.toArray()));

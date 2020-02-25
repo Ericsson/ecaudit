@@ -42,6 +42,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class CassandraAuditTester
 {
+    private static final AtomicInteger superUsernameNumber = new AtomicInteger();
     private static final AtomicInteger usernameNumber = new AtomicInteger();
     private List<Integer> usernameNumbers = new ArrayList<>();
 
@@ -53,9 +54,9 @@ public class CassandraAuditTester
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
 
-    CassandraAuditTester(String superUserName)
+    CassandraAuditTester()
     {
-        superName = superUserName;
+        superName = "superuser" + superUsernameNumber.incrementAndGet();
         try
         {
             cdt = CassandraDaemonForAuditTest.getInstance();
