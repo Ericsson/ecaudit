@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
@@ -40,21 +41,23 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-public class CassandraAuditTester
+public class CassandraClusterFacade
 {
     private static final AtomicInteger superUsernameNumber = new AtomicInteger();
-    private static final AtomicInteger usernameNumber = new AtomicInteger();
-    private List<Integer> usernameNumbers = new ArrayList<>();
 
     private CassandraDaemonForAuditTest cdt;
     private String superName;
     private Cluster superCluster;
     private Session superSession;
 
+    private List<String> createdUsers = new ArrayList<>();
+    private List<String> createdKeyspaces = new ArrayList<>();
+    private List<String> createdTables = new ArrayList<>();
+
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
 
-    CassandraAuditTester()
+    void beforeClass()
     {
         superName = "superuser" + superUsernameNumber.incrementAndGet();
         try
@@ -72,6 +75,7 @@ public class CassandraAuditTester
             cassandraSession.execute("CREATE ROLE " + superName + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
             cassandraSession.execute("ALTER ROLE " + superName + " WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}");
             cassandraSession.execute("ALTER ROLE " + superName + " WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}");
+            cassandraSession.execute("ALTER ROLE " + superName + " WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'functions'}");
         }
 
         superCluster = cdt.createCluster(superName, "secret");
@@ -81,23 +85,27 @@ public class CassandraAuditTester
     void before()
     {
         MockitoAnnotations.initMocks(this);
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).addAppender(mockAuditAppender);
+        getLogger().addAppender(mockAuditAppender);
     }
 
     void after()
     {
         verifyNoMoreInteractions(mockAuditAppender);
+        getLogger().detachAppender(mockAuditAppender);
+    }
+
+    private Logger getLogger()
+    {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME).detachAppender(mockAuditAppender);
+        return loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME);
     }
 
     void afterClass()
     {
-        for (int usernameNumber : usernameNumbers)
-        {
-            superSession.execute("DROP ROLE IF EXISTS role" + usernameNumber);
-        }
+        createdUsers.forEach(role -> superSession.execute("DROP ROLE IF EXISTS " + role));
+        createdTables.forEach(tbl -> superSession.execute("DROP TABLE IF EXISTS " + tbl));
+        createdKeyspaces.forEach(ks -> superSession.execute("DROP KEYSPACE IF EXISTS " + ks));
+
         superSession.close();
         superCluster.close();
 
@@ -108,59 +116,60 @@ public class CassandraAuditTester
         }
     }
 
-    String createUniqueUser()
+    void givenUser(String username)
     {
-        return createUniqueUser(false);
+        superSession.execute("CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = false");
+        createdUsers.add(username);
     }
 
-    String createUniqueSuperUser()
+    void givenSuperuserWithMinimalWhitelist(String username)
     {
-        return createUniqueUser(true);
-    }
-
-    private String createUniqueUser(boolean superuser)
-    {
-        String username = getUniqueUsername();
-        superSession.execute("CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = " + superuser);
-        return username;
-    }
-
-    String getUniqueUsername()
-    {
-        int uniqueNumber = usernameNumber.getAndIncrement();
-        usernameNumbers.add(uniqueNumber);
-        return "role" + uniqueNumber;
+        superSession.execute("CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
+        setMinimumWhitelist(username);
+        createdUsers.add(username);
     }
 
     void resetTestUserWithMinimalWhitelist(String username)
     {
         superSession.execute("DELETE FROM system_auth.role_audit_whitelists_v2 WHERE role = '" + username + "'");
+        setMinimumWhitelist(username);
+    }
+
+    private void setMinimumWhitelist(String username)
+    {
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }");
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }");
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }");
     }
 
-    void executeStatementAsSuperuserWithoutAudit(String statement)
+    void givenStatementExecutedAsSuperuserWithoutAudit(String statement)
     {
         superSession.execute(statement);
     }
 
-    void createKeyspace(String keyspace)
+    void givenKeyspace(String keyspace)
     {
-        superSession.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        superSession.execute("CREATE KEYSPACE " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        createdKeyspaces.add(keyspace);
     }
 
-    void whitelistRoleForOperationOnResource(String username, String operation, String resource)
+    void givenTable(String table)
+    {
+        superSession.execute("CREATE TABLE " + table + " (key int PRIMARY KEY, value text)");
+        createdTables.add(table);
+    }
+
+    void givenRoleIsWhitelistedForOperationOnResource(String username, String operation, String resource)
     {
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = {'grant_audit_whitelist_for_" + operation + "' : '" + resource + "'}");
     }
 
-    void expectNoAuditLog()
+    void thenAuditLogContainNothingForUser()
     {
         verify(mockAuditAppender, never()).doAppend(any(ILoggingEvent.class));
     }
 
-    void expectAuditLogContainEntryForUser(String auditOperation, String username)
+    void thenAuditLogContainEntryForUser(String auditOperation, String username)
     {
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
         verify(mockAuditAppender, times(1)).doAppend(loggingEventCaptor.capture());

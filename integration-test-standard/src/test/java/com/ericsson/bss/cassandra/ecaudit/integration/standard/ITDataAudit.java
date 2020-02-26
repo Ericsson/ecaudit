@@ -15,8 +15,6 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.integration.standard;
 
-import java.util.List;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -25,41 +23,41 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 
-import static java.util.Arrays.asList;
-
 @RunWith(JUnitParamsRunner.class)
 public class ITDataAudit
 {
-    private static CassandraAuditTester cat = new CassandraAuditTester();
+    private static CassandraClusterFacade ccf = new CassandraClusterFacade();
 
-    private static String testUsername;
+    private static final String testUsername = "datasuperuser";
     private static Cluster testCluster;
     private static Session testSession;
 
     @BeforeClass
     public static void beforeClass()
     {
-        testUsername = cat.createUniqueSuperUser();
-        testCluster = cat.createCluster(testUsername, "secret");
+        ccf.beforeClass();
+        ccf.givenSuperuserWithMinimalWhitelist(testUsername);
+        testCluster = ccf.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
+
+        ccf.givenUser("data_grantee");
     }
 
     @Before
     public void before()
     {
-        cat.before();
-        cat.resetTestUserWithMinimalWhitelist(testUsername);
+        ccf.before();
+        ccf.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @After
     public void after()
     {
-        cat.after();
+        ccf.after();
     }
 
     @AfterClass
@@ -67,23 +65,21 @@ public class ITDataAudit
     {
         testSession.close();
         testCluster.close();
-        cat.afterClass();
+        ccf.afterClass();
     }
 
     @SuppressWarnings("unused")
     private Object[] parametersForSimpleStatements()
     {
-        String grantee = cat.createUniqueUser();
-
         return new Object[]{
-            new Object[]{ "CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false", "create", "data/dataks" },
-            new Object[]{ "CREATE TABLE IF NOT EXISTS dataks.tbl (key int PRIMARY KEY, value text)", "create", "data/dataks" },
-            new Object[]{ "CREATE INDEX IF NOT EXISTS idx ON dataks.tbl (value)", "alter", "data/dataks/tbl" },
-            new Object[]{ "CREATE TYPE IF NOT EXISTS dataks.tp (data1 int, data2 int)", "create", "data/dataks" },
+            new Object[]{ "CREATE KEYSPACE dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false", "create", "data/dataks" },
+            new Object[]{ "CREATE TABLE dataks.tbl (key int PRIMARY KEY, value text)", "create", "data/dataks" },
+            new Object[]{ "CREATE INDEX idx ON dataks.tbl (value)", "alter", "data/dataks/tbl" },
+            new Object[]{ "CREATE TYPE dataks.tp (data1 int, data2 int)", "create", "data/dataks" },
             new Object[]{ "SELECT * FROM dataks.tbl WHERE key = 12", "select", "data/dataks/tbl" },
             new Object[]{ "INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')", "modify", "data/dataks/tbl" },
             new Object[]{ "UPDATE dataks.tbl SET value = 'hepp' WHERE key = 99", "modify", "data/dataks/tbl" },
-            new Object[]{ "GRANT SELECT ON TABLE dataks.tbl TO " + grantee, "authorize", "data/dataks/tbl" },
+            new Object[]{ "GRANT SELECT ON TABLE dataks.tbl TO data_grantee", "authorize", "data/dataks/tbl" },
             new Object[]{ "DELETE value FROM dataks.tbl WHERE key = 5654", "modify", "data/dataks/tbl" },
             new Object[]{ "ALTER TYPE dataks.tp ALTER data1 TYPE int", "alter", "data/dataks" },
             new Object[]{ "ALTER TABLE dataks.tbl WITH gc_grace_seconds = 0", "alter", "data/dataks/tbl" },
@@ -100,67 +96,16 @@ public class ITDataAudit
     @SuppressWarnings("unused")
     public void simpleStatementIsLogged(String statement, String operation, String resource)
     {
-        // When
         testSession.execute(statement);
-        // Then
-        cat.expectAuditLogContainEntryForUser(statement, testUsername);
+        ccf.thenAuditLogContainEntryForUser(statement, testUsername);
     }
 
     @Test
     @Parameters(method = "parametersForSimpleStatements")
     public void simpleStatementIsWhitelisted(String statement, String operation, String resource)
     {
-        // Given
-        cat.whitelistRoleForOperationOnResource(testUsername, operation, resource);
-        // When
+        ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, resource);
         testSession.execute(statement);
-        // Then
-        cat.expectNoAuditLog();
-    }
-
-    @SuppressWarnings("unused")
-    private Object[] parametersForPreparedStatements()
-    {
-        return new Object[]{
-            new Object[]{ "SELECT * FROM dataks.tbl WHERE key = ?", asList(5), "SELECT * FROM dataks.tbl WHERE key = ?[5]", "select", "data/dataks/tbl" },
-            new Object[]{ "INSERT INTO dataks.tbl (key, value) VALUES (?, ?)", asList(5, "hepp"), "INSERT INTO dataks.tbl (key, value) VALUES (?, ?)[5, 'hepp']", "modify", "data/dataks/tbl" },
-            new Object[]{ "UPDATE dataks.tbl SET value = ? WHERE key = ?", asList("hepp", 34), "UPDATE dataks.tbl SET value = ? WHERE key = ?['hepp', 34]", "modify", "data/dataks/tbl" },
-            new Object[]{ "DELETE value FROM dataks.tbl WHERE key = ?", asList(22), "DELETE value FROM dataks.tbl WHERE key = ?[22]", "modify", "data/dataks/tbl" },
-        };
-    }
-
-    @Test
-    @Parameters(method = "parametersForPreparedStatements")
-    @SuppressWarnings("unused")
-    public void preparedStatementIsLogged(String statement, List<Object> value, String expectedTrace, String operation, String resource)
-    {
-        // Given
-        givenTable("dataks", "tbl");
-        // When
-        PreparedStatement preparedStatement = testSession.prepare(statement);
-        testSession.execute(preparedStatement.bind(value.toArray()));
-        // Then
-        cat.expectAuditLogContainEntryForUser(expectedTrace, testUsername);
-    }
-
-    @Test
-    @Parameters(method = "parametersForPreparedStatements")
-    @SuppressWarnings("unused")
-    public void preparedStatementIsWhitelisted(String statement, List<Object> value, String expectedTrace, String operation, String resource)
-    {
-        // Given
-        givenTable("dataks", "tbl");
-        cat.whitelistRoleForOperationOnResource(testUsername, operation, resource);
-        // When
-        PreparedStatement preparedStatement = testSession.prepare(statement);
-        testSession.execute(preparedStatement.bind(value.toArray()));
-        // Then
-        cat.expectNoAuditLog();
-    }
-
-    private void givenTable(String keyspace, String table)
-    {
-        cat.createKeyspace(keyspace);
-        cat.executeStatementAsSuperuserWithoutAudit("CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)");
+        ccf.thenAuditLogContainNothingForUser();
     }
 }

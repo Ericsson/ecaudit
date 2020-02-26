@@ -30,52 +30,56 @@ import junitparams.Parameters;
 @RunWith(JUnitParamsRunner.class)
 public class ITFunctionsAudit
 {
-    private static CassandraAuditTester cat = new CassandraAuditTester();
+    private static CassandraClusterFacade ccf = new CassandraClusterFacade();
 
-    private static String testUsername;
+    private static final String testUsername = "funcsuperuser";
     private static Cluster testCluster;
     private static Session testSession;
 
     @BeforeClass
     public static void beforeClass()
     {
-        testUsername = cat.createUniqueSuperUser();
-        testCluster = cat.createCluster(testUsername, "secret");
+        ccf.beforeClass();
+        ccf.givenSuperuserWithMinimalWhitelist(testUsername);
+        testCluster = ccf.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
 
-        cat.createKeyspace("funcks");
-        givenStateFunction("aggks", "avgState1");
-        givenFinalStateFunction("aggks", "avgFinal1");
+        ccf.givenKeyspace("funcks");
+        ccf.givenKeyspace("aggks");
+        givenStateFunction("aggks.avgState1");
+        givenFinalStateFunction("aggks.avgFinal1");
     }
 
     @Before
     public void before()
     {
-        cat.before();
-        cat.resetTestUserWithMinimalWhitelist(testUsername);
+        ccf.before();
+        ccf.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @After
     public void after()
     {
-        cat.after();
+        ccf.after();
     }
 
     @AfterClass
     public static void afterClass()
     {
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit("DROP FUNCTION aggks.avgState1");
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit("DROP FUNCTION aggks.avgFinal1");
         testSession.close();
         testCluster.close();
-        cat.afterClass();
+        ccf.afterClass();
     }
 
     @SuppressWarnings("unused")
     private Object[] parametersForFunctionStatements()
     {
         return new Object[]{
-            new Object[]{ "CREATE FUNCTION IF NOT EXISTS funcks.flog1 (input double) CALLED ON NULL INPUT RETURNS double LANGUAGE java AS 'return Double.valueOf(Math.log(input.doubleValue()));'", "create", "functions/funcks" },
+            new Object[]{ "CREATE FUNCTION funcks.flog1 (input double) CALLED ON NULL INPUT RETURNS double LANGUAGE java AS 'return Double.valueOf(Math.log(input.doubleValue()));'", "create", "functions/funcks" },
             new Object[]{ "DROP FUNCTION IF EXISTS funcks.flog1(double)", "drop", "functions/funcks/flog1|DoubleType" },
-            new Object[]{ "CREATE AGGREGATE IF NOT EXISTS aggks.aaverage1 (int) SFUNC avgState1 STYPE tuple<int,bigint> FINALFUNC avgFinal1 INITCOND (0,0)", "create", "functions/aggks" },
+            new Object[]{ "CREATE AGGREGATE aggks.aaverage1 (int) SFUNC avgState1 STYPE tuple<int,bigint> FINALFUNC avgFinal1 INITCOND (0,0)", "create", "functions/aggks" },
             new Object[]{ "DROP AGGREGATE IF EXISTS aggks.aaverage1(int)", "drop", "functions/aggks/aaverage1|Int32Type" },
         };
     }
@@ -85,29 +89,23 @@ public class ITFunctionsAudit
     @SuppressWarnings("unused")
     public void statementIsLogged(String statement, String operation, String resource)
     {
-        // When
         testSession.execute(statement);
-        // Then
-        cat.expectAuditLogContainEntryForUser(statement, testUsername);
+        ccf.thenAuditLogContainEntryForUser(statement, testUsername);
     }
 
     @Test
     @Parameters(method = "parametersForFunctionStatements")
     public void statementIsWhitelisted(String statement, String operation, String resource)
     {
-        // Given
-        cat.whitelistRoleForOperationOnResource(testUsername, operation, resource);
-        // When
+        ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, resource);
         testSession.execute(statement);
-        // Then
-        cat.expectNoAuditLog();
+        ccf.thenAuditLogContainNothingForUser();
     }
 
-    private static void givenStateFunction(String keyspace, String func)
+    private static void givenStateFunction(String func)
     {
-        cat.createKeyspace(keyspace);
-        cat.executeStatementAsSuperuserWithoutAudit(
-        "CREATE FUNCTION IF NOT EXISTS " + keyspace + "." + func + " (state tuple<int, bigint>, val int) " +
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit(
+        "CREATE FUNCTION " + func + " (state tuple<int, bigint>, val int) " +
         "CALLED ON NULL INPUT " +
         "RETURNS tuple<int, bigint> LANGUAGE java AS " +
         "'" +
@@ -120,11 +118,10 @@ public class ITFunctionsAudit
         "'");
     }
 
-    private static void givenFinalStateFunction(String keyspace, String func)
+    private static void givenFinalStateFunction(String func)
     {
-        cat.createKeyspace(keyspace);
-        cat.executeStatementAsSuperuserWithoutAudit(
-        "CREATE FUNCTION IF NOT EXISTS " + keyspace + "." + func + " (state tuple<int, bigint>) " +
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit(
+        "CREATE FUNCTION " + func + " (state tuple<int, bigint>) " +
         "CALLED ON NULL INPUT " +
         "RETURNS double LANGUAGE java AS " +
         "'" +
