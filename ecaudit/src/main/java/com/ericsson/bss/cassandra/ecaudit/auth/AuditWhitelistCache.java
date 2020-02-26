@@ -18,6 +18,8 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
+
 import org.apache.cassandra.auth.AuthCache;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
@@ -63,6 +65,15 @@ public class AuditWhitelistCache extends AuthCache<RoleResource, Map<IResource, 
      */
     public Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
     {
-        return get(role);
+        try
+        {
+            return get(role);
+        }
+        catch (Exception e)
+        {
+            // The call to get() may throw ExecutionException in version 3.11.4 and older
+            // We're catching Exception here to remain compatible with those older versions
+            throw new UncheckedExecutionException(e);
+        }
     }
 }
