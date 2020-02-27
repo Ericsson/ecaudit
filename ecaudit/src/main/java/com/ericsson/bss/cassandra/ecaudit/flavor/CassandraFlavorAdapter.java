@@ -68,7 +68,7 @@ public class CassandraFlavorAdapter
 
             throw new ConfigurationException("Failed to create table: " + expectedTable.cfName, e);
         }
-        catch (NoSuchMethodException | IllegalAccessException e)
+        catch (NoSuchMethodException | IllegalAccessException | SecurityException | IllegalArgumentException e)
         {
             throw new ConfigurationException("Failed to create table: " + expectedTable.cfName, e);
         }
