@@ -37,15 +37,15 @@ public class ITDataPreparedAudit
 {
     private static CassandraClusterFacade ccf = new CassandraClusterFacade();
 
-    private static final String testUsername = "prepsuperuser";
+    private static String testUsername;
     private static Cluster testCluster;
     private static Session testSession;
 
     @BeforeClass
     public static void beforeClass()
     {
-        ccf.beforeClass();
-        ccf.givenSuperuserWithMinimalWhitelist(testUsername);
+        ccf.setup();
+        testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
         testCluster = ccf.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
 
@@ -57,13 +57,13 @@ public class ITDataPreparedAudit
     public void before()
     {
         ccf.before();
-        ccf.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @After
     public void after()
     {
         ccf.after();
+        ccf.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @AfterClass
@@ -71,7 +71,7 @@ public class ITDataPreparedAudit
     {
         testSession.close();
         testCluster.close();
-        ccf.afterClass();
+        ccf.tearDown();
     }
 
     @SuppressWarnings("unused")

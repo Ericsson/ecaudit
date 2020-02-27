@@ -57,7 +57,7 @@ public class CassandraClusterFacade
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
 
-    void beforeClass()
+    void setup()
     {
         superName = "superuser" + superUsernameNumber.incrementAndGet();
         try
@@ -100,7 +100,7 @@ public class CassandraClusterFacade
         return loggerContext.getLogger(Slf4jAuditLogger.AUDIT_LOGGER_NAME);
     }
 
-    void afterClass()
+    void tearDown()
     {
         createdUsers.forEach(role -> superSession.execute("DROP ROLE IF EXISTS " + role));
         createdTables.forEach(tbl -> superSession.execute("DROP TABLE IF EXISTS " + tbl));
@@ -118,14 +118,20 @@ public class CassandraClusterFacade
 
     void givenUser(String username)
     {
-        superSession.execute("CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = false");
-        createdUsers.add(username);
+        createUser(username, false);
     }
 
-    void givenSuperuserWithMinimalWhitelist(String username)
+    String givenUniqueSuperuserWithMinimalWhitelist()
     {
-        superSession.execute("CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
+        String username = "superuser" + superUsernameNumber.incrementAndGet();
+        createUser(username, true);
         setMinimumWhitelist(username);
+        return username;
+    }
+
+    private void createUser(String username, boolean isSuperuser)
+    {
+        superSession.execute("CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = " + isSuperuser);
         createdUsers.add(username);
     }
 

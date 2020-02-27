@@ -31,33 +31,34 @@ import junitparams.Parameters;
 public class ITDataAudit
 {
     private static CassandraClusterFacade ccf = new CassandraClusterFacade();
+    private static final String GRANTEE = "data_grantee";
 
-    private static final String testUsername = "datasuperuser";
+    private static String testUsername;
     private static Cluster testCluster;
     private static Session testSession;
 
     @BeforeClass
     public static void beforeClass()
     {
-        ccf.beforeClass();
-        ccf.givenSuperuserWithMinimalWhitelist(testUsername);
+        ccf.setup();
+        testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
         testCluster = ccf.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
 
-        ccf.givenUser("data_grantee");
+        ccf.givenUser(GRANTEE);
     }
 
     @Before
     public void before()
     {
         ccf.before();
-        ccf.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @After
     public void after()
     {
         ccf.after();
+        ccf.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @AfterClass
@@ -65,7 +66,7 @@ public class ITDataAudit
     {
         testSession.close();
         testCluster.close();
-        ccf.afterClass();
+        ccf.tearDown();
     }
 
     @SuppressWarnings("unused")
@@ -79,7 +80,7 @@ public class ITDataAudit
             new Object[]{ "SELECT * FROM dataks.tbl WHERE key = 12", "select", "data/dataks/tbl" },
             new Object[]{ "INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')", "modify", "data/dataks/tbl" },
             new Object[]{ "UPDATE dataks.tbl SET value = 'hepp' WHERE key = 99", "modify", "data/dataks/tbl" },
-            new Object[]{ "GRANT SELECT ON TABLE dataks.tbl TO data_grantee", "authorize", "data/dataks/tbl" },
+            new Object[]{ "GRANT SELECT ON TABLE dataks.tbl TO " + GRANTEE, "authorize", "data/dataks/tbl" },
             new Object[]{ "DELETE value FROM dataks.tbl WHERE key = 5654", "modify", "data/dataks/tbl" },
             new Object[]{ "ALTER TYPE dataks.tp ALTER data1 TYPE int", "alter", "data/dataks" },
             new Object[]{ "ALTER TABLE dataks.tbl WITH gc_grace_seconds = 0", "alter", "data/dataks/tbl" },

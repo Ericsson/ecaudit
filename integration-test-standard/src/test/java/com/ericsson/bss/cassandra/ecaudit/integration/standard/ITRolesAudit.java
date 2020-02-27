@@ -31,33 +31,34 @@ import junitparams.Parameters;
 public class ITRolesAudit
 {
     private static CassandraClusterFacade ccf = new CassandraClusterFacade();
+    private static final String ROLE = "role_role";
 
-    private static final String testUsername = "rolesuperuser";
+    private static String testUsername;
     private static Cluster testCluster;
     private static Session testSession;
 
     @BeforeClass
     public static void beforeClass()
     {
-        ccf.beforeClass();
-        ccf.givenSuperuserWithMinimalWhitelist(testUsername);
+        ccf.setup();
+        testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
         testCluster = ccf.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
 
-        ccf.givenUser("role_role");
+        ccf.givenUser(ROLE);
     }
 
     @Before
     public void before()
     {
         ccf.before();
-        ccf.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @After
     public void after()
     {
         ccf.after();
+        ccf.resetTestUserWithMinimalWhitelist(testUsername);
     }
 
     @AfterClass
@@ -65,7 +66,7 @@ public class ITRolesAudit
     {
         testSession.close();
         testCluster.close();
-        ccf.afterClass();
+        ccf.tearDown();
     }
 
     @SuppressWarnings("unused")
@@ -74,11 +75,11 @@ public class ITRolesAudit
         return new Object[]{
             new Object[]{ "CREATE ROLE role_user WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true", "create", "roles" },
             new Object[]{ "ALTER ROLE role_user WITH LOGIN = false", "alter", "roles/role_user" },
-            new Object[]{ "GRANT role_role TO role_user", "authorize", "roles/role_role" },
-            new Object[]{ "REVOKE role_role FROM role_user", "authorize", "roles/role_role" },
+            new Object[]{ "GRANT " + ROLE + " TO role_user", "authorize", "roles/" + ROLE },
+            new Object[]{ "REVOKE " + ROLE + " FROM role_user", "authorize", "roles/" + ROLE},
             new Object[]{ "LIST ROLES OF role_user", "describe", "roles" },
             new Object[]{ "DROP ROLE role_user", "drop", "roles/role_user" },
-            };
+        };
     }
 
     @Test
