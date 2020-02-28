@@ -23,27 +23,33 @@ import java.util.Optional;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 
+import com.ericsson.bss.cassandra.ecaudit.common.formatter.LogMessageFormatter;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+
 class Slf4jAuditLoggerConfig
 {
     private static final String CONFIG_LOG_FORMAT = "log_format";
     private static final String CONFIG_TIME_FORMAT = "time_format";
     private static final String CONFIG_TIME_ZONE = "time_zone";
 
-    private static final String DEFAULT_LOG_FORMAT = "{?client:'${CLIENT_IP}'|?}user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+    private static final String DEFAULT_LOG_FORMAT =
+            "{?client:'${CLIENT_IP}'|?}user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
 
     private final String logFormat;
     private final DateTimeFormatter timeFormatter;
+    private final LogMessageFormatter.Builder.FallbackFieldFunction<AuditEntry, Object> fallbackFieldFunction;
 
     Slf4jAuditLoggerConfig(Map<String, String> parameters)
     {
         logFormat = resolveLogFormat(parameters);
         timeFormatter = resolveTimeFormatter(parameters);
+        fallbackFieldFunction = (field, entry) -> entry.get(field, Object.class);
     }
 
     private static String resolveLogFormat(Map<String, String> parameters) throws ConfigurationException
     {
         return Optional.ofNullable(parameters.get(CONFIG_LOG_FORMAT))
-                       .orElse(DEFAULT_LOG_FORMAT);
+                .orElse(DEFAULT_LOG_FORMAT);
     }
 
     private static DateTimeFormatter resolveTimeFormatter(Map<String, String> configuration) throws ConfigurationException
@@ -51,9 +57,9 @@ class Slf4jAuditLoggerConfig
         try
         {
             return Optional.ofNullable(configuration.get(CONFIG_TIME_FORMAT))
-                           .map(DateTimeFormatter::ofPattern)
-                           .map(formatter -> formatter.withZone(resolveZoneId(configuration)))
-                           .orElse(null);
+                    .map(DateTimeFormatter::ofPattern)
+                    .map(formatter -> formatter.withZone(resolveZoneId(configuration)))
+                    .orElse(null);
         }
         catch (IllegalArgumentException e)
         {
@@ -66,8 +72,8 @@ class Slf4jAuditLoggerConfig
         try
         {
             return Optional.ofNullable(parameters.get(CONFIG_TIME_ZONE))
-                           .map(ZoneId::of)
-                           .orElse(ZoneId.systemDefault());
+                    .map(ZoneId::of)
+                    .orElse(ZoneId.systemDefault());
         }
         catch (DateTimeException e)
         {
@@ -83,5 +89,10 @@ class Slf4jAuditLoggerConfig
     Optional<DateTimeFormatter> getTimeFormatter()
     {
         return Optional.ofNullable(timeFormatter);
+    }
+
+    LogMessageFormatter.Builder.FallbackFieldFunction getFallbackFieldMapper()
+    {
+        return fallbackFieldFunction;
     }
 }

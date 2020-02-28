@@ -15,6 +15,18 @@
  */
 package com.ericsson.bss.cassandra.ecaudit;
 
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -25,24 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
-import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
-import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
-import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
-import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
-import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.Permission;
@@ -60,23 +54,29 @@ import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MD5Digest;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
+import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
+import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@RunWith (MockitoJUnitRunner.StrictStubs.class)
 public class TestAuditAdapter
 {
     private static final long TIMESTAMP = 42L;
@@ -268,7 +268,7 @@ public class TestAuditAdapter
         assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings ("unchecked")
     @Test
     public void testProcessBatchRegularStatements()
     {
@@ -292,7 +292,9 @@ public class TestAuditAdapter
         assertThat(entries).extracting(AuditEntry::getUser).containsOnly(USER);
         assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
         assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(Status.ATTEMPT);
-        assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsExactly("query1", "query2", "query3");
+        assertThat(entries).extracting(AuditEntry::getOperation)
+                .extracting(AuditOperation::getOperationString)
+                .containsExactly("query1", "query2", "query3");
         assertThat(entries).extracting(AuditEntry::getPermissions).containsOnly(PERMISSIONS);
         assertThat(entries).extracting(AuditEntry::getResource).containsOnly(RESOURCE);
         assertThat(entries).extracting(AuditEntry::getTimestamp).containsOnly(TIMESTAMP);
@@ -343,7 +345,8 @@ public class TestAuditAdapter
         // Given
         when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
-        auditAdapter.auditBatch(mock(BatchStatement.class), mock(UUID.class), mockState, mock(BatchQueryOptions.class), Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditBatch(mock(BatchStatement.class), mock(UUID.class), mockState, mock(BatchQueryOptions.class), Status.ATTEMPT,
+                TIMESTAMP);
         // Then
         verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
@@ -394,7 +397,7 @@ public class TestAuditAdapter
         doThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 3, 4, true)).when(mockAuditor).audit(any(AuditEntry.class));
 
         assertThatExceptionOfType(AuthenticationException.class)
-        .isThrownBy(() -> auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP));
+                .isThrownBy(() -> auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP));
     }
 
     @Test
@@ -407,6 +410,22 @@ public class TestAuditAdapter
         SimpleAuditOperation operation = AuditAdapter.statusToAuthenticationOperation(mockStatus);
         // Then
         assertThat(operation.getOperationString()).isEqualTo("Authentication OK");
+    }
+
+    @Test
+    public void testLogSpecificEntry()
+    {
+        // Given
+        String expectedOperation = "Authentication attempt";
+        ConnectionResource resource = ConnectionResource.root();
+
+        // When
+        AuditEntry expected = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(resource).status(Status.ATTEMPT).build();
+        auditAdapter.audit(expected);
+
+        // Then
+        AuditEntry actual = getAuditEntry();
+        assertThat(actual).isSameAs(expected);
     }
 
     private ImmutableList<ColumnSpecification> createTextColumns(String... columns)

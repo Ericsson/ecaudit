@@ -205,6 +205,19 @@ public class AuditAdapter
         }
     }
 
+    /**
+     * Audit log a specific, custom made entry.
+     * @param entry the entry to log
+     */
+    public void audit(AuditEntry entry)
+    {
+        Status status = entry.getStatus();
+        if (auditor.shouldLogForStatus(status))
+        {
+            auditor.audit(entry);
+        }
+    }
+
     static SimpleAuditOperation statusToAuthenticationOperation(Status status)
     {
         return new SimpleAuditOperation("Authentication " + status.getDisplayName());

@@ -21,15 +21,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
+import org.apache.cassandra.exceptions.ConfigurationException;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.common.formatter.LogMessageFormatter;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import org.apache.cassandra.exceptions.ConfigurationException;
-import org.jetbrains.annotations.Nullable;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Implements an {@link AuditLogger} that writes {@link AuditEntry} instance into file using {@link Logger}.
@@ -76,12 +76,13 @@ public class Slf4jAuditLogger implements AuditLogger
     {
         try
         {
-            return LogMessageFormatter.<AuditEntry>builder()
-                   .format(auditConfig.getLogFormat())
-                   .anchor("{}")
-                   .escape("\\{\\}", "\\\\{}")
-                   .availableFields(getAvailableFieldFunctionMap(auditConfig))
-                   .build();
+            return LogMessageFormatter.<AuditEntry> builder()
+                    .format(auditConfig.getLogFormat())
+                    .anchor("{}")
+                    .escape("\\{\\}", "\\\\{}")
+                    .availableFields(getDefaultFieldsFunctionMap(auditConfig))
+                    .fallbackFunction(auditConfig.getFallbackFieldMapper())
+                    .build();
         }
         catch (IllegalArgumentException e)
         {
@@ -89,19 +90,19 @@ public class Slf4jAuditLogger implements AuditLogger
         }
     }
 
-    static Map<String, Function<AuditEntry, Object>> getAvailableFieldFunctionMap(Slf4jAuditLoggerConfig auditConfig)
+    static Map<String, Function<AuditEntry, Object>> getDefaultFieldsFunctionMap(Slf4jAuditLoggerConfig auditConfig)
     {
-        return ImmutableMap.<String, Function<AuditEntry, Object>>builder()
-               .put("CLIENT_IP", entry -> getIpOrNull(entry.getClientAddress()))
-               .put("CLIENT_PORT", entry -> getPortOrNull(entry.getClientAddress()))
-               .put("COORDINATOR_IP", entry -> entry.getCoordinatorAddress().getHostAddress())
-               .put("USER", AuditEntry::getUser)
-               .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
-               .put("STATUS", AuditEntry::getStatus)
-               .put("OPERATION", entry -> entry.getOperation().getOperationString())
-               .put("OPERATION_NAKED", entry -> entry.getOperation().getNakedOperationString())
-               .put("TIMESTAMP", getTimeFunction(auditConfig))
-               .build();
+        return ImmutableMap.<String, Function<AuditEntry, Object>> builder()
+                .put("CLIENT_IP", entry -> getIpOrNull(entry.getClientAddress()))
+                .put("CLIENT_PORT", entry -> getPortOrNull(entry.getClientAddress()))
+                .put("COORDINATOR_IP", entry -> entry.getCoordinatorAddress().getHostAddress())
+                .put("USER", AuditEntry::getUser)
+                .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
+                .put("STATUS", AuditEntry::getStatus)
+                .put("OPERATION", entry -> entry.getOperation().getOperationString())
+                .put("OPERATION_NAKED", entry -> entry.getOperation().getNakedOperationString())
+                .put("TIMESTAMP", getTimeFunction(auditConfig))
+                .build();
     }
 
     @Nullable
@@ -119,8 +120,8 @@ public class Slf4jAuditLogger implements AuditLogger
     static Function<AuditEntry, Object> getTimeFunction(Slf4jAuditLoggerConfig auditConfig)
     {
         return auditConfig.getTimeFormatter()
-                          .map(Slf4jAuditLogger::getFormattedTimestamp)
-                          .orElse(AuditEntry::getTimestamp);
+                .map(Slf4jAuditLogger::getFormattedTimestamp)
+                .orElse(AuditEntry::getTimestamp);
     }
 
     private static Function<AuditEntry, Object> getFormattedTimestamp(DateTimeFormatter formatter)

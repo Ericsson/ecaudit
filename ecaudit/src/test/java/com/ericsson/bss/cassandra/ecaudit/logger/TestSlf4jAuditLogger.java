@@ -15,46 +15,51 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.logger;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
+import org.apache.cassandra.exceptions.ConfigurationException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
-import org.apache.cassandra.exceptions.ConfigurationException;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@RunWith (MockitoJUnitRunner.StrictStubs.class)
 public class TestSlf4jAuditLogger
 {
-    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+    private static final String DEFAULT_LOG_FORMAT =
+            "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+    private static final String LOG_FORMAT_WITH_CUSTOM_FIELD = "client:'${CLIENT_IP}'|customField:'${CUSTOM_FIELD}'";
     private static final String EXPECTED_STATEMENT = "insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']";
     private static final String EXPECTED_STATEMENT_NAKED = "insert into ks.tbl (key, val) values (?, ?)";
     private static final String EXPECTED_CLIENT_ADDRESS = "127.0.0.1";
@@ -64,12 +69,15 @@ public class TestSlf4jAuditLogger
     private static final Status EXPECTED_STATUS = Status.ATTEMPT;
     private static final UUID EXPECTED_BATCH_ID = UUID.fromString("12345678-aaaa-bbbb-cccc-123456789abc");
     private static final Long EXPECTED_TIMESTAMP = 42L;
+    private static final String CUSTOM_FIELD = "CUSTOM_FIELD";
+    private static final String EXPECTED_CUSTOM_FIELD = "entryCustomField";
     private static final String CUSTOM_LOGGER_NAME = "TEST_LOGGER";
     private static final Logger LOG = LoggerFactory.getLogger(CUSTOM_LOGGER_NAME);
 
     private static AuditEntry logEntryWithAll;
     private static AuditEntry logEntryWithoutBatch;
     private static AuditEntry logEntryWithoutClientPort;
+    private static AuditEntry logEntryWithCustomField;
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
@@ -85,24 +93,28 @@ public class TestSlf4jAuditLogger
         when(auditOperation.getOperationString()).thenReturn(EXPECTED_STATEMENT);
         when(auditOperation.getNakedOperationString()).thenReturn(EXPECTED_STATEMENT_NAKED);
         logEntryWithAll = AuditEntry.newBuilder()
-                                    .user(EXPECTED_USER)
-                                    .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, EXPECTED_CLIENT_PORT))
-                                    .coordinator(expectedCoordinatorAddress)
-                                    .operation(auditOperation)
-                                    .status(EXPECTED_STATUS)
-                                    .timestamp(EXPECTED_TIMESTAMP)
-                                    .batch(EXPECTED_BATCH_ID)
-                                    .build();
+                .user(EXPECTED_USER)
+                .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, EXPECTED_CLIENT_PORT))
+                .coordinator(expectedCoordinatorAddress)
+                .operation(auditOperation)
+                .status(EXPECTED_STATUS)
+                .timestamp(EXPECTED_TIMESTAMP)
+                .batch(EXPECTED_BATCH_ID)
+                .build();
 
         logEntryWithoutBatch = AuditEntry.newBuilder()
-                                         .basedOn(logEntryWithAll)
-                                         .batch(null)
-                                         .build();
+                .basedOn(logEntryWithAll)
+                .batch(null)
+                .build();
 
         logEntryWithoutClientPort = AuditEntry.newBuilder()
-                                              .basedOn(logEntryWithAll)
-                                              .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, 0))
-                                              .build();
+                .basedOn(logEntryWithAll)
+                .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, 0))
+                .build();
+        logEntryWithCustomField = AuditEntry.newBuilder()
+                .basedOn(logEntryWithAll)
+                .with(CUSTOM_FIELD, EXPECTED_CUSTOM_FIELD)
+                .build();
     }
 
     @Before
@@ -127,7 +139,8 @@ public class TestSlf4jAuditLogger
         logger.log(logEntryWithoutBatch);
 
         assertThat(getSlf4jLogMessage())
-        .isEqualTo("client:'127.0.0.1'|user:'user'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
+                .isEqualTo(
+                        "client:'127.0.0.1'|user:'user'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
     }
 
     @Test
@@ -137,7 +150,8 @@ public class TestSlf4jAuditLogger
         logger.log(logEntryWithAll);
 
         assertThat(getSlf4jLogMessage())
-        .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
+                .isEqualTo(
+                        "client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
     }
 
     @Test
@@ -147,7 +161,7 @@ public class TestSlf4jAuditLogger
         logger.log(logEntryWithoutBatch);
 
         assertThat(getSlf4jLogMessage())
-        .isEqualTo("User = user, Status = {ATTEMPT}, Query = insert into ks.tbl (key, val) values (?, ?)");
+                .isEqualTo("User = user, Status = {ATTEMPT}, Query = insert into ks.tbl (key, val) values (?, ?)");
     }
 
     @Test
@@ -157,15 +171,16 @@ public class TestSlf4jAuditLogger
         logger.log(logEntryWithoutBatch);
 
         assertThat(getSlf4jLogMessage())
-        .isEqualTo("{}User=user{}Status=ATTEMPT");
+                .isEqualTo("{}User=user{}Status=ATTEMPT");
     }
 
     @Test
     public void testAvailableFieldFunctions()
     {
         Slf4jAuditLoggerConfig configMock = mock(Slf4jAuditLoggerConfig.class);
-        Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
-        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "TIMESTAMP");
+        Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getDefaultFieldsFunctionMap(configMock);
+        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS",
+                "OPERATION", "OPERATION_NAKED", "TIMESTAMP");
 
         Function<AuditEntry, Object> clientFunction = availableFieldFunctions.get("CLIENT_IP");
         assertThat(clientFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_CLIENT_ADDRESS);
@@ -211,8 +226,33 @@ public class TestSlf4jAuditLogger
     public void testInvalidConfig()
     {
         assertThatExceptionOfType(ConfigurationException.class)
-        .isThrownBy(() -> loggerWithConfig("value=${INVALID}"))
-        .withMessage("Unknown log format field: INVALID");
+                .isThrownBy(() -> loggerWithConfig("value=${INVALID}"))
+                .withMessage("Unknown log format field and missing fallback: INVALID");
+    }
+
+    @Test
+    public void testCustomLogFormatWithCustomEntryField()
+    {
+        Slf4jAuditLoggerConfig mockConfig = spy(new Slf4jAuditLoggerConfig(Collections.emptyMap()));
+        when(mockConfig.getLogFormat()).thenReturn(LOG_FORMAT_WITH_CUSTOM_FIELD);
+
+        Slf4jAuditLogger logger = new Slf4jAuditLogger(mockConfig, LOG);
+        logger.log(logEntryWithCustomField);
+
+        assertThat(getSlf4jLogMessage()).isEqualTo("client:'127.0.0.1'|customField:'entryCustomField'");
+    }
+
+    @Test
+    public void testCustomLogFormatWithMissingCustomField()
+    {
+        Slf4jAuditLoggerConfig mockConfig = spy(new Slf4jAuditLoggerConfig(Collections.emptyMap()));
+        when(mockConfig.getLogFormat()).thenReturn(LOG_FORMAT_WITH_CUSTOM_FIELD);
+
+        Slf4jAuditLogger logger = new Slf4jAuditLogger(mockConfig, LOG);
+        AuditEntry withMissingEntry = AuditEntry.newBuilder().basedOn(logEntryWithCustomField).with(CUSTOM_FIELD, null).build();
+        logger.log(withMissingEntry);
+
+        assertThat(getSlf4jLogMessage()).isEqualTo("client:'127.0.0.1'|customField:'null'");
     }
 
     private Slf4jAuditLogger loggerWithConfig(String format)

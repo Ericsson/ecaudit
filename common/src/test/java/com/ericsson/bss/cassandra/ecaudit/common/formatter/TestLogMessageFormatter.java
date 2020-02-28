@@ -23,6 +23,10 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests the {@link LogMessageFormatter} class.
@@ -109,6 +113,21 @@ public class TestLogMessageFormatter
         // Throws when field does not exist
         assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> LogMessageFormatter.getFieldFunctionOrThrow("NON_EXISTING_FIELD", builder))
-        .withMessage("Unknown log format field: NON_EXISTING_FIELD");
+        .withMessage("Unknown log format field and missing fallback: NON_EXISTING_FIELD");
+    }
+
+    @Test
+    public void testGetFieldFunctionOrThrowWithFallback()
+    {
+        // Given
+        LogMessageFormatter.Builder.FallbackFieldFunction fallback = mock(LogMessageFormatter.Builder.FallbackFieldFunction.class);
+        LogMessageFormatter.Builder builder = LogMessageFormatter.<Integer>builder().availableFields(TEST_FIELDS).fallbackFunction(fallback);
+
+        // When
+        Function nonExistingFieldFunction = LogMessageFormatter.getFieldFunctionOrThrow("NON_EXISTING_FIELD", builder);
+        nonExistingFieldFunction.apply(4711);
+
+        // Then
+        verify(fallback, times(1)).apply(eq("NON_EXISTING_FIELD"), eq(4711));
     }
 }

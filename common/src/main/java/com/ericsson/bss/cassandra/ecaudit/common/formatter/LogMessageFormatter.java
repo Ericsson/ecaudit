@@ -96,7 +96,13 @@ public class LogMessageFormatter<T>
     {
         if (!builder.availableFields.containsKey(field))
         {
-            throw new IllegalArgumentException("Unknown log format field: " + field);
+            if (builder.fallbackFunction == null)
+            {
+                throw new IllegalArgumentException("Unknown log format field and missing fallback: " + field);
+            }
+
+            Builder.FallbackFieldFunction<T, Object> fallback = builder.fallbackFunction;
+            return instance -> fallback.apply(field, instance);
         }
         return builder.availableFields.get(field);
     }
@@ -130,6 +136,7 @@ public class LogMessageFormatter<T>
         private String escapeExpr;
         private String escapeWith;
         private Map<String, Function<T, Object>> availableFields;
+        private FallbackFieldFunction<T, Object> fallbackFunction;
 
         public LogMessageFormatter<T> build()
         {
@@ -159,6 +166,23 @@ public class LogMessageFormatter<T>
         {
             this.availableFields = availableFields;
             return this;
+        }
+
+        public Builder<T> fallbackFunction(FallbackFieldFunction<T, Object> function)
+        {
+            this.fallbackFunction = function;
+            return this;
+        }
+
+        /**
+         * Map a custom field by the given field name.
+         * @param <T> the type of the field
+         * @param <R> the mapped vale
+         */
+        @FunctionalInterface
+        public interface FallbackFieldFunction<T, R>
+        {
+            R apply(String field, T instance);
         }
     }
 }

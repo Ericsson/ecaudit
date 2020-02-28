@@ -17,15 +17,23 @@ package com.ericsson.bss.cassandra.ecaudit.entry;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
+import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.Permission;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
-import org.apache.cassandra.auth.IResource;
-import org.apache.cassandra.auth.Permission;
 
 /**
  * The domain object which contains audit record information to be logged.
@@ -34,44 +42,43 @@ import org.apache.cassandra.auth.Permission;
  */
 public class AuditEntry implements AuditRecord
 {
-    public static final int UNKNOWN_PORT = 0;
+    private final Map<String, Object> fields;
 
-    private final InetSocketAddress clientAddress;
-    private final InetAddress coordinatorAddress;
-    private final Set<Permission> permissions;
-    private final IResource resource;
-    private final AuditOperation operation;
-    private final String user;
-    private final UUID batchId;
-    private final Status status;
-    private final Long timestamp;
+    private static final String CLIENT = "clientAddress";
+    private static final String COORDINATOR = "coordinatorAddress";
+    private static final String PERMISSIONS = "permissions";
+    private static final String RESOURCE = "resource";
+    private static final String OPERATION = "operation";
+    private static final String USER = "user";
+    private static final String BATCH_ID = "batchId";
+    private static final String STATUS = "status";
+    private static final String TIMESTAMP = "timestamp";
+
+    @VisibleForTesting
+    final static ImmutableSet<String> RESERVED_KEYS = ImmutableSet.<String>builder()
+            .add(CLIENT, COORDINATOR, PERMISSIONS, RESOURCE, OPERATION, USER, BATCH_ID, STATUS, TIMESTAMP)
+            .build();
+
+    public static final int UNKNOWN_PORT = 0;
 
     /**
      * @see #newBuilder()
      */
     private AuditEntry(Builder builder)
     {
-        this.clientAddress = builder.client;
-        this.coordinatorAddress = builder.coordinator;
-        this.permissions = builder.permissions;
-        this.resource = builder.resource;
-        this.operation = builder.operation;
-        this.user = builder.user;
-        this.batchId = builder.batchId;
-        this.status = builder.status;
-        this.timestamp = builder.timestamp;
+        fields = new HashMap<>(builder.fields);
     }
 
     @Override
     public InetSocketAddress getClientAddress()
     {
-        return clientAddress;
+        return safeCast(fields.get(CLIENT), InetSocketAddress.class);
     }
 
     @Override
     public InetAddress getCoordinatorAddress()
     {
-        return coordinatorAddress;
+        return safeCast(fields.get(COORDINATOR), InetAddress.class);
     }
 
     /**
@@ -83,12 +90,12 @@ public class AuditEntry implements AuditRecord
      */
     public Set<Permission> getPermissions()
     {
-        return permissions;
+        return safeCast(fields.get(PERMISSIONS), Set.class);
     }
 
     public IResource getResource()
     {
-        return resource;
+        return safeCast(fields.get(RESOURCE), IResource.class);
     }
 
     /**
@@ -102,13 +109,13 @@ public class AuditEntry implements AuditRecord
     @Override
     public AuditOperation getOperation()
     {
-        return operation;
+        return safeCast(fields.get(OPERATION), AuditOperation.class);
     }
 
     @Override
     public String getUser()
     {
-        return user;
+        return safeCast(fields.get(USER), String.class);
     }
 
     /**
@@ -119,13 +126,13 @@ public class AuditEntry implements AuditRecord
     @Override
     public Optional<UUID> getBatchId()
     {
-        return Optional.ofNullable(batchId);
+        return Optional.ofNullable(safeCast(fields.get(BATCH_ID), UUID.class));
     }
 
     @Override
     public Status getStatus()
     {
-        return status;
+        return safeCast(fields.get(STATUS), Status.class);
     }
 
     /**
@@ -134,7 +141,30 @@ public class AuditEntry implements AuditRecord
     @Override
     public Long getTimestamp()
     {
-        return timestamp;
+        return safeCast(fields.get(TIMESTAMP), Long.class);
+    }
+
+    /**
+     * Get a named field of a specific type.
+     * @param fieldName the name of the field
+     * @param clazz the class of the field type
+     * @param <T> the type of the field
+     * @return the field of the wanted type, or null if it doesn't exist
+     */
+    public <T> T get(String fieldName, Class<T> clazz)
+    {
+        return safeCast(fields.get(fieldName), clazz);
+    }
+
+    /**
+     * Get all custom fields in this entry
+     * @return a map of all entries
+     */
+    public Map<String, Object> customFields()
+    {
+        return Collections.unmodifiableMap(this.fields.entrySet().stream()
+                .filter(e -> !RESERVED_KEYS.contains(e.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 
     /**
@@ -152,25 +182,17 @@ public class AuditEntry implements AuditRecord
      */
     public static class Builder
     {
-        private InetSocketAddress client;
-        private InetAddress coordinator;
-        private Set<Permission> permissions;
-        private IResource resource;
-        private AuditOperation operation;
-        private String user;
-        private UUID batchId;
-        private Status status;
-        private Long timestamp;
+        private final Map<String, Object> fields = new LinkedHashMap<>();
 
         public Builder client(InetSocketAddress address)
         {
-            this.client = address;
+            fields.put(CLIENT, address);
             return this;
         }
 
         public Builder coordinator(InetAddress coordinator)
         {
-            this.coordinator = coordinator;
+            fields.put(COORDINATOR, coordinator);
             return this;
         }
 
@@ -185,13 +207,13 @@ public class AuditEntry implements AuditRecord
          */
         public Builder permissions(Set<Permission> permissions)
         {
-            this.permissions = permissions;
+            fields.put(PERMISSIONS, permissions);
             return this;
         }
 
         public Builder resource(IResource resource)
         {
-            this.resource = resource;
+            fields.put(RESOURCE, resource);
             return this;
         }
 
@@ -206,13 +228,13 @@ public class AuditEntry implements AuditRecord
          */
         public Builder operation(AuditOperation operation)
         {
-            this.operation = operation;
+            fields.put(OPERATION, operation);
             return this;
         }
 
         public Builder user(String user)
         {
-            this.user = user;
+            fields.put(USER, user);
             return this;
         }
 
@@ -224,19 +246,39 @@ public class AuditEntry implements AuditRecord
          */
         public Builder batch(UUID uuid)
         {
-            this.batchId = uuid;
+            fields.put(BATCH_ID, uuid);
             return this;
         }
 
         public Builder status(Status status)
         {
-            this.status = status;
+            fields.put(STATUS, status);
             return this;
         }
 
         public Builder timestamp(Long timestamp)
         {
-            this.timestamp = timestamp;
+            fields.put(TIMESTAMP, timestamp);
+            return this;
+        }
+
+        /**
+         * Add a new generic field to this builder.
+         *
+         * Use this to add custom fields that can be serialized to a string with {@link String#toString}.
+         * @param field the field name
+         * @param value the field value
+         * @param <T> the type of the field
+         * @throws IllegalArgumentException if the field clashes with reserved keys.
+         * @return this builder instance
+         */
+        public <T> Builder with(String field, T value) throws IllegalArgumentException
+        {
+            if (RESERVED_KEYS.contains(field))
+            {
+                throw new IllegalArgumentException(String.format("Not allowed to overwrite reserved field: %s", field));
+            }
+            fields.put(field, value);
             return this;
         }
 
@@ -248,15 +290,7 @@ public class AuditEntry implements AuditRecord
          */
         public Builder basedOn(AuditEntry entry)
         {
-            this.client = entry.getClientAddress();
-            this.coordinator = entry.getCoordinatorAddress();
-            this.permissions = entry.getPermissions();
-            this.resource = entry.getResource();
-            this.operation = entry.getOperation();
-            this.user = entry.getUser();
-            this.batchId = entry.getBatchId().orElse(null);
-            this.status = entry.getStatus();
-            this.timestamp = entry.getTimestamp();
+            this.fields.putAll(entry.fields);
             return this;
         }
 
@@ -269,5 +303,13 @@ public class AuditEntry implements AuditRecord
         {
             return new AuditEntry(this);
         }
+    }
+
+    private static <T> T safeCast(Object instance, Class<T> clazz)
+    {
+        return Optional.ofNullable(instance)
+                .filter(clazz::isInstance)
+                .map(clazz::cast)
+                .orElse(null);
     }
 }
