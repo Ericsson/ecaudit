@@ -1,17 +1,23 @@
 # Changes
 
 ## Version 2.3.0
-* Build with Cassandra 3.11.5 (only flavor ecaudit_c3.11)
-* Build with Cassandra 3.0.19 (only flavor ecaudit_c3.0)
-* Build with Cassandra 2.2.15 (only flavor ecaudit_c2.2)
-* Log only keys #125
-* Avoid logging BLOB values #126
-* Configurable format of printed records with eclog tool #102
+* Build with Cassandra 3.11.6 (only flavor ecaudit_c3.11)
+* Build with Cassandra 3.0.20 (only flavor ecaudit_c3.0)
+* Build with Cassandra 2.2.16 (only flavor ecaudit_c2.2)
+* Log only keys - #125
+* Avoid logging BLOB values - #126
+* Configurable format of printed records with eclog tool - #102
+
+## Version 2.2.2
+* Backport ecAudit to Cassandra 2.2.x - #111
+* Configurable fields in Chronicle backend - #101
+* Improve batch-id (UUID) performance - #108
+
+## Version 2.2.1
+Incomplete release - Don't use.
 
 ## Version 2.2.0
-* Backport ecAudit to Cassandra 2.2.x #111
-* Configurable fields in Chronicle backend #101
-* Improve batch-id (UUID) performance #108
+Incomplete release - Don't use.
 
 ## Version 2.1.0
 * Make configuration updateable from tests - #98
