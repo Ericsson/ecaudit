@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Telefonaktiebolaget LM Ericsson
+ * Copyright 2020 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.integration.standard;
 
+import java.util.List;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -23,15 +25,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 
+import static java.util.Arrays.asList;
+
 @RunWith(JUnitParamsRunner.class)
-public class ITRolesAudit
+public class ITDataPreparedAudit
 {
     private static CassandraClusterFacade ccf = new CassandraClusterFacade();
-    private static final String ROLE = "role_role";
 
     private static String testUsername;
     private static Cluster testCluster;
@@ -45,7 +49,8 @@ public class ITRolesAudit
         testCluster = ccf.createCluster(testUsername, "secret");
         testSession = testCluster.connect();
 
-        ccf.givenUser(ROLE);
+        ccf.givenKeyspace("prepks");
+        ccf.givenTable("prepks.tbl");
     }
 
     @Before
@@ -70,33 +75,34 @@ public class ITRolesAudit
     }
 
     @SuppressWarnings("unused")
-    private Object[] parametersForRoleStatements()
+    private Object[] parametersForPreparedStatements()
     {
         return new Object[]{
-            new Object[]{ "CREATE ROLE role_user WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true", "create", "roles" },
-            new Object[]{ "ALTER ROLE role_user WITH LOGIN = false", "alter", "roles/role_user" },
-            new Object[]{ "GRANT " + ROLE + " TO role_user", "authorize", "roles/" + ROLE },
-            new Object[]{ "REVOKE " + ROLE + " FROM role_user", "authorize", "roles/" + ROLE},
-            new Object[]{ "LIST ROLES OF role_user", "describe", "roles" },
-            new Object[]{ "DROP ROLE role_user", "drop", "roles/role_user" },
+            new Object[]{ "SELECT * FROM prepks.tbl WHERE key = ?", asList(5), "SELECT * FROM prepks.tbl WHERE key = ?[5]", "select", "data/prepks/tbl" },
+            new Object[]{ "INSERT INTO prepks.tbl (key, value) VALUES (?, ?)", asList(5, "hepp"), "INSERT INTO prepks.tbl (key, value) VALUES (?, ?)[5, 'hepp']", "modify", "data/prepks/tbl" },
+            new Object[]{ "UPDATE prepks.tbl SET value = ? WHERE key = ?", asList("hepp", 34), "UPDATE prepks.tbl SET value = ? WHERE key = ?['hepp', 34]", "modify", "data/prepks/tbl" },
+            new Object[]{ "DELETE value FROM prepks.tbl WHERE key = ?", asList(22), "DELETE value FROM prepks.tbl WHERE key = ?[22]", "modify", "data/prepks/tbl" },
         };
     }
 
     @Test
-    @Parameters(method = "parametersForRoleStatements")
+    @Parameters(method = "parametersForPreparedStatements")
     @SuppressWarnings("unused")
-    public void statementIsLogged(String statement, String operation, String resource)
+    public void preparedStatementIsLogged(String statement, List<Object> value, String expectedTrace, String operation, String resource)
     {
-        testSession.execute(statement);
-        ccf.thenAuditLogContainEntryForUser(statement, testUsername);
+        PreparedStatement preparedStatement = testSession.prepare(statement);
+        testSession.execute(preparedStatement.bind(value.toArray()));
+        ccf.thenAuditLogContainEntryForUser(expectedTrace, testUsername);
     }
 
     @Test
-    @Parameters(method = "parametersForRoleStatements")
-    public void statementIsWhitelisted(String statement, String operation, String resource)
+    @Parameters(method = "parametersForPreparedStatements")
+    @SuppressWarnings("unused")
+    public void preparedStatementIsWhitelisted(String statement, List<Object> value, String expectedTrace, String operation, String resource)
     {
         ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, resource);
-        testSession.execute(statement);
+        PreparedStatement preparedStatement = testSession.prepare(statement);
+        testSession.execute(preparedStatement.bind(value.toArray()));
         ccf.thenAuditLogContainNothingForUser();
     }
 }
