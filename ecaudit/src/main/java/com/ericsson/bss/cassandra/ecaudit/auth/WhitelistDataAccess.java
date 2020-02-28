@@ -28,6 +28,7 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ericsson.bss.cassandra.ecaudit.flavor.CassandraFlavorAdapter;
 import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
@@ -227,7 +228,7 @@ public class WhitelistDataAccess
             CFMetaData definedTable = defined.tables.get(expectedTable.cfName).orElse(null);
             if (definedTable == null || !definedTable.equals(expectedTable))
             {
-                MigrationManager.forceAnnounceNewColumnFamily(expectedTable);
+                CassandraFlavorAdapter.getInstance().forceAnnounceNewColumnFamily(expectedTable);
                 changesAnnounced = true;
             }
         }
@@ -303,7 +304,7 @@ public class WhitelistDataAccess
 
     private ConsistencyLevel consistencyForRole(RoleResource role)
     {
-        String roleName =  role.getRoleName();
+        String roleName = role.getRoleName();
         if (roleName.equals(DEFAULT_SUPERUSER_NAME))
         {
             return ConsistencyLevel.QUORUM;
