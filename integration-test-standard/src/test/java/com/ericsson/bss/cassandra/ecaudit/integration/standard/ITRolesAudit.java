@@ -24,26 +24,38 @@ import org.junit.runner.RunWith;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.UnauthorizedException;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(JUnitParamsRunner.class)
 public class ITRolesAudit
 {
     private static CassandraClusterFacade ccf = new CassandraClusterFacade();
+    private static final String USER = "role_user";
     private static final String ROLE = "role_role";
 
     private static String testUsername;
     private static Cluster testCluster;
     private static Session testSession;
 
+    private static String basicUsername;
+    private static Cluster basicCluster;
+    private static Session basicSession;
+
     @BeforeClass
     public static void beforeClass()
     {
         ccf.setup();
-        testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
-        testCluster = ccf.createCluster(testUsername, "secret");
+        testUsername = ccf.givenUniqueUserWithMinimalWhitelist(true);
+        testCluster = ccf.createCluster(testUsername);
         testSession = testCluster.connect();
+
+        basicUsername = ccf.givenUniqueUserWithMinimalWhitelist(false);
+        basicCluster = ccf.createCluster(basicUsername);
+        basicSession = basicCluster.connect();
 
         ccf.givenUser(ROLE);
     }
@@ -59,11 +71,14 @@ public class ITRolesAudit
     {
         ccf.after();
         ccf.resetTestUserWithMinimalWhitelist(testUsername);
+        ccf.resetTestUserWithMinimalWhitelist(basicUsername);
     }
 
     @AfterClass
     public static void afterClass()
     {
+        basicSession.close();
+        basicCluster.close();
         testSession.close();
         testCluster.close();
         ccf.tearDown();
@@ -73,12 +88,12 @@ public class ITRolesAudit
     private Object[] parametersForRoleStatements()
     {
         return new Object[]{
-            new Object[]{ "CREATE ROLE role_user WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true", "create", "roles" },
-            new Object[]{ "ALTER ROLE role_user WITH LOGIN = false", "alter", "roles/role_user" },
-            new Object[]{ "GRANT " + ROLE + " TO role_user", "authorize", "roles/" + ROLE },
-            new Object[]{ "REVOKE " + ROLE + " FROM role_user", "authorize", "roles/" + ROLE},
-            new Object[]{ "LIST ROLES OF role_user", "describe", "roles" },
-            new Object[]{ "DROP ROLE role_user", "drop", "roles/role_user" },
+            new Object[]{ "CREATE ROLE IF NOT EXISTS " + USER + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true", "create", "roles" },
+            new Object[]{ "ALTER ROLE " + USER + " WITH LOGIN = false", "alter", "roles/" + USER },
+            new Object[]{ "GRANT " + ROLE + " TO " + USER, "authorize", "roles/" + ROLE },
+            new Object[]{ "REVOKE " + ROLE + " FROM " + USER, "authorize", "roles/" + ROLE},
+            new Object[]{ "LIST ROLES OF " + USER, "describe", "roles" },
+            new Object[]{ "DROP ROLE " + USER, "drop", "roles/" + USER },
         };
     }
 
@@ -99,4 +114,36 @@ public class ITRolesAudit
         testSession.execute(statement);
         ccf.thenAuditLogContainNothingForUser();
     }
+
+    @Test
+    @Parameters(method = "parametersForRoleStatements")
+    public void statementIsGrantWhitelisted(String statement, String operation, String resource)
+    {
+        ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, "grants/" + resource);
+        testSession.execute(statement);
+        ccf.thenAuditLogContainNothingForUser();
+    }
+
+    @Test
+    @Parameters(method = "parametersForRoleStatements")
+    @SuppressWarnings("unused")
+    public void statementIsGrantWhitelistedUsingTopLevelGrant(String statement, String operation, String resource)
+    {
+        ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, "grants");
+        testSession.execute(statement);
+        ccf.thenAuditLogContainNothingForUser();
+    }
+
+    @Test
+    @Parameters(method = "parametersForRoleStatements")
+    public void statementIsLoggedWhenGrantWhitelistUnauthorized(String statement, String operation, String resource)
+    {
+        ccf.givenUser(USER);
+
+        ccf.givenRoleIsWhitelistedForOperationOnResource(basicUsername, operation, "grants/" + resource);
+        assertThatExceptionOfType(UnauthorizedException.class)
+            .isThrownBy(() -> basicSession.execute(statement));
+        ccf.thenAuditLogContainsFailedEntriesForUser(statement, basicUsername);
+    }
+
 }

@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.integration.standard;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Splitter;
 import org.junit.After;
@@ -33,6 +34,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnauthorizedException;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
+import org.apache.cassandra.auth.Permission;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
@@ -316,6 +318,34 @@ public class ITVerifyWhitelistManagement
     }
 
     @Test
+    public void testSuperUserCanWhitelistOnGrant()
+    {
+        given_temporary_user(superSession);
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants' }"));
+
+        List<String> allPermissions = Permission.ALL.stream().map(Enum::name).collect(Collectors.toList());
+        assertRoleOperations("temporary_user", "grants", allPermissions);
+    }
+
+    @Test
+    public void testSuperUserCanWhitelistOnTableDataGrant()
+    {
+        given_temporary_user(superSession);
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data/ks/tb' }"));
+        assertRoleOperations("temporary_user", "grants/data/ks/tb", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+    }
+
+    @Test (expected = InvalidQueryException.class)
+    public void testSuperUserCanNotWhitelistOnGrantWithInvalidResource()
+    {
+        given_temporary_user(superSession);
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/non_existing_resource' }"));
+    }
+
+    @Test
     public void testSuperUserCanWhitelistOnRoles()
     {
         given_temporary_user(superSession);
@@ -383,6 +413,6 @@ public class ITVerifyWhitelistManagement
 
         String operationsString = optionsMap.get(expectedKey);
         List<String> operations = Splitter.on(",").trimResults().splitToList(operationsString);
-        assertThat(operations).containsOnlyElementsOf(expectedOperations);
+        assertThat(operations).containsAll(expectedOperations);
     }
 }
