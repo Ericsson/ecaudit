@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.3.0
+* Fix announcement of internal table (only flavor ecaudit_c3.0 and ecaudit_c3.11) - #137
 * Build with Cassandra 3.11.6 (only flavor ecaudit_c3.11)
 * Build with Cassandra 3.0.20 (only flavor ecaudit_c3.0)
 * Build with Cassandra 2.2.16 (only flavor ecaudit_c2.2)
