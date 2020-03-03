@@ -51,11 +51,11 @@ public class ITDataPreparedAudit
     public static void beforeClass()
     {
         ccf.setup();
-        testUsername = ccf.givenUniqueUserWithMinimalWhitelist(true);
+        testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
         testCluster = ccf.createCluster(testUsername);
         testSession = testCluster.connect();
 
-        basicUsername = ccf.givenUniqueUserWithMinimalWhitelist(false);
+        basicUsername = ccf.givenUniqueBasicUserWithMinimalWhitelist();
         basicCluster = ccf.createCluster(basicUsername);
         basicSession = basicCluster.connect();
 

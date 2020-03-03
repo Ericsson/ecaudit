@@ -147,12 +147,10 @@ public class TestRoleAuditFilter
     @Test
     public void primaryRoleWithGrantWhitelistedDataTableDoSelectAndAuthorized()
     {
-        DataResource dataResource = DataResource.fromName("data/ks/tbl");
-        GrantResource grantResource = GrantResource.fromResource(dataResource);
-        when(auditFilterAuthorizerMock.isOperationAuthorizedForUser(eq(Permission.SELECT), eq(USER), eq(Resources.chain(dataResource)))).thenReturn(true);
-        givenRoleIsWhitelisted("primary", Permission.SELECT, grantResource);
+        givenRoleIsAuthorized();
+        givenRoleIsWhitelisted("primary", Permission.SELECT, GrantResource.fromResource(DataResource.fromName("data/ks/tbl")));
         givenRolesOfRequest("primary", "inherited");
-        AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), dataResource);
+        AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
         assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
@@ -160,12 +158,9 @@ public class TestRoleAuditFilter
     @Test
     public void primaryRoleWithGrantWhitelistedDataTableDoSelectAndNotAuthorized()
     {
-        DataResource dataResource = DataResource.fromName("data/ks/tbl");
-        GrantResource grantResource = GrantResource.fromResource(dataResource);
-        when(auditFilterAuthorizerMock.isOperationAuthorizedForUser(eq(Permission.CREATE), eq(USER), eq(Resources.chain(dataResource)))).thenReturn(false);
-        givenRoleIsWhitelisted("primary", Permission.CREATE, grantResource);
+        givenRoleIsWhitelisted("primary", Permission.CREATE, GrantResource.fromResource(DataResource.fromName("data/ks/tbl")));
         givenRolesOfRequest("primary", "inherited");
-        AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.CREATE), dataResource);
+        AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.CREATE), DataResource.fromName("data/ks/tbl"));
 
         assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
@@ -275,5 +270,11 @@ public class TestRoleAuditFilter
                          .resource(resource)
                          .user(USER)
                          .build();
+    }
+
+    private void givenRoleIsAuthorized()
+    {
+        DataResource dataResource = DataResource.fromName("data/ks/tbl");
+        when(auditFilterAuthorizerMock.isOperationAuthorizedForUser(eq(Permission.SELECT), eq(USER), eq(Resources.chain(dataResource)))).thenReturn(true);
     }
 }

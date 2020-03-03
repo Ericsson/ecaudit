@@ -187,6 +187,17 @@ public class ITVerifyWhitelistManagement
     }
 
     @Test(expected = UnauthorizedException.class)
+    public void testOrdinaryUserCannotGrantWhitelistHimself()
+    {
+        try (Cluster privateCluster = cdt.createCluster("ordinary_user", "secret");
+                Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+                    "ALTER ROLE ordinary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data' }"));
+        }
+    }
+
+    @Test(expected = UnauthorizedException.class)
     public void testCreateUserCannotWhitelistUser()
     {
         try (Cluster privateCluster = cdt.createCluster("create_user", "secret");
@@ -207,12 +218,39 @@ public class ITVerifyWhitelistManagement
     }
 
     @Test
+    public void testAuthorizedUserCanGrantWhitelistToHimself()
+    {
+        authorizedSession.execute(new SimpleStatement(
+        "ALTER ROLE authorized_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+
+        assertRoleOperations("authorized_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+    }
+
+    @Test
     public void testAuthorizedUserCanGrantWhitelistToOther()
     {
         authorizedSession.execute(new SimpleStatement(
         "ALTER ROLE other_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
 
         assertRoleOperations("other_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+    }
+
+    @Test
+    public void testAuthorizedUserCanGrantPermissionDerivedWhitelistToHimself()
+    {
+        authorizedSession.execute(new SimpleStatement(
+        "ALTER ROLE authorized_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data' }"));
+
+        assertRoleOperations("authorized_user", "grants/data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+    }
+
+    @Test
+    public void testAuthorizedUserCanGrantPermissionDerivedWhitelistToOthers()
+    {
+        authorizedSession.execute(new SimpleStatement(
+        "ALTER ROLE other_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data' }"));
+
+        assertRoleOperations("other_user", "grants/data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
     }
 
     @Test(expected = UnauthorizedException.class)
@@ -413,6 +451,6 @@ public class ITVerifyWhitelistManagement
 
         String operationsString = optionsMap.get(expectedKey);
         List<String> operations = Splitter.on(",").trimResults().splitToList(operationsString);
-        assertThat(operations).containsAll(expectedOperations);
+        assertThat(operations).hasSameElementsAs(expectedOperations);
     }
 }

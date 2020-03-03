@@ -50,12 +50,12 @@ public class AuditFilterAuthorizer
     {
         if (authorizer == null)
         {
-            setAuthorizerSync();
+            resolveAuthorizerSync();
         }
         return authorizer;
     }
 
-    private synchronized void setAuthorizerSync()
+    private synchronized void resolveAuthorizerSync()
     {
         if (authorizer == null)
         {

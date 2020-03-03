@@ -49,15 +49,15 @@ public class ITRolesAudit
     public static void beforeClass()
     {
         ccf.setup();
-        testUsername = ccf.givenUniqueUserWithMinimalWhitelist(true);
+        testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
         testCluster = ccf.createCluster(testUsername);
         testSession = testCluster.connect();
 
-        basicUsername = ccf.givenUniqueUserWithMinimalWhitelist(false);
+        basicUsername = ccf.givenUniqueBasicUserWithMinimalWhitelist();
         basicCluster = ccf.createCluster(basicUsername);
         basicSession = basicCluster.connect();
 
-        ccf.givenUser(ROLE);
+        ccf.givenBasicUser(ROLE);
     }
 
     @Before
@@ -138,7 +138,7 @@ public class ITRolesAudit
     @Parameters(method = "parametersForRoleStatements")
     public void statementIsLoggedWhenGrantWhitelistUnauthorized(String statement, String operation, String resource)
     {
-        ccf.givenUser(USER);
+        ccf.givenBasicUser(USER);
 
         ccf.givenRoleIsWhitelistedForOperationOnResource(basicUsername, operation, "grants/" + resource);
         assertThatExceptionOfType(UnauthorizedException.class)

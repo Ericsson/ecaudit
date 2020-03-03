@@ -163,11 +163,17 @@ class AuditWhitelistManager
 
     private static void checkPermissionToWhitelist(AuthenticatedUser performer, IResource resource)
     {
-        Set<Permission> userPermissions = performer.getPermissions(resource);
-        if (!userPermissions.contains(Permission.AUTHORIZE))
+        if (!performer.isSuper())
         {
-            throw new UnauthorizedException(String.format("User %s is not authorized to whitelist access to %s",
-                                                          performer.getName(), resource));
+            IResource actualResource = resource instanceof GrantResource
+                                       ? ((GrantResource) resource).getWrappedResource()
+                                       : resource;
+
+            if (actualResource == null || !performer.getPermissions(actualResource).contains(Permission.AUTHORIZE))
+            {
+                throw new UnauthorizedException(String.format("User %s is not authorized to whitelist access to %s",
+                                                              performer.getName(), resource));
+            }
         }
     }
 }

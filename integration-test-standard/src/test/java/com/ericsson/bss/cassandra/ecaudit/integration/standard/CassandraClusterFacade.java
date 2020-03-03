@@ -114,15 +114,23 @@ public class CassandraClusterFacade
         }
     }
 
-    void givenUser(String username)
+    void givenBasicUser(String username)
     {
         createUser(username, false);
     }
 
-    String givenUniqueUserWithMinimalWhitelist(boolean isSuperuser)
+    String givenUniqueSuperuserWithMinimalWhitelist()
     {
-        String username = "testuser" + superUsernameNumber.incrementAndGet();
-        createUser(username, isSuperuser);
+        String username = "supertestuser" + superUsernameNumber.incrementAndGet();
+        createUser(username, true);
+        setMinimumWhitelist(username);
+        return username;
+    }
+
+    String givenUniqueBasicUserWithMinimalWhitelist()
+    {
+        String username = "basictestuser" + superUsernameNumber.incrementAndGet();
+        createUser(username, false);
         setMinimumWhitelist(username);
         return username;
     }

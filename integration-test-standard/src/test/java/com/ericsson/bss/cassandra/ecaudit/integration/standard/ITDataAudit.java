@@ -48,15 +48,15 @@ public class ITDataAudit
     public static void beforeClass()
     {
         ccf.setup();
-        testUsername = ccf.givenUniqueUserWithMinimalWhitelist(true);
+        testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
         testCluster = ccf.createCluster(testUsername);
         testSession = testCluster.connect();
 
-        basicUsername = ccf.givenUniqueUserWithMinimalWhitelist(false);
+        basicUsername = ccf.givenUniqueBasicUserWithMinimalWhitelist();
         basicCluster = ccf.createCluster(basicUsername);
         basicSession = basicCluster.connect();
 
-        ccf.givenUser(GRANTEE);
+        ccf.givenBasicUser(GRANTEE);
     }
 
     @Before
@@ -147,7 +147,7 @@ public class ITDataAudit
     @Parameters(method = "parametersForSimpleStatements")
     public void simpleStatementIsLoggedWhenGrantWhitelistUnauthorized(String statement, String operation, String resource)
     {
-        // Given
+        // Add the below resources to make sure the test(s) fails due to Authorization failure
         ccf.givenKeyspace("dataks");
         ccf.givenTable("dataks.tbl");
         givenIndex("dataks.tbl", "idx");

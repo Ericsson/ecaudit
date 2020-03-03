@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * The resource {@code grants/data/myKeyspace/myTable} represents a <i>grant</i> on the <i>wrapped resource</i>
  * {@code data/myKeyspace/myTable}
  * <p>
- * The "root-level" grant is represented by the {@link GrantResource#ROOT_LEVEL} constant.
+ * The "root-level" grant is returned by the {@link GrantResource#root()} method.
  */
 public final class GrantResource implements IResource
 {
@@ -52,6 +52,11 @@ public final class GrantResource implements IResource
         return new GrantResource(checkNotNull(resource));
     }
 
+    IResource getWrappedResource()
+    {
+        return wrappedResource;
+    }
+
     /**
      * @return the root-level resource.
      */
@@ -68,12 +73,18 @@ public final class GrantResource implements IResource
                : ROOT_NAME + "/" + wrappedResource.getName();
     }
 
+    /**
+     * This method should not be used to travers the resource hierarchy. Use {@link #getWrappedResource()} instead.
+     */
     @Override
     public IResource getParent()
     {
         throw new IllegalStateException("Root-level resource can't have a parent");
     }
 
+    /**
+     * This method should not be used to travers the resource hierarchy. Use {@link #getWrappedResource()} instead.
+     */
     @Override
     public boolean hasParent()
     {
@@ -83,7 +94,7 @@ public final class GrantResource implements IResource
     @Override
     public boolean exists()
     {
-        return true;
+        return wrappedResource != null && wrappedResource.exists();
     }
 
     @Override
