@@ -205,6 +205,15 @@ public class ITVerifyWhitelistManagement
     }
 
     @Test
+    public void testAuthorizedUserCanGrantWhitelistToHimself()
+    {
+        authorizedSession.execute(new SimpleStatement(
+        "ALTER ROLE authorized_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
+
+        assertRoleOperations("authorized_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+    }
+
+    @Test
     public void testAuthorizedUserCanGrantWhitelistToOther()
     {
         authorizedSession.execute(new SimpleStatement(
@@ -383,6 +392,6 @@ public class ITVerifyWhitelistManagement
 
         String operationsString = optionsMap.get(expectedKey);
         List<String> operations = Splitter.on(",").trimResults().splitToList(operationsString);
-        assertThat(operations).containsOnlyElementsOf(expectedOperations);
+        assertThat(operations).hasSameElementsAs(expectedOperations);
     }
 }

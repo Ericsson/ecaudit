@@ -115,7 +115,7 @@ public class TestAuditRoleManager
     {
         Set<IRoleManager.Option> options = auditRoleManager.alterableOptions();
 
-        assertThat(options).containsExactlyElementsOf(ImmutableSet.of(IRoleManager.Option.PASSWORD));
+        assertThat(options).containsExactlyElementsOf(ImmutableSet.of(IRoleManager.Option.PASSWORD, IRoleManager.Option.OPTIONS));
     }
 
     @Test

@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.4.0
+* Make sure authorized user can whitelist himself - #145
+
 ## Version 2.3.0
 * Fix announcement of internal table (only flavor ecaudit_c3.0 and ecaudit_c3.11) - #137
 * Build with Cassandra 3.11.6 (only flavor ecaudit_c3.11)
