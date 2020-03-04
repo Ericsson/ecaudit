@@ -27,10 +27,12 @@ import org.junit.runner.RunWith;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.UnauthorizedException;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 
 import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(JUnitParamsRunner.class)
 public class ITDataPreparedAudit
@@ -41,13 +43,21 @@ public class ITDataPreparedAudit
     private static Cluster testCluster;
     private static Session testSession;
 
+    private static String basicUsername;
+    private static Cluster basicCluster;
+    private static Session basicSession;
+
     @BeforeClass
     public static void beforeClass()
     {
         ccf.setup();
         testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
-        testCluster = ccf.createCluster(testUsername, "secret");
+        testCluster = ccf.createCluster(testUsername);
         testSession = testCluster.connect();
+
+        basicUsername = ccf.givenUniqueBasicUserWithMinimalWhitelist();
+        basicCluster = ccf.createCluster(basicUsername);
+        basicSession = basicCluster.connect();
 
         ccf.givenKeyspace("prepks");
         ccf.givenTable("prepks.tbl");
@@ -64,11 +74,14 @@ public class ITDataPreparedAudit
     {
         ccf.after();
         ccf.resetTestUserWithMinimalWhitelist(testUsername);
+        ccf.resetTestUserWithMinimalWhitelist(basicUsername);
     }
 
     @AfterClass
     public static void afterClass()
     {
+        basicSession.close();
+        basicCluster.close();
         testSession.close();
         testCluster.close();
         ccf.tearDown();
@@ -104,5 +117,38 @@ public class ITDataPreparedAudit
         PreparedStatement preparedStatement = testSession.prepare(statement);
         testSession.execute(preparedStatement.bind(value.toArray()));
         ccf.thenAuditLogContainNothingForUser();
+    }
+
+    @Test
+    @Parameters(method = "parametersForPreparedStatements")
+    @SuppressWarnings("unused")
+    public void preparedStatementIsGrantWhitelisted(String statement, List<Object> value, String expectedTrace, String operation, String resource)
+    {
+        ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, "grants/" + resource);
+        PreparedStatement preparedStatement = testSession.prepare(statement);
+        testSession.execute(preparedStatement.bind(value.toArray()));
+        ccf.thenAuditLogContainNothingForUser();
+    }
+
+    @Test
+    @Parameters(method = "parametersForPreparedStatements")
+    @SuppressWarnings("unused")
+    public void preparedStatementIsGrantWhitelistedUsingTopLevelGrant(String statement, List<Object> value, String expectedTrace, String operation, String resource)
+    {
+        ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, "grants");
+        PreparedStatement preparedStatement = testSession.prepare(statement);
+        testSession.execute(preparedStatement.bind(value.toArray()));
+        ccf.thenAuditLogContainNothingForUser();
+    }
+
+    @Test
+    @Parameters(method = "parametersForPreparedStatements")
+    public void preparedStatementIsLoggedWhenGrantWhitelistUnauthorized(String statement, List<Object> value, String expectedTrace, String operation, String resource)
+    {
+        ccf.givenRoleIsWhitelistedForOperationOnResource(basicUsername, operation, "grants/" + resource);
+        PreparedStatement preparedStatement = basicSession.prepare(statement);
+        assertThatExceptionOfType(UnauthorizedException.class)
+            .isThrownBy(() -> basicSession.execute(preparedStatement.bind(value.toArray())));
+        ccf.thenAuditLogContainsFailedEntriesForUser(expectedTrace, basicUsername);
     }
 }

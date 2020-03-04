@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.integration.standard;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Splitter;
 import org.junit.After;
@@ -33,6 +34,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnauthorizedException;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
+import org.apache.cassandra.auth.Permission;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
@@ -185,6 +187,17 @@ public class ITVerifyWhitelistManagement
     }
 
     @Test(expected = UnauthorizedException.class)
+    public void testOrdinaryUserCannotGrantWhitelistHimself()
+    {
+        try (Cluster privateCluster = cdt.createCluster("ordinary_user", "secret");
+                Session privateSession = privateCluster.connect())
+        {
+            privateSession.execute(new SimpleStatement(
+                    "ALTER ROLE ordinary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data' }"));
+        }
+    }
+
+    @Test(expected = UnauthorizedException.class)
     public void testCreateUserCannotWhitelistUser()
     {
         try (Cluster privateCluster = cdt.createCluster("create_user", "secret");
@@ -220,6 +233,24 @@ public class ITVerifyWhitelistManagement
         "ALTER ROLE other_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }"));
 
         assertRoleOperations("other_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+    }
+
+    @Test
+    public void testAuthorizedUserCanGrantPermissionDerivedWhitelistToHimself()
+    {
+        authorizedSession.execute(new SimpleStatement(
+        "ALTER ROLE authorized_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data' }"));
+
+        assertRoleOperations("authorized_user", "grants/data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+    }
+
+    @Test
+    public void testAuthorizedUserCanGrantPermissionDerivedWhitelistToOthers()
+    {
+        authorizedSession.execute(new SimpleStatement(
+        "ALTER ROLE other_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data' }"));
+
+        assertRoleOperations("other_user", "grants/data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
     }
 
     @Test(expected = UnauthorizedException.class)
@@ -322,6 +353,34 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
         "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections/native' }"));
+    }
+
+    @Test
+    public void testSuperUserCanWhitelistOnGrant()
+    {
+        given_temporary_user(superSession);
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants' }"));
+
+        List<String> allPermissions = Permission.ALL.stream().map(Enum::name).collect(Collectors.toList());
+        assertRoleOperations("temporary_user", "grants", allPermissions);
+    }
+
+    @Test
+    public void testSuperUserCanWhitelistOnTableDataGrant()
+    {
+        given_temporary_user(superSession);
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data/ks/tb' }"));
+        assertRoleOperations("temporary_user", "grants/data/ks/tb", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+    }
+
+    @Test (expected = InvalidQueryException.class)
+    public void testSuperUserCanNotWhitelistOnGrantWithInvalidResource()
+    {
+        given_temporary_user(superSession);
+        superSession.execute(new SimpleStatement(
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/non_existing_resource' }"));
     }
 
     @Test

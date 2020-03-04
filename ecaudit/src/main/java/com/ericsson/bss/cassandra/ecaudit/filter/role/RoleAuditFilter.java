@@ -16,8 +16,6 @@
 package com.ericsson.bss.cassandra.ecaudit.filter.role;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -25,10 +23,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
-import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
+import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.Resources;
@@ -37,24 +35,33 @@ import org.apache.cassandra.auth.Roles;
 
 /**
  * A role based white-list filter that exempts users based on custom options on roles in Cassandra.
+ * e.g. the resource "data/myKeyspace/myTable" can be white-listed for SELECT operations for a specific role,
+ * then no SELECT operations by the that user/role on that table will be audited.
+ * <p>
+ * Grants-based white-lists can be used in a similar way.
+ * e.g. the grant resource "grants/data/aKeyspace" can be white-listed for SELECT operations,
+ * then no SELECT operations on tables in "aKeyspace" will we audited IF the user/role have permissions to perform that
+ * operation.
  */
 public class RoleAuditFilter implements AuditFilter
 {
     private final Function<RoleResource, Set<RoleResource>> getRolesFunction;
     private final AuditWhitelistCache whitelistCache;
     private final WhitelistDataAccess whitelistDataAccess;
+    private final AuditFilterAuthorizer auditFilterAuthorizer;
 
     public RoleAuditFilter()
     {
-        this(Roles::getRoles, AuditWhitelistCache.getInstance(), WhitelistDataAccess.getInstance());
+        this(Roles::getRoles, AuditWhitelistCache.getInstance(), WhitelistDataAccess.getInstance(), new AuditFilterAuthorizer());
     }
 
     @VisibleForTesting
-    RoleAuditFilter(Function<RoleResource, Set<RoleResource>> getRolesFunction, AuditWhitelistCache whitelistCache, WhitelistDataAccess whitelistDataAccess)
+    RoleAuditFilter(Function<RoleResource, Set<RoleResource>> getRolesFunction, AuditWhitelistCache whitelistCache, WhitelistDataAccess whitelistDataAccess, AuditFilterAuthorizer auditFilterAuthorizer)
     {
         this.getRolesFunction = getRolesFunction;
         this.whitelistCache = whitelistCache;
         this.whitelistDataAccess = whitelistDataAccess;
+        this.auditFilterAuthorizer = auditFilterAuthorizer;
     }
 
     @Override
@@ -71,6 +78,10 @@ public class RoleAuditFilter implements AuditFilter
      * operations must be whitelisted.
      *
      * A resource is considered to be whitelisted if it, or any of its parents are mentioned in a roles whitelist.
+     *
+     * A resource white-list can be either "direct" or "grants-based".
+     * Grants-based white-list requires not only the resource to be white-listed, but also that the user/role have
+     * authorization to perform the operation on that resource to exempt audit logging.
      *
      * @param logEntry
      *            the log entry specifying the primary role as well as operation and resource
@@ -94,7 +105,7 @@ public class RoleAuditFilter implements AuditFilter
         Set<RoleResource> roles = getRoles(logEntry.getUser());
         List<? extends IResource> operationResourceChain = Resources.chain(logEntry.getResource());
         return logEntry.getPermissions().stream()
-                       .allMatch(permission -> isOperationWhitelistedOnResourceByRoles(permission, operationResourceChain, roles));
+                       .allMatch(permission -> isOperationWhitelistedOnResourceByRoles(permission, operationResourceChain, roles, logEntry.getUser()));
     }
 
     private Set<RoleResource> getRoles(String username)
@@ -103,18 +114,18 @@ public class RoleAuditFilter implements AuditFilter
         return getRolesFunction.apply(primaryRole);
     }
 
-    private boolean isOperationWhitelistedOnResourceByRoles(Permission operation, List<? extends IResource> operationResourceChain, Set<RoleResource> roles)
+    private boolean isOperationWhitelistedOnResourceByRoles(Permission operation, List<? extends IResource> operationResourceChain, Set<RoleResource> roles, String user)
     {
         return roles.stream()
-                    .anyMatch(role -> isOperationWhitelistedOnResourceByRole(operation, operationResourceChain, role));
+                    .anyMatch(role -> isOperationWhitelistedOnResourceByRole(operation, operationResourceChain, role, user));
     }
 
-    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<? extends IResource> operationResourceChain, RoleResource role)
+    private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<? extends IResource> operationResourceChain, RoleResource role, String user)
     {
-        Map<IResource, Set<Permission>> whitelist = whitelistCache.getWhitelist(role);
-        return operationResourceChain.stream()
-                                     .map(whitelist::get)
-                                     .filter(Objects::nonNull)
-                                     .anyMatch(whitelistedOperations -> whitelistedOperations.contains(operation));
+        RoleWhitelistChecker whitelistChecker = new RoleWhitelistChecker(operation, operationResourceChain, whitelistCache.getWhitelist(role));
+
+        return whitelistChecker.isWhitelisted()
+               || whitelistChecker.isGrantWhitelisted()
+                  && auditFilterAuthorizer.isOperationAuthorizedForUser(operation, user, operationResourceChain);
     }
 }
