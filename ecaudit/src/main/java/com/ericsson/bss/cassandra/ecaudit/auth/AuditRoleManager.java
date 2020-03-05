@@ -84,7 +84,7 @@ public class AuditRoleManager implements IRoleManager
                            ? ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.PASSWORD, Option.OPTIONS)
                            : ImmutableSet.of(Option.LOGIN, Option.SUPERUSER);
         alterableOptions = hasAuditPasswordAuthenticator
-                           ? ImmutableSet.of(Option.PASSWORD)
+                           ? ImmutableSet.of(Option.PASSWORD, Option.OPTIONS)
                            : ImmutableSet.of();
     }
 

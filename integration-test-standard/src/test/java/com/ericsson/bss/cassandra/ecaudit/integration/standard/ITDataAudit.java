@@ -24,8 +24,11 @@ import org.junit.runner.RunWith;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.UnauthorizedException;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(JUnitParamsRunner.class)
 public class ITDataAudit
@@ -37,15 +40,23 @@ public class ITDataAudit
     private static Cluster testCluster;
     private static Session testSession;
 
+    private static String basicUsername;
+    private static Cluster basicCluster;
+    private static Session basicSession;
+
     @BeforeClass
     public static void beforeClass()
     {
         ccf.setup();
         testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
-        testCluster = ccf.createCluster(testUsername, "secret");
+        testCluster = ccf.createCluster(testUsername);
         testSession = testCluster.connect();
 
-        ccf.givenUser(GRANTEE);
+        basicUsername = ccf.givenUniqueBasicUserWithMinimalWhitelist();
+        basicCluster = ccf.createCluster(basicUsername);
+        basicSession = basicCluster.connect();
+
+        ccf.givenBasicUser(GRANTEE);
     }
 
     @Before
@@ -59,11 +70,14 @@ public class ITDataAudit
     {
         ccf.after();
         ccf.resetTestUserWithMinimalWhitelist(testUsername);
+        ccf.resetTestUserWithMinimalWhitelist(basicUsername);
     }
 
     @AfterClass
     public static void afterClass()
     {
+        basicSession.close();
+        basicCluster.close();
         testSession.close();
         testCluster.close();
         ccf.tearDown();
@@ -73,11 +87,11 @@ public class ITDataAudit
     private Object[] parametersForSimpleStatements()
     {
         return new Object[]{
-            new Object[]{ "CREATE KEYSPACE dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false", "create", "data/dataks" },
-            new Object[]{ "CREATE TABLE dataks.tbl (key int PRIMARY KEY, value text)", "create", "data/dataks" },
-            new Object[]{ "CREATE INDEX idx ON dataks.tbl (value)", "alter", "data/dataks/tbl" },
-            new Object[]{ "CREATE MATERIALIZED VIEW dataks.viw AS SELECT value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)", "alter", "data/dataks/tbl" },
-            new Object[]{ "CREATE TYPE dataks.tp (data1 int, data2 int)", "create", "data/dataks" },
+            new Object[]{ "CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false", "create", "data/dataks" },
+            new Object[]{ "CREATE TABLE IF NOT EXISTS dataks.tbl (key int PRIMARY KEY, value text)", "create", "data/dataks" },
+            new Object[]{ "CREATE INDEX IF NOT EXISTS idx ON dataks.tbl (value)", "alter", "data/dataks/tbl" },
+            new Object[]{ "CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.viw AS SELECT value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)", "alter", "data/dataks/tbl" },
+            new Object[]{ "CREATE TYPE IF NOT EXISTS dataks.tp (data1 int, data2 int)", "create", "data/dataks" },
             new Object[]{ "SELECT * FROM dataks.tbl WHERE key = 12", "select", "data/dataks/tbl" },
             new Object[]{ "INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')", "modify", "data/dataks/tbl" },
             new Object[]{ "UPDATE dataks.tbl SET value = 'hepp' WHERE key = 99", "modify", "data/dataks/tbl" },
@@ -111,5 +125,56 @@ public class ITDataAudit
         ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, resource);
         testSession.execute(statement);
         ccf.thenAuditLogContainNothingForUser();
+    }
+
+    @Test
+    @Parameters(method = "parametersForSimpleStatements")
+    public void simpleStatementIsGrantWhitelisted(String statement, String operation, String resource)
+    {
+        ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, "grants/" + resource);
+        testSession.execute(statement);
+        ccf.thenAuditLogContainNothingForUser();
+    }
+
+    @Test
+    @Parameters(method = "parametersForSimpleStatements")
+    @SuppressWarnings("unused")
+    public void simpleStatementIsGrantWhitelistedUsingTopLevelGrant(String statement, String operation, String resource)
+    {
+        ccf.givenRoleIsWhitelistedForOperationOnResource(testUsername, operation, "grants");
+        testSession.execute(statement);
+        ccf.thenAuditLogContainNothingForUser();
+    }
+
+    @Test
+    @Parameters(method = "parametersForSimpleStatements")
+    public void simpleStatementIsLoggedWhenGrantWhitelistUnauthorized(String statement, String operation, String resource)
+    {
+        // Add the below resources to make sure the test(s) fails due to Authorization failure
+        ccf.givenKeyspace("dataks");
+        ccf.givenTable("dataks.tbl");
+        givenIndex("dataks.tbl", "idx");
+        givenType("dataks.tp");
+        givenMaterializedView("dataks.viw");
+
+        ccf.givenRoleIsWhitelistedForOperationOnResource(basicUsername, operation, "grants/" + resource);
+        assertThatExceptionOfType(UnauthorizedException.class)
+            .isThrownBy(() -> basicSession.execute(statement));
+        ccf.thenAuditLogContainsFailedEntriesForUser(statement, basicUsername);
+    }
+
+    private void givenIndex(String table, String index)
+    {
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit("CREATE INDEX IF NOT EXISTS " + index + " ON " + table + " (value)");
+    }
+
+    private void givenType(String type)
+    {
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit("CREATE TYPE IF NOT EXISTS " + type + "(data1 int, data2 int)");
+    }
+
+    private void givenMaterializedView(String view)
+    {
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit("CREATE MATERIALIZED VIEW IF NOT EXISTS " + view + " AS SELECT value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)");
     }
 }

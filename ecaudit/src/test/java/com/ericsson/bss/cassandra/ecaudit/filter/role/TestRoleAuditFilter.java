@@ -31,11 +31,13 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
+import com.ericsson.bss.cassandra.ecaudit.auth.GrantResource;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
+import org.apache.cassandra.auth.Resources;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.exceptions.CassandraException;
@@ -46,6 +48,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +56,8 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestRoleAuditFilter
 {
+    private static final String USER = "user1";
+
     @Mock
     private Function<RoleResource, Set<RoleResource>> getRolesFunctionMock;
 
@@ -62,13 +67,15 @@ public class TestRoleAuditFilter
 
     @Mock
     private WhitelistDataAccess whitelistDataAccessMock;
+    @Mock
+    private AuditFilterAuthorizer auditFilterAuthorizerMock;
 
     private RoleAuditFilter filter;
 
     @Before
     public void before()
     {
-        filter = new RoleAuditFilter(getRolesFunctionMock, auditWhitelistCacheMock, whitelistDataAccessMock);
+        filter = new RoleAuditFilter(getRolesFunctionMock, auditWhitelistCacheMock, whitelistDataAccessMock, auditFilterAuthorizerMock);
 
         whitelistMap = Maps.newHashMap();
         when(auditWhitelistCacheMock.getWhitelist(any(RoleResource.class)))
@@ -93,7 +100,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -103,7 +110,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -113,7 +120,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -123,7 +130,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.MODIFY), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -134,7 +141,28 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Sets.newHashSet(Permission.SELECT, Permission.MODIFY), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
+    }
+
+    @Test
+    public void primaryRoleWithGrantWhitelistedDataTableDoSelectAndAuthorized()
+    {
+        givenRoleIsAuthorized();
+        givenRoleIsWhitelisted("primary", Permission.SELECT, GrantResource.fromResource(DataResource.fromName("data/ks/tbl")));
+        givenRolesOfRequest("primary", "inherited");
+        AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
+
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
+    }
+
+    @Test
+    public void primaryRoleWithGrantWhitelistedDataTableDoSelectAndNotAuthorized()
+    {
+        givenRoleIsWhitelisted("primary", Permission.CREATE, GrantResource.fromResource(DataResource.fromName("data/ks/tbl")));
+        givenRolesOfRequest("primary", "inherited");
+        AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.CREATE), DataResource.fromName("data/ks/tbl"));
+
+        assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
 
     @Test
@@ -145,7 +173,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Sets.newHashSet(Permission.SELECT, Permission.MODIFY), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -155,7 +183,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/other_tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isFalse();
+        assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
 
     @Test
@@ -165,7 +193,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -175,7 +203,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.EXECUTE), ConnectionResource.root());
 
-        assertThat(filter.isFiltered(auditEntry)).isTrue();
+        assertThat(filter.isWhitelisted(auditEntry)).isTrue();
     }
 
     @Test
@@ -184,7 +212,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.EXECUTE), ConnectionResource.root());
 
-        assertThat(filter.isFiltered(auditEntry)).isFalse();
+        assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
 
     @Test
@@ -193,7 +221,7 @@ public class TestRoleAuditFilter
         givenRolesOfRequest("primary", "inherited");
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.MODIFY), DataResource.fromName("data/ks/tbl"));
 
-        assertThat(filter.isFiltered(auditEntry)).isFalse();
+        assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
 
     @Test
@@ -204,7 +232,7 @@ public class TestRoleAuditFilter
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
         assertThatExceptionOfType(CassandraException.class)
-        .isThrownBy(() -> filter.isFiltered(auditEntry));
+        .isThrownBy(() -> filter.isWhitelisted(auditEntry));
     }
 
     private void givenRolesOfRequest(String... roleNames)
@@ -240,6 +268,13 @@ public class TestRoleAuditFilter
         return AuditEntry.newBuilder()
                          .permissions(permissions)
                          .resource(resource)
+                         .user(USER)
                          .build();
+    }
+
+    private void givenRoleIsAuthorized()
+    {
+        DataResource dataResource = DataResource.fromName("data/ks/tbl");
+        when(auditFilterAuthorizerMock.isOperationAuthorizedForUser(eq(Permission.SELECT), eq(USER), eq(Resources.chain(dataResource)))).thenReturn(true);
     }
 }

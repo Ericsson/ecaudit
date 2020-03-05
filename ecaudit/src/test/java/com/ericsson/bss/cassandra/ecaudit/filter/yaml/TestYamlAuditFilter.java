@@ -54,7 +54,7 @@ public class TestYamlAuditFilter
 
         List<String> users = new ArrayList<>(Arrays.asList("foo", "User1", "bar", "User2", "fnord", "another"));
 
-        assertThat(users.stream().map(TestYamlAuditFilter::toLogEntry).map(filter::isFiltered)
+        assertThat(users.stream().map(TestYamlAuditFilter::toLogEntry).map(filter::isWhitelisted)
                 .collect(Collectors.toList()))
                         .containsExactly(false, true, false, true, false, false);
     }
@@ -69,7 +69,7 @@ public class TestYamlAuditFilter
         assertThat(users.stream()
                 .map(TestYamlAuditFilter::toLogEntry)
                 .map(TestYamlAuditFilter::asLoginEntry)
-                .map(filter::isFiltered)
+                .map(filter::isWhitelisted)
                 .collect(Collectors.toList()))
                 .containsOnly(false);
     }

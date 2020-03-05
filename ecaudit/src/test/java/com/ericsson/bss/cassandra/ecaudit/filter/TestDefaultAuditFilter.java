@@ -34,8 +34,8 @@ public class TestDefaultAuditFilter
     {
         DefaultAuditFilter filter = new DefaultAuditFilter();
 
-        assertThat(filter.isFiltered(toLogEntry("user1"))).isFalse();
-        assertThat(filter.isFiltered(toLogEntry("user2"))).isFalse();
+        assertThat(filter.isWhitelisted(toLogEntry("user1"))).isFalse();
+        assertThat(filter.isWhitelisted(toLogEntry("user2"))).isFalse();
     }
 
     private static AuditEntry toLogEntry(String user)
