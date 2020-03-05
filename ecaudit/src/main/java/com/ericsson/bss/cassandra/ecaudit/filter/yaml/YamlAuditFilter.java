@@ -36,7 +36,7 @@ public class YamlAuditFilter implements AuditFilter
     }
 
     @Override
-    public boolean isFiltered(AuditEntry logEntry)
+    public boolean isWhitelisted(AuditEntry logEntry)
     {
         // When using YAML-based whitelist, always audit log authentication operations
         if (logEntry.getResource() instanceof ConnectionResource)

@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
 import org.apache.cassandra.auth.DataResource;
@@ -33,6 +34,7 @@ final class ResourceFactory
     private static final String ROLES_ROOT = "roles";
     private static final String CONNECTIONS_ROOT = "connections";
     private static final String FUNCTIONS_ROOT = "functions";
+    private static final String GRANT_ROOT = "grants";
 
     private static final String SEPARATOR = "/";
     private static final Pattern VALID_NAME_PATTERN = Pattern.compile("\\w+");
@@ -80,6 +82,15 @@ final class ResourceFactory
                 FunctionResource functionResource = FunctionResource.fromName(resourceName);
                 validateFunctionResourceName(functionResource);
                 return functionResource;
+            case GRANT_ROOT:
+                if (parts.length == 1)
+                {
+                    return GrantResource.root();
+                }
+                String wrappedResourceName = parts[1];
+                Preconditions.checkArgument(!wrappedResourceName.startsWith(GRANT_ROOT), "Invalid resource type: %s, recursive grants not allowed", resourceName);
+                IResource wrappedResource = toResource(wrappedResourceName);
+                return GrantResource.fromResource(wrappedResource);
             default:
                 throw new IllegalArgumentException("Invalid resource type: " + resourceName);
         }

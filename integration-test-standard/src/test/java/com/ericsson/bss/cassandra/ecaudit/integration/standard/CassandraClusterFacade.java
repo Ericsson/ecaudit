@@ -52,7 +52,6 @@ public class CassandraClusterFacade
 
     private List<String> createdUsers = new ArrayList<>();
     private List<String> createdKeyspaces = new ArrayList<>();
-    private List<String> createdTables = new ArrayList<>();
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
@@ -103,7 +102,6 @@ public class CassandraClusterFacade
     void tearDown()
     {
         createdUsers.forEach(role -> superSession.execute("DROP ROLE IF EXISTS " + role));
-        createdTables.forEach(tbl -> superSession.execute("DROP TABLE IF EXISTS " + tbl));
         createdKeyspaces.forEach(ks -> superSession.execute("DROP KEYSPACE IF EXISTS " + ks));
 
         superSession.close();
@@ -116,22 +114,30 @@ public class CassandraClusterFacade
         }
     }
 
-    void givenUser(String username)
+    void givenBasicUser(String username)
     {
         createUser(username, false);
     }
 
     String givenUniqueSuperuserWithMinimalWhitelist()
     {
-        String username = "superuser" + superUsernameNumber.incrementAndGet();
+        String username = "supertestuser" + superUsernameNumber.incrementAndGet();
         createUser(username, true);
+        setMinimumWhitelist(username);
+        return username;
+    }
+
+    String givenUniqueBasicUserWithMinimalWhitelist()
+    {
+        String username = "basictestuser" + superUsernameNumber.incrementAndGet();
+        createUser(username, false);
         setMinimumWhitelist(username);
         return username;
     }
 
     private void createUser(String username, boolean isSuperuser)
     {
-        superSession.execute("CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = " + isSuperuser);
+        superSession.execute("CREATE ROLE IF NOT EXISTS " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = " + isSuperuser);
         createdUsers.add(username);
     }
 
@@ -155,14 +161,13 @@ public class CassandraClusterFacade
 
     void givenKeyspace(String keyspace)
     {
-        superSession.execute("CREATE KEYSPACE " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        superSession.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
         createdKeyspaces.add(keyspace);
     }
 
     void givenTable(String table)
     {
-        superSession.execute("CREATE TABLE " + table + " (key int PRIMARY KEY, value text)");
-        createdTables.add(table);
+        superSession.execute("CREATE TABLE IF NOT EXISTS " + table + " (key int PRIMARY KEY, value text)");
     }
 
     void givenRoleIsWhitelistedForOperationOnResource(String username, String operation, String resource)
@@ -184,14 +189,24 @@ public class CassandraClusterFacade
         assertThat(loggingEvents.get(0).getFormattedMessage()).isEqualTo(expectedAuditEntry(auditOperation, username, "ATTEMPT"));
     }
 
+    void thenAuditLogContainsFailedEntriesForUser(String auditOperation, String username)
+    {
+        ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
+        verify(mockAuditAppender, times(2)).doAppend(loggingEventCaptor.capture());
+        List<ILoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertThat(loggingEvents.get(0).getFormattedMessage()).isEqualTo(expectedAuditEntry(auditOperation, username, "ATTEMPT"));
+        assertThat(loggingEvents.get(1).getFormattedMessage()).isEqualTo(expectedAuditEntry(auditOperation, username, "FAILED"));
+    }
+
     private String expectedAuditEntry(String auditOperation, String username, String status)
     {
         String obfuscatedOperation = auditOperation.replaceAll("secret", "*****");
         return String.format("client:'127.0.0.1'|user:'%s'|status:'%s'|operation:'%s'", username, status, obfuscatedOperation);
     }
 
-    Cluster createCluster(String username, String secret)
+    Cluster createCluster(String username)
     {
-        return cdt.createCluster(username, secret);
+        return cdt.createCluster(username, "secret");
     }
 }

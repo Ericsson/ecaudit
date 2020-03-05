@@ -96,11 +96,11 @@ public class TestDefaultAuditor
     public void testAuditFiltered()
     {
         AuditEntry logEntry = AuditEntry.newBuilder().build();
-        when(mockFilter.isFiltered(logEntry)).thenReturn(true);
+        when(mockFilter.isWhitelisted(logEntry)).thenReturn(true);
 
         long timeTaken = timedOperation(() -> auditor.audit(logEntry));
 
-        verify(mockFilter).isFiltered(logEntry);
+        verify(mockFilter).isWhitelisted(logEntry);
         verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
         verifyNoMoreInteractions(mockAuditMetrics);
         verifyZeroInteractions(mockLogger, mockObfuscator);
@@ -113,7 +113,7 @@ public class TestDefaultAuditor
     public void testAuditFilteredThrowsException()
     {
         AuditEntry logEntry = AuditEntry.newBuilder().build();
-        when(mockFilter.isFiltered(logEntry)).thenThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 1, 1, false));
+        when(mockFilter.isWhitelisted(logEntry)).thenThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 1, 1, false));
 
         long timeTaken = timedOperation(() -> auditor.audit(logEntry), CassandraException.class);
 
@@ -129,12 +129,12 @@ public class TestDefaultAuditor
     public void testAuditNotFiltered()
     {
         AuditEntry logEntry = AuditEntry.newBuilder().build();
-        when(mockFilter.isFiltered(logEntry)).thenReturn(false);
+        when(mockFilter.isWhitelisted(logEntry)).thenReturn(false);
         when(mockObfuscator.obfuscate(logEntry)).thenReturn(logEntry);
 
         long timeTaken = timedOperation(() -> auditor.audit(logEntry));
 
-        verify(mockFilter).isFiltered(logEntry);
+        verify(mockFilter).isWhitelisted(logEntry);
         verify(mockObfuscator).obfuscate(logEntry);
         verify(mockLogger).log(logEntry);
         verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));

@@ -143,6 +143,43 @@ public class TestAuditWhitelistManager
     }
 
     @Test
+    public void testGrantOnGrantBasedResourceAtAlter()
+    {
+        DataResource dataResource = DataResource.fromName("data/myks");
+        when(performer.getPermissions(eq(dataResource))).thenReturn(ImmutableSet.of(Permission.AUTHORIZE));
+        RoleOptions options = createRoleOptions(
+                Collections.singletonMap("grant_audit_whitelist_for_modify", "grants/data/myks"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
+
+        verify(mockWhitelistDataAccess, times(1))
+        .addToWhitelist(eq(role), eq(GrantResource.fromResource(dataResource)), eq(ImmutableSet.of(Permission.MODIFY)));
+    }
+
+    @Test
+    public void testGrantOnTopLevelGrantBasedResourceAtAlterIsDenied()
+    {
+        RoleOptions options = createRoleOptions(
+                Collections.singletonMap("grant_audit_whitelist_for_modify", "grants"));
+
+        assertThatExceptionOfType(UnauthorizedException.class)
+        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
+    }
+
+    @Test
+    public void testGrantOnTopLevelGrantBasedResourceAtAlterIsAllowedBySuperUser()
+    {
+        when(performer.isSuper()).thenReturn(true);
+        RoleOptions options = createRoleOptions(
+                Collections.singletonMap("grant_audit_whitelist_for_modify", "grants"));
+
+        whitelistManager.alterRoleOption(performer, role, options);
+
+        verify(mockWhitelistDataAccess, times(1))
+        .addToWhitelist(eq(role), eq(GrantResource.root()), eq(ImmutableSet.of(Permission.MODIFY)));
+    }
+
+    @Test
     public void testGrantAtAlterIsDenied()
     {
         when(performer.getPermissions(any())).thenReturn(ImmutableSet.of(Permission.MODIFY, Permission.SELECT));

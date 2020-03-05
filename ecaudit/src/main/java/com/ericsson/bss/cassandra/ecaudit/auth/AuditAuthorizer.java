@@ -134,4 +134,9 @@ public class AuditAuthorizer implements IAuthorizer
     {
         wrappedAuthorizer.setup();
     }
+
+    public IAuthorizer getWrappedAuthorizer()
+    {
+        return wrappedAuthorizer;
+    }
 }
