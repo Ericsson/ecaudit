@@ -22,18 +22,23 @@ This way feature compatibility will be maintained on the different flavors of ec
 
 At the moment the oldest maintained release branch is ```release/c2.2```
 which is tracking the latest release of Cassandra 2.2.x.
-Then comes ```release/c3.0.11```
-which is building with Cassandra 3.0.11 specifically.
 Then comes ```release/3.0```
 which is tracking the latest release of Cassandra 3.0.x.
 The ```master``` branch is tracking the latest release of Cassandra 3.11.x.
 
 Pull Requests with new features should typically target ```release/c2.2```.
-Merge order is then ```PR``` -> ```release/c2.2``` -> ```release/c3.0.11``` -> ```release/c3.0``` -> ```master```
+Merge order is then ```PR``` -> ```release/c2.2``` -> ```release/c3.0``` -> ```master```
 
 It is encouraged to encapsulate differences between flavors in Flavor Adapters.
 This simplifies maintenance and merging between flavors.
 Examples are the FieldFilterFlavorAdapter and the CqlLiteralFlavorAdapter.
+
+
+### Maintenance
+
+We don't merge new features into the ```release/c3.0.11``` branch which is building with Cassandra 3.0.11 specifically.
+On request we will fix critical issues.
+This is handled by separate PR's for this specific branch.
 
 
 ## Design Environment
