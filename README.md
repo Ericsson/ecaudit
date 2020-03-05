@@ -37,10 +37,16 @@ Get the ecAudit flavor for your Cassandra version.
 
 [![ecAudit for Cassandra 3.11.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.11.svg?label=ecAudit%20for%20Cassandra%203.11.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.11%22)
 [![ecAudit for Cassandra 3.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=ecAudit%20for%20Cassandra%203.0.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
-[![ecAudit for Cassandra 3.0.11](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.11.svg?label=ecAudit%20for%20Cassandra%203.0.11)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0.11%22)
 [![ecAudit for Cassandra 2.2.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c2.2.svg?label=ecAudit%20for%20Cassandra%202.2)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c2.2%22)
 
 For a detailed description of compatible Cassandra versions, refer to the [Cassandra Compatibility Matrix](doc/cassandra_compatibility.md).
+
+
+#### Maintenance
+
+The following flavors of ecAudit are in maintenance mode and will get critical fixes, but no new features.
+
+[![ecAudit for Cassandra 3.0.11](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.11.svg?label=ecAudit%20for%20Cassandra%203.0.11)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0.11%22)
 
 
 ### Setup
@@ -75,7 +81,7 @@ The following Ericsson developers contributed to the initial ecAudit project:
 
 ## License
 
-Copyright 2018-19 Telefonaktiebolaget LM Ericsson
+Copyright 2018-20 Telefonaktiebolaget LM Ericsson
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

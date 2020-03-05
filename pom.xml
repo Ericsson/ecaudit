@@ -307,6 +307,7 @@ limitations under the License.
                     <version>${org.apache.maven.plugins.maven-release-plugin.version}</version>
                     <configuration>
                         <tagNameFormat>ecaudit_${artifact.flavor.version}-@{project.version}</tagNameFormat>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
                         <useReleaseProfile>false</useReleaseProfile>
                         <releaseProfiles>release</releaseProfiles>
                         <goals>deploy</goals>
