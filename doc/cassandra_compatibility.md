@@ -34,12 +34,12 @@ The table below list the Cassandra version used while building each ecAudit rele
 ## ecaudit_c3.0.11
 
 This flavor is built with Apache Cassandra 3.0.11 specifically and it is not compatible with any other version.
-This flavor is deprecated and so this flavor may not be supported in future versions of ecAudit.
+This flavor is in maintenance mode and so this flavor will only get critical fixes on request.
 Users should consider to upgrade to one of the latest Cassandra releases together with a suitable ecAudit flavor. 
 
 | ecAudit Version | Compiled With    | Compatible With  |
 | --------------- | ---------------- | ---------------- |
-| 2.0.0 -> latest | Cassandra 3.0.11 | Cassandra 3.0.11 |
+| 2.0.0 -> 2.3.0  | Cassandra 3.0.11 | Cassandra 3.0.11 |
 
 
 ## ecaudit_c2.2
