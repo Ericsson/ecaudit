@@ -99,11 +99,11 @@ cassandra@cqlsh> LIST ROLES;
 Note how the options map list all whitelists without the grant/revoke prefix.
 
 
-## Access Derived Whitelists
+## Permission Derived Whitelists
 
-Access derived whitelisting is a convenient way to configure whitelisting (without having to configure too much details).
+Permission derived whitelisting is a convenient way to configure whitelisting (without having to configure too much details).
 
-For a statement to be whitelisted, the user must have _both_ an access derived whitelist configuration _and_ be authorized by
+For a statement to be whitelisted, the user must have _both_ an permission derived whitelist configuration _and_ be authorized by
 Cassandra to access the given operation and resource.
 
 To whitelist the __kalle__ user on __modify__ operations to __all tables__ in the __unit keyspace__ that he has
@@ -113,8 +113,8 @@ cassandra@cqlsh> ALTER ROLE kalle WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR MO
 ```
 If kalle tries to modify a table where he lacks permission, not only will the operation be unauthorized, it will also be audit logged.
 
-Access derived whitelisting is configured similar to other role base whitelists, but with the resource prefixed with __grants/__.
-It is also possible to configure a top-level accessed derived whitelist for a user. The following statement
+Permission derived whitelisting is configured similar to other role base whitelists, but with the resource prefixed with __grants/__.
+It is also possible to configure a top-level permission derived whitelist for a user. The following statement
 will whitelist the  __anka__ user on __any operation__ to __any resource__ he has permissions to:
 ```SQL
 cassandra@cqlsh> ALTER ROLE anka WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' : 'grants' };
@@ -168,7 +168,7 @@ cassandra@cqlsh> LIST ROLES OF ibbe;
 
 ## Resources
 
-Four types of resources can be managed in whitelists:
+Five types of resources can be managed in whitelists:
 
 * connections - represent connection (authentication) attempts
 * data - represent all kinds of data resources in Cassandra such as data in tables
@@ -270,16 +270,16 @@ cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALT
 
 ### Grant Resources
 
-This resource type is used to represent an access derived whitelist on the wrapped resource.
+This resource type is used to represent an permission derived whitelist on the wrapped resource.
 
 The operations that can be whitelisted depends on the type of resource being wrapped inside the grant.
 
-For example, when granting access derived whitelist __all__ on a __keyspace__ - _CREATE/ALTER/DROP/SELECT/MODIFY/AUTHORIZE_ operations will be whitelisted:
+For example, when granting permission derived whitelist __all__ on a __keyspace__ - _CREATE/ALTER/DROP/SELECT/MODIFY/AUTHORIZE_ operations will be whitelisted:
 ```SQL
 cassandra@cqlsh> ALTER ROLE kalle WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' : 'grants/data/unit' };
 ```
 
-And when granting access derived whitelist __all__ on __connections__ - _AUTHORIZE/EXECUTE_ operations will be whitelisted:
+And when granting permission derived whitelist __all__ on __connections__ - _AUTHORIZE/EXECUTE_ operations will be whitelisted:
 ```SQL
 cassandra@cqlsh> ALTER ROLE kalle WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' : 'grants/connections' };
 ```
@@ -300,6 +300,8 @@ micke@cqlsh> ALTER ROLE micke WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' :
 ```
 
 The __connections__ resource is specific to ecAudit an may only be whitelisted by super-users.
+
+The __grant__ resource is specific to ecAudit. A Top-level grant may only be whitelisted by super-users.
 
 
 ## Tuning
