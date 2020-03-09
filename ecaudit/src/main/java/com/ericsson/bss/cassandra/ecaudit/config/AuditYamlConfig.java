@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressNothing;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.ParameterizedClass;
 
 /**
@@ -44,6 +45,9 @@ public final class AuditYamlConfig
     public LoggerTiming log_timing_strategy;
     public String wrapped_authorizer;
     public String bound_value_suppressor;
+    public Integer whitelist_cache_validity_in_ms;
+    public Integer whitelist_cache_update_interval_in_ms;
+    public Integer whitelist_cache_max_entries;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -107,5 +111,41 @@ public final class AuditYamlConfig
     String getBoundValueSuppressor()
     {
         return bound_value_suppressor == null ? DEFAULT_BOUND_VALUE_SUPPRESSOR : bound_value_suppressor;
+    }
+
+    public Integer getWhitelistCacheValidity()
+    {
+        return whitelist_cache_validity_in_ms == null
+               ? DatabaseDescriptor.getRolesValidity()
+               : whitelist_cache_validity_in_ms;
+    }
+
+    public void setWhitelistCacheValidity(Integer whitelistCacheValidityInMs)
+    {
+        this.whitelist_cache_validity_in_ms = whitelistCacheValidityInMs;
+    }
+
+    public Integer getWhitelistCacheUpdateInterval()
+    {
+        return whitelist_cache_update_interval_in_ms == null
+               ? DatabaseDescriptor.getRolesUpdateInterval()
+               : whitelist_cache_update_interval_in_ms;
+    }
+
+    public void setWhitelistCacheUpdateInterval(Integer whitelistCacheUpdateIntervalInMs)
+    {
+        this.whitelist_cache_update_interval_in_ms = whitelistCacheUpdateIntervalInMs;
+    }
+
+    public Integer getWhitelistCacheMaxEntries()
+    {
+        return whitelist_cache_max_entries == null
+               ? DatabaseDescriptor.getRolesCacheMaxEntries()
+               : whitelist_cache_max_entries;
+    }
+
+    public void setWhitelistCacheMaxEntries(Integer whitelistCacheMaxEntries)
+    {
+        this.whitelist_cache_max_entries = whitelistCacheMaxEntries;
     }
 }

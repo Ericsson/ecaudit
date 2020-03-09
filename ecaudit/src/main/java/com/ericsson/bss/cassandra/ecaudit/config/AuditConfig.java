@@ -46,41 +46,71 @@ public class AuditConfig
     public List<String> getYamlWhitelist() throws ConfigurationException
     {
         loadConfigIfNeeded();
-
         if (!yamlConfig.isFromFile())
         {
             throw new ConfigurationException("No audit configuration file found for yaml based whitelist");
         }
-
         return yamlConfig.getWhitelist();
     }
 
     public ParameterizedClass getLoggerBackendParameters() throws ConfigurationException
     {
         loadConfigIfNeeded();
-
         return yamlConfig.getLoggerBackendParameters();
     }
 
     public boolean isPostLogging()
     {
         loadConfigIfNeeded();
-
         return yamlConfig.isPostLogging();
     }
 
     public String getWrappedAuthorizer()
     {
         loadConfigIfNeeded();
-
         return yamlConfig.getWrappedAuthorizer();
     }
 
     public String getBoundValueSuppressor()
     {
         loadConfigIfNeeded();
-
         return yamlConfig.getBoundValueSuppressor();
+    }
+
+    public int getWhitelistCacheValidity()
+    {
+        loadConfigIfNeeded();
+        return yamlConfig.getWhitelistCacheValidity();
+    }
+
+    public void setWhitelistCacheValidity(int whitelistCacheValidityInMs)
+    {
+        loadConfigIfNeeded();
+        yamlConfig.setWhitelistCacheValidity(whitelistCacheValidityInMs);
+    }
+
+    public int getWhitelistCacheUpdateInterval()
+    {
+        loadConfigIfNeeded();
+        return yamlConfig.getWhitelistCacheUpdateInterval();
+    }
+
+    public void setWhitelistCacheUpdateInterval(int whitelistCacheUpdateIntervalInMs)
+    {
+        loadConfigIfNeeded();
+        yamlConfig.setWhitelistCacheUpdateInterval(whitelistCacheUpdateIntervalInMs);
+    }
+
+    public int getWhitelistCacheMaxEntries()
+    {
+        loadConfigIfNeeded();
+        return yamlConfig.getWhitelistCacheMaxEntries();
+    }
+
+    public void setWhitelistCacheMaxEntries(int whitelistCacheMaxEntries)
+    {
+        loadConfigIfNeeded();
+        yamlConfig.setWhitelistCacheMaxEntries(whitelistCacheMaxEntries);
     }
 
     private synchronized void loadConfigIfNeeded()

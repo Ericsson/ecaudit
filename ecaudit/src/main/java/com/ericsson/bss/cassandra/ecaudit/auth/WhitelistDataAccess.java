@@ -151,7 +151,7 @@ public class WhitelistDataAccess
                                                                            values));
     }
 
-    Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
+    public Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
     {
         ResultMessage.Rows rows = loadWhitelistStatement.execute(
                 QueryState.forInternalCalls(),

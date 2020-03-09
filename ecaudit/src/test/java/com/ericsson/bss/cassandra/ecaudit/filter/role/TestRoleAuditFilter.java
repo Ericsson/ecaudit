@@ -25,15 +25,17 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
 import com.ericsson.bss.cassandra.ecaudit.auth.ConnectionResource;
 import com.ericsson.bss.cassandra.ecaudit.auth.GrantResource;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
@@ -61,8 +63,6 @@ public class TestRoleAuditFilter
     @Mock
     private Function<RoleResource, Set<RoleResource>> getRolesFunctionMock;
 
-    @Mock
-    private AuditWhitelistCache auditWhitelistCacheMock;
     private Map<RoleResource, Map<IResource, Set<Permission>>> whitelistMap;
 
     @Mock
@@ -72,13 +72,25 @@ public class TestRoleAuditFilter
 
     private RoleAuditFilter filter;
 
+    @BeforeClass
+    public static void beforeClass()
+    {
+        ClientInitializer.beforeClass();
+    }
+
+    @AfterClass
+    public static void afterClass()
+    {
+        ClientInitializer.afterClass();
+    }
+
     @Before
     public void before()
     {
-        filter = new RoleAuditFilter(getRolesFunctionMock, auditWhitelistCacheMock, whitelistDataAccessMock, auditFilterAuthorizerMock);
+        filter = new RoleAuditFilter(getRolesFunctionMock, whitelistDataAccessMock, auditFilterAuthorizerMock);
 
         whitelistMap = Maps.newHashMap();
-        when(auditWhitelistCacheMock.getWhitelist(any(RoleResource.class)))
+        when(whitelistDataAccessMock.getWhitelist(any(RoleResource.class)))
         .thenAnswer((invocation) -> {
             RoleResource roleResource = invocation.getArgument(0);
             Map<IResource, Set<Permission>> whitelist = whitelistMap.get(roleResource);
