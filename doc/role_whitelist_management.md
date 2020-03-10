@@ -289,7 +289,7 @@ Top-level grants can only be created by a user with the SUPERUSER flag.
 
 ## Permissions
 
-Any role with the __SUPERUSER__ flag can manage __connections__, __roles__, __functions__ and __data__ whitelists on all roles.
+Any role with the __SUPERUSER__ flag can manage __connections__, __grants__, __roles__, __functions__ and __data__ whitelists on all roles.
 Further, any role with __AUTHORIZE__ permission on a resource will be able to manage whitelists on that resource.
 For instance, a role which have the __AUTHORIZE__ permission on __ALL__ __KEYSPACES__ will be able to manage __data__ whitelists on all roles, including itself:
 
