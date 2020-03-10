@@ -1,6 +1,5 @@
 # Changes
 
-
 ## Version 2.4.0
 * Make sure authorized user can whitelist himself - #145
 * Introduce grants-based role white-listing
