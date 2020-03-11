@@ -15,3 +15,5 @@
 #
 
 wrapped_authorizer: org.apache.cassandra.auth.AllowAllAuthorizer
+
+whitelist_cache_validity_in_ms: 0
