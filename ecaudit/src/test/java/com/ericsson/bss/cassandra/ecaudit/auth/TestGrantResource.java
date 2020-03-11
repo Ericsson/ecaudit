@@ -15,16 +15,13 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
-import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -87,5 +84,13 @@ public class TestGrantResource
     {
         assertThatExceptionOfType(NullPointerException.class)
         .isThrownBy(() -> GrantResource.fromResource(null));
+    }
+
+    @Test
+    public void testEqualsContract()
+    {
+        EqualsVerifier.forClass(GrantResource.class)
+                      .usingGetClass()
+                      .verify();
     }
 }

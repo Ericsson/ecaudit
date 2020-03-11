@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import org.junit.Test;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.cassandra.auth.Permission;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,5 +61,13 @@ public class TestConnectionResource
     {
         assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> ConnectionResource.fromName("foo"));
+    }
+
+    @Test
+    public void testEqualsContract()
+    {
+        EqualsVerifier.forClass(ConnectionResource.class)
+                      .usingGetClass()
+                      .verify();
     }
 }

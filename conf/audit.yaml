@@ -120,3 +120,22 @@ logger_backend:
 # By default SuppressNothing will be used.
 #
 # bound_value_suppressor: SuppressBlobs
+
+
+# Validity period for whitelist cache (processing role based whitelist logic can be an expensive operation depending
+# on the whitelist configuration).
+# The whitelist results (per user/operation/permission) are cached for the period specified here.
+# Set to 0 to disable caching entirely.
+# Defaults to the value of roles_validity_in_ms (specified in cassandra.yaml)
+whitelist_cache_validity_in_ms: 30000
+
+# Refresh interval for whitelist cache (if enabled).
+# After this interval, cache entries become eligible for refresh. Upon next access, an async reload is scheduled
+# and the old value returned until it completes.
+# This value should be less that the validity so that the the async reload can complete well before the validity expires.
+# Defaults to the value of roles_update_interval_in_ms (specified in cassandra.yaml)
+whitelist_cache_update_interval_in_ms: 20000
+
+# Maximum number of entries in the whitelist cache
+# Default to 10 x the value of roles_cache_max_entries (specified in cassandra.yaml)
+whitelist_cache_max_entries: 10000

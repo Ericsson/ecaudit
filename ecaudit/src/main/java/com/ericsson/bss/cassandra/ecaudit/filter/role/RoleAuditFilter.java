@@ -22,7 +22,6 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
-import com.ericsson.bss.cassandra.ecaudit.auth.AuditWhitelistCache;
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
@@ -46,20 +45,20 @@ import org.apache.cassandra.auth.Roles;
 public class RoleAuditFilter implements AuditFilter
 {
     private final Function<RoleResource, Set<RoleResource>> getRolesFunction;
-    private final AuditWhitelistCache whitelistCache;
+    private final RoleAuditFilterCache filterCache;
     private final WhitelistDataAccess whitelistDataAccess;
     private final AuditFilterAuthorizer auditFilterAuthorizer;
 
     public RoleAuditFilter()
     {
-        this(Roles::getRoles, AuditWhitelistCache.getInstance(), WhitelistDataAccess.getInstance(), new AuditFilterAuthorizer());
+        this(Roles::getRoles, WhitelistDataAccess.getInstance(), new AuditFilterAuthorizer());
     }
 
     @VisibleForTesting
-    RoleAuditFilter(Function<RoleResource, Set<RoleResource>> getRolesFunction, AuditWhitelistCache whitelistCache, WhitelistDataAccess whitelistDataAccess, AuditFilterAuthorizer auditFilterAuthorizer)
+    RoleAuditFilter(Function<RoleResource, Set<RoleResource>> getRolesFunction, WhitelistDataAccess whitelistDataAccess, AuditFilterAuthorizer auditFilterAuthorizer)
     {
         this.getRolesFunction = getRolesFunction;
-        this.whitelistCache = whitelistCache;
+        this.filterCache = new RoleAuditFilterCache(this::isWhitelistedUnchecked);
         this.whitelistDataAccess = whitelistDataAccess;
         this.auditFilterAuthorizer = auditFilterAuthorizer;
     }
@@ -90,9 +89,10 @@ public class RoleAuditFilter implements AuditFilter
     @Override
     public boolean isWhitelisted(AuditEntry logEntry)
     {
+        RoleAuditFilterCacheKey cacheKey = new RoleAuditFilterCacheKey(logEntry.getUser(), logEntry.getResource(), logEntry.getPermissions());
         try
         {
-            return isWhitelistedUnchecked(logEntry);
+            return filterCache.isWhitelisted(cacheKey);
         }
         catch (UncheckedExecutionException e)
         {
@@ -100,12 +100,12 @@ public class RoleAuditFilter implements AuditFilter
         }
     }
 
-    private boolean isWhitelistedUnchecked(AuditEntry logEntry)
+    private boolean isWhitelistedUnchecked(RoleAuditFilterCacheKey cacheKey)
     {
-        Set<RoleResource> roles = getRoles(logEntry.getUser());
-        List<? extends IResource> operationResourceChain = Resources.chain(logEntry.getResource());
-        return logEntry.getPermissions().stream()
-                       .allMatch(permission -> isOperationWhitelistedOnResourceByRoles(permission, operationResourceChain, roles, logEntry.getUser()));
+        Set<RoleResource> roles = getRoles(cacheKey.getUser());
+        List<? extends IResource> operationResourceChain = Resources.chain(cacheKey.getResource());
+        return cacheKey.getPermissions().stream()
+                       .allMatch(permission -> isOperationWhitelistedOnResourceByRoles(permission, operationResourceChain, roles, cacheKey.getUser()));
     }
 
     private Set<RoleResource> getRoles(String username)
@@ -122,7 +122,7 @@ public class RoleAuditFilter implements AuditFilter
 
     private boolean isOperationWhitelistedOnResourceByRole(Permission operation, List<? extends IResource> operationResourceChain, RoleResource role, String user)
     {
-        RoleWhitelistChecker whitelistChecker = new RoleWhitelistChecker(operation, operationResourceChain, whitelistCache.getWhitelist(role));
+        RoleWhitelistChecker whitelistChecker = new RoleWhitelistChecker(operation, operationResourceChain, whitelistDataAccess.getWhitelist(role));
 
         return whitelistChecker.isWhitelisted()
                || whitelistChecker.isGrantWhitelisted()
