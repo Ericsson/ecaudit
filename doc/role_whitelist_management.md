@@ -99,6 +99,27 @@ cassandra@cqlsh> LIST ROLES;
 Note how the options map list all whitelists without the grant/revoke prefix.
 
 
+## Permission Derived Whitelists
+
+Permission derived whitelisting is a convenient way to configure whitelisting (without having to configure too much details).
+
+For a statement to be whitelisted, the user must have _both_ an permission derived whitelist configuration _and_ be authorized by
+Cassandra to access the given operation and resource.
+
+To whitelist the __kalle__ user on __modify__ operations to __all tables__ in the __unit keyspace__ that he has
+permissions to modify, execute the following statement:
+```SQL
+cassandra@cqlsh> ALTER ROLE kalle WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR MODIFY' : 'grants/data/unit' };
+```
+If kalle tries to modify a table where he lacks permission, not only will the operation be unauthorized, it will also be audit logged.
+
+Permission derived whitelisting is configured similar to other role base whitelists, but with the resource prefixed with __grants/__.
+It is also possible to configure a top-level permission derived whitelist for a user. The following statement
+will whitelist the  __anka__ user on __any operation__ to __any resource__ he has permissions to:
+```SQL
+cassandra@cqlsh> ALTER ROLE anka WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' : 'grants' };
+```
+
 ## Inheritance
 
 Just like ordinary permissions, a role will inherit whitelists from other roles granted to it.
@@ -147,12 +168,13 @@ cassandra@cqlsh> LIST ROLES OF ibbe;
 
 ## Resources
 
-Four types of resources can be managed in whitelists:
+Five types of resources can be managed in whitelists:
 
 * connections - represent connection (authentication) attempts
 * data - represent all kinds of data resources in Cassandra such as data in tables
 * functions - represent all kinds of function and aggregate resources in Cassandra
 * roles - represent all kinds of role resources in Cassandra
+* grants - represent a grant on a wrapped resource (with one of the above types)
 
 ### Connection Resources
 
@@ -246,10 +268,28 @@ without any record of that in the audit log.
 cassandra@cqlsh> ALTER ROLE ibbe WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALTER' : 'roles/jim' };
 ```
 
+### Grant Resources
+
+This resource type is used to represent an permission derived whitelist on the wrapped resource.
+
+The operations that can be whitelisted depends on the type of resource being wrapped inside the grant.
+
+For example, when granting permission derived whitelist __all__ on a __keyspace__ - _CREATE/ALTER/DROP/SELECT/MODIFY/AUTHORIZE_ operations will be whitelisted:
+```SQL
+cassandra@cqlsh> ALTER ROLE kalle WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' : 'grants/data/unit' };
+```
+
+And when granting permission derived whitelist __all__ on __connections__ - _AUTHORIZE/EXECUTE_ operations will be whitelisted:
+```SQL
+cassandra@cqlsh> ALTER ROLE kalle WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' : 'grants/connections' };
+```
+
+A top-level grant resource (not containing any wrapped resource) can whitelist any operation (CREATE/ALTER/DROP/SELECT/MODIFY/AUTHORIZE/DESCRIBE/EXECUTE).
+Top-level grants can only be created by a user with the SUPERUSER flag.
 
 ## Permissions
 
-Any role with the __SUPERUSER__ flag can manage __connections__, __roles__, __functions__ and __data__ whitelists on all roles.
+Any role with the __SUPERUSER__ flag can manage __connections__, __grants__, __roles__, __functions__ and __data__ whitelists on all roles.
 Further, any role with __AUTHORIZE__ permission on a resource will be able to manage whitelists on that resource.
 For instance, a role which have the __AUTHORIZE__ permission on __ALL__ __KEYSPACES__ will be able to manage __data__ whitelists on all roles, including itself:
 
@@ -260,6 +300,8 @@ micke@cqlsh> ALTER ROLE micke WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL' :
 ```
 
 The __connections__ resource is specific to ecAudit an may only be whitelisted by super-users.
+
+The __grant__ resource is specific to ecAudit. A Top-level grant may only be whitelisted by super-users.
 
 
 ## Tuning

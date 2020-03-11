@@ -18,8 +18,13 @@ package com.ericsson.bss.cassandra.ecaudit.config;
 import java.net.URL;
 import java.util.Properties;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressNothing;
+import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +33,18 @@ import static org.assertj.core.api.Assertions.entry;
 
 public class TestAuditYamlConfigurationLoader
 {
+    @BeforeClass
+    public static void beforeClass()
+    {
+        ClientInitializer.beforeClass();
+    }
+
+    @AfterClass
+    public static void afterClass()
+    {
+        ClientInitializer.afterClass();
+    }
+
     @Test
     public void testEmptyPropertyThrowsConfigurationException()
     {
@@ -68,7 +85,7 @@ public class TestAuditYamlConfigurationLoader
     }
 
     @Test
-    public void testMissingWhitelistIsDefault()
+    public void testDefaultConfiguration()
     {
         Properties properties = getProperties("empty.yaml");
 
@@ -76,6 +93,10 @@ public class TestAuditYamlConfigurationLoader
 
         assertThat(config.getYamlWhitelist()).isEmpty();
         assertThat(config.isPostLogging()).isFalse();
+        assertThat(config.getBoundValueSuppressor()).isEqualTo(SuppressNothing.class.getName());
+        assertThat(config.getWhitelistCacheValidity()).isEqualTo(DatabaseDescriptor.getRolesValidity());
+        assertThat(config.getWhitelistCacheUpdateInterval()).isEqualTo(DatabaseDescriptor.getRolesUpdateInterval());
+        assertThat(config.getWhitelistCacheMaxEntries()).isEqualTo(DatabaseDescriptor.getRolesCacheMaxEntries() * 10);
     }
 
     @Test
@@ -89,7 +110,7 @@ public class TestAuditYamlConfigurationLoader
     }
 
     @Test
-    public void testLoadWhitelistAllPresent()
+    public void testCustomConfiguration()
     {
         Properties properties = getProperties("mock_configuration.yaml");
 
@@ -97,6 +118,10 @@ public class TestAuditYamlConfigurationLoader
 
         assertThat(config.getYamlWhitelist()).containsOnly("User1", "User2");
         assertThat(config.isPostLogging()).isTrue();
+        assertThat(config.getBoundValueSuppressor()).isEqualTo("SuppressBlobs");
+        assertThat(config.getWhitelistCacheValidity()).isEqualTo(42);
+        assertThat(config.getWhitelistCacheUpdateInterval()).isEqualTo(41);
+        assertThat(config.getWhitelistCacheMaxEntries()).isEqualTo(40);
     }
 
     @Test
@@ -155,6 +180,22 @@ public class TestAuditYamlConfigurationLoader
         AuditConfig config = givenLoadedConfig(properties);
 
         assertThat(config.getWrappedAuthorizer()).isEqualTo("org.apache.cassandra.auth.AllowAllAuthorizer");
+    }
+
+    @Test
+    public void testWhitelistCacheParametersCanBeSet()
+    {
+        Properties properties = getProperties("empty.yaml");
+
+        AuditConfig config = givenLoadedConfig(properties);
+
+        config.setWhitelistCacheValidity(99);
+        config.setWhitelistCacheUpdateInterval(88);
+        config.setWhitelistCacheMaxEntries(77);
+
+        assertThat(config.getWhitelistCacheValidity()).isEqualTo(99);
+        assertThat(config.getWhitelistCacheUpdateInterval()).isEqualTo(88);
+        assertThat(config.getWhitelistCacheMaxEntries()).isEqualTo(77);
     }
 
     private AuditConfig givenLoadedConfig(Properties properties)
