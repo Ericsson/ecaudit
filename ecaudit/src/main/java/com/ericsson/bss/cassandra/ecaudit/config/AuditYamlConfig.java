@@ -140,7 +140,7 @@ public final class AuditYamlConfig
     public Integer getWhitelistCacheMaxEntries()
     {
         return whitelist_cache_max_entries == null
-               ? DatabaseDescriptor.getRolesCacheMaxEntries()
+               ? DatabaseDescriptor.getRolesCacheMaxEntries() * 10
                : whitelist_cache_max_entries;
     }
 

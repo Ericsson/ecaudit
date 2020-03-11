@@ -85,7 +85,7 @@ public class TestAuditYamlConfigurationLoader
     }
 
     @Test
-    public void testMissingWhitelistIsDefault()
+    public void testDefaultConfiguration()
     {
         Properties properties = getProperties("empty.yaml");
 
@@ -96,7 +96,7 @@ public class TestAuditYamlConfigurationLoader
         assertThat(config.getBoundValueSuppressor()).isEqualTo(SuppressNothing.class.getName());
         assertThat(config.getWhitelistCacheValidity()).isEqualTo(DatabaseDescriptor.getRolesValidity());
         assertThat(config.getWhitelistCacheUpdateInterval()).isEqualTo(DatabaseDescriptor.getRolesUpdateInterval());
-        assertThat(config.getWhitelistCacheMaxEntries()).isEqualTo(DatabaseDescriptor.getRolesCacheMaxEntries());
+        assertThat(config.getWhitelistCacheMaxEntries()).isEqualTo(DatabaseDescriptor.getRolesCacheMaxEntries() * 10);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class TestAuditYamlConfigurationLoader
     }
 
     @Test
-    public void testLoadWhitelistAllPresent()
+    public void testCustomConfiguration()
     {
         Properties properties = getProperties("mock_configuration.yaml");
 

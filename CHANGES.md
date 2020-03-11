@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.4.0
+* Optimizing cache performance for role audit filter
 * Make sure authorized user can whitelist himself - #145
 * Introduce grants-based role white-listing
 
