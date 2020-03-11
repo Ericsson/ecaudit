@@ -58,6 +58,10 @@ update_audit_yaml() {
  cat <<EOF > $1
 logger_backend:
   - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
+
+whitelist_cache_validity_in_ms: 30000
+whitelist_cache_update_interval_in_ms: 20000
+whitelist_cache_max_entries: 10000
 EOF
 }
 
