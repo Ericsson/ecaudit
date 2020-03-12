@@ -1,5 +1,5 @@
 /*
- * Copyright 20202 Telefonaktiebolaget LM Ericsson
+ * Copyright 2020 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.auth.audited;
+package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Collections;
-import java.util.Optional;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -26,7 +25,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
-import com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
@@ -51,7 +49,7 @@ import static org.mockito.Mockito.when;
 public class TestWrappingAuditAuthenticator
 {
     @Mock
-    AuditedAuthenticator mockAuthenticator;
+    IAuditAuthenticator mockAuthenticator;
 
     @Mock
     AuditAdapter mockAuditAdapter;
@@ -60,7 +58,7 @@ public class TestWrappingAuditAuthenticator
     AuditConfig mockConfig;
 
     @Mock
-    AuditedAuthenticator.AuditedSaslNegotiator mockSaslNegotiator;
+    IAuditAuthenticator.AuditSaslNegotiator mockSaslNegotiator;
 
     @InjectMocks
     WrappingAuditAuthenticator authenticator;
@@ -106,7 +104,7 @@ public class TestWrappingAuditAuthenticator
     {
         AuthenticatedUser expected = mock(AuthenticatedUser.class);
         when(mockSaslNegotiator.getAuthenticatedUser()).thenReturn(expected);
-        when(mockSaslNegotiator.getUser()).thenReturn(Optional.of("audited_user"));
+        when(mockSaslNegotiator.getUser()).thenReturn("audited_user");
 
         IAuthenticator.SaslNegotiator negotiator = authenticator.newSaslNegotiator();
         AuthenticatedUser actual = negotiator.getAuthenticatedUser();
@@ -119,7 +117,7 @@ public class TestWrappingAuditAuthenticator
     @Test
     public void testWhenAuthenticationFailsIsStillAudited()
     {
-        when(mockSaslNegotiator.getUser()).thenReturn(Optional.of("audited_user"));
+        when(mockSaslNegotiator.getUser()).thenReturn("audited_user");
         when(mockSaslNegotiator.getAuthenticatedUser()).thenThrow(new AuthenticationException("audited_user"));
 
         IAuthenticator.SaslNegotiator negotiator = authenticator.newSaslNegotiator();
@@ -141,7 +139,7 @@ public class TestWrappingAuditAuthenticator
         String wrappedAuthenticatorName = AuditPasswordAuthenticator.class.getName();
         when(mockConfig.getWrappedAuthenticator()).thenReturn(wrappedAuthenticatorName);
 
-        AuditedAuthenticator wrappedAuthenticator = WrappingAuditAuthenticator.newWrappedAuthenticator(mockConfig);
+        IAuditAuthenticator wrappedAuthenticator = WrappingAuditAuthenticator.newWrappedAuthenticator(mockConfig);
         assertThat(wrappedAuthenticator).isInstanceOf(AuditPasswordAuthenticator.class);
     }
 }

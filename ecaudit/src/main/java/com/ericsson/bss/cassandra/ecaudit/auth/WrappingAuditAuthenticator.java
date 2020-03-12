@@ -1,5 +1,5 @@
 /*
- * Copyright 20202 Telefonaktiebolaget LM Ericsson
+ * Copyright 2020 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.auth.audited;
+package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -26,20 +27,21 @@ import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.utils.FBUtilities;
 
-public class WrappingAuditAuthenticator implements IAuthenticator
+public class WrappingAuditAuthenticator implements IAuditAuthenticator
 {
-    private final AuditedAuthenticator wrappedAuthenticator;
+    private final IAuditAuthenticator wrappedAuthenticator;
     private final AuditAdapter auditAdapter;
 
     /**
      * Default constructor called by Cassandra.
      *
      * This creates an instance of {@link WrappingAuditAuthenticator} with the default {@link AuditAdapter}
-     * and gets an {@link AuditedAuthenticator} from configuration (or the default one).
+     * and gets an {@link IAuditAuthenticator} from configuration (or the default one).
      */
     public WrappingAuditAuthenticator()
     {
@@ -47,14 +49,14 @@ public class WrappingAuditAuthenticator implements IAuthenticator
     }
 
     @VisibleForTesting
-    WrappingAuditAuthenticator(AuditedAuthenticator wrappedAuthenticator, AuditAdapter auditAdapter)
+    WrappingAuditAuthenticator(IAuditAuthenticator wrappedAuthenticator, AuditAdapter auditAdapter)
     {
         this.wrappedAuthenticator = wrappedAuthenticator;
         this.auditAdapter = auditAdapter;
     }
 
     @VisibleForTesting
-    static AuditedAuthenticator newWrappedAuthenticator(AuditConfig auditConfig)
+    static IAuditAuthenticator newWrappedAuthenticator(AuditConfig auditConfig)
     {
         String className = auditConfig.getWrappedAuthenticator();
         return FBUtilities.construct(className, "authenticator");
@@ -87,7 +89,7 @@ public class WrappingAuditAuthenticator implements IAuthenticator
     @Override
     public IAuthenticator.SaslNegotiator newSaslNegotiator()
     {
-        return new AuditingSaslNegotiator(wrappedAuthenticator.createAuditedSaslNegotiator());
+        return createAuditedSaslNegotiator();
     }
 
     @Override
@@ -96,41 +98,59 @@ public class WrappingAuditAuthenticator implements IAuthenticator
         return wrappedAuthenticator.legacyAuthenticate(credentials);
     }
 
+    @Override
+    public AuditSaslNegotiator createAuditedSaslNegotiator()
+    {
+        return new AuditingSaslNegotiator(wrappedAuthenticator.createAuditedSaslNegotiator());
+    }
+
+    @Override
+    public Set<IRoleManager.Option> supportedOptions()
+    {
+        return wrappedAuthenticator.supportedOptions();
+    }
+
+    @Override
+    public Set<IRoleManager.Option> alterableOptions()
+    {
+        return wrappedAuthenticator.alterableOptions();
+    }
+
     /**
      * Implements a {@link org.apache.cassandra.auth.IAuthenticator.SaslNegotiator} that performs auditing on
      * login attempts.
      */
-    private class AuditingSaslNegotiator implements SaslNegotiator
+    private class AuditingSaslNegotiator implements AuditSaslNegotiator
     {
-        private final AuditedAuthenticator.AuditedSaslNegotiator auditedSaslNegotiator;
+        private final IAuditAuthenticator.AuditSaslNegotiator auditSaslNegotiator;
 
-        public AuditingSaslNegotiator(AuditedAuthenticator.AuditedSaslNegotiator auditedSaslNegotiator)
+        public AuditingSaslNegotiator(IAuditAuthenticator.AuditSaslNegotiator auditSaslNegotiator)
         {
-            this.auditedSaslNegotiator = auditedSaslNegotiator;
+            this.auditSaslNegotiator = auditSaslNegotiator;
         }
 
         @Override
         public byte[] evaluateResponse(byte[] clientResponse) throws AuthenticationException
         {
-            return auditedSaslNegotiator.evaluateResponse(clientResponse);
+            return auditSaslNegotiator.evaluateResponse(clientResponse);
         }
 
         @Override
         public boolean isComplete()
         {
-            return auditedSaslNegotiator.isComplete();
+            return auditSaslNegotiator.isComplete();
         }
 
         @Override
         public AuthenticatedUser getAuthenticatedUser() throws AuthenticationException
         {
-            String userName = auditedSaslNegotiator.getUser().orElse(null);
+            String userName = getUser();
 
             long timestamp = System.currentTimeMillis();
             auditAdapter.auditAuth(userName, Status.ATTEMPT, timestamp);
             try
             {
-                AuthenticatedUser result = auditedSaslNegotiator.getAuthenticatedUser();
+                AuthenticatedUser result = auditSaslNegotiator.getAuthenticatedUser();
                 auditAdapter.auditAuth(userName, Status.SUCCEEDED, timestamp);
                 return result;
             }
@@ -139,6 +159,18 @@ public class WrappingAuditAuthenticator implements IAuthenticator
                 auditAdapter.auditAuth(userName, Status.FAILED, timestamp);
                 throw e;
             }
+        }
+
+        @Override
+        public String getUser()
+        {
+            return auditSaslNegotiator.getUser();
+        }
+
+        @Override
+        public Optional<String> getSubject()
+        {
+            return auditSaslNegotiator.getSubject();
         }
     }
 }

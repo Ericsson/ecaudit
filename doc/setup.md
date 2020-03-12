@@ -28,6 +28,12 @@ Read on below to learn how to tune the logger backend and manage audit whitelist
 
 In the [audit.yaml reference](audit_yaml_reference.md) you'll find more details about different options.
 
+### Wrapped Authenticator Backend
+
+The ecAudit plug-in supports wrapping ```authenticators``` implementing the ```IAuditAuthenticator``` interface, using
+the ```wrapped_authenticator``` setting in the ```audit.yaml``` file together with setting the authenticator as ```WrappingAuditAuthenticator``` in the ```cassandra.yaml```.
+This is useful if requiring a non-default (i.e. not ```PasswordAuthenticator```) implementation of an authenticator but still want authentication logs.
+If omitting the ```wrapped_autenticator``` setting when using ```WrappingAuditAuthenticator```, then the plug-in will fall back to using the default ```AuditPasswordAuthenticator```.
 
 ### Wrapped Authorizer Backend
 
