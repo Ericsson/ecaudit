@@ -60,9 +60,9 @@ public class SimpleAuditRecord implements AuditRecord
     }
 
     @Override
-    public String getUser()
+    public Optional<String> getUser()
     {
-        return user;
+        return Optional.ofNullable(user);
     }
 
     @Override

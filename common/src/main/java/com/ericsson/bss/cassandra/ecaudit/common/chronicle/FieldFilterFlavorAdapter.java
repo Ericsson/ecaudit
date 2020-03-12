@@ -36,8 +36,14 @@ final class FieldFilterFlavorAdapter
                                ? configuredFields
                                : configuredFields.withoutField(FieldSelector.Field.BATCH_ID);
 
-        return auditRecord.getClientAddress() == null
-               ? fields.withoutField(FieldSelector.Field.CLIENT_IP).withoutField(FieldSelector.Field.CLIENT_PORT)
-               : fields;
+        fields = auditRecord.getUser().isPresent()
+                 ? fields :
+                 fields.withoutField(FieldSelector.Field.USER);
+
+        fields = auditRecord.getClientAddress() == null
+                 ? fields.withoutField(FieldSelector.Field.CLIENT_IP).withoutField(FieldSelector.Field.CLIENT_PORT)
+                 : fields;
+
+        return fields;
     }
 }

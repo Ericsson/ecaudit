@@ -34,6 +34,7 @@ public final class AuditYamlConfig
     private static final List<String> DEFAULT_WHITELIST = Collections.emptyList();
     private static final ParameterizedClass DEFAULT_LOGGER_BACKEND = new ParameterizedClass(Slf4jAuditLogger.class.getCanonicalName(), Collections.emptyMap());
     private static final String DEFAULT_WRAPPED_AUTHORIZER = "org.apache.cassandra.auth.CassandraAuthorizer";
+    private static final String DEFAULT_WRAPPED_AUTHENTICATOR = "com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator";
     private static final String DEFAULT_BOUND_VALUE_SUPPRESSOR = SuppressNothing.class.getName();
 
     private boolean fromFile = true;
@@ -44,6 +45,7 @@ public final class AuditYamlConfig
     public ParameterizedClass logger_backend;
     public LoggerTiming log_timing_strategy;
     public String wrapped_authorizer;
+    public String wrapped_authenticator;
     public String bound_value_suppressor;
     public Integer whitelist_cache_validity_in_ms;
     public Integer whitelist_cache_update_interval_in_ms;
@@ -106,6 +108,11 @@ public final class AuditYamlConfig
     String getWrappedAuthorizer()
     {
         return wrapped_authorizer == null ? DEFAULT_WRAPPED_AUTHORIZER : wrapped_authorizer;
+    }
+
+    String getWrappedAuthenticator()
+    {
+        return wrapped_authenticator == null ? DEFAULT_WRAPPED_AUTHENTICATOR : wrapped_authenticator;
     }
 
     String getBoundValueSuppressor()

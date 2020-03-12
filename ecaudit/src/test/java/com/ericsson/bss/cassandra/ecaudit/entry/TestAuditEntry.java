@@ -69,7 +69,7 @@ public class TestAuditEntry
         assertThat(auditEntry.getPermissions()).isSameAs(newEntry.getPermissions()).isSameAs(PERMISSIONS);
         assertThat(auditEntry.getResource()).isSameAs(newEntry.getResource()).isSameAs(RESOURCE);
         assertThat(auditEntry.getOperation()).isSameAs(newEntry.getOperation()).isSameAs(OPERATION);
-        assertThat(auditEntry.getUser()).isSameAs(newEntry.getUser()).isSameAs(USER);
+        assertThat(auditEntry.getUser().get()).isSameAs(newEntry.getUser().get()).isSameAs(USER);
         assertThat(auditEntry.getBatchId()).isEqualTo(newEntry.getBatchId()).contains(BATCH);
         assertThat(auditEntry.getStatus()).isSameAs(newEntry.getStatus()).isSameAs(STATUS);
         assertThat(auditEntry.getTimestamp()).isSameAs(newEntry.getTimestamp()).isSameAs(TIMESTAMP);

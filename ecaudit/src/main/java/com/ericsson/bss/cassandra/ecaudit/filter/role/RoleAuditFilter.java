@@ -89,7 +89,7 @@ public class RoleAuditFilter implements AuditFilter
     @Override
     public boolean isWhitelisted(AuditEntry logEntry)
     {
-        RoleAuditFilterCacheKey cacheKey = new RoleAuditFilterCacheKey(logEntry.getUser(), logEntry.getResource(), logEntry.getPermissions());
+        RoleAuditFilterCacheKey cacheKey = new RoleAuditFilterCacheKey(logEntry.getUser().orElse(null), logEntry.getResource(), logEntry.getPermissions());
         try
         {
             return filterCache.isWhitelisted(cacheKey);

@@ -18,6 +18,7 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -25,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
+import com.ericsson.bss.cassandra.ecaudit.auth.audited.AuditedAuthenticator;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
@@ -36,7 +38,7 @@ import org.apache.cassandra.exceptions.ConfigurationException;
 /**
  * A decorator of {@link PasswordAuthenticator} with added audit logging.
  */
-public class AuditPasswordAuthenticator implements IAuthenticator
+public class AuditPasswordAuthenticator implements AuditedAuthenticator
 {
     private static final Logger LOG = LoggerFactory.getLogger(AuditPasswordAuthenticator.class);
 
@@ -89,6 +91,12 @@ public class AuditPasswordAuthenticator implements IAuthenticator
     @Override
     public SaslNegotiator newSaslNegotiator()
     {
+        return createAuditedSaslNegotiator();
+    }
+
+    @Override
+    public AuditedSaslNegotiator createAuditedSaslNegotiator()
+    {
         LOG.debug("Setting up SASL negotiation with client peer");
         return new AuditPlainTextSaslAuthenticator(wrappedAuthenticator.newSaslNegotiator());
     }
@@ -99,7 +107,7 @@ public class AuditPasswordAuthenticator implements IAuthenticator
         return wrappedAuthenticator.legacyAuthenticate(credentials);
     }
 
-    private class AuditPlainTextSaslAuthenticator implements SaslNegotiator
+    private class AuditPlainTextSaslAuthenticator implements AuditedSaslNegotiator
     {
         private final SaslNegotiator saslNegotiator;
 
@@ -139,6 +147,12 @@ public class AuditPasswordAuthenticator implements IAuthenticator
                 auditAdapter.auditAuth(decodedUsername, Status.FAILED, timestamp);
                 throw e;
             }
+        }
+
+        @Override
+        public Optional<String> getUser()
+        {
+            return Optional.ofNullable(decodedUsername);
         }
 
         /**

@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestSlf4jAuditLogger
 {
-    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'{?|user:'${USER}'?}{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
     private static final String EXPECTED_STATEMENT = "insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']";
     private static final String EXPECTED_STATEMENT_NAKED = "insert into ks.tbl (key, val) values (?, ?)";
     private static final String EXPECTED_CLIENT_ADDRESS = "127.0.0.1";
@@ -70,6 +70,7 @@ public class TestSlf4jAuditLogger
     private static AuditEntry logEntryWithAll;
     private static AuditEntry logEntryWithoutBatch;
     private static AuditEntry logEntryWithoutClientPort;
+    private static AuditEntry logEntryWithoutUser;
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
@@ -103,6 +104,10 @@ public class TestSlf4jAuditLogger
                                               .basedOn(logEntryWithAll)
                                               .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, 0))
                                               .build();
+        logEntryWithoutUser = AuditEntry.newBuilder()
+                                        .basedOn(logEntryWithAll)
+                                        .user(null)
+                                        .build();
     }
 
     @Before
@@ -138,6 +143,16 @@ public class TestSlf4jAuditLogger
 
         assertThat(getSlf4jLogMessage())
         .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
+    }
+
+    @Test
+    public void testDefaultFormatAuditEntryWithoutUser()
+    {
+        Slf4jAuditLogger logger = loggerWithConfig(DEFAULT_LOG_FORMAT);
+        logger.log(logEntryWithoutUser);
+
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("client:'127.0.0.1'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
     }
 
     @Test
@@ -179,6 +194,7 @@ public class TestSlf4jAuditLogger
 
         Function<AuditEntry, Object> userFunction = availableFieldFunctions.get("USER");
         assertThat(userFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_USER);
+        assertThat(userFunction.apply(logEntryWithoutUser)).isEqualTo(null); // User is not guaranteed to be in the log entry
 
         Function<AuditEntry, Object> batchIdFunction = availableFieldFunctions.get("BATCH_ID");
         assertThat(batchIdFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_BATCH_ID);

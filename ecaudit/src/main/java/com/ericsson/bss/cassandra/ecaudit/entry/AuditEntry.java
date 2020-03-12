@@ -106,9 +106,9 @@ public class AuditEntry implements AuditRecord
     }
 
     @Override
-    public String getUser()
+    public Optional<String> getUser()
     {
-        return user;
+        return Optional.ofNullable(user);
     }
 
     /**
@@ -253,7 +253,7 @@ public class AuditEntry implements AuditRecord
             this.permissions = entry.getPermissions();
             this.resource = entry.getResource();
             this.operation = entry.getOperation();
-            this.user = entry.getUser();
+            this.user = entry.getUser().orElse(null);
             this.batchId = entry.getBatchId().orElse(null);
             this.status = entry.getStatus();
             this.timestamp = entry.getTimestamp();

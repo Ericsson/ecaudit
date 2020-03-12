@@ -141,7 +141,7 @@ public class TestWriteReadVersionCurrent
         assertThat(actualAuditRecord.getStatus()).contains(expectedAuditRecord.getStatus());
         assertThat(actualAuditRecord.getOperation()).contains(expectedAuditRecord.getOperation().getOperationString());
         assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
-        assertThat(actualAuditRecord.getUser()).contains(expectedAuditRecord.getUser());
+        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
         assertThat(actualAuditRecord.getTimestamp()).contains(expectedAuditRecord.getTimestamp());
     }
 }

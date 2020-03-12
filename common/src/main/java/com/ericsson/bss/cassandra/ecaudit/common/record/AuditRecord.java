@@ -28,7 +28,7 @@ public interface AuditRecord
 
     InetAddress getCoordinatorAddress();
 
-    String getUser();
+    Optional<String> getUser();
 
     Optional<UUID> getBatchId();
 

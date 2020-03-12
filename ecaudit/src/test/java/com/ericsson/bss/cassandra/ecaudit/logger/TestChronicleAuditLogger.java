@@ -85,6 +85,16 @@ public class TestChronicleAuditLogger
     }
 
     @Test
+    public void noUserStatement() throws Exception
+    {
+        AuditEntry expectedAuditEntry = likeGenericRecord().user(null).build();
+
+        logger.log(expectedAuditEntry);
+
+        assertThatWireMatchRecord(expectedAuditEntry);
+    }
+
+    @Test
     public void batchStatement() throws Exception
     {
         AuditEntry expectedAuditEntry = likeGenericRecord().batch(UUID.fromString("4910e9a6-9d26-40f8-ad8c-5c0436784969")).build();
@@ -135,16 +145,20 @@ public class TestChronicleAuditLogger
         verify(mockValue).text(eq("ecaudit"));
         verify(mockWire).write(eq("fields"));
 
-        if (expectedAuditEntry.getBatchId().isPresent())
+        FieldSelector fields = FieldSelector.DEFAULT_FIELDS;
+
+        if (!expectedAuditEntry.getUser().isPresent())
         {
-            int bitmap = FieldSelector.DEFAULT_FIELDS.getBitmap();
-            verify(mockValue).int32(eq(bitmap));
+            fields = fields.withoutField(Field.USER);
         }
-        else
+
+        if (!expectedAuditEntry.getBatchId().isPresent())
         {
-            int bitmapWithoutBatch = FieldSelector.DEFAULT_FIELDS.withoutField(Field.BATCH_ID).getBitmap();
-            verify(mockValue).int32(eq(bitmapWithoutBatch));
+            fields = fields.withoutField(Field.BATCH_ID);
         }
+
+        int bitmap = fields.getBitmap();
+        verify(mockValue).int32(eq(bitmap));
 
         verify(mockWire).write(eq("timestamp"));
         verify(mockValue).int64(eq(expectedAuditEntry.getTimestamp()));
@@ -154,12 +168,16 @@ public class TestChronicleAuditLogger
         verify(mockValue).int32(eq(expectedAuditEntry.getClientAddress().getPort()));
         verify(mockWire).write(eq("coordinator_ip"));
         verify(mockValue).bytes(eq(expectedAuditEntry.getCoordinatorAddress().getAddress()));
-        verify(mockWire).write(eq("user"));
-        verify(mockValue).text(eq(expectedAuditEntry.getUser()));
         verify(mockWire).write(eq("status"));
         verify(mockValue).text(eq(expectedAuditEntry.getStatus().name()));
         verify(mockWire).write(eq("operation"));
         verify(mockValue).text(eq(expectedAuditEntry.getOperation().getOperationString()));
+
+        if (expectedAuditEntry.getUser().isPresent())
+        {
+            verify(mockWire).write(eq("user"));
+            verify(mockValue).text(eq(expectedAuditEntry.getUser().get()));
+        }
 
         if (expectedAuditEntry.getBatchId().isPresent())
         {
