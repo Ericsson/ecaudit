@@ -69,9 +69,8 @@ logger_backend:
         roll_cycle: MINUTELY
         max_log_size: 1073741824 # 1GB
 
-whitelist_cache_validity_in_ms: 30000
-whitelist_cache_update_interval_in_ms: 20000
-whitelist_cache_max_entries: 10000
+whitelist_cache_validity_in_ms: 10000
+whitelist_cache_update_interval_in_ms: 2000
 EOF
 }
 
