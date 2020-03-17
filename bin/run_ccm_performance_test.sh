@@ -87,7 +87,7 @@ set_yaml_based_filter() {
 }
 
 create_cluster() {
-  ccm create -n 1 -v ${CLUSTER_VERSION} ecaudit
+  ccm create -n 1 -v ${CLUSTER_VERSION} ecaudit-${1}
   if [[ $? -ne 0 ]]; then
    echo "Failed to create ccm cluster 'ecaudit'"
    exit 3
@@ -112,18 +112,18 @@ run_stress() {
 
 echo "Generating performance report into ecaudit-performance.html"
 
-create_cluster
+create_cluster vanilla
 start_cassandra
 run_stress vanilla
 stop_cassandra
 
-create_cluster
+create_cluster aa
 ${SCRIPT_PATH}/configure_ccm_cassandra_auth.sh
 start_cassandra
 run_stress authentication-authorization
 stop_cassandra
 
-create_cluster
+create_cluster aaa-yaml-wl
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 set_yaml_based_filter
 start_cassandra
@@ -131,7 +131,7 @@ create_dummy_whitelists
 run_stress authentication-authorization-audit-YAML-whitelist
 stop_cassandra
 
-create_cluster
+create_cluster aaa-role-wl
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 start_cassandra
 create_dummy_whitelists
@@ -139,7 +139,7 @@ ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS 
 run_stress authentication-authorization-audit-role-whitelist
 stop_cassandra
 
-create_cluster
+create_cluster aaa-rpd-wl
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 start_cassandra
 create_dummy_whitelists
@@ -147,14 +147,14 @@ ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS 
 run_stress authentication-authorization-audit-role-whitelist-permission-derived
 stop_cassandra
 
-create_cluster
+create_cluster aaa-chron
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 start_cassandra
 create_dummy_whitelists
 run_stress authentication-authorization-audit-chronicle
 stop_cassandra
 
-create_cluster
+create_cluster aaa-slf4j
 ${SCRIPT_PATH}/configure_ccm_audit_slf4j.sh
 start_cassandra
 create_dummy_whitelists
