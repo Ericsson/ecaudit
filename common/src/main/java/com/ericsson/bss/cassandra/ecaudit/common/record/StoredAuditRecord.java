@@ -34,6 +34,7 @@ public class StoredAuditRecord
     private final String operation;
     private final String nakedOperation;
     private final Long timestamp;
+    private final String subject;
 
     private StoredAuditRecord(Builder builder)
     {
@@ -46,6 +47,7 @@ public class StoredAuditRecord
         this.operation = builder.operation;
         this.nakedOperation = builder.nakedOperation;
         this.timestamp = builder.timestamp;
+        this.subject = builder.subject;
     }
 
     public Optional<Long> getTimestamp()
@@ -93,9 +95,32 @@ public class StoredAuditRecord
         return Optional.ofNullable(nakedOperation);
     }
 
+    public Optional<String> getSubject()
+    {
+        return Optional.ofNullable(subject);
+    }
+
     public static Builder builder()
     {
         return new Builder();
+    }
+
+    public static Builder basedOn(StoredAuditRecord auditRecord)
+    {
+        Builder builder = new Builder();
+
+        builder.batchId = auditRecord.batchId;
+        builder.clientAddress = auditRecord.clientAddress;
+        builder.clientPort = auditRecord.clientPort;
+        builder.coordinatorAddress = auditRecord.coordinatorAddress;
+        builder.nakedOperation = auditRecord.nakedOperation;
+        builder.operation = auditRecord.operation;
+        builder.status = auditRecord.status;
+        builder.timestamp = auditRecord.timestamp;
+        builder.user = auditRecord.user;
+        builder.subject = auditRecord.subject;
+
+        return builder;
     }
 
     public static class Builder
@@ -109,6 +134,7 @@ public class StoredAuditRecord
         private String operation;
         private String nakedOperation;
         private Long timestamp;
+        private String subject;
 
         public Builder withClientAddress(InetAddress clientAddress)
         {
@@ -161,6 +187,12 @@ public class StoredAuditRecord
         public Builder withTimestamp(long timestamp)
         {
             this.timestamp = timestamp;
+            return this;
+        }
+
+        public Builder withSubject(String subject)
+        {
+            this.subject = subject;
             return this;
         }
 

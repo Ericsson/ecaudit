@@ -44,10 +44,11 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
         actualFields.ifSelectedRun(Field.CLIENT_IP, () -> wire.write(WireTags.KEY_CLIENT_IP).bytes(auditRecord.getClientAddress().getAddress().getAddress()));
         actualFields.ifSelectedRun(Field.CLIENT_PORT, () -> wire.write(WireTags.KEY_CLIENT_PORT).int32(auditRecord.getClientAddress().getPort()));
         actualFields.ifSelectedRun(Field.COORDINATOR_IP, () -> wire.write(WireTags.KEY_COORDINATOR_IP).bytes(auditRecord.getCoordinatorAddress().getAddress()));
-        actualFields.ifSelectedRun(Field.USER, () -> wire.write(WireTags.KEY_USER).text(auditRecord.getUser().get()));
+        actualFields.ifSelectedRun(Field.USER, () -> wire.write(WireTags.KEY_USER).text(auditRecord.getUser()));
         actualFields.ifSelectedRun(Field.BATCH_ID, () -> wire.write(WireTags.KEY_BATCH_ID).uuid(auditRecord.getBatchId().get()));
         actualFields.ifSelectedRun(Field.STATUS, () -> wire.write(WireTags.KEY_STATUS).text(auditRecord.getStatus().name()));
         actualFields.ifSelectedRun(Field.OPERATION, () -> wire.write(WireTags.KEY_OPERATION).text(auditRecord.getOperation().getOperationString()));
         actualFields.ifSelectedRun(Field.OPERATION_NAKED, () -> wire.write(WireTags.KEY_NAKED_OPERATION).text(auditRecord.getOperation().getNakedOperationString()));
+        actualFields.ifSelectedRun(Field.SUBJECT, () -> wire.write(WireTags.KEY_SUBJECT).text(auditRecord.getSubject().get()));
     }
 }

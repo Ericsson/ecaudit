@@ -32,6 +32,7 @@ public class RecordValues
     private UUID batchId = null;
     private String status = "ATTEMPT";
     private String operation = "Some operation";
+    private String subject = null;
 
     private RecordValues() throws UnknownHostException
     {
@@ -77,6 +78,12 @@ public class RecordValues
     public RecordValues butWithStatus(String status)
     {
         this.status = status;
+        return this;
+    }
+
+    public RecordValues butWithSubject(String subject)
+    {
+        this.subject = subject;
         return this;
     }
 
@@ -128,5 +135,10 @@ public class RecordValues
     public String getOperation()
     {
         return operation;
+    }
+
+    public String getSubject()
+    {
+        return subject;
     }
 }

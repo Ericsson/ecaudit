@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -180,9 +181,10 @@ public class AuditAdapter
      * @param username  the user to authenticate
      * @param status    the status of the operation
      * @param timestamp the system timestamp for the request
+     * @param subject   the (optional) subject of the autentication
      * @throws AuthenticationException if the audit operation could not be performed
      */
-    public void auditAuth(String username, Status status, long timestamp) throws AuthenticationException
+    public void auditAuth(String username, Status status, long timestamp, Optional<String> subject) throws AuthenticationException
     {
         if (auditor.shouldLogForStatus(status))
         {
@@ -192,6 +194,7 @@ public class AuditAdapter
                                                      .status(status)
                                                      .operation(statusToAuthenticationOperation(status))
                                                      .timestamp(timestamp)
+                                                     .subject(subject.orElse(null))
                                                      .build();
 
             try

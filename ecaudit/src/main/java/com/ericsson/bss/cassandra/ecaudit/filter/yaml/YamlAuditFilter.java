@@ -44,7 +44,7 @@ public class YamlAuditFilter implements AuditFilter
             return false;
         }
 
-        String user = logEntry.getUser().orElse(null);
+        String user = logEntry.getUser();
         return whitelist.contains(user);
     }
 

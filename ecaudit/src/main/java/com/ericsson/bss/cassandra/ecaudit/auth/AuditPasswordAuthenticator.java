@@ -18,6 +18,7 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -163,16 +164,16 @@ public class AuditPasswordAuthenticator implements IAuditAuthenticator
             }
 
             long timestamp = System.currentTimeMillis();
-            auditAdapter.auditAuth(decodedUsername, Status.ATTEMPT, timestamp);
+            auditAdapter.auditAuth(decodedUsername, Status.ATTEMPT, timestamp, Optional.empty());
             try
             {
                 AuthenticatedUser result = saslNegotiator.getAuthenticatedUser();
-                auditAdapter.auditAuth(decodedUsername, Status.SUCCEEDED, timestamp);
+                auditAdapter.auditAuth(decodedUsername, Status.SUCCEEDED, timestamp, Optional.empty());
                 return result;
             }
             catch (RuntimeException e)
             {
-                auditAdapter.auditAuth(decodedUsername, Status.FAILED, timestamp);
+                auditAdapter.auditAuth(decodedUsername, Status.FAILED, timestamp, Optional.empty());
                 throw e;
             }
         }

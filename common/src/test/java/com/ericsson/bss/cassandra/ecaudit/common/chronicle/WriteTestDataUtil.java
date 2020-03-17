@@ -56,6 +56,7 @@ public class WriteTestDataUtil
                                               .withStatus(Status.SUCCEEDED)
                                               .withOperation(mockOperation("SELECT SOMETHING", "SELECT SOMETHING NAKED"))
                                               .withTimestamp(1554188832013L)
+                                              .withSubject("bob-the-subject")
                                               .build();
 
         // Write Data to Queue

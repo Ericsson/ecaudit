@@ -61,6 +61,20 @@ public class TestWriteReadVersionCurrent
     }
 
     @Test
+    public void writeReadSubject() throws  Exception
+    {
+        AuditRecord expectedAuditRecord = likeGenericRecord().withSubject("bob-the-subject").build();
+
+        FieldSelector fieldsWithSubject = FieldSelector.DEFAULT_FIELDS.withField(FieldSelector.Field.SUBJECT);
+
+        writeAuditRecordToChronicle(expectedAuditRecord, fieldsWithSubject);
+
+        StoredAuditRecord actualAuditRecord = readAuditRecordFromChronicle();
+
+        assertThatRecordsMatch(actualAuditRecord, expectedAuditRecord);
+    }
+
+    @Test
     public void writeReadBatch() throws Exception
     {
         AuditRecord expectedAuditRecord = likeGenericRecord().withBatchId(UUID.randomUUID()).build();
@@ -116,7 +130,12 @@ public class TestWriteReadVersionCurrent
 
     private void writeAuditRecordToChronicle(AuditRecord auditRecord)
     {
-        WriteMarshallable writeMarshallable = new AuditRecordWriteMarshallable(auditRecord, FieldSelector.DEFAULT_FIELDS);
+        writeAuditRecordToChronicle(auditRecord, FieldSelector.DEFAULT_FIELDS);
+    }
+
+    private void writeAuditRecordToChronicle(AuditRecord auditRecord, FieldSelector fields)
+    {
+        WriteMarshallable writeMarshallable = new AuditRecordWriteMarshallable(auditRecord, fields);
 
         ExcerptAppender appender = chronicleQueue.acquireAppender();
         appender.writeDocument(writeMarshallable);
@@ -141,7 +160,8 @@ public class TestWriteReadVersionCurrent
         assertThat(actualAuditRecord.getStatus()).contains(expectedAuditRecord.getStatus());
         assertThat(actualAuditRecord.getOperation()).contains(expectedAuditRecord.getOperation().getOperationString());
         assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
-        assertThat(actualAuditRecord.getUser()).isEqualTo(expectedAuditRecord.getUser());
+        assertThat(actualAuditRecord.getUser()).contains(expectedAuditRecord.getUser());
         assertThat(actualAuditRecord.getTimestamp()).contains(expectedAuditRecord.getTimestamp());
+        assertThat(actualAuditRecord.getSubject()).isEqualTo(expectedAuditRecord.getSubject());
     }
 }

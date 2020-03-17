@@ -28,11 +28,13 @@ public interface AuditRecord
 
     InetAddress getCoordinatorAddress();
 
-    Optional<String> getUser();
+    String getUser();
 
     Optional<UUID> getBatchId();
 
     Status getStatus();
 
     AuditOperation getOperation();
+
+    Optional<String> getSubject();
 }

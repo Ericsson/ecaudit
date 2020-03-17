@@ -145,18 +145,19 @@ public class WrappingAuditAuthenticator implements IAuditAuthenticator
         public AuthenticatedUser getAuthenticatedUser() throws AuthenticationException
         {
             String userName = getUser();
+            Optional<String> subject = getSubject();
 
             long timestamp = System.currentTimeMillis();
-            auditAdapter.auditAuth(userName, Status.ATTEMPT, timestamp);
+            auditAdapter.auditAuth(userName, Status.ATTEMPT, timestamp, subject);
             try
             {
                 AuthenticatedUser result = auditSaslNegotiator.getAuthenticatedUser();
-                auditAdapter.auditAuth(userName, Status.SUCCEEDED, timestamp);
+                auditAdapter.auditAuth(userName, Status.SUCCEEDED, timestamp, subject);
                 return result;
             }
             catch (RuntimeException e)
             {
-                auditAdapter.auditAuth(userName, Status.FAILED, timestamp);
+                auditAdapter.auditAuth(userName, Status.FAILED, timestamp, subject);
                 throw e;
             }
         }

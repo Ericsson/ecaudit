@@ -95,7 +95,7 @@ public class Slf4jAuditLogger implements AuditLogger
                .put("CLIENT_IP", entry -> getIpOrNull(entry.getClientAddress()))
                .put("CLIENT_PORT", entry -> getPortOrNull(entry.getClientAddress()))
                .put("COORDINATOR_IP", entry -> entry.getCoordinatorAddress().getHostAddress())
-               .put("USER", entry -> entry.getUser().orElse(null))
+               .put("USER", AuditEntry::getUser)
                .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
                .put("STATUS", AuditEntry::getStatus)
                .put("OPERATION", entry -> entry.getOperation().getOperationString())

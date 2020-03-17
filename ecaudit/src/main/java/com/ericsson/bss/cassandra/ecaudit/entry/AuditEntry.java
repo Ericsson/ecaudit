@@ -45,6 +45,7 @@ public class AuditEntry implements AuditRecord
     private final UUID batchId;
     private final Status status;
     private final Long timestamp;
+    private final String subject;
 
     /**
      * @see #newBuilder()
@@ -60,6 +61,7 @@ public class AuditEntry implements AuditRecord
         this.batchId = builder.batchId;
         this.status = builder.status;
         this.timestamp = builder.timestamp;
+        this.subject = builder.subject;
     }
 
     @Override
@@ -106,9 +108,9 @@ public class AuditEntry implements AuditRecord
     }
 
     @Override
-    public Optional<String> getUser()
+    public String getUser()
     {
-        return Optional.ofNullable(user);
+        return user;
     }
 
     /**
@@ -137,6 +139,12 @@ public class AuditEntry implements AuditRecord
         return timestamp;
     }
 
+    @Override
+    public Optional<String> getSubject()
+    {
+        return Optional.ofNullable(subject);
+    }
+
     /**
      * Create a new {@link Builder} instance.
      *
@@ -161,6 +169,7 @@ public class AuditEntry implements AuditRecord
         private UUID batchId;
         private Status status;
         private Long timestamp;
+        private String subject;
 
         public Builder client(InetSocketAddress address)
         {
@@ -216,6 +225,12 @@ public class AuditEntry implements AuditRecord
             return this;
         }
 
+        public Builder subject(String subject)
+        {
+            this.subject = subject;
+            return this;
+        }
+
         /**
          * Set the optional batch identifier.
          *
@@ -253,10 +268,11 @@ public class AuditEntry implements AuditRecord
             this.permissions = entry.getPermissions();
             this.resource = entry.getResource();
             this.operation = entry.getOperation();
-            this.user = entry.getUser().orElse(null);
+            this.user = entry.getUser();
             this.batchId = entry.getBatchId().orElse(null);
             this.status = entry.getStatus();
             this.timestamp = entry.getTimestamp();
+            this.subject = entry.getSubject().orElse(null);
             return this;
         }
 

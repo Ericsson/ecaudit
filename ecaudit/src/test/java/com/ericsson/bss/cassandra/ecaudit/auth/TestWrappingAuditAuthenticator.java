@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -37,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -110,8 +112,8 @@ public class TestWrappingAuditAuthenticator
         AuthenticatedUser actual = negotiator.getAuthenticatedUser();
 
         assertThat(actual).isSameAs(expected);
-        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.ATTEMPT), anyLong());
-        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.SUCCEEDED), anyLong());
+        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.ATTEMPT), anyLong(), any(Optional.class));
+        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.SUCCEEDED), anyLong(), any(Optional.class));
     }
 
     @Test
@@ -128,8 +130,8 @@ public class TestWrappingAuditAuthenticator
         }
         catch (Exception e)
         {
-            verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.ATTEMPT), anyLong());
-            verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.FAILED), anyLong());
+            verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.ATTEMPT), anyLong(), any(Optional.class));
+            verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.FAILED), anyLong(), any(Optional.class));
         }
     }
 

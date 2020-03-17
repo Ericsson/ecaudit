@@ -171,7 +171,7 @@ public class TestAuditAdapter
         assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(entry.getOperation().getOperationString()).isEqualTo(STATEMENT);
-        assertThat(entry.getUser()).contains(USER);
+        assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getStatus()).isEqualTo(Status.ATTEMPT);
         assertThat(entry.getBatchId()).isEmpty();
         assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
@@ -218,7 +218,7 @@ public class TestAuditAdapter
         assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedQuery);
-        assertThat(entry.getUser()).contains(USER);
+        assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getStatus()).isEqualByComparingTo(Status.ATTEMPT);
         assertThat(entry.getBatchId()).isEmpty();
         assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
@@ -259,7 +259,7 @@ public class TestAuditAdapter
         AuditEntry entry = getAuditEntry();
         assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(entry.getUser()).contains(USER);
+        assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getBatchId()).contains(expectedBatchId);
         assertThat(entry.getStatus()).isEqualByComparingTo(Status.FAILED);
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedQuery);
@@ -289,7 +289,7 @@ public class TestAuditAdapter
         // Then
         List<AuditEntry> entries = getAuditEntries(3);
         assertThat(entries).extracting(AuditEntry::getClientAddress).containsOnly(clientSocketAddress);
-        assertThat(entries).extracting(AuditEntry::getUser).containsOnly(Optional.of(USER));
+        assertThat(entries).extracting(AuditEntry::getUser).containsOnly(USER);
         assertThat(entries).extracting(AuditEntry::getBatchId).containsOnly(Optional.of(expectedBatchId));
         assertThat(entries).extracting(AuditEntry::getStatus).containsOnly(Status.ATTEMPT);
         assertThat(entries).extracting(AuditEntry::getOperation).extracting(AuditOperation::getOperationString).containsExactly("query1", "query2", "query3");
@@ -328,7 +328,7 @@ public class TestAuditAdapter
         AuditEntry entry = getAuditEntry();
         assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(entry.getUser()).contains(USER);
+        assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getBatchId()).contains(BATCH_ID);
         assertThat(entry.getStatus()).isEqualByComparingTo(Status.ATTEMPT);
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedQuery);
@@ -359,19 +359,20 @@ public class TestAuditAdapter
         when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder()).thenReturn(auditBuilder);
 
         // When
-        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP, Optional.of(USER.toUpperCase()));
 
         // Then
         AuditEntry entry = getAuditEntry();
         assertThat(entry.getClientAddress()).isNull();
         assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
-        assertThat(entry.getUser()).contains(USER);
+        assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedOperation);
         assertThat(entry.getStatus()).isEqualTo(Status.ATTEMPT);
         assertThat(entry.getBatchId()).isEmpty();
         assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
         assertThat(entry.getResource()).isEqualTo(resource);
         assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
+        assertThat(entry.getSubject()).isEqualTo(Optional.of(USER.toUpperCase()));
     }
 
     @Test
@@ -380,7 +381,7 @@ public class TestAuditAdapter
         // Given
         when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
-        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP, Optional.empty());
         // Then
         verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
@@ -394,7 +395,7 @@ public class TestAuditAdapter
         doThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 3, 4, true)).when(mockAuditor).audit(any(AuditEntry.class));
 
         assertThatExceptionOfType(AuthenticationException.class)
-        .isThrownBy(() -> auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP));
+        .isThrownBy(() -> auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP, Optional.empty()));
     }
 
     @Test
