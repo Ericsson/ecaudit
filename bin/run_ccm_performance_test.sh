@@ -45,12 +45,6 @@ if [[ ! -e ${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress ]]; then
  exit 3
 fi
 
-ccm create -n 1 -v ${CLUSTER_VERSION} ecaudit
-if [[ $? -ne 0 ]]; then
- echo "Failed to create ccm cluster 'ecaudit'"
- exit 3
-fi
-
 if [ ! -f ${JAR_FILE} ]; then
  echo "No jar file found. Build project and try again."
  exit 3
@@ -92,6 +86,14 @@ set_yaml_based_filter() {
   done
 }
 
+create_cluster() {
+  ccm create -n 1 -v ${CLUSTER_VERSION} ecaudit
+  if [[ $? -ne 0 ]]; then
+   echo "Failed to create ccm cluster 'ecaudit'"
+   exit 3
+  fi
+}
+
 start_cassandra() {
   ccm start
   sleep 30
@@ -100,50 +102,61 @@ start_cassandra() {
 }
 
 stop_cassandra() {
-  ccm clear
+  ccm remove
   sleep 5
+}
+
+run_stress() {
+  ${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=${1}
 }
 
 echo "Generating performance report into ecaudit-performance.html"
 
+create_cluster
 start_cassandra
-${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=vanilla
+run_stress vanilla
 stop_cassandra
 
+create_cluster
 ${SCRIPT_PATH}/configure_ccm_cassandra_auth.sh
 start_cassandra
-${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization
+run_stress authentication-authorization
 stop_cassandra
 
+create_cluster
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 set_yaml_based_filter
 start_cassandra
 create_dummy_whitelists
-${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-YAML-whitelist
+run_stress authentication-authorization-audit-YAML-whitelist
 stop_cassandra
 
+create_cluster
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 start_cassandra
 create_dummy_whitelists
 ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL': 'data' };"
-${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-role-whitelist
+run_stress authentication-authorization-audit-role-whitelist
 stop_cassandra
 
+create_cluster
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 start_cassandra
 create_dummy_whitelists
 ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL': 'grants/data' };"
-${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-role-whitelist-permission-derived
+run_stress authentication-authorization-audit-role-whitelist-permission-derived
 stop_cassandra
 
+create_cluster
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 start_cassandra
 create_dummy_whitelists
-${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-chronicle
+run_stress authentication-authorization-audit-chronicle
 stop_cassandra
 
+create_cluster
 ${SCRIPT_PATH}/configure_ccm_audit_slf4j.sh
 start_cassandra
 create_dummy_whitelists
-${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-slf4j
+run_stress authentication-authorization-audit-slf4j
 stop_cassandra
