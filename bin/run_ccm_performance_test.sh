@@ -56,41 +56,94 @@ if [ ! -f ${JAR_FILE} ]; then
  exit 3
 fi
 
+create_dummy_tables() {
+  tmpfile=$(mktemp /tmp/perf_test_data_XXXX.cql)
+  echo "CREATE KEYSPACE aperfks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};" >> $tmpfile
+  for i in {1..100}
+  do
+    echo "CREATE TABLE aperfks.tb${i} (key text PRIMARY KEY, value text);" >> $tmpfile
+  done
+  ccm node1 cqlsh -u cassandra -p cassandra -f $tmpfile
+  rm $tmpfile
+}
+
+create_dummy_whitelists() {
+  tmpfile=$(mktemp /tmp/perf_test_data_XXXX.cql)
+  for i in {1..50}
+  do
+    echo "ALTER ROLE cassandra WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL': 'data/aperfks/tb${i}' };" >> $tmpfile
+  done
+  for i in {51..100}
+  do
+    echo "ALTER ROLE cassandra WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL': 'grants/data/aperfks/tb${i}' };" >> $tmpfile
+  done
+  ccm node1 cqlsh -u cassandra -p cassandra -f $tmpfile
+  rm $tmpfile
+}
+
+set_yaml_based_filter() {
+  CCM_CLUSTER_NAME=`cat ${CCM_CONFIG}/CURRENT`
+  CLUSTER_PATH=${CCM_CONFIG}/${CCM_CLUSTER_NAME}
+  echo "JVM_EXTRA_OPTS=\"\$JVM_EXTRA_OPTS -Decaudit.filter_type=YAML\"" >> ${CLUSTER_PATH}/cassandra.in.sh
+  for NODE_PATH in ${CLUSTER_PATH}/node*;
+  do
+    echo "whitelist:" >> ${NODE_PATH}/conf/audit.yaml
+    echo "  - cassandra" >> ${NODE_PATH}/conf/audit.yaml
+  done
+}
+
+start_cassandra() {
+  ccm start
+  sleep 30
+  ccm node1 nodetool disableautocompaction
+  create_dummy_tables
+}
+
+stop_cassandra() {
+  ccm clear
+  sleep 5
+}
+
 echo "Generating performance report into ecaudit-performance.html"
 
-ccm start
-sleep 30
+start_cassandra
 ${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=vanilla
-ccm clear
-sleep 5
+stop_cassandra
 
 ${SCRIPT_PATH}/configure_ccm_cassandra_auth.sh
-ccm start
-sleep 30
+start_cassandra
 ${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization
-ccm clear
-sleep 5
+stop_cassandra
 
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
-ccm start
-sleep 30
+set_yaml_based_filter
+start_cassandra
+create_dummy_whitelists
+${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-YAML-whitelist
+stop_cassandra
+
+${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
+start_cassandra
+create_dummy_whitelists
 ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL': 'data' };"
-${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-whitelist
-ccm clear
-sleep 5
+${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-role-whitelist
+stop_cassandra
 
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
-ccm start
-sleep 30
-ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS = { 'REVOKE AUDIT WHITELIST FOR ALL': 'data' };"
+start_cassandra
+create_dummy_whitelists
+ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS = { 'GRANT AUDIT WHITELIST FOR ALL': 'grants/data' };"
+${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-role-whitelist-permission-derived
+stop_cassandra
+
+${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
+start_cassandra
+create_dummy_whitelists
 ${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-chronicle
-ccm clear
-sleep 5
+stop_cassandra
 
 ${SCRIPT_PATH}/configure_ccm_audit_slf4j.sh
-ccm start
-sleep 30
-ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS = { 'REVOKE AUDIT WHITELIST FOR ALL': 'data' };"
+start_cassandra
+create_dummy_whitelists
 ${CCM_CONFIG}/repository/3.11.4/tools/bin/cassandra-stress write n=3000000 -node 127.0.0.1 -port jmx=7100 -mode native cql3 user=cassandra password=cassandra -rate threads=10 -graph file=ecaudit-performance.html title=ecAudit-Performance revision=authentication-authorization-audit-slf4j
-ccm clear
-sleep 5
+stop_cassandra
