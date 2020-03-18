@@ -32,14 +32,14 @@ import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.utils.FBUtilities;
 
-public class WrappingAuditAuthenticator implements IAuditAuthenticator
+public class WrappingAuditAuthenticator implements IAuthenticator, IOptionsProvider
 {
     private final IAuditAuthenticator wrappedAuthenticator;
     private final AuditAdapter auditAdapter;
 
     /**
      * Default constructor called by Cassandra.
-     *
+     * <p>
      * This creates an instance of {@link WrappingAuditAuthenticator} with the default {@link AuditAdapter}
      * and gets an {@link IAuditAuthenticator} from configuration (or the default one).
      */
@@ -89,19 +89,13 @@ public class WrappingAuditAuthenticator implements IAuditAuthenticator
     @Override
     public IAuthenticator.SaslNegotiator newSaslNegotiator()
     {
-        return createAuditedSaslNegotiator();
+        return new AuditingSaslNegotiator(wrappedAuthenticator.newAuditSaslNegotiator());
     }
 
     @Override
     public AuthenticatedUser legacyAuthenticate(Map<String, String> credentials) throws AuthenticationException
     {
         return wrappedAuthenticator.legacyAuthenticate(credentials);
-    }
-
-    @Override
-    public AuditSaslNegotiator createAuditedSaslNegotiator()
-    {
-        return new AuditingSaslNegotiator(wrappedAuthenticator.createAuditedSaslNegotiator());
     }
 
     @Override
@@ -120,7 +114,7 @@ public class WrappingAuditAuthenticator implements IAuditAuthenticator
      * Implements a {@link org.apache.cassandra.auth.IAuthenticator.SaslNegotiator} that performs auditing on
      * login attempts.
      */
-    private class AuditingSaslNegotiator implements AuditSaslNegotiator
+    private class AuditingSaslNegotiator implements SaslNegotiator
     {
         private final IAuditAuthenticator.AuditSaslNegotiator auditSaslNegotiator;
 
@@ -144,34 +138,34 @@ public class WrappingAuditAuthenticator implements IAuditAuthenticator
         @Override
         public AuthenticatedUser getAuthenticatedUser() throws AuthenticationException
         {
-            String userName = getUser();
-            Optional<String> subject = getSubject();
+            String userName = auditSaslNegotiator.getUser();
 
             long timestamp = System.currentTimeMillis();
-            auditAdapter.auditAuth(userName, Status.ATTEMPT, timestamp, subject);
+            auditAuth(userName, Status.ATTEMPT, timestamp);
             try
             {
                 AuthenticatedUser result = auditSaslNegotiator.getAuthenticatedUser();
-                auditAdapter.auditAuth(userName, Status.SUCCEEDED, timestamp, subject);
+                auditAuth(userName, Status.SUCCEEDED, timestamp);
                 return result;
             }
             catch (RuntimeException e)
             {
-                auditAdapter.auditAuth(userName, Status.FAILED, timestamp, subject);
+                auditAuth(userName, Status.FAILED, timestamp);
                 throw e;
             }
         }
 
-        @Override
-        public String getUser()
+        private void auditAuth(String userName, Status status, long timestamp)
         {
-            return auditSaslNegotiator.getUser();
-        }
-
-        @Override
-        public Optional<String> getSubject()
-        {
-            return auditSaslNegotiator.getSubject();
+            Optional<String> subject = auditSaslNegotiator.getSubject();
+            if (subject.isPresent())
+            {
+                auditAdapter.auditAuth(userName, subject.get(), status, timestamp);
+            }
+            else
+            {
+                auditAdapter.auditAuth(userName, status, timestamp);
+            }
         }
     }
 }

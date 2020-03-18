@@ -42,6 +42,7 @@ public class TestStoredAuditRecord
         assertThat(record.getOperation()).isEmpty();
         assertThat(record.getNakedOperation()).isEmpty();
         assertThat(record.getTimestamp()).isEmpty();
+        assertThat(record.getSubject()).isEmpty();
     }
 
     @Test
@@ -57,6 +58,7 @@ public class TestStoredAuditRecord
                                                     .withOperation("insert into user (name) values (?)['Bob']")
                                                     .withNakedOperation("insert into user (name) values (?)")
                                                     .withTimestamp(123456789L)
+                                                    .withSubject("subject")
                                                     .build();
 
         assertThat(record.getClientAddress()).contains(InetAddress.getByName("1.2.3.4"));
@@ -68,5 +70,6 @@ public class TestStoredAuditRecord
         assertThat(record.getOperation()).contains("insert into user (name) values (?)['Bob']");
         assertThat(record.getNakedOperation()).contains("insert into user (name) values (?)");
         assertThat(record.getTimestamp()).contains(123456789L);
+        assertThat(record.getSubject()).contains("subject");
     }
 }

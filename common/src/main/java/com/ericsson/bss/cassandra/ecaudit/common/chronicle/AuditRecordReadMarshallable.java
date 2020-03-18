@@ -45,11 +45,9 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
             case WireTags.VALUE_VERSION_0:
                 auditRecord = readV0(wire);
                 break;
-            case WireTags.VALUE_VERSION_1:
-                auditRecord = readV1(wire);
-                break;
-            case WireTags.VALUE_VERSION_2:
-                auditRecord = readV2(wire);
+            case WireTags.VALUE_VERSION_1: // NOPMD
+            case WireTags.VALUE_VERSION_CURRENT:
+                auditRecord = readBitmappedRecord(wire);
                 break;
             default:
                 throw new IORuntimeException("Unsupported record version: " + version);
@@ -78,44 +76,27 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
                       .build();
     }
 
-    private StoredAuditRecord readV1(WireIn wire)
+    private StoredAuditRecord readBitmappedRecord(WireIn wire)
     {
         checkV1Type(wire);
         int bitmap = wire.read(WireTags.KEY_FIELDS).int32();
 
-        FieldSelector fieldsV1 = FieldSelector.fromBitmap(bitmap);
-        return readV1WithFields(wire, fieldsV1).build();
-    }
-
-    private StoredAuditRecord readV2(WireIn wire)
-    {
-        checkV1Type(wire);
-        int bitmap = wire.read(WireTags.KEY_FIELDS).int32();
-
-        FieldSelector fieldsV2 = FieldSelector.fromBitmap(bitmap);
-
-        StoredAuditRecord.Builder recordBuilder = readV1WithFields(wire, fieldsV2);
-        fieldsV2.ifSelectedRun(Field.SUBJECT, () -> recordBuilder.withSubject(wire.read(WireTags.KEY_SUBJECT).text()));
-
-        return recordBuilder.build();
-    }
-
-    private StoredAuditRecord.Builder readV1WithFields(WireIn wire, FieldSelector selectedFields)
-    {
+        FieldSelector fields = FieldSelector.fromBitmap(bitmap);
         StoredAuditRecord.Builder recordBuilder = StoredAuditRecord.builder();
 
         // Read configurable fields
-        selectedFields.ifSelectedRun(Field.TIMESTAMP, () -> recordBuilder.withTimestamp(wire.read(WireTags.KEY_TIMESTAMP).int64()));
-        selectedFields.ifSelectedRun(Field.CLIENT_IP, () -> recordBuilder.withClientAddress(readInetAddress(wire, WireTags.KEY_CLIENT_IP)));
-        selectedFields.ifSelectedRun(Field.CLIENT_PORT, () -> recordBuilder.withClientPort(wire.read(WireTags.KEY_CLIENT_PORT).int32()));
-        selectedFields.ifSelectedRun(Field.COORDINATOR_IP, () -> recordBuilder.withCoordinatorAddress(readInetAddress(wire, WireTags.KEY_COORDINATOR_IP)));
-        selectedFields.ifSelectedRun(Field.USER, () -> recordBuilder.withUser(wire.read(WireTags.KEY_USER).text()));
-        selectedFields.ifSelectedRun(Field.BATCH_ID, () -> recordBuilder.withBatchId(readBatchId(wire)));
-        selectedFields.ifSelectedRun(Field.STATUS, () -> recordBuilder.withStatus(readStatus(wire)));
-        selectedFields.ifSelectedRun(Field.OPERATION, () -> recordBuilder.withOperation(wire.read(WireTags.KEY_OPERATION).text()));
-        selectedFields.ifSelectedRun(Field.OPERATION_NAKED, () -> recordBuilder.withNakedOperation(wire.read(WireTags.KEY_NAKED_OPERATION).text()));
+        fields.ifSelectedRun(Field.TIMESTAMP, () -> recordBuilder.withTimestamp(wire.read(WireTags.KEY_TIMESTAMP).int64()));
+        fields.ifSelectedRun(Field.CLIENT_IP, () -> recordBuilder.withClientAddress(readInetAddress(wire, WireTags.KEY_CLIENT_IP)));
+        fields.ifSelectedRun(Field.CLIENT_PORT, () -> recordBuilder.withClientPort(wire.read(WireTags.KEY_CLIENT_PORT).int32()));
+        fields.ifSelectedRun(Field.COORDINATOR_IP, () -> recordBuilder.withCoordinatorAddress(readInetAddress(wire, WireTags.KEY_COORDINATOR_IP)));
+        fields.ifSelectedRun(Field.USER, () -> recordBuilder.withUser(wire.read(WireTags.KEY_USER).text()));
+        fields.ifSelectedRun(Field.BATCH_ID, () -> recordBuilder.withBatchId(readBatchId(wire)));
+        fields.ifSelectedRun(Field.STATUS, () -> recordBuilder.withStatus(readStatus(wire)));
+        fields.ifSelectedRun(Field.OPERATION, () -> recordBuilder.withOperation(wire.read(WireTags.KEY_OPERATION).text()));
+        fields.ifSelectedRun(Field.OPERATION_NAKED, () -> recordBuilder.withNakedOperation(wire.read(WireTags.KEY_NAKED_OPERATION).text()));
+        fields.ifSelectedRun(Field.SUBJECT, () -> recordBuilder.withSubject(wire.read(WireTags.KEY_SUBJECT).text()));
 
-        return recordBuilder;
+        return recordBuilder.build();
     }
 
     private String readV0Type(WireIn wire) throws IORuntimeException

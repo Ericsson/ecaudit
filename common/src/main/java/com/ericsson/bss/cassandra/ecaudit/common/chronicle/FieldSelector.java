@@ -17,6 +17,8 @@ package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
 
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public final class FieldSelector
 {
     /**
@@ -95,7 +97,8 @@ public final class FieldSelector
      * @param field the field to select
      * @return a new field selector with the field selected
      */
-    public FieldSelector withField(Field field)
+    @VisibleForTesting
+    FieldSelector withField(Field field)
     {
         return new FieldSelector(bitmap | field.getBit());
     }

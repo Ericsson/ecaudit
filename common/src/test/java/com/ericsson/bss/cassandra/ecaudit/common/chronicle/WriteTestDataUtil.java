@@ -45,7 +45,7 @@ public class WriteTestDataUtil
 {
     public static void main(String[] args) throws Exception
     {
-        String version = "X"; // Set the version here!
+        String version = "2"; // Set the version here!
 
         // Data
         AuditRecord record = SimpleAuditRecord.builder()
@@ -69,7 +69,7 @@ public class WriteTestDataUtil
         appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.DEFAULT_FIELDS));
         appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.NO_FIELDS));
         appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.ALL_FIELDS));
-        appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.fromFields(asList("USER", "OPERATION_NAKED", "STATUS")))); // Custom fields
+        appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.fromFields(asList("USER", "OPERATION_NAKED", "STATUS", "SUBJECT")))); // Custom fields
 
         chronicleQueue.close();
     }

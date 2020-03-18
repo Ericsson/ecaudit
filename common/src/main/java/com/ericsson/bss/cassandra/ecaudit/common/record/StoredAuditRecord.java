@@ -105,24 +105,6 @@ public class StoredAuditRecord
         return new Builder();
     }
 
-    public static Builder basedOn(StoredAuditRecord auditRecord)
-    {
-        Builder builder = new Builder();
-
-        builder.batchId = auditRecord.batchId;
-        builder.clientAddress = auditRecord.clientAddress;
-        builder.clientPort = auditRecord.clientPort;
-        builder.coordinatorAddress = auditRecord.coordinatorAddress;
-        builder.nakedOperation = auditRecord.nakedOperation;
-        builder.operation = auditRecord.operation;
-        builder.status = auditRecord.status;
-        builder.timestamp = auditRecord.timestamp;
-        builder.user = auditRecord.user;
-        builder.subject = auditRecord.subject;
-
-        return builder;
-    }
-
     public static class Builder
     {
         private InetAddress clientAddress;

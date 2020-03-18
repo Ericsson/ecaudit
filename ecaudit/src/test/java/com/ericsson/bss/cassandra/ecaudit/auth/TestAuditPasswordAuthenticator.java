@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.After;
@@ -119,8 +118,8 @@ public class TestAuditPasswordAuthenticator
         assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(negotiator::getAuthenticatedUser);
 
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.ATTEMPT), longThat(isCloseToNow()), eq(Optional.empty()));
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.FAILED), longThat(isCloseToNow()), eq(Optional.empty()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
     @Test
@@ -137,8 +136,8 @@ public class TestAuditPasswordAuthenticator
         assertThatExceptionOfType(AuthenticationException.class)
         .isThrownBy(negotiator::getAuthenticatedUser);
 
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.ATTEMPT), longThat(isCloseToNow()), eq(Optional.empty()));
-        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.FAILED), longThat(isCloseToNow()), eq(Optional.empty()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("username"), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
     @Test
@@ -152,8 +151,8 @@ public class TestAuditPasswordAuthenticator
         negotiator.evaluateResponse(clientResponse);
 
         negotiator.getAuthenticatedUser();
-        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(Status.ATTEMPT), longThat(isCloseToNow()), eq(Optional.empty()));
-        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(Status.SUCCEEDED), longThat(isCloseToNow()), eq(Optional.empty()));
+        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(Status.ATTEMPT), longThat(isCloseToNow()));
+        verify(mockAdapter, times(1)).auditAuth(eq("user"), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
     }
 
     private void whenGetAuthUserThrowRuntimeException()

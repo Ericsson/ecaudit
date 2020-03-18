@@ -16,17 +16,13 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Optional;
-import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
 
 import org.apache.cassandra.auth.IAuthenticator;
-import org.apache.cassandra.auth.IRoleManager;
 
 /**
  * An {@link IAuthenticator} that provide custom fields to be used during authentication auditing.
  */
-public interface IAuditAuthenticator extends IAuthenticator
+public interface IAuditAuthenticator extends IAuthenticator, IOptionsProvider
 {
     /**
      * Returns an <em>audited</em> {@link AuditSaslNegotiator SaslNegotiator}.
@@ -35,27 +31,8 @@ public interface IAuditAuthenticator extends IAuthenticator
      *
      * @return an instance of an {@link AuditSaslNegotiator}
      */
-    AuditSaslNegotiator createAuditedSaslNegotiator();
+    AuditSaslNegotiator newAuditSaslNegotiator();
 
-    /**
-     * Returns a set of supported options relevant to this authenticator.
-     * @return the options, empty if not applicable
-     * @see IRoleManager#supportedOptions()
-     */
-    default Set<IRoleManager.Option> supportedOptions()
-    {
-        return ImmutableSet.of();
-    }
-
-    /**
-     * Returns a set of alterable options relevant to this authenticator.
-     * @return the options, empty if not applicable
-     * @see IRoleManager#alterableOptions()
-     */
-    default Set<IRoleManager.Option> alterableOptions()
-    {
-        return ImmutableSet.of();
-    }
 
     /**
      * An <em>audited</em> implementation of {@link org.apache.cassandra.auth.IAuthenticator.SaslNegotiator}

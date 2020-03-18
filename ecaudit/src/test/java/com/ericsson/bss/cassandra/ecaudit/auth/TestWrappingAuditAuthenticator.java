@@ -37,6 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -45,6 +46,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -74,19 +76,7 @@ public class TestWrappingAuditAuthenticator
     @Before
     public void setup()
     {
-        when(mockAuthenticator.createAuditedSaslNegotiator()).thenReturn(mockSaslNegotiator);
-
-        authenticator.setup();
-        authenticator.protectedResources();
-        authenticator.requireAuthentication();
-        authenticator.validateConfiguration();
-        authenticator.legacyAuthenticate(Collections.emptyMap());
-
-        verify(mockAuthenticator, times(1)).setup();
-        verify(mockAuthenticator, times(1)).protectedResources();
-        verify(mockAuthenticator, times(1)).requireAuthentication();
-        verify(mockAuthenticator, times(1)).validateConfiguration();
-        verify(mockAuthenticator, times(1)).legacyAuthenticate(eq(Collections.emptyMap()));
+        when(mockAuthenticator.newAuditSaslNegotiator()).thenReturn(mockSaslNegotiator);
     }
 
     @After
@@ -102,6 +92,33 @@ public class TestWrappingAuditAuthenticator
     }
 
     @Test
+    public void testWrappedMethodsAreDelegated()
+    {
+        authenticator.setup();
+        authenticator.protectedResources();
+        authenticator.requireAuthentication();
+        authenticator.validateConfiguration();
+        authenticator.legacyAuthenticate(Collections.emptyMap());
+        authenticator.alterableOptions();
+        authenticator.supportedOptions();
+
+        verify(mockAuthenticator, times(1)).setup();
+        verify(mockAuthenticator, times(1)).protectedResources();
+        verify(mockAuthenticator, times(1)).requireAuthentication();
+        verify(mockAuthenticator, times(1)).validateConfiguration();
+        verify(mockAuthenticator, times(1)).legacyAuthenticate(eq(Collections.emptyMap()));
+        verify(mockAuthenticator, times(1)).alterableOptions();
+        verify(mockAuthenticator, times(1)).supportedOptions();
+
+        IAuthenticator.SaslNegotiator negotiator = authenticator.newSaslNegotiator();
+        negotiator.evaluateResponse(new byte[]{});
+        negotiator.isComplete();
+
+        verify(mockSaslNegotiator, times(1)).evaluateResponse(eq(new byte[] {}));
+        verify(mockSaslNegotiator, times(1)).isComplete();
+    }
+
+    @Test
     public void testWhenUserIsProviedAuthenticationAttemptIsLogged()
     {
         AuthenticatedUser expected = mock(AuthenticatedUser.class);
@@ -112,8 +129,8 @@ public class TestWrappingAuditAuthenticator
         AuthenticatedUser actual = negotiator.getAuthenticatedUser();
 
         assertThat(actual).isSameAs(expected);
-        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.ATTEMPT), anyLong(), any(Optional.class));
-        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.SUCCEEDED), anyLong(), any(Optional.class));
+        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.ATTEMPT), anyLong());
+        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.SUCCEEDED), anyLong());
     }
 
     @Test
@@ -123,16 +140,10 @@ public class TestWrappingAuditAuthenticator
         when(mockSaslNegotiator.getAuthenticatedUser()).thenThrow(new AuthenticationException("audited_user"));
 
         IAuthenticator.SaslNegotiator negotiator = authenticator.newSaslNegotiator();
-        try
-        {
-            negotiator.getAuthenticatedUser();
-            fail("Expected exception!");
-        }
-        catch (Exception e)
-        {
-            verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.ATTEMPT), anyLong(), any(Optional.class));
-            verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.FAILED), anyLong(), any(Optional.class));
-        }
+
+        assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> negotiator.getAuthenticatedUser());
+        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.ATTEMPT), anyLong());
+        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq(Status.FAILED), anyLong());
     }
 
     @Test
@@ -143,5 +154,21 @@ public class TestWrappingAuditAuthenticator
 
         IAuditAuthenticator wrappedAuthenticator = WrappingAuditAuthenticator.newWrappedAuthenticator(mockConfig);
         assertThat(wrappedAuthenticator).isInstanceOf(AuditPasswordAuthenticator.class);
+    }
+
+    @Test
+    public void testAuthWithSubject()
+    {
+        AuthenticatedUser expected = mock(AuthenticatedUser.class);
+        when(mockSaslNegotiator.getAuthenticatedUser()).thenReturn(expected);
+        when(mockSaslNegotiator.getUser()).thenReturn("audited_user");
+        when(mockSaslNegotiator.getSubject()).thenReturn(Optional.of("subject_user"));
+
+        IAuthenticator.SaslNegotiator negotiator = authenticator.newSaslNegotiator();
+        AuthenticatedUser actual = negotiator.getAuthenticatedUser();
+
+        assertThat(actual).isSameAs(expected);
+        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq("subject_user"), eq(Status.ATTEMPT), anyLong());
+        verify(mockAuditAdapter, times(1)).auditAuth(eq("audited_user"), eq("subject_user"), eq(Status.SUCCEEDED), anyLong());
     }
 }

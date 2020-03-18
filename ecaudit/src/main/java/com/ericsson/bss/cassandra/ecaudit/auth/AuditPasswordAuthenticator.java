@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -93,11 +92,11 @@ public class AuditPasswordAuthenticator implements IAuditAuthenticator
     @Override
     public SaslNegotiator newSaslNegotiator()
     {
-        return createAuditedSaslNegotiator();
+        return newAuditSaslNegotiator();
     }
 
     @Override
-    public AuditSaslNegotiator createAuditedSaslNegotiator()
+    public AuditSaslNegotiator newAuditSaslNegotiator()
     {
         // For BWC, check if being wrapped. If not, log authentication attempts as normal.
         // If being wrapped, i.e. not used standalone, let the wrapper do the authentication
@@ -164,16 +163,16 @@ public class AuditPasswordAuthenticator implements IAuditAuthenticator
             }
 
             long timestamp = System.currentTimeMillis();
-            auditAdapter.auditAuth(decodedUsername, Status.ATTEMPT, timestamp, Optional.empty());
+            auditAdapter.auditAuth(decodedUsername, Status.ATTEMPT, timestamp);
             try
             {
                 AuthenticatedUser result = saslNegotiator.getAuthenticatedUser();
-                auditAdapter.auditAuth(decodedUsername, Status.SUCCEEDED, timestamp, Optional.empty());
+                auditAdapter.auditAuth(decodedUsername, Status.SUCCEEDED, timestamp);
                 return result;
             }
             catch (RuntimeException e)
             {
-                auditAdapter.auditAuth(decodedUsername, Status.FAILED, timestamp, Optional.empty());
+                auditAdapter.auditAuth(decodedUsername, Status.FAILED, timestamp);
                 throw e;
             }
         }

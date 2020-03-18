@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestSlf4jAuditLogger
 {
-    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'{?|user:'${USER}'?}{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
+    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'{?|subject:'${SUBJECT}'?}";
     private static final String EXPECTED_STATEMENT = "insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']";
     private static final String EXPECTED_STATEMENT_NAKED = "insert into ks.tbl (key, val) values (?, ?)";
     private static final String EXPECTED_CLIENT_ADDRESS = "127.0.0.1";
@@ -64,13 +64,14 @@ public class TestSlf4jAuditLogger
     private static final Status EXPECTED_STATUS = Status.ATTEMPT;
     private static final UUID EXPECTED_BATCH_ID = UUID.fromString("12345678-aaaa-bbbb-cccc-123456789abc");
     private static final Long EXPECTED_TIMESTAMP = 42L;
+    private static final String EXPECTED_SUBJECT = "the_subject";
     private static final String CUSTOM_LOGGER_NAME = "TEST_LOGGER";
     private static final Logger LOG = LoggerFactory.getLogger(CUSTOM_LOGGER_NAME);
 
     private static AuditEntry logEntryWithAll;
     private static AuditEntry logEntryWithoutBatch;
     private static AuditEntry logEntryWithoutClientPort;
-    private static AuditEntry logEntryWithoutUser;
+    private static AuditEntry logEntryWithoutSubject;
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
@@ -93,6 +94,7 @@ public class TestSlf4jAuditLogger
                                     .status(EXPECTED_STATUS)
                                     .timestamp(EXPECTED_TIMESTAMP)
                                     .batch(EXPECTED_BATCH_ID)
+                                    .subject(EXPECTED_SUBJECT)
                                     .build();
 
         logEntryWithoutBatch = AuditEntry.newBuilder()
@@ -104,10 +106,11 @@ public class TestSlf4jAuditLogger
                                               .basedOn(logEntryWithAll)
                                               .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, 0))
                                               .build();
-        logEntryWithoutUser = AuditEntry.newBuilder()
-                                        .basedOn(logEntryWithAll)
-                                        .user(null)
-                                        .build();
+
+        logEntryWithoutSubject = AuditEntry.newBuilder()
+                                         .basedOn(logEntryWithAll)
+                                         .subject(null)
+                                         .build();
     }
 
     @Before
@@ -132,7 +135,17 @@ public class TestSlf4jAuditLogger
         logger.log(logEntryWithoutBatch);
 
         assertThat(getSlf4jLogMessage())
-        .isEqualTo("client:'127.0.0.1'|user:'user'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
+        .isEqualTo("client:'127.0.0.1'|user:'user'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'|subject:'the_subject'");
+    }
+
+    @Test
+    public void testDefaultFormatAuditEntryNoSubject()
+    {
+        Slf4jAuditLogger logger = loggerWithConfig(DEFAULT_LOG_FORMAT);
+        logger.log(logEntryWithoutSubject);
+
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
     }
 
     @Test
@@ -142,17 +155,7 @@ public class TestSlf4jAuditLogger
         logger.log(logEntryWithAll);
 
         assertThat(getSlf4jLogMessage())
-        .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
-    }
-
-    @Test
-    public void testDefaultFormatAuditEntryWithoutUser()
-    {
-        Slf4jAuditLogger logger = loggerWithConfig(DEFAULT_LOG_FORMAT);
-        logger.log(logEntryWithoutUser);
-
-        assertThat(getSlf4jLogMessage())
-        .isEqualTo("client:'127.0.0.1'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
+        .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'|subject:'the_subject'");
     }
 
     @Test
@@ -180,7 +183,7 @@ public class TestSlf4jAuditLogger
     {
         Slf4jAuditLoggerConfig configMock = mock(Slf4jAuditLoggerConfig.class);
         Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
-        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "TIMESTAMP");
+        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "TIMESTAMP", "SUBJECT");
 
         Function<AuditEntry, Object> clientFunction = availableFieldFunctions.get("CLIENT_IP");
         assertThat(clientFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_CLIENT_ADDRESS);
@@ -194,7 +197,6 @@ public class TestSlf4jAuditLogger
 
         Function<AuditEntry, Object> userFunction = availableFieldFunctions.get("USER");
         assertThat(userFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_USER);
-        assertThat(userFunction.apply(logEntryWithoutUser)).isEqualTo(null); // User is not guaranteed to be in the log entry
 
         Function<AuditEntry, Object> batchIdFunction = availableFieldFunctions.get("BATCH_ID");
         assertThat(batchIdFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_BATCH_ID);
@@ -211,6 +213,10 @@ public class TestSlf4jAuditLogger
 
         Function<AuditEntry, Object> timestampFunction = availableFieldFunctions.get("TIMESTAMP");
         assertThat(timestampFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_TIMESTAMP);
+
+        Function<AuditEntry, Object> subjectFunction = availableFieldFunctions.get("SUBJECT");
+        assertThat(subjectFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_SUBJECT);
+        assertThat(subjectFunction.apply(logEntryWithoutSubject)).isEqualTo(null); // Subject is not guaranteed to be in the log entry
     }
 
     @Test

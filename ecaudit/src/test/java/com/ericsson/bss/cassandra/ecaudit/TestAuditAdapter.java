@@ -354,12 +354,13 @@ public class TestAuditAdapter
         // Given
         String expectedOperation = "Authentication attempt";
         ConnectionResource resource = ConnectionResource.root();
+        String expectedSubject = "bob-the-subject";
 
         AuditEntry.Builder auditBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(resource);
         when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder()).thenReturn(auditBuilder);
 
         // When
-        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP, Optional.of(USER.toUpperCase()));
+        auditAdapter.auditAuth(USER, expectedSubject, Status.ATTEMPT, TIMESTAMP);
 
         // Then
         AuditEntry entry = getAuditEntry();
@@ -372,7 +373,7 @@ public class TestAuditAdapter
         assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
         assertThat(entry.getResource()).isEqualTo(resource);
         assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
-        assertThat(entry.getSubject()).isEqualTo(Optional.of(USER.toUpperCase()));
+        assertThat(entry.getSubject()).isEqualTo(Optional.of(expectedSubject));
     }
 
     @Test
@@ -381,7 +382,7 @@ public class TestAuditAdapter
         // Given
         when(mockAuditor.shouldLogForStatus(any(Status.class))).thenReturn(false);
         // When
-        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP, Optional.empty());
+        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP);
         // Then
         verifyNoMoreInteractions(mockAuditor, mockAuditEntryBuilderFactory);
     }
@@ -395,7 +396,7 @@ public class TestAuditAdapter
         doThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 3, 4, true)).when(mockAuditor).audit(any(AuditEntry.class));
 
         assertThatExceptionOfType(AuthenticationException.class)
-        .isThrownBy(() -> auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP, Optional.empty()));
+        .isThrownBy(() -> auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP));
     }
 
     @Test

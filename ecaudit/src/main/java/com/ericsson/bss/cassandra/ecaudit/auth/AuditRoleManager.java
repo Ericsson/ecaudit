@@ -82,11 +82,11 @@ public class AuditRoleManager implements IRoleManager
         this.whitelistManager = whitelistManager;
         permissionChecker = new PermissionChecker();
 
-        if (authenticator instanceof IAuditAuthenticator)
+        if (authenticator instanceof IOptionsProvider)
         {
-            IAuditAuthenticator auditedAuthenticator = (IAuditAuthenticator) authenticator;
-            supportedOptions = auditedAuthenticator.supportedOptions();
-            alterableOptions = auditedAuthenticator.alterableOptions();
+            IOptionsProvider optionsProvider = (IOptionsProvider) authenticator;
+            supportedOptions = optionsProvider.supportedOptions();
+            alterableOptions = optionsProvider.alterableOptions();
         }
         else
         {
