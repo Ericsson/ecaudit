@@ -15,9 +15,14 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -31,7 +36,10 @@ import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
+import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.exceptions.AuthenticationException;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -92,23 +100,13 @@ public class TestWrappingAuditAuthenticator
     }
 
     @Test
-    public void testWrappedMethodsAreDelegated()
+    public void testSimpleWrappedMethodsAreDelegated()
     {
         authenticator.setup();
-        authenticator.protectedResources();
-        authenticator.requireAuthentication();
         authenticator.validateConfiguration();
-        authenticator.legacyAuthenticate(Collections.emptyMap());
-        authenticator.alterableOptions();
-        authenticator.supportedOptions();
 
         verify(mockAuthenticator, times(1)).setup();
-        verify(mockAuthenticator, times(1)).protectedResources();
-        verify(mockAuthenticator, times(1)).requireAuthentication();
         verify(mockAuthenticator, times(1)).validateConfiguration();
-        verify(mockAuthenticator, times(1)).legacyAuthenticate(eq(Collections.emptyMap()));
-        verify(mockAuthenticator, times(1)).alterableOptions();
-        verify(mockAuthenticator, times(1)).supportedOptions();
 
         IAuthenticator.SaslNegotiator negotiator = authenticator.newSaslNegotiator();
         negotiator.evaluateResponse(new byte[]{});
@@ -119,7 +117,65 @@ public class TestWrappingAuditAuthenticator
     }
 
     @Test
-    public void testWhenUserIsProviedAuthenticationAttemptIsLogged()
+    public void testProtectedResourcesAreProperlyDelegated()
+    {
+        Set<? extends IResource> expectedResources = ImmutableSet.of(mock(IResource.class));
+        when(mockAuthenticator.protectedResources()).thenReturn((Set)expectedResources);
+
+        Set<? extends IResource> actualResources = authenticator.protectedResources();
+        verify(mockAuthenticator, times(1)).protectedResources();
+        assertThat(actualResources).isEqualTo(expectedResources);
+    }
+
+    @Test
+    public void testLegacyAuthenticateIsDelegated()
+    {
+        Map<String, String> expectedCredentials = new HashMap<>();
+        expectedCredentials.put("user", "password");
+
+        AuthenticatedUser expectedUser = mock(AuthenticatedUser.class);
+        when(mockAuthenticator.legacyAuthenticate(eq(expectedCredentials))).thenReturn(expectedUser);
+
+        AuthenticatedUser actualUser = authenticator.legacyAuthenticate(expectedCredentials);
+
+        ArgumentCaptor<Map> captor = ArgumentCaptor.forClass(Map.class);
+        verify(mockAuthenticator, times(1)).legacyAuthenticate(captor.capture());
+
+        Map<String, String> actualCredentials = captor.getValue();
+        assertThat(actualCredentials).isEqualTo(expectedCredentials);
+        assertThat(expectedUser).isEqualTo(actualUser);
+    }
+
+    @Test
+    public void testDelegatedOptions()
+    {
+        Set<IRoleManager.Option> expectedAlterableOptions = ImmutableSet.of(IRoleManager.Option.SUPERUSER);
+        Set<IRoleManager.Option> expectedSupportedOptions = ImmutableSet.of(IRoleManager.Option.PASSWORD, IRoleManager.Option.LOGIN);
+
+        when(mockAuthenticator.alterableOptions()).thenReturn(expectedAlterableOptions);
+        when(mockAuthenticator.supportedOptions()).thenReturn(expectedSupportedOptions);
+
+        Set<IRoleManager.Option> actualAlterableOptions = authenticator.alterableOptions();
+        Set<IRoleManager.Option> actualSupportedOptions = authenticator.supportedOptions();
+
+        verify(mockAuthenticator, times(1)).alterableOptions();
+        verify(mockAuthenticator, times(1)).supportedOptions();
+
+        assertThat(actualAlterableOptions).isEqualTo(expectedAlterableOptions);
+        assertThat(actualSupportedOptions).isEqualTo(expectedSupportedOptions);
+    }
+
+    @Test
+    public void testRequireAuthenticationIsDelegated()
+    {
+        when(mockAuthenticator.requireAuthentication()).thenReturn(true);
+
+        assertThat(authenticator.requireAuthentication()).isTrue();
+        verify(mockAuthenticator, times(1)).requireAuthentication();
+    }
+
+    @Test
+    public void testWhenUserIsProvidedAuthenticationAttemptIsLogged()
     {
         AuthenticatedUser expected = mock(AuthenticatedUser.class);
         when(mockSaslNegotiator.getAuthenticatedUser()).thenReturn(expected);
