@@ -102,6 +102,11 @@ To compile and do static code analysis, execute;
 mvn compile
 ```
 
+To build jar files while skipping tests, execute;
+```bash
+mvn package -DskipTests
+```
+
 To run unit tests; execute:
 ```bash
 mvn test
