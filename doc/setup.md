@@ -28,19 +28,29 @@ Read on below to learn how to tune the logger backend and manage audit whitelist
 
 In the [audit.yaml reference](audit_yaml_reference.md) you'll find more details about different options.
 
+
 ### Wrapped Authenticator Backend
 
-The ecAudit plug-in supports wrapping ```authenticators``` implementing the ```IAuditAuthenticator``` interface, using
-the ```wrapped_authenticator``` setting in the ```audit.yaml``` file together with setting the authenticator as ```WrappingAuditAuthenticator``` in the ```cassandra.yaml```.
+The ecAudit plug-in must be installed as the ```authenticator``` in the ```cassandra.yaml``` in order to capture authentication operations for auditing.
+The actual authentication must still be handled by an ```IDecoratedAuthenticator``` implementation.
+The ```IDecoratedAuthenticator``` is an extended version of the ```IAuthenticator``` interface provided by Cassandra. 
+ecAudit provides the ```DecoratedPasswordAuthenticator``` out of the box, which is used by default.
+The ```DecoratedPasswordAuthenticator``` is just and extended version of the ```PasswordAuthenticator``` provided by Cassandra.
+
+With the ```wrapped_authenticator``` setting in the ```audit.yaml``` file it is possible to configure another ```IDecoratedAuthenticator``` which may be your own custom implementation.
 This is useful if requiring a non-default (i.e. not ```PasswordAuthenticator```) implementation of an authenticator but still want authentication logs.
-If omitting the ```wrapped_autenticator``` setting when using ```WrappingAuditAuthenticator```, then the plug-in will fall back to using the default ```AuditPasswordAuthenticator```.
+
+For backwards compatibility reasons the ```AuditPasswordAuthenticator``` is also provided by ecAudit.
+It is an ```IAuthenticator``` which will emit audit records and it is hard wired to use the standard ```PasswordAuthenticator``` for authentication.
+It may be installed directly in the  ```cassandra.yaml```.
+
 
 ### Wrapped Authorizer Backend
 
 The ecAudit plug-in must be installed as the ```authorizer``` in the ```cassandra.yaml``` in order to capture some operations.
 The actual authorization still has to be handled by another ```IAuthorizer``` implementation.
 Cassandra provides the ```AllowAllAuthorizer``` and the ```CassandraAuthorizer``` out of the box,
-where ecAudit will use the ```CassandraAuthorizer``` by default.
+where ecAudit will delegate authorization operations to the ```CassandraAuthorizer``` by default.
 With the ```wrapped_authorizer``` setting in the ```audit.yaml``` file it is possible to configure another ```IAuthorizer``` which may be your own custom implementation.
 
 
