@@ -28,14 +28,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
+import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +62,12 @@ public class TestAuditRoleManager
     @Mock
     private AuditWhitelistManager mockAuditWhitelistManager;
 
+    @Mock
+    private IAuthenticator mockRegularAuthenticator;
+
+    @Mock
+    private AuditAdapter mockAuditAdapter;
+
     @BeforeClass
     public static void beforeClass()
     {
@@ -67,7 +77,7 @@ public class TestAuditRoleManager
     @Before
     public void before()
     {
-        auditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, true);
+        auditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, new AuditPasswordAuthenticator(mockRegularAuthenticator, mockAuditAdapter));
     }
 
     @After
@@ -103,7 +113,7 @@ public class TestAuditRoleManager
     @Test
     public void testStandAloneSupportedOptions()
     {
-        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, false);
+        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, mockRegularAuthenticator);
 
         Set<IRoleManager.Option> options = standAloneAuditRoleManager.supportedOptions();
 
@@ -121,7 +131,7 @@ public class TestAuditRoleManager
     @Test
     public void testStandAloneAlterableOptions()
     {
-        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, false);
+        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, mockRegularAuthenticator);
 
         Set<IRoleManager.Option> options = standAloneAuditRoleManager.alterableOptions();
 

@@ -27,12 +27,13 @@ public class TestFieldFilterFlavorAdapter
     @Test
     public void testGetFieldsAvailableInRecord()
     {
-        AuditRecord recordWithoutBatchId = SimpleAuditRecord.builder().build();
+        AuditRecord recordWithoutOptionals = SimpleAuditRecord.builder().build();
 
-        FieldSelector fields = FieldFilterFlavorAdapter.getFieldsAvailableInRecord(recordWithoutBatchId, FieldSelector.ALL_FIELDS);
+        FieldSelector fields = FieldFilterFlavorAdapter.getFieldsAvailableInRecord(recordWithoutOptionals, FieldSelector.ALL_FIELDS);
 
         assertThat(fields.isSelected(FieldSelector.Field.CLIENT_IP)).isTrue();
         assertThat(fields.isSelected(FieldSelector.Field.CLIENT_PORT)).isTrue();
         assertThat(fields.isSelected(FieldSelector.Field.BATCH_ID)).isFalse();
+        assertThat(fields.isSelected(FieldSelector.Field.SUBJECT)).isFalse();
     }
 }

@@ -17,6 +17,8 @@ package com.ericsson.bss.cassandra.ecaudit.common.chronicle;
 
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public final class FieldSelector
 {
     /**
@@ -36,7 +38,8 @@ public final class FieldSelector
         STATUS(1 << 5),
         OPERATION(1 << 6),
         OPERATION_NAKED(1 << 7),
-        TIMESTAMP(1 << 8);
+        TIMESTAMP(1 << 8),
+        SUBJECT(1 << 9);
 
         private final int bit;
 
@@ -87,6 +90,17 @@ public final class FieldSelector
     public boolean isSelected(Field field)
     {
         return (bitmap & field.getBit()) > 0;
+    }
+
+    /**
+     * Toggle a field as selected
+     * @param field the field to select
+     * @return a new field selector with the field selected
+     */
+    @VisibleForTesting
+    FieldSelector withField(Field field)
+    {
+        return new FieldSelector(bitmap | field.getBit());
     }
 
     /**

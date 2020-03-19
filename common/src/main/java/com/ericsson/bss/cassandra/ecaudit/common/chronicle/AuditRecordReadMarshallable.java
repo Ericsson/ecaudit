@@ -45,8 +45,9 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
             case WireTags.VALUE_VERSION_0:
                 auditRecord = readV0(wire);
                 break;
+            case WireTags.VALUE_VERSION_1: // NOPMD
             case WireTags.VALUE_VERSION_CURRENT:
-                auditRecord = readV1(wire);
+                auditRecord = readBitmappedRecord(wire);
                 break;
             default:
                 throw new IORuntimeException("Unsupported record version: " + version);
@@ -75,7 +76,7 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
                       .build();
     }
 
-    private StoredAuditRecord readV1(WireIn wire)
+    private StoredAuditRecord readBitmappedRecord(WireIn wire)
     {
         checkV1Type(wire);
         int bitmap = wire.read(WireTags.KEY_FIELDS).int32();
@@ -93,6 +94,7 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
         fields.ifSelectedRun(Field.STATUS, () -> recordBuilder.withStatus(readStatus(wire)));
         fields.ifSelectedRun(Field.OPERATION, () -> recordBuilder.withOperation(wire.read(WireTags.KEY_OPERATION).text()));
         fields.ifSelectedRun(Field.OPERATION_NAKED, () -> recordBuilder.withNakedOperation(wire.read(WireTags.KEY_NAKED_OPERATION).text()));
+        fields.ifSelectedRun(Field.SUBJECT, () -> recordBuilder.withSubject(wire.read(WireTags.KEY_SUBJECT).text()));
 
         return recordBuilder.build();
     }

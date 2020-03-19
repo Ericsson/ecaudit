@@ -29,10 +29,12 @@ class WireTags
     static final String KEY_STATUS = "status";
     static final String KEY_OPERATION = "operation";
     static final String KEY_NAKED_OPERATION = "naked_operation";
+    static final String KEY_SUBJECT = "subject";
 
     static final short VALUE_VERSION_0 = 0;
     static final short VALUE_VERSION_1 = 1;
-    static final short VALUE_VERSION_CURRENT = VALUE_VERSION_1;
+    static final short VALUE_VERSION_2 = 2;
+    static final short VALUE_VERSION_CURRENT = VALUE_VERSION_2;
     static final String VALUE_TYPE_BATCH_ENTRY = "ecaudit-batch";
     static final String VALUE_TYPE_SINGLE_ENTRY = "ecaudit-single";
     static final String VALUE_TYPE_AUDIT = "ecaudit";
