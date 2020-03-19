@@ -130,7 +130,7 @@ public class TestChronicleAuditLogger
         writeMarshallable.writeMarshallable(mockWire);
 
         verify(mockWire).write(eq("version"));
-        verify(mockValue).int16(eq((short) 1));
+        verify(mockValue).int16(eq((short) 2));
         verify(mockWire).write(eq("type"));
         verify(mockValue).text(eq("ecaudit"));
         verify(mockWire).write(eq("fields"));
@@ -144,7 +144,7 @@ public class TestChronicleAuditLogger
         {
             int bitmapWithoutBatch = FieldSelector.DEFAULT_FIELDS.withoutField(Field.BATCH_ID).getBitmap();
             verify(mockValue).int32(eq(bitmapWithoutBatch));
-        }
+        } 
 
         verify(mockWire).write(eq("timestamp"));
         verify(mockValue).int64(eq(expectedAuditEntry.getTimestamp()));

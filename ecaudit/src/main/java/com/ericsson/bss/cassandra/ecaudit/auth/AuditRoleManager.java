@@ -27,8 +27,10 @@ import org.slf4j.LoggerFactory;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.CassandraRoleManager;
 import org.apache.cassandra.auth.DataResource;
+import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
+import org.apache.cassandra.auth.PasswordAuthenticator;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -68,11 +70,11 @@ public class AuditRoleManager implements IRoleManager
     {
         this(new CassandraRoleManager(),
              new AuditWhitelistManager(),
-             DatabaseDescriptor.getAuthenticator() instanceof AuditPasswordAuthenticator);
+             DatabaseDescriptor.getAuthenticator());
     }
 
     @VisibleForTesting
-    AuditRoleManager(IRoleManager wrappedRoleManager, AuditWhitelistManager whitelistManager, boolean hasAuditPasswordAuthenticator)
+    AuditRoleManager(IRoleManager wrappedRoleManager, AuditWhitelistManager whitelistManager, IAuthenticator authenticator)
     {
         LOG.info("Auditing enabled on role manager");
 
@@ -80,12 +82,22 @@ public class AuditRoleManager implements IRoleManager
         this.whitelistManager = whitelistManager;
         permissionChecker = new PermissionChecker();
 
-        supportedOptions = hasAuditPasswordAuthenticator
-                           ? ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.PASSWORD, Option.OPTIONS)
-                           : ImmutableSet.of(Option.LOGIN, Option.SUPERUSER);
-        alterableOptions = hasAuditPasswordAuthenticator
-                           ? ImmutableSet.of(Option.PASSWORD, Option.OPTIONS)
-                           : ImmutableSet.of();
+        if (authenticator instanceof IOptionsProvider)
+        {
+            IOptionsProvider optionsProvider = (IOptionsProvider) authenticator;
+            supportedOptions = optionsProvider.supportedOptions();
+            alterableOptions = optionsProvider.alterableOptions();
+        }
+        else
+        {
+            // To be compatible with CassandraRoleManager options
+            supportedOptions = authenticator.getClass() == PasswordAuthenticator.class
+                               ? ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.PASSWORD)
+                               : ImmutableSet.of(Option.LOGIN, Option.SUPERUSER);
+            alterableOptions = authenticator.getClass().equals(PasswordAuthenticator.class)
+                               ? ImmutableSet.of(Option.PASSWORD)
+                               : ImmutableSet.<Option>of();
+        }
     }
 
     @Override

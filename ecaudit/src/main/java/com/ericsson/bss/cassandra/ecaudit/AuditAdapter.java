@@ -184,12 +184,28 @@ public class AuditAdapter
      */
     public void auditAuth(String username, InetAddress clientIp, Status status, long timestamp) throws AuthenticationException
     {
+        auditAuth(username, clientIp, null, status, timestamp);
+    }
+
+    /**
+     * Audit an authentication attempt with a subject.
+     *
+     * @param userName  the user to authenticate
+     * @param clientIp  the address of the client that tries to authenticate
+     * @param subject   the subject to authenticate
+     * @param status    the status of the operation
+     * @param timestamp the system timestamp for the request
+     * @throws AuthenticationException if the audit operation could not be performed
+     */
+    public void auditAuth(String userName, InetAddress clientIp, String subject, Status status, long timestamp)
+    {
         if (auditor.shouldLogForStatus(status))
         {
             AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                                                      .client(new InetSocketAddress(clientIp, AuditEntry.UNKNOWN_PORT))
                                                      .coordinator(FBUtilities.getBroadcastAddress())
-                                                     .user(username)
+                                                     .user(userName)
+                                                     .subject(subject)
                                                      .status(status)
                                                      .operation(statusToAuthenticationOperation(status))
                                                      .timestamp(timestamp)

@@ -101,6 +101,7 @@ public class Slf4jAuditLogger implements AuditLogger
                .put("OPERATION", entry -> entry.getOperation().getOperationString())
                .put("OPERATION_NAKED", entry -> entry.getOperation().getNakedOperationString())
                .put("TIMESTAMP", getTimeFunction(auditConfig))
+               .put("SUBJECT", entry -> entry.getSubject().orElse(null))
                .build();
     }
 

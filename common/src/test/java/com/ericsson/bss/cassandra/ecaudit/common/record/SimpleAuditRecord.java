@@ -29,6 +29,7 @@ public class SimpleAuditRecord implements AuditRecord
     private final Status status;
     private final AuditOperation operation;
     private final long timestamp;
+    private final String subject;
 
     private SimpleAuditRecord(Builder builder)
     {
@@ -39,6 +40,7 @@ public class SimpleAuditRecord implements AuditRecord
         this.status = builder.status;
         this.operation = builder.operation;
         this.timestamp = builder.timestamp;
+        this.subject = builder.subject;
     }
 
     @Override
@@ -83,6 +85,12 @@ public class SimpleAuditRecord implements AuditRecord
         return operation;
     }
 
+    @Override
+    public Optional<String> getSubject()
+    {
+        return Optional.ofNullable(subject);
+    }
+
     public static Builder builder()
     {
         return new Builder();
@@ -97,6 +105,7 @@ public class SimpleAuditRecord implements AuditRecord
         private Status status;
         private AuditOperation operation;
         private long timestamp;
+        private String subject;
 
         public Builder withClientAddress(InetSocketAddress clientAddress)
         {
@@ -137,6 +146,12 @@ public class SimpleAuditRecord implements AuditRecord
         public Builder withTimestamp(long timestamp)
         {
             this.timestamp = timestamp;
+            return this;
+        }
+
+        public Builder withSubject(String subject)
+        {
+            this.subject = subject;
             return this;
         }
 

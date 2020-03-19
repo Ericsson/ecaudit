@@ -35,4 +35,6 @@ public interface AuditRecord
     Status getStatus();
 
     AuditOperation getOperation();
+
+    Optional<String> getSubject();
 }

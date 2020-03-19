@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,14 +31,16 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IResource;
+import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.PasswordAuthenticator;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 
 /**
  * A decorator of {@link PasswordAuthenticator} with added audit logging.
  */
-public class AuditPasswordAuthenticator implements IAuthenticator
+public class AuditPasswordAuthenticator implements IAuditAuthenticator
 {
     private static final Logger LOG = LoggerFactory.getLogger(AuditPasswordAuthenticator.class);
 
@@ -90,8 +93,32 @@ public class AuditPasswordAuthenticator implements IAuthenticator
     @Override
     public SaslNegotiator newSaslNegotiator(InetAddress clientAddress)
     {
-        LOG.debug("Setting up SASL negotiation with {}", clientAddress);
-        return new AuditPlainTextSaslAuthenticator(clientAddress, wrappedAuthenticator.newSaslNegotiator(clientAddress));
+        return newAuditSaslNegotiator(clientAddress);
+    }
+
+    @Override
+    public AuditSaslNegotiator newAuditSaslNegotiator(InetAddress clientAddress)
+    {
+        // For BWC, check if being wrapped. If not, log authentication attempts as normal.
+        // If being wrapped, i.e. not used standalone, let the wrapper do the authentication
+        // logging for us (disable logging)
+        IAuthenticator authenticator = DatabaseDescriptor.getAuthenticator();
+        boolean disableLogging = authenticator instanceof WrappingAuditAuthenticator;
+
+        LOG.debug("Setting up SASL negotiation with client peer");
+        return new AuditPlainTextSaslAuthenticator(clientAddress, wrappedAuthenticator.newSaslNegotiator(clientAddress), disableLogging);
+    }
+
+    @Override
+    public Set<IRoleManager.Option> supportedOptions()
+    {
+        return ImmutableSet.of(IRoleManager.Option.LOGIN, IRoleManager.Option.SUPERUSER, IRoleManager.Option.PASSWORD, IRoleManager.Option.OPTIONS);
+    }
+
+    @Override
+    public Set<IRoleManager.Option> alterableOptions()
+    {
+        return  ImmutableSet.of(IRoleManager.Option.PASSWORD, IRoleManager.Option.OPTIONS);
     }
 
     @Override
@@ -100,17 +127,19 @@ public class AuditPasswordAuthenticator implements IAuthenticator
         return wrappedAuthenticator.legacyAuthenticate(credentials);
     }
 
-    private class AuditPlainTextSaslAuthenticator implements SaslNegotiator
+    private class AuditPlainTextSaslAuthenticator implements AuditSaslNegotiator
     {
         private final InetAddress clientAddress;
         private final SaslNegotiator saslNegotiator;
 
         private String decodedUsername;
+        private final boolean disableLogging;
 
-        AuditPlainTextSaslAuthenticator(InetAddress clientAddress, SaslNegotiator saslNegotiator)
+        AuditPlainTextSaslAuthenticator(InetAddress clientAddress, SaslNegotiator saslNegotiator, boolean disableLogging)
         {
             this.clientAddress = clientAddress;
             this.saslNegotiator = saslNegotiator;
+            this.disableLogging = disableLogging;
         }
 
         @Override
@@ -129,6 +158,13 @@ public class AuditPasswordAuthenticator implements IAuthenticator
         @Override
         public AuthenticatedUser getAuthenticatedUser() throws AuthenticationException
         {
+            // If wrapped by the WrappingAuditAuthenticator just try to authenticate without logging
+            // since the wrapper will log for us
+            if (disableLogging)
+            {
+                return saslNegotiator.getAuthenticatedUser();
+            }
+
             long timestamp = System.currentTimeMillis();
             auditAdapter.auditAuth(decodedUsername, clientAddress, Status.ATTEMPT, timestamp);
             try
@@ -142,6 +178,12 @@ public class AuditPasswordAuthenticator implements IAuthenticator
                 auditAdapter.auditAuth(decodedUsername, clientAddress, Status.FAILED, timestamp);
                 throw e;
             }
+        }
+
+        @Override
+        public String getUser()
+        {
+            return decodedUsername;
         }
 
         /**

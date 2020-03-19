@@ -71,6 +71,13 @@ public class AuditConfig
         return yamlConfig.getWrappedAuthorizer();
     }
 
+    public String getWrappedAuthenticator()
+    {
+        loadConfigIfNeeded();
+
+        return yamlConfig.getWrappedAuthenticator();
+    }
+
     public String getBoundValueSuppressor()
     {
         loadConfigIfNeeded();

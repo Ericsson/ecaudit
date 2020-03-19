@@ -51,6 +51,7 @@ public class TestFieldSelector
         assertThat(Field.OPERATION.getBit()).isEqualTo(64);
         assertThat(Field.OPERATION_NAKED.getBit()).isEqualTo(128);
         assertThat(Field.TIMESTAMP.getBit()).isEqualTo(256);
+        assertThat(Field.SUBJECT.getBit()).isEqualTo(512);
     }
 
     @Test
@@ -84,7 +85,7 @@ public class TestFieldSelector
 
         assertAllFieldsAreSelected(fields);
 
-        assertThat(fields.getBitmap()).isEqualTo(511)
+        assertThat(fields.getBitmap()).isEqualTo(1023)
                                       .isEqualTo(FieldSelector.ALL_FIELDS.getBitmap());
     }
 
@@ -147,7 +148,7 @@ public class TestFieldSelector
     public void testInvalidBitmapUpperRange()
     {
         assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> FieldSelector.fromBitmap(512)) // Only 9 fields available == Max 9 bits => max bitmap value 2^9 - 1
+        .isThrownBy(() -> FieldSelector.fromBitmap(1024)) // Only 10 fields available == Max 10 bits => max bitmap value 2^10 - 1
         .withMessageContaining("Bitmap value is out of bounds");
     }
 

@@ -49,5 +49,6 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
         actualFields.ifSelectedRun(Field.STATUS, () -> wire.write(WireTags.KEY_STATUS).text(auditRecord.getStatus().name()));
         actualFields.ifSelectedRun(Field.OPERATION, () -> wire.write(WireTags.KEY_OPERATION).text(auditRecord.getOperation().getOperationString()));
         actualFields.ifSelectedRun(Field.OPERATION_NAKED, () -> wire.write(WireTags.KEY_NAKED_OPERATION).text(auditRecord.getOperation().getNakedOperationString()));
+        actualFields.ifSelectedRun(Field.SUBJECT, () -> wire.write(WireTags.KEY_SUBJECT).text(auditRecord.getSubject().get()));
     }
 }

@@ -32,8 +32,18 @@ final class FieldFilterFlavorAdapter
 
     static FieldSelector getFieldsAvailableInRecord(AuditRecord auditRecord, FieldSelector configuredFields)
     {
-        return auditRecord.getBatchId().isPresent()
-               ? configuredFields
-               : configuredFields.withoutField(FieldSelector.Field.BATCH_ID);
+        FieldSelector fields = configuredFields;
+
+        if (!auditRecord.getBatchId().isPresent())
+        {
+            fields = fields.withoutField(FieldSelector.Field.BATCH_ID);
+        }
+
+        if (!auditRecord.getSubject().isPresent())
+        {
+            fields = fields.withoutField(FieldSelector.Field.SUBJECT);
+        }
+
+        return fields;
     }
 }

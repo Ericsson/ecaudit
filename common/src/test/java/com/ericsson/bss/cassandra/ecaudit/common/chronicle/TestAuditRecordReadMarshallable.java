@@ -84,6 +84,20 @@ public class TestAuditRecordReadMarshallable
         assertThatRecordIsSame(actualAuditRecord, expectedValues);
     }
 
+     @Test
+     public void testReadSubjectMatch() throws Exception
+     {
+         RecordValues expectedValues = defaultValues.butWithSubject("bob-subject");
+
+         givenNextRecordIs(expectedValues);
+
+         readMarshallable.readMarshallable(wireInMock);
+
+         StoredAuditRecord actualAuditRecord = readMarshallable.getAuditRecord();
+
+         assertThatRecordIsSame(actualAuditRecord, expectedValues);
+     }
+
     @Test
     public void testReuseMarshallable()
     {
@@ -166,9 +180,19 @@ public class TestAuditRecordReadMarshallable
         when(typeValueMock.text()).thenReturn(values.getType());
         when(wireInMock.read(eq("type"))).thenReturn(typeValueMock);
 
-        int fieldsBitmap = values.getBatchId() != null ? FieldSelector.DEFAULT_FIELDS.getBitmap() : FieldSelector.DEFAULT_FIELDS.withoutField(Field.BATCH_ID).getBitmap();
+        FieldSelector selectedFields = FieldSelector.DEFAULT_FIELDS;
+        if (values.getBatchId() == null)
+        {
+            selectedFields = selectedFields.withoutField(Field.BATCH_ID);
+        }
+
+        if (values.getSubject() != null)
+        {
+            selectedFields = selectedFields.withField(Field.SUBJECT);
+        }
+
         ValueIn fieldsValueMock = mock(ValueIn.class);
-        when(fieldsValueMock.int32()).thenReturn(fieldsBitmap);
+        when(fieldsValueMock.int32()).thenReturn(selectedFields.getBitmap());
         when(wireInMock.read(eq("fields"))).thenReturn(fieldsValueMock);
 
         ValueIn timestampValueMock = mock(ValueIn.class);
@@ -205,6 +229,13 @@ public class TestAuditRecordReadMarshallable
         ValueIn operationValueMock = mock(ValueIn.class);
         when(operationValueMock.text()).thenReturn(values.getOperation());
         when(wireInMock.read(eq("operation"))).thenReturn(operationValueMock);
+
+        if (values.getSubject() != null)
+        {
+            ValueIn subjectValueMock = mock(ValueIn.class);
+            when(subjectValueMock.text()).thenReturn(values.getSubject());
+            when(wireInMock.read(eq("subject"))).thenReturn(subjectValueMock);
+        }
     }
 
     private void assertThatRecordIsSame(StoredAuditRecord actualAuditRecord, RecordValues expectedValues) throws UnknownHostException
@@ -218,5 +249,6 @@ public class TestAuditRecordReadMarshallable
         assertThat(actualAuditRecord.getNakedOperation()).isEmpty();
         assertThat(actualAuditRecord.getUser()).contains(expectedValues.gethUser());
         assertThat(actualAuditRecord.getTimestamp()).contains(expectedValues.getTimestamp());
+        assertThat(actualAuditRecord.getSubject()).isEqualTo(Optional.ofNullable(expectedValues.getSubject()));
     }
 }

@@ -18,6 +18,15 @@
 # This configuration file will be automatically picked up by ecAudit if it is placed in the Cassandra configuration
 # directory.
 
+# The authenticator backend where WrappingAuditAuthenticator delegate authentication requests.
+#
+# The value must represent a class name implementing the IAuditAuthenticator interface. This can be either:
+# - com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator, provided by ecAudit
+# - a custom implementation of IAuditAuthenticator
+#
+# By default ecAudit delegates to the AuditPasswordAuthenticator.
+wrapped_authenticator: com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator
+
 
 # The authorizer backend where the AuditAuthorizer delegate authorization requests.
 #

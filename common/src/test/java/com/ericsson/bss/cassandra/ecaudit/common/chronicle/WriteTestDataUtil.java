@@ -45,7 +45,7 @@ public class WriteTestDataUtil
 {
     public static void main(String[] args) throws Exception
     {
-        String version = "X"; // Set the version here!
+        String version = "2"; // Set the version here!
 
         // Data
         AuditRecord record = SimpleAuditRecord.builder()
@@ -56,6 +56,7 @@ public class WriteTestDataUtil
                                               .withStatus(Status.SUCCEEDED)
                                               .withOperation(mockOperation("SELECT SOMETHING", "SELECT SOMETHING NAKED"))
                                               .withTimestamp(1554188832013L)
+                                              .withSubject("bob-the-subject")
                                               .build();
 
         // Write Data to Queue
@@ -68,7 +69,7 @@ public class WriteTestDataUtil
         appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.DEFAULT_FIELDS));
         appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.NO_FIELDS));
         appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.ALL_FIELDS));
-        appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.fromFields(asList("USER", "OPERATION_NAKED", "STATUS")))); // Custom fields
+        appender.writeDocument(new AuditRecordWriteMarshallable(record, FieldSelector.fromFields(asList("USER", "OPERATION_NAKED", "STATUS", "SUBJECT")))); // Custom fields
 
         chronicleQueue.close();
     }
