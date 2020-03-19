@@ -34,6 +34,7 @@ public class StoredAuditRecord
     private final String operation;
     private final String nakedOperation;
     private final Long timestamp;
+    private final String subject;
 
     private StoredAuditRecord(Builder builder)
     {
@@ -46,6 +47,7 @@ public class StoredAuditRecord
         this.operation = builder.operation;
         this.nakedOperation = builder.nakedOperation;
         this.timestamp = builder.timestamp;
+        this.subject = builder.subject;
     }
 
     public Optional<Long> getTimestamp()
@@ -93,6 +95,11 @@ public class StoredAuditRecord
         return Optional.ofNullable(nakedOperation);
     }
 
+    public Optional<String> getSubject()
+    {
+        return Optional.ofNullable(subject);
+    }
+
     public static Builder builder()
     {
         return new Builder();
@@ -109,6 +116,7 @@ public class StoredAuditRecord
         private String operation;
         private String nakedOperation;
         private Long timestamp;
+        private String subject;
 
         public Builder withClientAddress(InetAddress clientAddress)
         {
@@ -161,6 +169,12 @@ public class StoredAuditRecord
         public Builder withTimestamp(long timestamp)
         {
             this.timestamp = timestamp;
+            return this;
+        }
+
+        public Builder withSubject(String subject)
+        {
+            this.subject = subject;
             return this;
         }
 

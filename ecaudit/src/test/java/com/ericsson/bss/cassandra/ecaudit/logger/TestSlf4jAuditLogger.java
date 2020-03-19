@@ -64,12 +64,14 @@ public class TestSlf4jAuditLogger
     private static final Status EXPECTED_STATUS = Status.ATTEMPT;
     private static final UUID EXPECTED_BATCH_ID = UUID.fromString("12345678-aaaa-bbbb-cccc-123456789abc");
     private static final Long EXPECTED_TIMESTAMP = 42L;
+    private static final String EXPECTED_SUBJECT = "the_subject";
     private static final String CUSTOM_LOGGER_NAME = "TEST_LOGGER";
     private static final Logger LOG = LoggerFactory.getLogger(CUSTOM_LOGGER_NAME);
 
     private static AuditEntry logEntryWithAll;
     private static AuditEntry logEntryWithoutBatch;
     private static AuditEntry logEntryWithoutClientPort;
+    private static AuditEntry logEntryWithoutSubject;
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
@@ -92,6 +94,7 @@ public class TestSlf4jAuditLogger
                                     .status(EXPECTED_STATUS)
                                     .timestamp(EXPECTED_TIMESTAMP)
                                     .batch(EXPECTED_BATCH_ID)
+                                    .subject(EXPECTED_SUBJECT)
                                     .build();
 
         logEntryWithoutBatch = AuditEntry.newBuilder()
@@ -103,6 +106,11 @@ public class TestSlf4jAuditLogger
                                               .basedOn(logEntryWithAll)
                                               .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, 0))
                                               .build();
+
+        logEntryWithoutSubject = AuditEntry.newBuilder()
+                                         .basedOn(logEntryWithAll)
+                                         .subject(null)
+                                         .build();
     }
 
     @Before
@@ -151,6 +159,16 @@ public class TestSlf4jAuditLogger
     }
 
     @Test
+    public void testCustomLogFormatWithSubject()
+    {
+        Slf4jAuditLogger logger = loggerWithConfig("User = ${USER}, Status = {${STATUS}}, Subject = ${SUBJECT}");
+        logger.log(logEntryWithAll);
+
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("User = user, Status = {ATTEMPT}, Subject = the_subject");
+    }
+
+    @Test
     public void testAnchorCharactersAreEscapedWhenUsedInLogFormat()
     {
         Slf4jAuditLogger logger = loggerWithConfig("{}User=${USER}{}Status=${STATUS}");
@@ -165,7 +183,7 @@ public class TestSlf4jAuditLogger
     {
         Slf4jAuditLoggerConfig configMock = mock(Slf4jAuditLoggerConfig.class);
         Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
-        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "TIMESTAMP");
+        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "TIMESTAMP", "SUBJECT");
 
         Function<AuditEntry, Object> clientFunction = availableFieldFunctions.get("CLIENT_IP");
         assertThat(clientFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_CLIENT_ADDRESS);
@@ -195,6 +213,10 @@ public class TestSlf4jAuditLogger
 
         Function<AuditEntry, Object> timestampFunction = availableFieldFunctions.get("TIMESTAMP");
         assertThat(timestampFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_TIMESTAMP);
+
+        Function<AuditEntry, Object> subjectFunction = availableFieldFunctions.get("SUBJECT");
+        assertThat(subjectFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_SUBJECT);
+        assertThat(subjectFunction.apply(logEntryWithoutSubject)).isEqualTo(null); // Subject is not guaranteed to be in the log entry
     }
 
     @Test

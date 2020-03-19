@@ -354,12 +354,13 @@ public class TestAuditAdapter
         // Given
         String expectedOperation = "Authentication attempt";
         ConnectionResource resource = ConnectionResource.root();
+        String expectedSubject = "bob-the-subject";
 
         AuditEntry.Builder auditBuilder = AuditEntry.newBuilder().permissions(PERMISSIONS).resource(resource);
         when(mockAuditEntryBuilderFactory.createAuthenticationEntryBuilder()).thenReturn(auditBuilder);
 
         // When
-        auditAdapter.auditAuth(USER, Status.ATTEMPT, TIMESTAMP);
+        auditAdapter.auditAuth(USER, expectedSubject, Status.ATTEMPT, TIMESTAMP);
 
         // Then
         AuditEntry entry = getAuditEntry();
@@ -372,6 +373,7 @@ public class TestAuditAdapter
         assertThat(entry.getPermissions()).isEqualTo(PERMISSIONS);
         assertThat(entry.getResource()).isEqualTo(resource);
         assertThat(entry.getTimestamp()).isEqualTo(TIMESTAMP);
+        assertThat(entry.getSubject()).isEqualTo(Optional.of(expectedSubject));
     }
 
     @Test
