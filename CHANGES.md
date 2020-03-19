@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.5.0
+* Add support for custom authenticator and the Subject audit record field - #146
+
 ## Version 2.4.0
 * Optimizing cache performance for role audit filter
 * Make sure authorized user can whitelist himself - #145
