@@ -149,8 +149,8 @@ public class TestWrappingAuditAuthenticator
     @Test
     public void testDelegatedOptions()
     {
-        Set<IRoleManager.Option> expectedAlterableOptions = ImmutableSet.of(IRoleManager.Option.SUPERUSER);
-        Set<IRoleManager.Option> expectedSupportedOptions = ImmutableSet.of(IRoleManager.Option.PASSWORD, IRoleManager.Option.LOGIN);
+        Set<IRoleManager.Option> expectedAlterableOptions = ImmutableSet.of(IRoleManager.Option.OPTIONS, IRoleManager.Option.SUPERUSER);
+        Set<IRoleManager.Option> expectedSupportedOptions = ImmutableSet.of(IRoleManager.Option.OPTIONS, IRoleManager.Option.PASSWORD, IRoleManager.Option.LOGIN);
 
         when(mockAuthenticator.alterableOptions()).thenReturn(expectedAlterableOptions);
         when(mockAuthenticator.supportedOptions()).thenReturn(expectedSupportedOptions);

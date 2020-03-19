@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestSlf4jAuditLogger
 {
-    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'{?|subject:'${SUBJECT}'?}";
+    private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
     private static final String EXPECTED_STATEMENT = "insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']";
     private static final String EXPECTED_STATEMENT_NAKED = "insert into ks.tbl (key, val) values (?, ?)";
     private static final String EXPECTED_CLIENT_ADDRESS = "127.0.0.1";
@@ -135,17 +135,7 @@ public class TestSlf4jAuditLogger
         logger.log(logEntryWithoutBatch);
 
         assertThat(getSlf4jLogMessage())
-        .isEqualTo("client:'127.0.0.1'|user:'user'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'|subject:'the_subject'");
-    }
-
-    @Test
-    public void testDefaultFormatAuditEntryNoSubject()
-    {
-        Slf4jAuditLogger logger = loggerWithConfig(DEFAULT_LOG_FORMAT);
-        logger.log(logEntryWithoutSubject);
-
-        assertThat(getSlf4jLogMessage())
-        .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
+        .isEqualTo("client:'127.0.0.1'|user:'user'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
     }
 
     @Test
@@ -155,7 +145,7 @@ public class TestSlf4jAuditLogger
         logger.log(logEntryWithAll);
 
         assertThat(getSlf4jLogMessage())
-        .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'|subject:'the_subject'");
+        .isEqualTo("client:'127.0.0.1'|user:'user'|batchId:'12345678-aaaa-bbbb-cccc-123456789abc'|status:'ATTEMPT'|operation:'insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']'");
     }
 
     @Test
@@ -166,6 +156,16 @@ public class TestSlf4jAuditLogger
 
         assertThat(getSlf4jLogMessage())
         .isEqualTo("User = user, Status = {ATTEMPT}, Query = insert into ks.tbl (key, val) values (?, ?)");
+    }
+
+    @Test
+    public void testCustomLogFormatWithSubject()
+    {
+        Slf4jAuditLogger logger = loggerWithConfig("User = ${USER}, Status = {${STATUS}}, Subject = ${SUBJECT}");
+        logger.log(logEntryWithAll);
+
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("User = user, Status = {ATTEMPT}, Subject = the_subject");
     }
 
     @Test

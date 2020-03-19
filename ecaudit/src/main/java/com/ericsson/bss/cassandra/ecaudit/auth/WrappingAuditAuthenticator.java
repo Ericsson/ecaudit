@@ -15,6 +15,8 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -101,13 +103,17 @@ public class WrappingAuditAuthenticator implements IAuthenticator, IOptionsProvi
     @Override
     public Set<IRoleManager.Option> supportedOptions()
     {
-        return wrappedAuthenticator.supportedOptions();
+        Set<IRoleManager.Option> supportedOptions = new HashSet<>(wrappedAuthenticator.supportedOptions());
+        supportedOptions.add(IRoleManager.Option.OPTIONS);
+        return Collections.unmodifiableSet(supportedOptions);
     }
 
     @Override
     public Set<IRoleManager.Option> alterableOptions()
     {
-        return wrappedAuthenticator.alterableOptions();
+        Set<IRoleManager.Option> alterableOptions = new HashSet<>(wrappedAuthenticator.alterableOptions());
+        alterableOptions.add(IRoleManager.Option.OPTIONS);
+        return Collections.unmodifiableSet(alterableOptions);
     }
 
     /**

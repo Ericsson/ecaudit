@@ -87,7 +87,7 @@ public class TestAuditRecordReadMarshallable
      @Test
      public void testReadSubjectMatch() throws Exception
      {
-         RecordValues expectedValues = defaultValues.butWithVersion((short) 2).butWithSubject("bob-subject");
+         RecordValues expectedValues = defaultValues.butWithSubject("bob-subject");
 
          givenNextRecordIs(expectedValues);
 

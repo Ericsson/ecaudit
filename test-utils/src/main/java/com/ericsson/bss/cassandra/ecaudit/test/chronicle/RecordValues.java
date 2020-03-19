@@ -22,7 +22,7 @@ import java.util.UUID;
 @SuppressWarnings("PMD")
 public class RecordValues
 {
-    private short version = 1;
+    private short version = 2;
     private String type = "ecaudit";
     private long timestamp = 42;
     private byte[] clientAddress;
