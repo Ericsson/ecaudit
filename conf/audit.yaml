@@ -75,7 +75,7 @@ log_timing_strategy: pre_logging
 # optional parameters are accepted:
 # - log_format   - Format of the audit record sent to SLF4J. Fields can be configured with bash-style parameter
 #                  substitution. Supported parameters are ${CLIENT_IP}, ${CLIENT_PORT}, ${COORDINATOR_IP}, ${USER},
-#                  ${BATCH_ID}, ${STATUS}, ${OPERATION}, ${OPERATION_NAKED}, and ${TIMESTAMP}.
+#                  ${BATCH_ID}, ${STATUS}, ${OPERATION}, ${OPERATION_NAKED}, ${TIMESTAMP}, and ${SUBJECT}.
 # - time_format  - Format of ${TIMESTAMP} field as defined by the Java DateTimeFormatter. By default this field will be
 #                  unformatted and get printed as milliseconds since epoch of 1970-01-01Z.
 # - time_zone    - Time zone of formatted ${TIMESTAMP}, using system default if unspecified.
@@ -88,8 +88,8 @@ log_timing_strategy: pre_logging
 #                  HOURLY.
 # - max_log_size - Rotate oldest file when maximum size (in bytes) of log files is reached. Default is 16GB.
 # - fields       - The fields that will be written to the binary log file. Supported fields are CLIENT_IP, CLIENT_PORT,
-#                  COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION, OPERATION_NAKED, and TIMESTAMP.
-#                  Default is CLIENT_IP, CLIENT_PORT, COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION and TIMESTAMP
+#                  COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION, OPERATION_NAKED, TIMESTAMP, and SUBJECT.
+#                  Default is CLIENT_IP, CLIENT_PORT, COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION, and TIMESTAMP
 #                  fields.
 #
 logger_backend:
