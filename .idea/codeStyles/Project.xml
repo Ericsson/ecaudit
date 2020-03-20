@@ -24,6 +24,7 @@
           <package name="" withSubpackages="true" static="true" />
         </value>
       </option>
+      <option name="JD_P_AT_EMPTY_LINES" value="false" />
     </JavaCodeStyleSettings>
     <XML>
       <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
