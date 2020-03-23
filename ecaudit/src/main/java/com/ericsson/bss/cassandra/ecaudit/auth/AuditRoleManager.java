@@ -114,10 +114,10 @@ public class AuditRoleManager implements IRoleManager
         }
         else if (authenticator instanceof PasswordAuthenticator)
         {
-            options.addAll(ImmutableSet.of(Option.PASSWORD));
+            options.add(Option.PASSWORD);
         }
 
-        options.add(IRoleManager.Option.OPTIONS);
+        options.add(Option.OPTIONS);
 
         return options;
     }
