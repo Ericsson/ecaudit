@@ -105,7 +105,7 @@ public class DecoratedPasswordAuthenticator implements IDecoratedAuthenticator
     public DecoratedSaslNegotiator newDecoratedSaslNegotiator(InetAddress clientAddress)
     {
         LOG.debug("Setting up SASL negotiation with client peer");
-        return new DecoratedPlainTextSaslAuthenticator(wrappedAuthenticator.newSaslNegotiator(clientAddress));
+        return new DecoratedPlainTextSaslNegotiator(wrappedAuthenticator.newSaslNegotiator(clientAddress));
     }
 
     @Override
@@ -114,13 +114,13 @@ public class DecoratedPasswordAuthenticator implements IDecoratedAuthenticator
         return wrappedAuthenticator.legacyAuthenticate(credentials);
     }
 
-    private class DecoratedPlainTextSaslAuthenticator implements DecoratedSaslNegotiator
+    private static class DecoratedPlainTextSaslNegotiator implements DecoratedSaslNegotiator
     {
         private final SaslNegotiator saslNegotiator;
 
         private String decodedUsername;
 
-        DecoratedPlainTextSaslAuthenticator(SaslNegotiator saslNegotiator)
+        DecoratedPlainTextSaslNegotiator(SaslNegotiator saslNegotiator)
         {
             this.saslNegotiator = saslNegotiator;
         }
