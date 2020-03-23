@@ -15,13 +15,13 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
@@ -34,31 +34,40 @@ import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.utils.FBUtilities;
 
-public class WrappingAuditAuthenticator implements IAuthenticator, IOptionsProvider
+/**
+ * An auditing {@link IAuthenticator} which is delegating authentication
+ * to a {@link IDecoratedAuthenticator}.
+ *
+ * The {@link IDecoratedAuthenticator} provides attributes which the
+ * {@link AuditAuthenticator} use to emit audit records.
+ */
+public class AuditAuthenticator implements IAuthenticator
 {
-    private final IAuditAuthenticator wrappedAuthenticator;
+    private static final Logger LOG = LoggerFactory.getLogger(AuditAuthenticator.class);
+
+    private final IDecoratedAuthenticator wrappedAuthenticator;
     private final AuditAdapter auditAdapter;
 
     /**
      * Default constructor called by Cassandra.
-     * <p>
-     * This creates an instance of {@link WrappingAuditAuthenticator} with the default {@link AuditAdapter}
-     * and gets an {@link IAuditAuthenticator} from configuration (or the default one).
+     *
+     * This creates an instance of {@link AuditAuthenticator} with the default {@link AuditAdapter}
+     * and gets an {@link IDecoratedAuthenticator} from configuration (or the default one).
      */
-    public WrappingAuditAuthenticator()
+    public AuditAuthenticator()
     {
         this(newWrappedAuthenticator(AuditConfig.getInstance()), AuditAdapter.getInstance());
     }
 
-    @VisibleForTesting
-    WrappingAuditAuthenticator(IAuditAuthenticator wrappedAuthenticator, AuditAdapter auditAdapter)
+    AuditAuthenticator(IDecoratedAuthenticator wrappedAuthenticator, AuditAdapter auditAdapter)
     {
+        LOG.info("Auditing enabled on authenticator");
         this.wrappedAuthenticator = wrappedAuthenticator;
         this.auditAdapter = auditAdapter;
     }
 
     @VisibleForTesting
-    static IAuditAuthenticator newWrappedAuthenticator(AuditConfig auditConfig)
+    static IDecoratedAuthenticator newWrappedAuthenticator(AuditConfig auditConfig)
     {
         String className = auditConfig.getWrappedAuthenticator();
         return FBUtilities.construct(className, "authenticator");
@@ -86,12 +95,23 @@ public class WrappingAuditAuthenticator implements IAuthenticator, IOptionsProvi
     public void setup()
     {
         wrappedAuthenticator.setup();
+        auditAdapter.setup();
+    }
+
+    Set<IRoleManager.Option> supportedOptions()
+    {
+        return wrappedAuthenticator.supportedOptions();
+    }
+
+    Set<IRoleManager.Option> alterableOptions()
+    {
+        return wrappedAuthenticator.alterableOptions();
     }
 
     @Override
-    public IAuthenticator.SaslNegotiator newSaslNegotiator()
+    public SaslNegotiator newSaslNegotiator()
     {
-        return new AuditingSaslNegotiator(wrappedAuthenticator.newAuditSaslNegotiator());
+        return new AuditSaslNegotiator(wrappedAuthenticator.newDecoratedSaslNegotiator());
     }
 
     @Override
@@ -100,57 +120,40 @@ public class WrappingAuditAuthenticator implements IAuthenticator, IOptionsProvi
         return wrappedAuthenticator.legacyAuthenticate(credentials);
     }
 
-    @Override
-    public Set<IRoleManager.Option> supportedOptions()
-    {
-        Set<IRoleManager.Option> supportedOptions = new HashSet<>(wrappedAuthenticator.supportedOptions());
-        supportedOptions.add(IRoleManager.Option.OPTIONS);
-        return Collections.unmodifiableSet(supportedOptions);
-    }
-
-    @Override
-    public Set<IRoleManager.Option> alterableOptions()
-    {
-        Set<IRoleManager.Option> alterableOptions = new HashSet<>(wrappedAuthenticator.alterableOptions());
-        alterableOptions.add(IRoleManager.Option.OPTIONS);
-        return Collections.unmodifiableSet(alterableOptions);
-    }
-
     /**
-     * Implements a {@link org.apache.cassandra.auth.IAuthenticator.SaslNegotiator} that performs auditing on
-     * login attempts.
+     * Implements a {@link SaslNegotiator} that performs auditing on login attempts.
      */
-    private class AuditingSaslNegotiator implements SaslNegotiator
+    private class AuditSaslNegotiator implements SaslNegotiator
     {
-        private final IAuditAuthenticator.AuditSaslNegotiator auditSaslNegotiator;
+        private final IDecoratedAuthenticator.DecoratedSaslNegotiator decoratedSaslNegotiator;
 
-        public AuditingSaslNegotiator(IAuditAuthenticator.AuditSaslNegotiator auditSaslNegotiator)
+        public AuditSaslNegotiator(IDecoratedAuthenticator.DecoratedSaslNegotiator decoratedSaslNegotiator)
         {
-            this.auditSaslNegotiator = auditSaslNegotiator;
+            this.decoratedSaslNegotiator = decoratedSaslNegotiator;
         }
 
         @Override
         public byte[] evaluateResponse(byte[] clientResponse) throws AuthenticationException
         {
-            return auditSaslNegotiator.evaluateResponse(clientResponse);
+            return decoratedSaslNegotiator.evaluateResponse(clientResponse);
         }
 
         @Override
         public boolean isComplete()
         {
-            return auditSaslNegotiator.isComplete();
+            return decoratedSaslNegotiator.isComplete();
         }
 
         @Override
         public AuthenticatedUser getAuthenticatedUser() throws AuthenticationException
         {
-            String userName = auditSaslNegotiator.getUser();
+            String userName = decoratedSaslNegotiator.getUser();
 
             long timestamp = System.currentTimeMillis();
             auditAuth(userName, Status.ATTEMPT, timestamp);
             try
             {
-                AuthenticatedUser result = auditSaslNegotiator.getAuthenticatedUser();
+                AuthenticatedUser result = decoratedSaslNegotiator.getAuthenticatedUser();
                 auditAuth(userName, Status.SUCCEEDED, timestamp);
                 return result;
             }
@@ -163,7 +166,7 @@ public class WrappingAuditAuthenticator implements IAuthenticator, IOptionsProvi
 
         private void auditAuth(String userName, Status status, long timestamp)
         {
-            Optional<String> subject = auditSaslNegotiator.getSubject();
+            Optional<String> subject = decoratedSaslNegotiator.getSubject();
             if (subject.isPresent())
             {
                 auditAdapter.auditAuth(userName, subject.get(), status, timestamp);

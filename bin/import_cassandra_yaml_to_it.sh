@@ -34,7 +34,7 @@ format_for_it () {
  cp $1 $2
  sed -i 's/# \(data_file_directories:\)/\1/' $2
  sed -i 's@^# \(.*\)/var/lib/cassandra/\(.*\)@\1###tmp###/cassandra/\2@' $2
- sed -i 's/^\(authenticator: \).*/\1com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator/' $2
+ sed -i 's/^\(authenticator: \).*/\1com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthenticator/' $2
  sed -i 's/^\(authorizer: \).*/\1com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer/' $2
  sed -i 's/^\(role_manager: \).*/\1com.ericsson.bss.cassandra.ecaudit.auth.AuditRoleManager/' $2
  sed -i 's/roles_validity_in_ms:.*/roles_validity_in_ms: 0/' $2

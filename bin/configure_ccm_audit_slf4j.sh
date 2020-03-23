@@ -96,7 +96,7 @@ update_logback_config() {
 
 for NODE_PATH in ${CLUSTER_PATH}/node*;
 do
- sed -i 's/^authenticator:.*/authenticator: com.ericsson.bss.cassandra.ecaudit.auth.AuditPasswordAuthenticator/' ${NODE_PATH}/conf/cassandra.yaml
+ sed -i 's/^authenticator:.*/authenticator: com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthenticator/' ${NODE_PATH}/conf/cassandra.yaml
  sed -i 's/^authorizer:.*/authorizer: com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer/' ${NODE_PATH}/conf/cassandra.yaml
  sed -i 's/^role_manager:.*/role_manager: com.ericsson.bss.cassandra.ecaudit.auth.AuditRoleManager/' ${NODE_PATH}/conf/cassandra.yaml
  update_cache_times roles ${NODE_PATH}/conf/cassandra.yaml

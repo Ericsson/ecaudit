@@ -103,12 +103,12 @@ This check is performed on all requests when ecAudit is enabled.
 
 Second, there is an overhead involved with the actual logging of the audit record.
 This operation is performed on all requests that are not filtered by the whitelist.
-In a busy system this may add as much as 20% overhead.
+This may add as much as 20% overhead.
 
 This cassandra-stress chart illustrates typical performance impact of ecAudit:
 
-* [Throughput](https://rawgit.com/Ericsson/ecaudit/release/c3.0.11/doc/ecaudit-performance.html)
-* [Latency](https://rawgit.com/Ericsson/ecaudit/release/c3.0.11/doc/ecaudit-performance.html?metric=mean)
+* [Throughput](https://rawgit.com/Ericsson/ecaudit/release/c2.2/doc/ecaudit-performance.html)
+* [Latency](https://rawgit.com/Ericsson/ecaudit/release/c2.2/doc/ecaudit-performance.html?metric=mean)
 
 Refer to the guides of Logback settings, authentication caches and whitelist settings to get best possible performance.
 

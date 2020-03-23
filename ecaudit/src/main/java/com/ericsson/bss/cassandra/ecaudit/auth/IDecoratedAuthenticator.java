@@ -16,34 +16,55 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.cassandra.auth.IAuthenticator;
+import org.apache.cassandra.auth.IRoleManager;
 
 /**
  * An {@link IAuthenticator} that provide custom fields to be used during authentication auditing.
  */
-public interface IAuditAuthenticator extends IAuthenticator, IOptionsProvider
+public interface IDecoratedAuthenticator extends IAuthenticator
 {
     /**
-     * Returns an <em>audited</em> {@link AuditSaslNegotiator SaslNegotiator}.
-     * <p>
+     * Returns a set of options supported and used by this authenticator.
+     *
+     * @return the options, empty if not applicable
+     * @see IRoleManager#supportedOptions()
+     */
+    Set<IRoleManager.Option> supportedOptions();
+
+    /**
+     * Returns a set of user alterable options supported by this authenticator.
+     *
+     * This should be a sub set of {@link #supportedOptions()}. Regular users will be able to alter these options
+     * on their own account.
+     *
+     * @return the options, empty if not applicable
+     * @see IRoleManager#alterableOptions()
+     */
+    Set<IRoleManager.Option> alterableOptions();
+
+    /**
+     * Returns an <em>audited</em> {@link DecoratedSaslNegotiator}.
+     *
      * Note: Implementations should probably use this method when {@link IAuthenticator#newSaslNegotiator()} is called.
      *
-     * @return an instance of an {@link AuditSaslNegotiator}
+     * @return an instance of an {@link DecoratedSaslNegotiator}
      */
-    AuditSaslNegotiator newAuditSaslNegotiator();
+    DecoratedSaslNegotiator newDecoratedSaslNegotiator();
 
 
     /**
-     * An <em>audited</em> implementation of {@link org.apache.cassandra.auth.IAuthenticator.SaslNegotiator}
-     * that may optionally return additional fields to be used for auditing authentication attempts.
+     * A <em>decorated</em> implementation of {@link SaslNegotiator} that will return additional fields to be used for
+     * auditing authentication attempts.
      */
-    interface AuditSaslNegotiator extends SaslNegotiator
+    interface DecoratedSaslNegotiator extends SaslNegotiator
     {
         /**
          * Get the user used in the authentication attempt.
-         * <p>
-         * This method should only be called if {@link SaslNegotiator#isComplete()} returns true.
+         *
+         * This method will only be called after {@link SaslNegotiator#isComplete()} returns true.
          *
          * @return the name of the user.
          */
@@ -51,8 +72,8 @@ public interface IAuditAuthenticator extends IAuthenticator, IOptionsProvider
 
         /**
          * Get the <em>subject</em> of the authentication attempt, if applicable.
-         * <p>
-         * This method should only be called if {@link SaslNegotiator#isComplete()} returns true.
+         *
+         * This method will only be called after {@link SaslNegotiator#isComplete()} returns true.
          *
          * @return the subject, if applicable
          */
