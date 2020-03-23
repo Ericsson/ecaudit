@@ -4,6 +4,15 @@ Below you'll find special instructions to consider when upgrading to a new versi
 Check out the [change log](CHANGES.md) for a full list of new features and fixes.
 
 
+## To version 2.5.x
+
+Administrators should be aware of the following changes when upgrading to version 2.5.0 or later.
+ecAudit can be upgraded to 2.5.x from any previous major version as long as these and any intermediate upgrade instructions are observed.
+
+As of version 2.5.0 the ```AuditPasswordAuthenticator``` is deprecated and should no longer be configured as the ```authenticator``` in ```cassandra.yaml```.
+Users should instead use the ```AuditAuthenticator``` which can delegate authentication operations to custom ```IAuthenticator``` implementation.
+By default the new ```AuditAuthenticator``` will behave exactly like the ```AuditPasswordAuthenticator```.
+
 ## To version 2.1.x
 
 Administrators should be aware of the following changes when upgrading from version 0.x.x, 1.x.x or 2.0.x to 2.1.0 or later.

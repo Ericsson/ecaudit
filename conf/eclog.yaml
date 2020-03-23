@@ -20,7 +20,7 @@
 
 # Format of the audit record printed by eclog. Fields can be configured with bash-style parameter substitution.
 # Supported parameters are ${CLIENT_IP}, ${CLIENT_PORT}, ${COORDINATOR_IP}, ${USER}, ${BATCH_ID}, ${STATUS},
-# ${OPERATION}, ${OPERATION_NAKED}, and ${TIMESTAMP}.
+# ${OPERATION}, ${OPERATION_NAKED}, ${TIMESTAMP}, and ${SUBJECT}.
 log_format: "${TIMESTAMP} -> Client=${CLIENT_IP}{?:${CLIENT_PORT}?}, User=${USER}, Status=${STATUS}, Operation=${OPERATION}"
 
 # Format of the ${TIMESTAMP} field as defined by the Java DateTimeFormatter. By default this field will be
