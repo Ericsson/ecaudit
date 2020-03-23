@@ -17,15 +17,21 @@ Passwords which appear in an audit record will be obfuscated.
 
 ## Audit Records
 
-| Field Label | Field Value                                                       | Mandatory Field |
-| ----------- | ----------------------------------------------------------------- | --------------- |
-| client      | Client IP address                                                 | yes             |
-| user        | Username of the authenticated user                                | yes             |
-| batchId     | Internal identifier shared by all statements in a batch operation | no              |
-| status      | Value is either ATTEMPT or FAILED                                 | yes             |
-| operation   | The CQL statement or a textual description of the operation       | yes             |
-| timestamp   | The system timestamp of the request                               | yes             |
-| coordinator | The coordinator address (host address)                            | yes             |
+| Field Label    | Field Value                                                       | Available In               |
+| -------------- | ----------------------------------------------------------------- | -------------------------- |
+| CLIENT_IP      | Client IP address                                                 | All Records (*1)           |
+| CLIENT_PORT    | Client port                                                       | Query Records              |
+| USER           | Username of the authenticated user                                | All Records                |
+| BATCH_ID       | Internal identifier shared by all statements in a batch operation | Batch Query Records        |
+| STATUS         | Value is either ATTEMPT or FAILED                                 | All Records                |
+| OPERATION      | The CQL statement or a textual description of the operation       | All Records                |
+| OPERATION_NAKED | The CQL statement or a textual description of the operation, *without* bound values appended to prepared statements | All Records |
+| TIMESTAMP      | The system timestamp of the request                               | All Records                |
+| COORDINATOR_IP | The coordinator address (host address)                            | All Records                |
+| SUBJECT        | External user identity                                            | Authentication Records (*2)|
+
+* (1) In ecAudit_c2.2 the CLIENT_IP will not be available in authentication records.
+* (2) Only provided by custom Authenticator implementations.
 
 
 ### Examples
@@ -97,7 +103,7 @@ This check is performed on all requests when ecAudit is enabled.
 
 Second, there is an overhead involved with the actual logging of the audit record.
 This operation is performed on all requests that are not filtered by the whitelist.
-In a busy system this may add as much as 20% overhead.
+This may add as much as 20% overhead.
 
 This cassandra-stress chart illustrates typical performance impact of ecAudit:
 

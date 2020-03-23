@@ -15,6 +15,7 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,7 +65,7 @@ public class AuditRoleManager implements IRoleManager
      * Default constructor.
      *
      * Using this constructor wraps the {@link CassandraRoleManager} for actual role management. But this role manager
-     * is paired with the {@link AuditPasswordAuthenticator} and it adds support for audit white-list options.
+     * is paired with the {@link AuditAuthenticator} and it adds support for audit white-list options.
      */
     public AuditRoleManager()
     {
@@ -81,24 +82,46 @@ public class AuditRoleManager implements IRoleManager
         this.wrappedRoleManager = wrappedRoleManager;
         this.whitelistManager = whitelistManager;
         permissionChecker = new PermissionChecker();
-
-        if (authenticator instanceof IOptionsProvider)
-        {
-            IOptionsProvider optionsProvider = (IOptionsProvider) authenticator;
-            supportedOptions = optionsProvider.supportedOptions();
-            alterableOptions = optionsProvider.alterableOptions();
-        }
-        else
-        {
-            // To be compatible with CassandraRoleManager options
-            supportedOptions = authenticator.getClass() == PasswordAuthenticator.class
-                               ? ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.PASSWORD)
-                               : ImmutableSet.of(Option.LOGIN, Option.SUPERUSER);
-            alterableOptions = authenticator.getClass().equals(PasswordAuthenticator.class)
-                               ? ImmutableSet.of(Option.PASSWORD)
-                               : ImmutableSet.<Option>of();
-        }
+        supportedOptions = resolveSupportedOptions(authenticator);
+        alterableOptions = resolveAlterableOptions(authenticator);
     }
+
+    private Set<Option> resolveSupportedOptions(IAuthenticator authenticator)
+    {
+        Set<Option> options = new HashSet<>(ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.OPTIONS));
+
+        if (authenticator instanceof AuditAuthenticator)
+        {
+            AuditAuthenticator auditAuthenticator = (AuditAuthenticator) authenticator;
+            options.addAll(auditAuthenticator.supportedOptions());
+        }
+        else if (authenticator instanceof PasswordAuthenticator)
+        {
+            options.add(Option.PASSWORD);
+        }
+
+        return options;
+    }
+
+    private Set<Option> resolveAlterableOptions(IAuthenticator authenticator)
+    {
+        Set<Option> options = new HashSet<>();
+
+        if (authenticator instanceof AuditAuthenticator)
+        {
+            AuditAuthenticator auditAuthenticator = (AuditAuthenticator) authenticator;
+            options.addAll(auditAuthenticator.alterableOptions());
+        }
+        else if (authenticator instanceof PasswordAuthenticator)
+        {
+            options.add(Option.PASSWORD);
+        }
+
+        options.add(Option.OPTIONS);
+
+        return options;
+    }
+
 
     @Override
     public void validateConfiguration() throws ConfigurationException

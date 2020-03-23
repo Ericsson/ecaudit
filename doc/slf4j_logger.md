@@ -27,22 +27,24 @@ To configure a custom log message format the following parameters can be configu
 It is possible to configure a parameterized log message by providing a formatting string.
 The following fields are available:
 
-| Field          | Field Value                                                       | Mandatory Field |
-| -------------- | ----------------------------------------------------------------- | --------------- |
-| CLIENT_IP      | Client IP address                                                 | yes             |
-| CLIENT_PORT    | Client port                                                       | no              |
-| USER           | Username of the authenticated user                                | yes             |
-| BATCH_ID       | Internal identifier shared by all statements in a batch operation | no              |
-| STATUS         | Value is either ATTEMPT or FAILED                                 | yes             |
-| OPERATION      | The CQL statement or a textual description of the operation       | yes             |
-| OPERATION_NAKED | The CQL statement or a textual description of the operation, *without* bound values appended to prepared statements | yes |
-| TIMESTAMP      | The system timestamp of the request (\*) (**)                     | yes             |
-| COORDINATOR_IP | Coordinator IP address (host address)                             | yes             |
+| Field          | Field Value                                                       | Available In               |
+| -------------- | ----------------------------------------------------------------- | -------------------------- |
+| CLIENT_IP      | Client IP address                                                 | All Records (*1)           |
+| CLIENT_PORT    | Client port                                                       | Query Records              |
+| USER           | Username of the authenticated user                                | All Records                |
+| BATCH_ID       | Internal identifier shared by all statements in a batch operation | Batch Query Records        |
+| STATUS         | Value is either ATTEMPT or FAILED                                 | All Records                |
+| OPERATION      | The CQL statement or a textual description of the operation       | All Records                |
+| OPERATION_NAKED | The CQL statement or a textual description of the operation, *without* bound values appended to prepared statements | All Records |
+| TIMESTAMP      | The system timestamp of the request (*3) (*4)                     | All Records                |
+| COORDINATOR_IP | Coordinator IP address (host address)                             | All Records                |
+| SUBJECT        | External user identity                                            | Authentication Records (*2)|
 
-(*) - This timestamp is more accurate than the Logback time (since that is written asynchronously).
-If this timestamp is used, then the Logback timestamp can be removed by reconfiguring the encoder pattern in logback.xml.
-
-(**) - It is possible to configure a custom display format.
+* (1) In ecAudit_c2.2 the CLIENT_IP will not be available in authentication records.
+* (2) Only provided by custom Authenticator implementations.
+* (3) This timestamp is more accurate than the Logback time (since that is written asynchronously).
+      If this timestamp is used, then the Logback timestamp can be removed by reconfiguring the encoder pattern in logback.xml.
+* (4) It is possible to configure a custom display format.
 
 Modify the ```audit.yaml``` configuration file.
 Field name goes between ```${``` and ```}``` (*bash*-style parameter substitution).

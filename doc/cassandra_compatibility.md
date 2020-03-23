@@ -145,3 +145,4 @@ Comparing record fields between Cassandra 4.0 and ecAudit:
 | operation     | OPERATION_NAKED | operation, without bound values appended to prepared statements                        |
 | -             | OPERATION       | operation, with bound values appended to prepared statements. Not present in Cassandra |
 | -             | STATUS          | Not present in Cassandra                                                               |
+| -             | SUBJECT         | Not present in Cassandra                                                               |

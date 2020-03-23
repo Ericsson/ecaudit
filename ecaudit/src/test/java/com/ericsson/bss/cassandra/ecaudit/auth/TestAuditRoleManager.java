@@ -37,9 +37,7 @@ import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -63,7 +61,7 @@ public class TestAuditRoleManager
     private AuditWhitelistManager mockAuditWhitelistManager;
 
     @Mock
-    private IAuthenticator mockRegularAuthenticator;
+    private IDecoratedAuthenticator mockDecoratedAuthenticator;
 
     @Mock
     private AuditAdapter mockAuditAdapter;
@@ -77,7 +75,10 @@ public class TestAuditRoleManager
     @Before
     public void before()
     {
-        auditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, new AuditPasswordAuthenticator(mockRegularAuthenticator, mockAuditAdapter));
+        when(mockDecoratedAuthenticator.alterableOptions()).thenReturn(ImmutableSet.of(IRoleManager.Option.PASSWORD));
+        when(mockDecoratedAuthenticator.supportedOptions()).thenReturn(ImmutableSet.of(IRoleManager.Option.LOGIN, IRoleManager.Option.SUPERUSER, IRoleManager.Option.PASSWORD));
+
+        auditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, new AuditAuthenticator(mockDecoratedAuthenticator, mockAuditAdapter));
     }
 
     @After
@@ -107,17 +108,18 @@ public class TestAuditRoleManager
     {
         Set<IRoleManager.Option> options = auditRoleManager.supportedOptions();
 
-        assertThat(options).containsExactlyElementsOf(ImmutableSet.of(IRoleManager.Option.LOGIN, IRoleManager.Option.SUPERUSER, IRoleManager.Option.PASSWORD, IRoleManager.Option.OPTIONS));
+        assertThat(options).containsExactlyInAnyOrder(IRoleManager.Option.LOGIN, IRoleManager.Option.SUPERUSER, IRoleManager.Option.PASSWORD, IRoleManager.Option.OPTIONS);
     }
 
     @Test
     public void testStandAloneSupportedOptions()
     {
-        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, mockRegularAuthenticator);
+        IAuthenticator authenticator = mock(IAuthenticator.class);
+        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, authenticator);
 
         Set<IRoleManager.Option> options = standAloneAuditRoleManager.supportedOptions();
 
-        assertThat(options).containsExactlyElementsOf(ImmutableSet.of(IRoleManager.Option.LOGIN, IRoleManager.Option.SUPERUSER));
+        assertThat(options).containsExactlyInAnyOrder(IRoleManager.Option.LOGIN, IRoleManager.Option.SUPERUSER, IRoleManager.Option.OPTIONS);
     }
 
     @Test
@@ -125,17 +127,18 @@ public class TestAuditRoleManager
     {
         Set<IRoleManager.Option> options = auditRoleManager.alterableOptions();
 
-        assertThat(options).containsExactlyElementsOf(ImmutableSet.of(IRoleManager.Option.PASSWORD, IRoleManager.Option.OPTIONS));
+        assertThat(options).containsExactlyInAnyOrder(IRoleManager.Option.PASSWORD, IRoleManager.Option.OPTIONS);
     }
 
     @Test
     public void testStandAloneAlterableOptions()
     {
-        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, mockRegularAuthenticator);
+        IAuthenticator authenticator = mock(IAuthenticator.class);
+        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, authenticator);
 
         Set<IRoleManager.Option> options = standAloneAuditRoleManager.alterableOptions();
 
-        assertThat(options).isEmpty();
+        assertThat(options).containsExactlyInAnyOrder(IRoleManager.Option.OPTIONS);
     }
 
     @Test
