@@ -14,9 +14,11 @@
 # limitations under the License.
 #
 
+
 # Configuration file for ecAudit
 # This configuration file will be automatically picked up by ecAudit if it is placed in the Cassandra configuration
 # directory.
+
 
 # The authenticator backend where AuditAuthenticator delegate authentication requests.
 #
@@ -37,16 +39,17 @@ wrapped_authenticator: com.ericsson.bss.cassandra.ecaudit.auth.DecoratedPassword
 # - org.apache.cassandra.auth.AllowAllAuthorizer allows any action to any user - set it to disable authorization.
 # - org.apache.cassandra.auth.CassandraAuthorizer stores permissions in system_auth.role_permissions table.
 #
-# By default ecAudit will delegate to the CassandraAuthorizer.
+# By default ecAudit delegates to the CassandraAuthorizer.
 #
 wrapped_authorizer: org.apache.cassandra.auth.CassandraAuthorizer
 
 
 # Role/User whitelist at node level
+#
 # This whitelist is only considered if the Java property 'ecaudit.filter_type' is set to YAML or YAML_AND_ROLE
 # When enabled, log entries will not be generated for queries performed by roles listed here.
-# Authentication attempts will still be logged.
-#
+# Authentication attempts will still be logged. By default this list is empty.
+# Example:
 #whitelist:
 #    - username1
 #    - username2
@@ -92,16 +95,18 @@ log_timing_strategy: pre_logging
 #                  COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION, OPERATION_NAKED, TIMESTAMP, and SUBJECT.
 #                  Default is CLIENT_IP, CLIENT_PORT, COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION, and TIMESTAMP
 #                  fields.
+
 #
 logger_backend:
     - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
       parameters:
-#      - log_format: "{?client:'${CLIENT_IP}'|?}user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'"
+      - log_format: "{?client:'${CLIENT_IP}'|?}user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'"
 #        time_format:
 #        time_zone:
 
 
 # The bound value suppressor determines how bound values should be logged for prepared statements.
+#
 # The suppressor is applied to all prepared statements regardless of which table is used.
 #
 # - SuppressNothing              -> Will not suppress. logs all values for prepared statements.
@@ -129,23 +134,32 @@ logger_backend:
 #
 # By default SuppressNothing will be used.
 #
-# bound_value_suppressor: SuppressBlobs
+bound_value_suppressor: SuppressNothing
 
 
-# Validity period for whitelist cache (processing role based whitelist logic can be an expensive operation depending
-# on the whitelist configuration).
-# The whitelist results (per user/operation/permission) are cached for the period specified here.
+# Validity period for whitelist cache
+#
+# The whitelist results (per user/resource/permission) are cached for the period specified here.
 # Set to 0 to disable caching entirely.
 # Defaults to the value of roles_validity_in_ms (specified in cassandra.yaml)
-whitelist_cache_validity_in_ms: 30000
+# Example value: 30000
+#
+#whitelist_cache_validity_in_ms:
 
 # Refresh interval for whitelist cache (if enabled).
+#
 # After this interval, cache entries become eligible for refresh. Upon next access, an async reload is scheduled
 # and the old value returned until it completes.
 # This value should be less that the validity so that the the async reload can complete well before the validity expires.
 # Defaults to the value of roles_update_interval_in_ms (specified in cassandra.yaml)
-whitelist_cache_update_interval_in_ms: 20000
+# Example value: 20000
+#
+#whitelist_cache_update_interval_in_ms:
 
 # Maximum number of entries in the whitelist cache
+#
+# The cache will keep one entry for each combination of role/resource/permission.
 # Default to 10 x the value of roles_cache_max_entries (specified in cassandra.yaml)
-whitelist_cache_max_entries: 10000
+# Example value: 10000
+#
+#whitelist_cache_max_entries:

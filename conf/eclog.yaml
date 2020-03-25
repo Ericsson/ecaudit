@@ -14,18 +14,32 @@
 # limitations under the License.
 #
 
+
 # Configuration file for eclog
 # This configuration file can be specified by a command line argument with running eclog, or placed in either the
 # working directory or together with the binary log files.
 
-# Format of the audit record printed by eclog. Fields can be configured with bash-style parameter substitution.
-# Supported parameters are ${CLIENT_IP}, ${CLIENT_PORT}, ${COORDINATOR_IP}, ${USER}, ${BATCH_ID}, ${STATUS},
-# ${OPERATION}, ${OPERATION_NAKED}, ${TIMESTAMP}, and ${SUBJECT}.
-log_format: "${TIMESTAMP} -> Client=${CLIENT_IP}{?:${CLIENT_PORT}?}, User=${USER}, Status=${STATUS}, Operation=${OPERATION}"
 
-# Format of the ${TIMESTAMP} field as defined by the Java DateTimeFormatter. By default this field will be
-# unformatted and get printed as milliseconds since epoch of 1970-01-01Z.
-time_format: "yyyy-MM-dd HH:mm:ss z"
+# Set the format of the audit record printed by eclog.
+#
+# Fields can be configured with bash-style parameter substitution. Supported parameters are ${CLIENT_IP},
+# ${CLIENT_PORT}, ${COORDINATOR_IP}, ${USER}, ${BATCH_ID}, ${STATUS}, ${OPERATION}, ${OPERATION_NAKED}, ${TIMESTAMP},
+# and ${SUBJECT}.
+#
+log_format: "{?${TIMESTAMP}?}{?|${CLIENT_IP}?}{?:${CLIENT_PORT}?}{?|${COORDINATOR_IP}?}{?|${USER}?}{?|${STATUS}?}{?|${BATCH_ID}?}{?|${OPERATION}?}"
 
-# Time zone of the formatted ${TIMESTAMP}, using system default if unspecified.
-time_zone: "UTC"
+
+# Format of the ${TIMESTAMP} field with the Java DateTimeFormatter.
+#
+# By default this field will be unformatted and get printed as milliseconds since epoch of 1970-01-01Z.
+# Example value: "yyyy-MM-dd HH:mm:ss z"
+#
+#time_format:
+
+
+# Time zone of the formatted ${TIMESTAMP}.
+#
+# The system default is used if unspecified.
+# Example value: "UTC"
+#
+#time_zone:

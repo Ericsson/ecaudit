@@ -1,6 +1,8 @@
 # Installation
 
 Follow these instructions to install ecAudit in each node of your Cassandra cluster.
+This will enable all the features provided by ecAudit.
+Visit the [sertup guide](setup.md) for a detailed list of options.
 
 
 ## Deploy Plug-In Jar File
@@ -36,7 +38,7 @@ Add the following JVM option to your ```cassandra-env.sh``` or your ```cassandra
 
 **Note:** If you configure these settings in your ```cassandra-env.sh```,
 consider that the ```JVM_EXTRA_OPTS``` variable is consumed at the end of the file,
-so make sure to add the following line *before* it is consumed.
+so make sure to add the following lines *before* they are consumed.
 
 ```
 JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Dcassandra.custom_query_handler_class=com.ericsson.bss.cassandra.ecaudit.handler.AuditQueryHandler"

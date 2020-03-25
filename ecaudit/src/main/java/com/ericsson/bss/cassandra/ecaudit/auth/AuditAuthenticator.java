@@ -117,6 +117,7 @@ public class AuditAuthenticator implements IAuthenticator
     @Override
     public AuthenticatedUser legacyAuthenticate(Map<String, String> credentials) throws AuthenticationException
     {
+        LOG.debug("Setting up SASL negotiation with client peer");
         return wrappedAuthenticator.legacyAuthenticate(credentials);
     }
 

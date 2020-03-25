@@ -147,6 +147,13 @@ ccm node1 cqlsh -u cassandra -p cassandra -x "ALTER ROLE cassandra WITH OPTIONS 
 run_stress authentication-authorization-audit-role-whitelist-permission-derived
 stop_cassandra
 
+create_cluster vanilla-chron
+${SCRIPT_PATH}/configure_ccm_querylog_chronicle.sh
+start_cassandra
+create_dummy_whitelists
+run_stress vanilla-querylog-chronicle
+stop_cassandra
+
 create_cluster aaa-chron
 ${SCRIPT_PATH}/configure_ccm_audit_chronicle.sh
 start_cassandra

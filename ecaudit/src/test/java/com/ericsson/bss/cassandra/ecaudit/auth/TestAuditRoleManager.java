@@ -78,7 +78,7 @@ public class TestAuditRoleManager
         when(mockDecoratedAuthenticator.alterableOptions()).thenReturn(ImmutableSet.of(IRoleManager.Option.PASSWORD));
         when(mockDecoratedAuthenticator.supportedOptions()).thenReturn(ImmutableSet.of(IRoleManager.Option.LOGIN, IRoleManager.Option.SUPERUSER, IRoleManager.Option.PASSWORD));
 
-        auditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, new AuditAuthenticator(mockDecoratedAuthenticator, mockAuditAdapter));
+        auditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, mockAuditAdapter, new AuditAuthenticator(mockDecoratedAuthenticator, mockAuditAdapter));
     }
 
     @After
@@ -101,6 +101,7 @@ public class TestAuditRoleManager
 
         verify(mockWrappedRoleManager).setup();
         verify(mockAuditWhitelistManager).setup();
+        verify(mockAuditAdapter).setup();
     }
 
     @Test
@@ -115,7 +116,7 @@ public class TestAuditRoleManager
     public void testStandAloneSupportedOptions()
     {
         IAuthenticator authenticator = mock(IAuthenticator.class);
-        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, authenticator);
+        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, mockAuditAdapter, authenticator);
 
         Set<IRoleManager.Option> options = standAloneAuditRoleManager.supportedOptions();
 
@@ -134,7 +135,7 @@ public class TestAuditRoleManager
     public void testStandAloneAlterableOptions()
     {
         IAuthenticator authenticator = mock(IAuthenticator.class);
-        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, authenticator);
+        AuditRoleManager standAloneAuditRoleManager = new AuditRoleManager(mockWrappedRoleManager, mockAuditWhitelistManager, mockAuditAdapter, authenticator);
 
         Set<IRoleManager.Option> options = standAloneAuditRoleManager.alterableOptions();
 
