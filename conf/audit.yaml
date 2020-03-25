@@ -95,7 +95,6 @@ log_timing_strategy: pre_logging
 #                  COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION, OPERATION_NAKED, TIMESTAMP, and SUBJECT.
 #                  Default is CLIENT_IP, CLIENT_PORT, COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION, and TIMESTAMP
 #                  fields.
-
 #
 logger_backend:
     - class_name: com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger
@@ -132,8 +131,6 @@ logger_backend:
 # A custom bound value suppressor can be plugged in by setting the full name of an suppressor class implementing the
 # BoundValueSuppressor interface.
 #
-# By default SuppressNothing will be used.
-#
 bound_value_suppressor: SuppressNothing
 
 
@@ -142,7 +139,6 @@ bound_value_suppressor: SuppressNothing
 # The whitelist results (per user/resource/permission) are cached for the period specified here.
 # Set to 0 to disable caching entirely.
 # Defaults to the value of roles_validity_in_ms (specified in cassandra.yaml)
-# Example value: 30000
 #
 #whitelist_cache_validity_in_ms:
 
@@ -152,7 +148,6 @@ bound_value_suppressor: SuppressNothing
 # and the old value returned until it completes.
 # This value should be less that the validity so that the the async reload can complete well before the validity expires.
 # Defaults to the value of roles_update_interval_in_ms (specified in cassandra.yaml)
-# Example value: 20000
 #
 #whitelist_cache_update_interval_in_ms:
 
@@ -160,6 +155,5 @@ bound_value_suppressor: SuppressNothing
 #
 # The cache will keep one entry for each combination of role/resource/permission.
 # Default to 10 x the value of roles_cache_max_entries (specified in cassandra.yaml)
-# Example value: 10000
 #
 #whitelist_cache_max_entries:
