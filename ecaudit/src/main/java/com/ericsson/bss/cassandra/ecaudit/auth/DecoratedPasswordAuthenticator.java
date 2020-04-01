@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IResource;
@@ -37,8 +35,6 @@ import org.apache.cassandra.exceptions.ConfigurationException;
  */
 public class DecoratedPasswordAuthenticator implements IDecoratedAuthenticator
 {
-    private static final Logger LOG = LoggerFactory.getLogger(DecoratedPasswordAuthenticator.class);
-
     private final PasswordAuthenticator wrappedAuthenticator;
 
     /**
@@ -54,7 +50,6 @@ public class DecoratedPasswordAuthenticator implements IDecoratedAuthenticator
     @VisibleForTesting
     DecoratedPasswordAuthenticator(PasswordAuthenticator authenticator)
     {
-        LOG.info("Auditing enabled on authenticator");
         this.wrappedAuthenticator = authenticator;
     }
 
@@ -103,7 +98,6 @@ public class DecoratedPasswordAuthenticator implements IDecoratedAuthenticator
     @Override
     public DecoratedSaslNegotiator newDecoratedSaslNegotiator()
     {
-        LOG.debug("Setting up SASL negotiation with client peer");
         return new DecoratedPlainTextSaslNegotiator(wrappedAuthenticator.newSaslNegotiator());
     }
 
