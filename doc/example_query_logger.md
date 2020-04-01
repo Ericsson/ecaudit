@@ -2,6 +2,7 @@
 
 This short guide will demonstrate how to setup ecAudit as a pure Query Logger in combination with the [Chronicle Logger](chronicle_logger.md) backend.
 In this example all CQL queries will be logged without any filtering, and users will be able to connect without any credentials.
+With a setup like this it is possible to log all CQL queries in a cluster for troubleshooting purposes and similar. 
 
 ## cassandra.yaml
 
@@ -67,10 +68,11 @@ time_format: "yyyy-MM-dd HH:mm:ss z"
 Here's an example on how that could look.
 
 ```
-# java -jar eclog.jar -t 5 /var/lib/cassandra/audit/
-2020-03-27 10:42:01 CET||SUCCEEDED|INSERT INTO country.by_code (code, name, iso) VALUES ( 46, 'Sweden', 'SE');
-2020-03-27 10:42:35 CET||SUCCEEDED|INSERT INTO country.by_code (code, name, iso) VALUES ( 47, 'Norway', 'NO');
-2020-03-27 10:43:12 CET||SUCCEEDED|INSERT INTO country.by_code (code, name, iso) VALUES ( 48, 'Poland', 'PL');
-2020-03-27 10:43:28 CET||SUCCEEDED|INSERT INTO country.by_code (code, name, iso) VALUES ( 49, 'Germany', 'DE');
-2020-03-27 10:43:42 CET||SUCCEEDED|INSERT INTO country.by_code (code, name, iso) VALUES ( 51, 'Peru', 'PE');
+# java -jar eclog.jar -t 6 /var/lib/cassandra/audit/
+2020-04-01 12:42:02 CEST||ATTEMPT|INSERT INTO country.by_code (code, name, iso) VALUES ( 46, 'Sweden', 'SE');
+2020-04-01 12:42:10 CEST||ATTEMPT|INSERT INTO country.by_code (code, name, iso) VALUES ( 47, 'Norway', 'NO');
+2020-04-01 12:42:18 CEST||ATTEMPT|INSERT INTO country.by_code (code, name, iso) VALUES ( 48, 'Poland', 'PL');
+2020-04-01 12:42:24 CEST||ATTEMPT|INSERT INTO country.by_code (code, name, iso) VALUES ( 49, 'Germany', 'DE');
+2020-04-01 12:42:32 CEST||ATTEMPT|INSERT INTO country.by_code (code, name, iso) VALUES ( 51, 'Peru', 'PE');
+2020-04-01 12:43:10 CEST||ATTEMPT|SELECT iso FROM country.by_code WHERE code = 46;
 ```
