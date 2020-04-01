@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.6.0
+* Support pure query logger deployment without authentication/authorization - #77
+
 ## Version 2.5.0
 * Add support for custom authenticator and the Subject audit record field - #146
 
