@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Telefonaktiebolaget LM Ericsson
+ * Copyright 2020 Telefonaktiebolaget LM Ericsson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.integration.allowallauthorizer;
+package com.ericsson.bss.cassandra.ecaudit.integration.querylogger;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +32,7 @@ import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.exceptions.ServerError;
+import com.datastax.driver.core.exceptions.UnauthorizedException;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import org.mockito.ArgumentCaptor;
@@ -48,7 +48,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ITAllowAllAuthorizer
+public class ITQueryLogger
 {
     private static Cluster cluster;
     private static Session session;
@@ -97,7 +97,7 @@ public class ITAllowAllAuthorizer
 
         session.execute("INSERT INTO school.students (key, value) VALUES (42, 'Kalle')");
 
-        assertThat(getLogEntries()).containsOnly("client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'INSERT INTO school.students (key, value) VALUES (42, 'Kalle')'");
+        assertThat(getLogEntries()).containsOnly("client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'INSERT INTO school.students (key, value) VALUES (42, 'Kalle')'");
     }
 
     @Test
@@ -106,11 +106,11 @@ public class ITAllowAllAuthorizer
         givenTable("company", "engineers");
         reset(mockAuditAppender);
 
-        assertThatExceptionOfType(ServerError.class).isThrownBy(() -> session.execute("GRANT SELECT ON TABLE company.engineers TO cassandra"));
+        assertThatExceptionOfType(UnauthorizedException.class).isThrownBy(() -> session.execute("GRANT SELECT ON TABLE company.engineers TO cassandra"));
 
         assertThat(getLogEntries()).containsOnly(
-        "client:'127.0.0.1'|user:'cassandra'|status:'ATTEMPT'|operation:'GRANT SELECT ON TABLE company.engineers TO cassandra'",
-        "client:'127.0.0.1'|user:'cassandra'|status:'FAILED'|operation:'GRANT SELECT ON TABLE company.engineers TO cassandra'"
+        "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'GRANT SELECT ON TABLE company.engineers TO cassandra'",
+        "client:'127.0.0.1'|user:'anonymous'|status:'FAILED'|operation:'GRANT SELECT ON TABLE company.engineers TO cassandra'"
         );
     }
 

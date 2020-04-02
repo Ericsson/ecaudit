@@ -25,6 +25,7 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.CassandraRoleManager;
 import org.apache.cassandra.auth.DataResource;
@@ -57,6 +58,7 @@ public class AuditRoleManager implements IRoleManager
     private final IRoleManager wrappedRoleManager;
     private final AuditWhitelistManager whitelistManager;
     private final PermissionChecker permissionChecker;
+    private final AuditAdapter auditAdapter;
 
     private final Set<Option> supportedOptions;
     private final Set<Option> alterableOptions;
@@ -71,16 +73,18 @@ public class AuditRoleManager implements IRoleManager
     {
         this(new CassandraRoleManager(),
              new AuditWhitelistManager(),
+             AuditAdapter.getInstance(),
              DatabaseDescriptor.getAuthenticator());
     }
 
     @VisibleForTesting
-    AuditRoleManager(IRoleManager wrappedRoleManager, AuditWhitelistManager whitelistManager, IAuthenticator authenticator)
+    AuditRoleManager(IRoleManager wrappedRoleManager, AuditWhitelistManager whitelistManager, AuditAdapter auditAdapter, IAuthenticator authenticator)
     {
         LOG.info("Auditing enabled on role manager");
 
         this.wrappedRoleManager = wrappedRoleManager;
         this.whitelistManager = whitelistManager;
+        this.auditAdapter = auditAdapter;
         permissionChecker = new PermissionChecker();
         supportedOptions = resolveSupportedOptions(authenticator);
         alterableOptions = resolveAlterableOptions(authenticator);
@@ -134,6 +138,7 @@ public class AuditRoleManager implements IRoleManager
     {
         wrappedRoleManager.setup();
         whitelistManager.setup();
+        auditAdapter.setup();
     }
 
     @Override

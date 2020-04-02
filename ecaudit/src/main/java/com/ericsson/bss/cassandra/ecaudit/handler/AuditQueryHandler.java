@@ -45,7 +45,7 @@ import org.apache.cassandra.utils.UUIDGen;
 
 /**
  * An implementation of {@link QueryHandler} that performs audit logging on queries.
- * <p>
+ *
  * It can be used as a stand-alone query handler, or wrapped inside another query handler if configuration is needed.
  */
 public class AuditQueryHandler implements QueryHandler
@@ -71,7 +71,7 @@ public class AuditQueryHandler implements QueryHandler
     /**
      * Creates an instance of {@link AuditQueryHandler} that uses the default audit logger configuration and wraps the
      * given query handler.
-     * <p>
+     *
      * The signature of this constructor must remain unchanged as it is used by other frameworks to create layers of
      * decorators on top of each other.
      *
