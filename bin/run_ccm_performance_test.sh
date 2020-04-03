@@ -175,7 +175,6 @@ stop_cassandra
 create_cluster vanilla-chron
 ${SCRIPT_PATH}/configure_ccm_querylog_chronicle.sh
 start_cassandra
-create_dummy_whitelists
 run_stress vanilla-querylog-chronicle
 stop_cassandra
 
