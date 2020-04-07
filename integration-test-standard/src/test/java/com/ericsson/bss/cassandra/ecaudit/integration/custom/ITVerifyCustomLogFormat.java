@@ -142,6 +142,11 @@ public class ITVerifyCustomLogFormat
                        "INSERT INTO school.students (name, grade) VALUES (?, ?); " +
                        "UPDATE school.students SET grade = 'B' WHERE name = ?; " +
                        "APPLY BATCH;";
+        String nonPreparedBatch = "BEGIN UNLOGGED BATCH " +
+                                  "INSERT INTO school.students (name, grade) VALUES ('Pelle', 'C'); " +
+                                  "UPDATE school.students SET grade = 'E' WHERE name = 'Pelle';" +
+                                  "APPLY BATCH;";
+
         // When
         session.execute(new SimpleStatement(createKeyspace));
         session.execute(new SimpleStatement(createTable));
@@ -156,6 +161,8 @@ public class ITVerifyCustomLogFormat
         PreparedStatement preparedBatch = session.prepare(batch);
         session.execute(preparedBatch.bind(1234L, "Pelle", "A", "Kalle"));
 
+        session.execute(nonPreparedBatch);
+
         // Then
         verify(mockAuditAppender, atLeast(1)).doAppend(loggingEventCaptor.capture());
         List<String> logEntries = loggingEventCaptor.getAllValues().stream()
@@ -167,6 +174,7 @@ public class ITVerifyCustomLogFormat
         assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(insert) + "', batch-id=" + UUID_REGEX);
         assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(update) + "', batch-id=" + UUID_REGEX);
         assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(batch));
+        assertListContainsPattern(logEntries, TIMESTAMP_REGEX + "-> client=127.0.0.1:[0-9]*, coordinator=127.0.0.1, user=cassandra, status=ATTEMPT, operation='" + Pattern.quote(nonPreparedBatch));
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);// With second resolution...
         String expectedTimestampString = dateTimeFormatter.format(now);

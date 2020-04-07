@@ -149,6 +149,11 @@ public class ITVerifyThreadedAudit
 
         for (int i = 0; i < USER_COUNT; i++)
         {
+            jobResults.add(executorService.submit(new NonPreparedBatchStatementClient("user" + i)));
+        }
+
+        for (int i = 0; i < USER_COUNT; i++)
+        {
             jobResults.add(executorService.submit(new PreparedBatchStatementClient("user" + i)));
         }
 
@@ -254,6 +259,41 @@ public class ITVerifyThreadedAudit
                 }
 
                 return expectedBatchAttemptFragmentsAsUser(expectedStatements, username);
+            }
+        }
+    }
+
+    public class NonPreparedBatchStatementClient implements Callable<List<String>>
+    {
+        private final String username;
+
+        public NonPreparedBatchStatementClient(String username)
+        {
+            this.username = username;
+        }
+
+        @Override
+        public List<String> call()
+        {
+            try (Cluster cluster = cdt.createCluster(username, "secret");
+                 Session session = cluster.connect())
+            {
+                List<String> expectedStatements = new ArrayList<>();
+
+                for (int i = 0; i < 10; i++)
+                {
+                    String batchStatement = "BEGIN UNLOGGED BATCH " +
+                                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (" + (100 + i) + ", '1', 'b1'); " +
+                                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (" + (200 + i) + ", '2', 'b2'); " +
+                                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (" + (300 + i) + ", '3', 'static'); " +
+                                            "INSERT INTO ecks.ectbl (partk, clustk) VALUES (" + (400 + i) + ", '4'); " +
+                                            "INSERT INTO ecks.ectbl (partk, clustk) VALUES (" + (500 + i) + ", '5'); " +
+                                            "APPLY BATCH;";
+                    expectedStatements.add(batchStatement);
+                    session.execute(batchStatement);
+                }
+
+                return expectedAttemptsAsUser(expectedStatements, username);
             }
         }
     }

@@ -357,6 +357,38 @@ public class ITVerifyAudit
     }
 
     @Test
+    public void testValidNonPreparedBatchStatementsAreLogged()
+    {
+        List<String> allStatements = Arrays.asList(
+        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (1, '1', 'valid')",
+        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (2, '2', 'valid')",
+        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (3, '3', 'valid')",
+        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')",
+        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (5, '5', 'valid')");
+
+        StringBuilder batchStatementBuilder = new StringBuilder("BEGIN UNLOGGED BATCH ");
+        for (String statement : allStatements)
+        {
+            batchStatementBuilder.append(statement).append("; ");
+        }
+        batchStatementBuilder.append("APPLY BATCH;");
+
+        List<String> expectedStatements = Collections.singletonList(batchStatementBuilder.toString());
+
+        session.execute(batchStatementBuilder.toString());
+
+        ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
+        verify(mockAuditAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        List<ILoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertThat(loggingEvents
+                   .stream()
+                   .map(ILoggingEvent::getFormattedMessage)
+                   .collect(Collectors.toList()))
+                        .containsAll(expectedAttempts(expectedStatements));
+    }
+
+    @Test
     public void testValidPreparedBatchStatementsAreLogged()
     {
         String statement = "BEGIN UNLOGGED BATCH USING TIMESTAMP ? " +
@@ -364,9 +396,7 @@ public class ITVerifyAudit
                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'valid'); " +
                            "APPLY BATCH;";
 
-        List<String> expectedStatements = Collections.singletonList(
-        statement + "[1234, 1, '1', 'valid', 3, '3']"
-        );
+        List<String> expectedStatements = Collections.singletonList(statement + "[1234, 1, '1', 'valid', 3, '3']");
 
         PreparedStatement preparedBatchStatement = session.prepare(statement);
         session.execute(preparedBatchStatement.bind(1234L, 1, "1", "valid", 3, "3"));
