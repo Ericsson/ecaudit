@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,6 +53,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -352,6 +354,32 @@ public class ITVerifyAudit
                 .collect(Collectors.toList()))
                         .flatExtracting(e -> Arrays.asList(e.split(UUID_REGEX)))
                         .containsAll(expectedBatchAttemptSegments(expectedStatements));
+    }
+
+    @Test
+    public void testValidPreparedBatchStatementsAreLogged()
+    {
+        String statement = "BEGIN UNLOGGED BATCH USING TIMESTAMP ? " +
+                           "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?); " +
+                           "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'valid'); " +
+                           "APPLY BATCH;";
+
+        List<String> expectedStatements = Collections.singletonList(
+        statement + "[1234, 1, '1', 'valid', 3, '3']"
+        );
+
+        PreparedStatement preparedBatchStatement = session.prepare(statement);
+        session.execute(preparedBatchStatement.bind(1234L, 1, "1", "valid", 3, "3"));
+
+        ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
+        verify(mockAuditAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        List<ILoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertThat(loggingEvents
+                   .stream()
+                   .map(ILoggingEvent::getFormattedMessage)
+                   .collect(Collectors.toList()))
+                        .containsAll(expectedAttempts(expectedStatements));
     }
 
     @Test

@@ -151,14 +151,22 @@ public class ITVerifyPostLogging
         givenTable("keyspace1", "table1");
         reset(mockAuditAppender);
 
-        BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
-        batch.add(new SimpleStatement("INSERT INTO keyspace1.table1 (key, value) VALUES (42, 'Kalle')"));
-        batch.add(new SimpleStatement("UPDATE keyspace1.table1 SET value = 'Anka' WHERE key = 42"));
+        BatchStatement batchStatement = new BatchStatement(BatchStatement.Type.UNLOGGED);
+        batchStatement.add(new SimpleStatement("INSERT INTO keyspace1.table1 (key, value) VALUES (42, 'Kalle')"));
+        batchStatement.add(new SimpleStatement("UPDATE keyspace1.table1 SET value = 'Anka' WHERE key = 42"));
+
+        String batch = "BEGIN UNLOGGED BATCH USING TIMESTAMP ? " +
+                       "INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?); " +
+                       "UPDATE keyspace1.table1 SET value = 'New' WHERE key = ?; " +
+                       "APPLY BATCH;";
+        PreparedStatement preparedBatch = session.prepare(batch);
+
         // When
         session.execute(new SimpleStatement("SELECT * from keyspace1.table1"));
-        session.execute(batch);
+        session.execute(batchStatement);
         PreparedStatement preparedStatement = session.prepare("SELECT * FROM keyspace1.table1 WHERE key = ?");
         session.execute(preparedStatement.bind(42));
+        session.execute(preparedBatch.bind(1234L, 43, "Pelle", 43));
         // Then
         List<String> entries = getLogEntries().stream()
                                               .map(this::replaceBatchIdWithConstant)
@@ -167,7 +175,8 @@ public class ITVerifyPostLogging
             "Status=SUCCEEDED|User=cassandra|Operation=SELECT * from keyspace1.table1",
             "Status=SUCCEEDED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (42, 'Kalle')",
             "Status=SUCCEEDED|User=cassandra|Batch-ID=<uuid>|Operation=UPDATE keyspace1.table1 SET value = 'Anka' WHERE key = 42",
-            "Status=SUCCEEDED|User=cassandra|Operation=SELECT * FROM keyspace1.table1 WHERE key = ?[42]"
+            "Status=SUCCEEDED|User=cassandra|Operation=SELECT * FROM keyspace1.table1 WHERE key = ?[42]",
+            "Status=SUCCEEDED|User=cassandra|Operation=" + batch + "[1234, 43, 'Pelle', 43]"
         );
     }
 
@@ -219,6 +228,32 @@ public class ITVerifyPostLogging
         assertThat(entries).containsOnly(
         "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)[42, 'Kalle']",
         "Status=FAILED|User=cassandra|Batch-ID=<uuid>|Operation=INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)[null, '']"
+        );
+    }
+
+    @Ignore("Rejected on client side by the 2.1.10 driver version")
+    @Test
+    public void testFailedPreparedBatchStatements()
+    {
+        // Given
+        givenTable("keyspace1", "table1");
+        reset(mockAuditAppender);
+
+        // When
+        String batch = "BEGIN UNLOGGED BATCH USING TIMESTAMP ? " +
+                       "INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?); " +
+                       "UPDATE keyspace1.table1 SET value = 'New' WHERE key=?; " +
+                       "APPLY BATCH;";
+        PreparedStatement preparedBatch = session.prepare(batch);
+
+        executeAndIgnoreException(() -> session.execute(preparedBatch.bind(1234L, 43))); // To few values -> will fail
+
+        // Then
+        List<String> entries = getLogEntries().stream()
+                                              .map(this::replaceBatchIdWithConstant)
+                                              .collect(Collectors.toList());
+        assertThat(entries).containsOnly(
+        "Status=FAILED|User=cassandra|Operation=" + batch + "[1234, 43, '', null]"
         );
     }
 
