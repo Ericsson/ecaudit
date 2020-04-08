@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.6.0
+* Support prepared batch statements - #164
 * Support pure query logger deployment without authentication/authorization - #77
 
 ## Version 2.5.0

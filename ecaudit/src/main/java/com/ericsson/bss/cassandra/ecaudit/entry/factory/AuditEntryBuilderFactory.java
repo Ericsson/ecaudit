@@ -95,7 +95,6 @@ public class AuditEntryBuilderFactory
     private static final Set<Permission> DROP_PERMISSIONS = ImmutableSet.of(Permission.DROP);
     private static final Set<Permission> DESCRIBE_PERMISSIONS = ImmutableSet.of(Permission.DESCRIBE);
     private static final Set<Permission> AUTHORIZE_PERMISSIONS = ImmutableSet.of(Permission.AUTHORIZE);
-    private static final String UNEXPECTED_BATCH_STATEMENT = "Unexpected BatchStatement when mapping single query for audit";
 
     private final StatementResourceAdapter statementResourceAdapter = new StatementResourceAdapter();
 
@@ -183,11 +182,9 @@ public class AuditEntryBuilderFactory
         {
             return createAuthorizationEntryBuilder((AuthorizationStatement) parsedStatement);
         }
-
         if (parsedStatement instanceof BatchStatement.Parsed)
         {
-            LOG.error(UNEXPECTED_BATCH_STATEMENT);
-            throw new CassandraAuditException(UNEXPECTED_BATCH_STATEMENT);
+            return createBatchEntryBuilder();
         }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
@@ -225,11 +222,9 @@ public class AuditEntryBuilderFactory
         {
             return createAuthorizationEntryBuilder((AuthorizationStatement) statement);
         }
-
         if (statement instanceof BatchStatement)
         {
-            LOG.error("Unexpected BatchStatement when mapping singe query for audit");
-            throw new CassandraAuditException("Unexpected BatchStatement when mapping singe query for audit");
+            return createBatchEntryBuilder();
         }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
@@ -255,8 +250,8 @@ public class AuditEntryBuilderFactory
             // TODO: We should be able to fix this
             // This would be the result of a query towards a non-existing resource in a batch statement
             // But right now we don't get here since batch statements fail pre-processing
-            LOG.error("Failed to parse and prepare BatchStatement when mapping singe query for audit", e);
-            throw new CassandraAuditException("Failed to parse and prepare BatchStatement when mapping singe query for audit", e);
+            LOG.error("Failed to parse and prepare BatchStatement when mapping single query for audit", e);
+            throw new CassandraAuditException("Failed to parse and prepare BatchStatement when mapping single query for audit", e);
         }
 
         return updateBatchEntryBuilder(builder, (ModificationStatement) statement);
