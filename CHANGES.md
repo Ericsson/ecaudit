@@ -1,5 +1,10 @@
 # Changes
 
+## Version 2.7.0
+* Build with Cassandra 3.11.8 (only flavor ecaudit_c3.11)
+* Build with Cassandra 3.0.22 (only flavor ecaudit_c3.0)
+* Build with Cassandra 2.2.18 (only flavor ecaudit_c2.2)
+
 ## Version 2.6.0
 * Support prepared batch statements - #164
 * Support pure query logger deployment without authentication/authorization - #77
