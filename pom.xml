@@ -63,7 +63,7 @@
         <cassandra-driver.version>2.1.10.3</cassandra-driver.version>
         <commons-io.version>2.6</commons-io.version>
         <jcip-annotations.version>1.0</jcip-annotations.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <mockito.version>2.28.2</mockito.version>
         <jmh.version>1.21</jmh.version>
         <junitparams.version>1.1.1</junitparams.version>
