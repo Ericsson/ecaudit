@@ -35,7 +35,7 @@ class WhitelistContract
 
     void verifyValidDropValue(String value)
     {
-        if (!DROP_LEGACY_VALUE_PATTERN.equals(value.toLowerCase()))
+        if (!DROP_LEGACY_VALUE_PATTERN.equalsIgnoreCase(value))
         {
             throw new InvalidRequestException(String.format("Legacy audit whitelist data will only be dropped if value is set to [%s]", DROP_LEGACY_VALUE_PATTERN));
         }
