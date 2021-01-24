@@ -68,6 +68,7 @@ import org.apache.cassandra.cql3.statements.UseStatement;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.service.ClientState;
 
+@SuppressWarnings("PMD.CyclomaticComplexity")
 public class AuditEntryBuilderFactory
 {
     private static final Logger LOG = LoggerFactory.getLogger(AuditEntryBuilderFactory.class);
