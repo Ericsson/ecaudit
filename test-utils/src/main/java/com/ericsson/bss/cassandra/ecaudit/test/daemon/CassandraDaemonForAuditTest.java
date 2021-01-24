@@ -114,7 +114,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
             Runtime.getRuntime().addShutdownHook(new Thread(this::deactivate));
             cassandraDaemon.activate();
         }
-        else if (!cassandraDaemon.nativeServer.isRunning())
+        else if (!cassandraDaemon.isNativeTransportRunning())
         {
             cassandraDaemon.start();
         }
