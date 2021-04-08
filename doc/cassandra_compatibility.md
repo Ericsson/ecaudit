@@ -12,12 +12,12 @@ The ecAudit plug-in is maintained for selected Cassandra versions only.
 This flavor is built with the latest version of the Apache Cassandra 3.11.x series.
 The table below list the Cassandra version used while building each ecAudit release and indicate compatibility with other Cassandra versions. 
 
-| ecAudit Version | Compiled With    | Compatible With            |
-| --------------- | ---------------- | -------------------------- |
-| 2.7.0 -> latest | Cassandra 3.11.9 | Cassandra 3.11.2 -> 3.11.9 |
-| 2.3.0 -> 2.6.0  | Cassandra 3.11.6 | Cassandra 3.11.2 -> 3.11.6 |
-| 2.1.0 -> 2.2.2  | Cassandra 3.11.4 | Cassandra 3.11.2 -> 3.11.4 |
-| 1.0.0 -> 2.0.0  | Cassandra 3.11.3 | Cassandra 3.11.2 -> 3.11.3 |
+| ecAudit Version | Compiled With     | Compatible With             |
+| --------------- | ----------------- | --------------------------- |
+| 2.7.0 -> latest | Cassandra 3.11.10 | Cassandra 3.11.2 -> 3.11.10 |
+| 2.3.0 -> 2.6.0  | Cassandra 3.11.6  | Cassandra 3.11.2 -> 3.11.6  |
+| 2.1.0 -> 2.2.2  | Cassandra 3.11.4  | Cassandra 3.11.2 -> 3.11.4  |
+| 1.0.0 -> 2.0.0  | Cassandra 3.11.3  | Cassandra 3.11.2 -> 3.11.3  |
 
 
 ## ecaudit_c3.0
