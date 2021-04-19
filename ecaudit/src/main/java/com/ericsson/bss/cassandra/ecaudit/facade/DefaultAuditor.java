@@ -79,7 +79,7 @@ public class DefaultAuditor implements Auditor
         {
             return !filter.isWhitelisted(logEntry);
         }
-        catch(Exception ex) {
+        catch(Exception e) {
         	return true;
         }
         finally

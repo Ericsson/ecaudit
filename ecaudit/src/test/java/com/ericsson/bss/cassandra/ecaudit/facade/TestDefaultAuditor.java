@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -102,23 +101,6 @@ public class TestDefaultAuditor
         long timeTaken = timedOperation(() -> auditor.audit(logEntry));
 
         verify(mockFilter).isWhitelisted(logEntry);
-        verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
-        verifyNoMoreInteractions(mockAuditMetrics);
-        verifyZeroInteractions(mockLogger, mockObfuscator);
-
-        long timeMeasured = timingCaptor.getValue();
-        assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
-    }
-
-    @Ignore
-    @Test
-    public void testAuditFilteredThrowsException()
-    {
-        AuditEntry logEntry = AuditEntry.newBuilder().build();
-        when(mockFilter.isWhitelisted(logEntry)).thenThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 1, 1, false));
-
-        long timeTaken = timedOperation(() -> auditor.audit(logEntry), CassandraException.class);
-
         verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
         verifyNoMoreInteractions(mockAuditMetrics);
         verifyZeroInteractions(mockLogger, mockObfuscator);
