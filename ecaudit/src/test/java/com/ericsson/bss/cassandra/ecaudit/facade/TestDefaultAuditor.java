@@ -110,6 +110,24 @@ public class TestDefaultAuditor
     }
 
     @Test
+    public void testAuditFilterExceptionHandled()
+    {
+        AuditEntry logEntry = AuditEntry.newBuilder().build();
+        when(mockFilter.isWhitelisted(logEntry)).thenThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 1, 1, false));
+        when(mockObfuscator.obfuscate(logEntry)).thenReturn(logEntry);
+        
+        long timeTaken = timedOperation(() -> auditor.audit(logEntry));
+
+        verify(mockObfuscator).obfuscate(logEntry);
+        verify(mockLogger).log(logEntry);
+        verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
+        verify(mockAuditMetrics).logAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
+        
+        long timeMeasured = timingCaptor.getAllValues().stream().mapToLong(l -> l).sum();
+        assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
+    }
+
+    @Test
     public void testAuditNotFiltered()
     {
         AuditEntry logEntry = AuditEntry.newBuilder().build();
