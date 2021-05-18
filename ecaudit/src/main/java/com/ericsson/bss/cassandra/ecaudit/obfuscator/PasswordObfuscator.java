@@ -45,9 +45,9 @@ public class PasswordObfuscator implements AuditObfuscator
     private final static Set<Permission> PASSWORD_PERMISSIONS = ImmutableSet.of(Permission.CREATE, Permission.ALTER);
 
     @Override
-    public AuditEntry obfuscate(final AuditEntry entry)
+    public AuditEntry obfuscate(AuditEntry entry)
     {
-        if (isRoleResource(entry.getResource()) && isPasswordPermission(entry.getPermissions()))
+        if (shouldObfuscate(entry))
         {
             AuditEntry obfuscatedEntry = entry;
 
@@ -63,6 +63,12 @@ public class PasswordObfuscator implements AuditObfuscator
         }
 
         return entry;
+    }
+
+    private boolean shouldObfuscate(AuditEntry entry)
+    {
+        return !entry.hasKnownOperation()
+               || isRoleResource(entry.getResource()) && isPasswordPermission(entry.getPermissions());
     }
 
     private boolean isRoleResource(IResource resource)
