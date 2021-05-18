@@ -86,7 +86,8 @@ public class TestPasswordObfuscator
         "CREATE ROLE coach WITH PASSWORD ='%s' AND LOGIN = true;",
         "CREATE ROLE coach WITH PASSWORD='%s' AND LOGIN = true;",
         "CREATE ROLE coach WITH PASSWORD= '%s' AND LOGIN = true;",
-        "CREATE ROLE coach WITH PASSWORD  =   '%s' AND LOGIN = true;");
+        "CREATE ROLE coach WITH PASSWORD  =   '%s' AND LOGIN = true;",
+        "CREATE ROLE coach WITH PASSWORD\n = '%s'\n AND LOGIN = true");
 
         validateQueries(createRoleQueries, "coach", Permission.CREATE);
     }
@@ -97,7 +98,8 @@ public class TestPasswordObfuscator
         Map<String, String> createUserQueries = createPasswordQueries(
         "CREATE USER akers WITH PASSWORD '%s' SUPERUSER;",
         "CREATE USER akers WITH PASSWORD  '%s'  SUPERUSER;",
-        "CREATE USER akers WITH PASSWORD  '%s'  SUPERUSER;");
+        "CREATE USER akers WITH PASSWORD  '%s'  SUPERUSER;",
+        "CREATE USER akers WITH PASSWORD\n '%s'\n SUPERUSER");
 
         validateQueries(createUserQueries, "akers", Permission.CREATE);
     }
@@ -110,7 +112,8 @@ public class TestPasswordObfuscator
         "ALTER ROLE coach WITH PASSWORD = '%s'",
         "ALTER ROLE coach WITH PASSWORD ='%s'",
         "ALTER ROLE coach WITH PASSWORD='%s'",
-        "ALTER ROLE coach WITH PASSWORD=  '%s'");
+        "ALTER ROLE coach WITH PASSWORD=  '%s'",
+        "ALTER ROLE coach WITH PASSWORD\n = '%s'");
 
         validateQueries(alterRoleQueries, "coach", Permission.ALTER);
     }
@@ -122,7 +125,8 @@ public class TestPasswordObfuscator
         "ALTER USER moss WITH PASSWORD '%s';",
         "ALTER USER moss WITH PASSWORD  '%s';",
         "ALTER USER moss WITH PASSWORD '%s' ;",
-        "ALTER USER moss WITH PASSWORD  '%s'    ;");
+        "ALTER USER moss WITH PASSWORD  '%s'    ;",
+        "ALTER USER moss WITH PASSWORD\n '%s';");
 
         validateQueries(alterUserQueries, "moss", Permission.ALTER);
     }
