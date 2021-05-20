@@ -30,6 +30,7 @@ import org.junit.Test;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
+import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 
@@ -86,7 +87,8 @@ public class TestPasswordObfuscator
         "CREATE ROLE coach WITH PASSWORD ='%s' AND LOGIN = true;",
         "CREATE ROLE coach WITH PASSWORD='%s' AND LOGIN = true;",
         "CREATE ROLE coach WITH PASSWORD= '%s' AND LOGIN = true;",
-        "CREATE ROLE coach WITH PASSWORD  =   '%s' AND LOGIN = true;");
+        "CREATE ROLE coach WITH PASSWORD  =   '%s' AND LOGIN = true;",
+        "CREATE ROLE coach WITH PASSWORD\n = '%s'\n AND LOGIN = true");
 
         validateQueries(createRoleQueries, "coach", Permission.CREATE);
     }
@@ -97,7 +99,8 @@ public class TestPasswordObfuscator
         Map<String, String> createUserQueries = createPasswordQueries(
         "CREATE USER akers WITH PASSWORD '%s' SUPERUSER;",
         "CREATE USER akers WITH PASSWORD  '%s'  SUPERUSER;",
-        "CREATE USER akers WITH PASSWORD  '%s'  SUPERUSER;");
+        "CREATE USER akers WITH PASSWORD  '%s'  SUPERUSER;",
+        "CREATE USER akers WITH PASSWORD\n '%s'\n SUPERUSER");
 
         validateQueries(createUserQueries, "akers", Permission.CREATE);
     }
@@ -110,7 +113,8 @@ public class TestPasswordObfuscator
         "ALTER ROLE coach WITH PASSWORD = '%s'",
         "ALTER ROLE coach WITH PASSWORD ='%s'",
         "ALTER ROLE coach WITH PASSWORD='%s'",
-        "ALTER ROLE coach WITH PASSWORD=  '%s'");
+        "ALTER ROLE coach WITH PASSWORD=  '%s'",
+        "ALTER ROLE coach WITH PASSWORD\n = '%s'");
 
         validateQueries(alterRoleQueries, "coach", Permission.ALTER);
     }
@@ -122,9 +126,22 @@ public class TestPasswordObfuscator
         "ALTER USER moss WITH PASSWORD '%s';",
         "ALTER USER moss WITH PASSWORD  '%s';",
         "ALTER USER moss WITH PASSWORD '%s' ;",
-        "ALTER USER moss WITH PASSWORD  '%s'    ;");
+        "ALTER USER moss WITH PASSWORD  '%s'    ;",
+        "ALTER USER moss WITH PASSWORD\n '%s';");
 
         validateQueries(alterUserQueries, "moss", Permission.ALTER);
+    }
+
+    @Test
+    public void testUnparsedStatementsObfuscation()
+    {
+        Map<String, String> alterUserQueries = createPasswordQueries(
+        "ALTER USER coach WITH PASSWORD \n'%s' extra_characters;",
+        "ALTER ROLE coach \nWITH PASSWORD = '%s' extra_characters;",
+        "CREATE USER coach WITH PASSWORD '%s' SUPERUSER extra_characters;",
+        "CREATE ROLE coach WITH PASSWORD\n = '%s'\n AND LOGIN = true extra_characters");
+
+        validateUnknownQueries(alterUserQueries);
     }
 
     private void validateUnmodifiedQueries(List<String> queries, String username, Permission permission)
@@ -150,6 +167,22 @@ public class TestPasswordObfuscator
                                          .operation(new SimpleAuditOperation(query))
                                          .permissions(Sets.immutableEnumSet(permission))
                                          .resource(RoleResource.fromName("roles/" + username))
+                                         .build();
+
+            AuditEntry obfuscated = myObfuscator.obfuscate(entry);
+            assertThat(obfuscated.getOperation().getOperationString()).isEqualTo(queries.get(query));
+        }
+    }
+
+    private void validateUnknownQueries(Map<String, String> queries)
+    {
+        for (String query : queries.keySet())
+        {
+            AuditEntry entry = AuditEntry.newBuilder()
+                                         .operation(new SimpleAuditOperation(query))
+                                         .permissions(Permission.ALL)
+                                         .resource(DataResource.root())
+                                         .knownOperation(false)
                                          .build();
 
             AuditEntry obfuscated = myObfuscator.obfuscate(entry);
