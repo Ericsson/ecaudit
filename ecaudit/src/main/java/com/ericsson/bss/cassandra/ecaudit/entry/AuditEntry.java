@@ -46,6 +46,7 @@ public class AuditEntry implements AuditRecord
     private final Status status;
     private final Long timestamp;
     private final String subject;
+    private final boolean hasKnownOperation;
 
     /**
      * @see #newBuilder()
@@ -62,6 +63,7 @@ public class AuditEntry implements AuditRecord
         this.status = builder.status;
         this.timestamp = builder.timestamp;
         this.subject = builder.subject;
+        this.hasKnownOperation = builder.hasKnownOperation;
     }
 
     @Override
@@ -146,6 +148,14 @@ public class AuditEntry implements AuditRecord
     }
 
     /**
+     * @return True if the statement was parsed successfully.
+     */
+    public boolean hasKnownOperation()
+    {
+        return hasKnownOperation;
+    }
+
+    /**
      * Create a new {@link Builder} instance.
      *
      * @return a new instance of {@link Builder}.
@@ -170,6 +180,7 @@ public class AuditEntry implements AuditRecord
         private Status status;
         private Long timestamp;
         private String subject;
+        private boolean hasKnownOperation = true;
 
         public Builder client(InetSocketAddress address)
         {
@@ -255,6 +266,12 @@ public class AuditEntry implements AuditRecord
             return this;
         }
 
+        public Builder knownOperation(boolean hasKnownOperation)
+        {
+            this.hasKnownOperation = hasKnownOperation;
+            return this;
+        }
+
         /**
          * Configure this builder from an existing {@link AuditEntry} instance.
          *
@@ -273,6 +290,7 @@ public class AuditEntry implements AuditRecord
             this.status = entry.getStatus();
             this.timestamp = entry.getTimestamp();
             this.subject = entry.getSubject().orElse(null);
+            this.hasKnownOperation = entry.hasKnownOperation();
             return this;
         }
 

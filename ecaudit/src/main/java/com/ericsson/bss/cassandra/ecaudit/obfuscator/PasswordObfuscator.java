@@ -36,18 +36,18 @@ public class PasswordObfuscator implements AuditObfuscator
 {
     private final static String PASSWORD_OBFUSCATED = "*****";
 
+    private static final int PATTERN_FLAGS = Pattern.CASE_INSENSITIVE | Pattern.DOTALL;
+
     private final static String REGEX_PASSWORD_GROUP = "password";
-    private final static Pattern QUERY_CREATE_ALTER_USER_PATTERN =
-            Pattern.compile(".*password\\s+'(?<password>[^\\s]+)'.*", Pattern.CASE_INSENSITIVE);
-    private final static Pattern QUERY_CREATE_ALTER_ROLE_PATTERN =
-            Pattern.compile(".*password\\s*=\\s*'(?<password>[^\\s]+)'.*", Pattern.CASE_INSENSITIVE);
+    private final static Pattern PASSWORD_PATTERN =
+            Pattern.compile(".*password\\s*=?\\s*'(?<password>[^\\s]+)'.*", PATTERN_FLAGS);
 
     private final static Set<Permission> PASSWORD_PERMISSIONS = ImmutableSet.of(Permission.CREATE, Permission.ALTER);
 
     @Override
-    public AuditEntry obfuscate(final AuditEntry entry)
+    public AuditEntry obfuscate(AuditEntry entry)
     {
-        if (isRoleResource(entry.getResource()) && isPasswordPermission(entry.getPermissions()))
+        if (shouldObfuscate(entry))
         {
             AuditEntry obfuscatedEntry = entry;
 
@@ -63,6 +63,12 @@ public class PasswordObfuscator implements AuditObfuscator
         }
 
         return entry;
+    }
+
+    private boolean shouldObfuscate(AuditEntry entry)
+    {
+        return !entry.hasKnownOperation()
+               || isRoleResource(entry.getResource()) && isPasswordPermission(entry.getPermissions());
     }
 
     private boolean isRoleResource(IResource resource)
@@ -82,18 +88,10 @@ public class PasswordObfuscator implements AuditObfuscator
      */
     private String obfuscateOperation(String operation)
     {
-        // CREATE ROLE / ALTER ROLE query
-        Matcher createAlterRoleMatcher = QUERY_CREATE_ALTER_ROLE_PATTERN.matcher(operation);
-        if (createAlterRoleMatcher.matches())
+        Matcher passwordMatcher = PASSWORD_PATTERN.matcher(operation);
+        if (passwordMatcher.matches())
         {
-            return obfuscateOperation(createAlterRoleMatcher, operation);
-        }
-
-        // CREATE USER / ALTER USER query
-        Matcher createAlterUserMatcher = QUERY_CREATE_ALTER_USER_PATTERN.matcher(operation);
-        if (createAlterUserMatcher.matches())
-        {
-            return obfuscateOperation(createAlterUserMatcher, operation);
+            return obfuscateOperation(passwordMatcher, operation);
         }
 
         return operation;
