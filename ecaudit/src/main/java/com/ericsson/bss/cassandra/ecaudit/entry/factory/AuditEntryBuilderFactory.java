@@ -112,7 +112,7 @@ public class AuditEntryBuilderFactory
         catch (RuntimeException e)
         {
             LOG.debug("Failed to parse or prepare statement - assuming default permissions and resources", e);
-            return createDefaultEntryBuilder();
+            return createDefaultEntryBuilder().knownOperation(false);
         }
     }
 
@@ -186,7 +186,7 @@ public class AuditEntryBuilderFactory
         }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
-        return createDefaultEntryBuilder();
+        return createDefaultEntryBuilder().knownOperation(false);
     }
 
     @SuppressWarnings("PMD")
@@ -226,7 +226,7 @@ public class AuditEntryBuilderFactory
         }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
-        return createDefaultEntryBuilder();
+        return createDefaultEntryBuilder().knownOperation(false);
     }
 
     public Builder createBatchEntryBuilder()

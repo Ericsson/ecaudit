@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.8.0
+* Obfuscate passwords properly - #170
+
 ## Version 2.7.0
 * Build with Cassandra 3.11.10 (only flavor ecaudit_c3.11)
 * Build with Cassandra 3.0.24 (only flavor ecaudit_c3.0)

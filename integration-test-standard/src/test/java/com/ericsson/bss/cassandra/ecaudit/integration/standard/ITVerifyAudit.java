@@ -575,7 +575,8 @@ public class ITVerifyAudit
                 "SELECT * FROM ecks.invalidtbl",
                 "DELETE FROM invalidks.invalidtbl WHERE partk = 2",
                 "DROP KEYSPACE invalidks",
-                "DROP ROLE invaliduser");
+                "DROP ROLE invaliduser",
+                "CREATE ROLE invaliduser \nWITH PASSWORD = 'secret' _unknown_");
 
         for (String statement : statements)
         {
