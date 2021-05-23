@@ -36,6 +36,7 @@ import org.mockito.MockitoAnnotations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -187,6 +188,16 @@ public class CassandraClusterFacade
         List<ILoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
 
         assertThat(loggingEvents.get(0).getFormattedMessage()).isEqualTo(expectedAuditEntry(auditOperation, username, "ATTEMPT"));
+    }
+
+    void thenAuditLogContainOnlyAuthenticationAttemptsForUser(String username)
+    {
+        ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
+        verify(mockAuditAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+
+        String authenticationAttempt = expectedAuditEntry("Authentication attempt", username, "ATTEMPT");
+        List<ILoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+        assertThat(loggingEvents).extracting(ILoggingEvent::getFormattedMessage).allMatch(event -> event.equals(authenticationAttempt));
     }
 
     void thenAuditLogContainsFailedEntriesForUser(String auditOperation, String username)
