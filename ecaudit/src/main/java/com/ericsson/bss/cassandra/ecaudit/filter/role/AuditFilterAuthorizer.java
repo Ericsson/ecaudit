@@ -31,6 +31,7 @@ import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.config.SchemaConstants;
 import org.apache.cassandra.db.SystemKeyspace;
 
 public class AuditFilterAuthorizer
@@ -39,7 +40,6 @@ public class AuditFilterAuthorizer
     private static final Set<IResource> READABLE_SYSTEM_RESOURCES = new HashSet<>();
 
     // From SchemaKeyspace, will cause initialization errors if accessed directly
-    private static final String SCHEMA_KEYSPACE_NAME = "system_schema";
     private static final ImmutableList<String> ALL_SCHEMA_TABLES = ImmutableList.of("columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
 
     // peers_v2 is read by the driver as well
@@ -49,10 +49,10 @@ public class AuditFilterAuthorizer
     {
         for (String cf : Arrays.asList(SystemKeyspace.LOCAL, SystemKeyspace.PEERS, PEERS_V2))
         {
-            READABLE_SYSTEM_RESOURCES.add(DataResource.table(SystemKeyspace.NAME, cf));
+            READABLE_SYSTEM_RESOURCES.add(DataResource.table(SchemaConstants.SYSTEM_KEYSPACE_NAME, cf));
         }
 
-        ALL_SCHEMA_TABLES.forEach(table -> READABLE_SYSTEM_RESOURCES.add(DataResource.table(SCHEMA_KEYSPACE_NAME, table)));
+        ALL_SCHEMA_TABLES.forEach(table -> READABLE_SYSTEM_RESOURCES.add(DataResource.table(SchemaConstants.SCHEMA_KEYSPACE_NAME, table)));
     }
 
     private IAuthorizer authorizer; // lazy initialization

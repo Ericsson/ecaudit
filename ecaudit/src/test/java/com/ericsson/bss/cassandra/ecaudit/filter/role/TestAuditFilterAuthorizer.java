@@ -35,6 +35,7 @@ import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
+import org.apache.cassandra.config.SchemaConstants;
 import org.apache.cassandra.db.SystemKeyspace;
 
 import static java.util.Arrays.asList;
@@ -53,7 +54,6 @@ public class TestAuditFilterAuthorizer
     private static final AuditFilterAuthorizer AUTHORIZER = new AuditFilterAuthorizer();
 
     // From SchemaKeyspace
-    private static final String SCHEMA_KEYSPACE_NAME = "system_schema";
     private static final ImmutableList<String> ALL_SCHEMA_TABLES = ImmutableList.of("columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
 
     @BeforeClass
@@ -109,13 +109,13 @@ public class TestAuditFilterAuthorizer
     private Object[] parametersForTestSystemOperationAuthorization()
     {
         List<Object[]> objects = new ArrayList<>();
-        objects.add(new Object[] {toDataResources(SystemKeyspace.NAME, SystemKeyspace.LOCAL)});
-        objects.add(new Object[] {toDataResources(SystemKeyspace.NAME, SystemKeyspace.PEERS)});
-        objects.add(new Object[] {toDataResources(SystemKeyspace.NAME, "peers_v2")});
+        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, SystemKeyspace.LOCAL)});
+        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, SystemKeyspace.PEERS)});
+        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, "peers_v2")});
 
         for (String table : ALL_SCHEMA_TABLES)
         {
-            objects.add(new Object[] {toDataResources(SCHEMA_KEYSPACE_NAME, table)});
+            objects.add(new Object[] {toDataResources(SchemaConstants.SCHEMA_KEYSPACE_NAME, table)});
         }
 
         return objects.toArray();
