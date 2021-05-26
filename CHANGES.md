@@ -2,6 +2,7 @@
 
 ## Version 2.8.0
 * Obfuscate passwords properly - #170
+* Grant based audit doesn't take system resources into consideration - #172
 
 ## Version 2.7.0
 * Build with Cassandra 3.11.10 (only flavor ecaudit_c3.11)
