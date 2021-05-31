@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
@@ -41,6 +44,8 @@ public class DefaultAuditor implements Auditor
     private final AuditObfuscator obfuscator;
     private final AuditMetrics auditMetrics;
     private LogTimingStrategy logTimingStrategy;
+	
+	private static final Logger LOG = LoggerFactory.getLogger(DefaultAuditor.class);
 
     public DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, LogTimingStrategy logTimingStrategy)
     {
@@ -78,6 +83,10 @@ public class DefaultAuditor implements Auditor
         try
         {
             return !filter.isWhitelisted(logEntry);
+        }
+        catch(RuntimeException e) {
+        	LOG.error("cannot fetch whitelist user, cause={}, message={}", e.getCause(), e.getMessage());
+        	return true;
         }
         finally
         {

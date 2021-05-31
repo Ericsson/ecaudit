@@ -110,18 +110,20 @@ public class TestDefaultAuditor
     }
 
     @Test
-    public void testAuditFilteredThrowsException()
+    public void testAuditFilterExceptionHandled()
     {
         AuditEntry logEntry = AuditEntry.newBuilder().build();
         when(mockFilter.isWhitelisted(logEntry)).thenThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 1, 1, false));
+        when(mockObfuscator.obfuscate(logEntry)).thenReturn(logEntry);
+        
+        long timeTaken = timedOperation(() -> auditor.audit(logEntry));
 
-        long timeTaken = timedOperation(() -> auditor.audit(logEntry), CassandraException.class);
-
+        verify(mockObfuscator).obfuscate(logEntry);
+        verify(mockLogger).log(logEntry);
         verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
-        verifyNoMoreInteractions(mockAuditMetrics);
-        verifyZeroInteractions(mockLogger, mockObfuscator);
-
-        long timeMeasured = timingCaptor.getValue();
+        verify(mockAuditMetrics).logAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
+        
+        long timeMeasured = timingCaptor.getAllValues().stream().mapToLong(l -> l).sum();
         assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
     }
 
