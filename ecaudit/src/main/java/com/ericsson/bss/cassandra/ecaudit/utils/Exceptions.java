@@ -42,7 +42,8 @@ public final class Exceptions
         Throwable cause = exception.getCause();
         if (cause instanceof CassandraException)
         {
-            cause.addSuppressed(exception);
+            // TODO: Use addSuppressed when fix for https://jira.qos.ch/browse/LOGBACK-1454 is available
+            // cause.addSuppressed(exception);
             return (CassandraException) cause;
         }
         else if (cause instanceof RuntimeException)
@@ -54,7 +55,8 @@ public final class Exceptions
                 return exception;
             }
 
-            causeOfCause.addSuppressed(exception);
+            // TODO: Use addSuppressed when fix for https://jira.qos.ch/browse/LOGBACK-1454 is available
+            // causeOfCause.addSuppressed(exception);
             return causeOfCause;
         }
         else

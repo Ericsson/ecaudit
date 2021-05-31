@@ -24,15 +24,10 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.cache.AuthCache;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
-import org.apache.cassandra.exceptions.UnavailableException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RoleAuditFilterCache extends AuthCache<RoleAuditFilterCacheKey, Boolean>
 {
     private static final AtomicInteger UNIQUE_ID = new AtomicInteger();
-	
-	private static final Logger LOG = LoggerFactory.getLogger(RoleAuditFilterCache.class);
 
     RoleAuditFilterCache(Function<RoleAuditFilterCacheKey, Boolean> loadFunction)
     {
@@ -58,10 +53,6 @@ public class RoleAuditFilterCache extends AuthCache<RoleAuditFilterCacheKey, Boo
         try
         {
             return get(cacheKey);
-        }
-		catch(UnavailableException e) {
-        	LOG.error("cannot fetch data from AuthCache, message={}", e.getMessage());
-        	return false;
         }
         catch (ExecutionException e)
         {
