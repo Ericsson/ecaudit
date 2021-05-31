@@ -69,7 +69,7 @@ Check out our [contribution guide](CONTRIBUTING.md).
 
 ## Credits
 
-The following Ericsson developers contributed to the initial ecAudit project:
+The following developers have contributed to the ecAudit project:
 
 * Per Otterström
 * Tobias Eriksson
@@ -77,11 +77,12 @@ The following Ericsson developers contributed to the initial ecAudit project:
 * Anuj Wadhera
 * Marcus Olsson
 * Ted Petersson
+* Pushpendra Rajpoot
 
 
 ## License
 
-Copyright 2018-20 Telefonaktiebolaget LM Ericsson
+Copyright 2018-21 Telefonaktiebolaget LM Ericsson
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

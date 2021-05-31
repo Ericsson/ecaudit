@@ -510,15 +510,11 @@ limitations under the License.
         </developer>
         <developer>
             <name>Tobias Eriksson</name>
-            <email>tobias.a.eriksson@ericsson.com</email>
-            <organization>Ericsson AB</organization>
-            <organizationUrl>http://www.ericsson.com</organizationUrl>
+            <email>tti.eriksson@gmail.com</email>
         </developer>
         <developer>
             <name>Laxmikant Upadhyay</name>
-            <email>laxmikant.upadhyay@ericsson.com</email>
-            <organization>Ericsson AB</organization>
-            <organizationUrl>http://www.ericsson.com</organizationUrl>
+            <email>laxmikant.hcl@gmail.com</email>
         </developer>
         <developer>
             <name>Anuj Wadhera</name>
@@ -534,7 +530,13 @@ limitations under the License.
         </developer>
         <developer>
             <name>Ted Petersson</name>
-            <email>Ted Petersson@ericsson.com</email>
+            <email>ted.petersson@ericsson.com</email>
+            <organization>Ericsson AB</organization>
+            <organizationUrl>http://www.ericsson.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Pushpendra Rajpoot</name>
+            <email>pushpendra.rajpoot@ericsson.com</email>
             <organization>Ericsson AB</organization>
             <organizationUrl>http://www.ericsson.com</organizationUrl>
         </developer>
