@@ -15,8 +15,11 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.filter.role;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -32,6 +35,8 @@ import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
+import org.apache.cassandra.config.SchemaConstants;
+import org.apache.cassandra.db.SystemKeyspace;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +52,9 @@ public class TestAuditFilterAuthorizer
     private static final IResource RESOURCE_KEYSPACE = DataResource.fromName("data/ks");
     private static final IResource RESOURCE_TABLE = DataResource.fromName("data/ks/tbl");
     private static final AuditFilterAuthorizer AUTHORIZER = new AuditFilterAuthorizer();
+
+    // From SchemaKeyspace
+    private static final ImmutableList<String> ALL_SCHEMA_TABLES = ImmutableList.of("columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
 
     @BeforeClass
     public static void beforeAll()
@@ -95,5 +103,45 @@ public class TestAuditFilterAuthorizer
     public void testOperationAuthorization(Permission operation, String user, List<IResource> resources, boolean expectedAuthorized)
     {
         assertThat(AUTHORIZER.isOperationAuthorizedForUser(operation, user, resources)).isEqualTo(expectedAuthorized);
+    }
+
+    @SuppressWarnings("unused")
+    private Object[] parametersForTestSystemOperationAuthorization()
+    {
+        List<Object[]> objects = new ArrayList<>();
+        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, SystemKeyspace.LOCAL)});
+        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, SystemKeyspace.PEERS)});
+        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, "peers_v2")});
+
+        for (String table : ALL_SCHEMA_TABLES)
+        {
+            objects.add(new Object[] {toDataResources(SchemaConstants.SCHEMA_KEYSPACE_NAME, table)});
+        }
+
+        return objects.toArray();
+    }
+
+    @Test
+    @Parameters
+    public void testSystemOperationAuthorization(List<IResource> resources)
+    {
+        // Select on system keyspaces are ok
+        assertThat(AUTHORIZER.isOperationAuthorizedForUser(Permission.SELECT, AUTH_USER, resources)).isEqualTo(true);
+
+        List<Permission> NOT_OK = new ArrayList<>(Permission.ALL);
+        NOT_OK.remove(Permission.SELECT);
+        for (Permission permission : NOT_OK)
+        {
+            assertThat(AUTHORIZER.isOperationAuthorizedForUser(permission, AUTH_USER, resources)).isEqualTo(false);
+        }
+    }
+
+    private static List<DataResource> toDataResources(String keyspace, String table)
+    {
+        return Arrays.asList(
+            DataResource.fromName(String.format("data/%s/%s", keyspace, table)),
+            DataResource.fromName(String.format("data/%s", keyspace)),
+            DataResource.fromName("data")
+        );
     }
 }

@@ -37,6 +37,8 @@ public class ITRolesAudit
     private static final String USER = "role_user";
     private static final String ROLE = "role_role";
 
+    private static final String GRANT_BASED_USER = "grant_based_user";
+
     private static String testUsername;
     private static Cluster testCluster;
     private static Session testSession;
@@ -144,6 +146,18 @@ public class ITRolesAudit
         assertThatExceptionOfType(UnauthorizedException.class)
             .isThrownBy(() -> basicSession.execute(statement));
         ccf.thenAuditLogContainsFailedEntriesForUser(statement, basicUsername);
+    }
+
+    @Test
+    public void systemStatementsAreNotLoggedWithGrantBasedAudit()
+    {
+        ccf.givenBasicUser(GRANT_BASED_USER);
+        ccf.givenRoleIsWhitelistedForOperationOnResource(GRANT_BASED_USER, "ALL", "grants/data");
+        try (Cluster cluster = ccf.createCluster(GRANT_BASED_USER); Session session = cluster.connect())
+        {
+            // Do nothing, we just need to connect
+        }
+        ccf.thenAuditLogContainOnlyAuthenticationAttemptsForUser(GRANT_BASED_USER);
     }
 
 }
