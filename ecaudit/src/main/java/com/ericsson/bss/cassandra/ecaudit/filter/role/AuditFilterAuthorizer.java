@@ -15,24 +15,55 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.filter.role;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer;
 import com.ericsson.bss.cassandra.ecaudit.utils.AuthenticatedUserUtil;
 import org.apache.cassandra.auth.AuthenticatedUser;
+import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.db.SystemKeyspace;
 
 public class AuditFilterAuthorizer
 {
+    // Matching Apache Cassandra operations defined in ClientState
+    private static final Set<IResource> READABLE_SYSTEM_RESOURCES = new HashSet<>();
+
+    // From SchemaKeyspace, will cause initialization errors if accessed directly
+    private static final String SCHEMA_KEYSPACE_NAME = "system_schema";
+    private static final ImmutableList<String> ALL_SCHEMA_TABLES = ImmutableList.of("columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
+
+    // peers_v2 is read by the driver as well
+    private static final String PEERS_V2 = "peers_v2";
+
+    static
+    {
+        for (String cf : Arrays.asList(SystemKeyspace.LOCAL, SystemKeyspace.PEERS, PEERS_V2))
+        {
+            READABLE_SYSTEM_RESOURCES.add(DataResource.table(SystemKeyspace.NAME, cf));
+        }
+
+        ALL_SCHEMA_TABLES.forEach(table -> READABLE_SYSTEM_RESOURCES.add(DataResource.table(SCHEMA_KEYSPACE_NAME, table)));
+    }
+
     private IAuthorizer authorizer; // lazy initialization
 
     public boolean isOperationAuthorizedForUser(Permission operation, String user, List<? extends IResource> resourceChain)
     {
+        if (isReadingSystemResource(operation, resourceChain))
+        {
+            return true;
+        }
+
         AuthenticatedUser authUser = AuthenticatedUserUtil.createFromString(user);
         IAuthorizer authorizer = getAuthorizer();
         return resourceChain.stream()
@@ -53,6 +84,16 @@ public class AuditFilterAuthorizer
             resolveAuthorizerSync();
         }
         return authorizer;
+    }
+
+    private static boolean isReadingSystemResource(Permission operation, List<? extends IResource> resourceChain)
+    {
+        if (operation != Permission.SELECT)
+        {
+            return false;
+        }
+
+        return resourceChain.stream().anyMatch(READABLE_SYSTEM_RESOURCES::contains);
     }
 
     private synchronized void resolveAuthorizerSync()
