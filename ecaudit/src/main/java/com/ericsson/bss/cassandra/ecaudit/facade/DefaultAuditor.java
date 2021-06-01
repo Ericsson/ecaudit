@@ -39,13 +39,13 @@ import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
  */
 public class DefaultAuditor implements Auditor
 {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultAuditor.class);
+
     private final List<AuditLogger> loggers = new ArrayList<>();
     private final AuditFilter filter;
     private final AuditObfuscator obfuscator;
     private final AuditMetrics auditMetrics;
     private LogTimingStrategy logTimingStrategy;
-	
-	private static final Logger LOG = LoggerFactory.getLogger(DefaultAuditor.class);
 
     public DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, LogTimingStrategy logTimingStrategy)
     {
@@ -84,9 +84,10 @@ public class DefaultAuditor implements Auditor
         {
             return !filter.isWhitelisted(logEntry);
         }
-        catch(RuntimeException e) {
-        	LOG.error("cannot fetch whitelist user, cause={}, message={}", e.getCause(), e.getMessage());
-        	return true;
+        catch (RuntimeException e)
+        {
+            LOG.error("Failure in whitelist check", e);
+            return true;
         }
         finally
         {
