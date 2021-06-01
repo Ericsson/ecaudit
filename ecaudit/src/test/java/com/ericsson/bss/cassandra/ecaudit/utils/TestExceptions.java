@@ -69,7 +69,8 @@ public class TestExceptions
         RuntimeException actualCause = Exceptions.tryGetCassandraExceptionCause(exception);
 
         assertThat(actualCause).isSameAs(expectedException);
-        assertThat(actualCause.getSuppressed()).contains(exception);
+        // TODO: Use addSuppressed when fix for https://jira.qos.ch/browse/LOGBACK-1454 is available
+        //assertThat(actualCause.getSuppressed()).contains(exception);
         assertThat(exception.getSuppressed()).isEmpty();
     }
 
@@ -83,7 +84,8 @@ public class TestExceptions
         RuntimeException actualCause = Exceptions.tryGetCassandraExceptionCause(exception);
 
         assertThat(actualCause).isSameAs(expectedException);
-        assertThat(actualCause.getSuppressed()).contains(exception);
+        // TODO: Use addSuppressed when fix for https://jira.qos.ch/browse/LOGBACK-1454 is available
+        //assertThat(actualCause.getSuppressed()).contains(exception);
         assertThat(exception.getSuppressed()).isEmpty();
     }
 

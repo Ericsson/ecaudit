@@ -21,6 +21,8 @@ import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.WhitelistDataAccess;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
@@ -31,6 +33,7 @@ import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.Resources;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.auth.Roles;
+import org.apache.cassandra.exceptions.UnavailableException;
 
 /**
  * A role based white-list filter that exempts users based on custom options on roles in Cassandra.
@@ -44,6 +47,8 @@ import org.apache.cassandra.auth.Roles;
  */
 public class RoleAuditFilter implements AuditFilter
 {
+    private static final Logger LOG = LoggerFactory.getLogger(RoleAuditFilter.class);
+
     private final Function<RoleResource, Set<RoleResource>> getRolesFunction;
     private final RoleAuditFilterCache filterCache;
     private final WhitelistDataAccess whitelistDataAccess;
@@ -82,12 +87,24 @@ public class RoleAuditFilter implements AuditFilter
      * Grants-based white-list requires not only the resource to be white-listed, but also that the user/role have
      * authorization to perform the operation on that resource to exempt audit logging.
      *
-     * @param logEntry
-     *            the log entry specifying the primary role as well as operation and resource
+     * @param logEntry the log entry specifying the primary role as well as operation and resource
      * @return true if the operation is white-listed, false otherwise
      */
     @Override
     public boolean isWhitelisted(AuditEntry logEntry)
+    {
+        try
+        {
+            return isWhitelistedMaybeUnavailable(logEntry);
+        }
+        catch (UnavailableException e)
+        {
+            LOG.debug("Audit entry for {} not whitelisted as filter backend is unavailable", logEntry.getUser(), e);
+            return false;
+        }
+    }
+
+    private boolean isWhitelistedMaybeUnavailable(AuditEntry logEntry)
     {
         RoleAuditFilterCacheKey cacheKey = new RoleAuditFilterCacheKey(logEntry.getUser(), logEntry.getResource(), logEntry.getPermissions());
         try

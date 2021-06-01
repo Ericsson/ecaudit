@@ -44,6 +44,7 @@ import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.exceptions.CassandraException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
+import org.apache.cassandra.exceptions.UnavailableException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -243,8 +244,18 @@ public class TestRoleAuditFilter
         .thenThrow(new UncheckedExecutionException(new RuntimeException(new ReadTimeoutException(ConsistencyLevel.QUORUM, 1, 1, false))));
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
-        assertThatExceptionOfType(CassandraException.class)
+        assertThatExceptionOfType(ReadTimeoutException.class)
         .isThrownBy(() -> filter.isWhitelisted(auditEntry));
+    }
+
+    @Test
+    public void unavailableExceptionIsNotWhitelisted()
+    {
+        when(getRolesFunctionMock.apply(any(RoleResource.class)))
+        .thenThrow(new UncheckedExecutionException(new RuntimeException(new UnavailableException(ConsistencyLevel.QUORUM, 2, 1))));
+        AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
+
+        assertThat(filter.isWhitelisted(auditEntry)).isFalse();
     }
 
     private void givenRolesOfRequest(String... roleNames)
