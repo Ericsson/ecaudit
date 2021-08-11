@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.8.0
+* Add single line operation to Sl4j log format
+
 ## Version 2.7.1
 * Obfuscate passwords properly - #170
 * Extend grant based audit to system tables - #172

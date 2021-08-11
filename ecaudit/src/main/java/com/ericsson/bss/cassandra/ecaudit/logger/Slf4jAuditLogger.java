@@ -100,6 +100,7 @@ public class Slf4jAuditLogger implements AuditLogger
                .put("STATUS", AuditEntry::getStatus)
                .put("OPERATION", entry -> entry.getOperation().getOperationString())
                .put("OPERATION_NAKED", entry -> entry.getOperation().getNakedOperationString())
+               .put("SINGLE_LINE_OPERATION", Slf4jAuditLogger::singleLineStatement)
                .put("TIMESTAMP", getTimeFunction(auditConfig))
                .put("SUBJECT", entry -> entry.getSubject().orElse(null))
                .build();
@@ -127,6 +128,11 @@ public class Slf4jAuditLogger implements AuditLogger
     private static Function<AuditEntry, Object> getFormattedTimestamp(DateTimeFormatter formatter)
     {
         return auditEntry -> formatter.format(Instant.ofEpochMilli(auditEntry.getTimestamp()));
+    }
+
+    private static Object singleLineStatement(AuditEntry auditEntry)
+    {
+        return auditEntry.getOperation().getOperationString().replaceAll("\\r\\n|\\r|\\n", "\\\\n");
     }
 
     @Override

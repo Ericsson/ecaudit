@@ -57,6 +57,7 @@ public class TestSlf4jAuditLogger
     private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
     private static final String EXPECTED_STATEMENT = "insert into ks.tbl (key, val) values (?, ?)['kalle', 'anka']";
     private static final String EXPECTED_STATEMENT_NAKED = "insert into ks.tbl (key, val) values (?, ?)";
+    private static final String EXPECTED_MULTILINE_STATEMENT = "insert\r\n into\r ks.tbl (key, val)\n values (?, ?)['kalle', 'anka']";
     private static final String EXPECTED_CLIENT_ADDRESS = "127.0.0.1";
     private static final Integer EXPECTED_CLIENT_PORT = 789;
     private static final String EXPECTED_COORDINATOR_ADDRESS = "127.0.0.2";
@@ -72,6 +73,7 @@ public class TestSlf4jAuditLogger
     private static AuditEntry logEntryWithoutBatch;
     private static AuditEntry logEntryWithoutClientPort;
     private static AuditEntry logEntryWithoutSubject;
+    private static AuditEntry logEntryWithNewlines;
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
@@ -107,9 +109,16 @@ public class TestSlf4jAuditLogger
                                               .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, 0))
                                               .build();
 
+        AuditOperation multilineAuditOperation = mock(AuditOperation.class);
+        when(multilineAuditOperation.getOperationString()).thenReturn(EXPECTED_MULTILINE_STATEMENT);
         logEntryWithoutSubject = AuditEntry.newBuilder()
                                          .basedOn(logEntryWithAll)
                                          .subject(null)
+                                         .build();
+
+        logEntryWithNewlines = AuditEntry.newBuilder()
+                                         .basedOn(logEntryWithAll)
+                                         .operation(multilineAuditOperation)
                                          .build();
     }
 
@@ -179,11 +188,21 @@ public class TestSlf4jAuditLogger
     }
 
     @Test
+    public void testNewlineCharactersAreEscapedWithSingleLineLogFormat()
+    {
+        Slf4jAuditLogger logger = loggerWithConfig("${SINGLE_LINE_OPERATION}");
+        logger.log(logEntryWithNewlines);
+
+        assertThat(getSlf4jLogMessage())
+        .isEqualTo("insert\\n into\\n ks.tbl (key, val)\\n values (?, ?)['kalle', 'anka']");
+    }
+
+    @Test
     public void testAvailableFieldFunctions()
     {
         Slf4jAuditLoggerConfig configMock = mock(Slf4jAuditLoggerConfig.class);
         Map<String, Function<AuditEntry, Object>> availableFieldFunctions = Slf4jAuditLogger.getAvailableFieldFunctionMap(configMock);
-        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "TIMESTAMP", "SUBJECT");
+        assertThat(availableFieldFunctions).containsOnlyKeys("CLIENT_IP", "CLIENT_PORT", "COORDINATOR_IP", "USER", "BATCH_ID", "STATUS", "OPERATION", "OPERATION_NAKED", "SINGLE_LINE_OPERATION", "TIMESTAMP", "SUBJECT");
 
         Function<AuditEntry, Object> clientFunction = availableFieldFunctions.get("CLIENT_IP");
         assertThat(clientFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_CLIENT_ADDRESS);
@@ -217,6 +236,10 @@ public class TestSlf4jAuditLogger
         Function<AuditEntry, Object> subjectFunction = availableFieldFunctions.get("SUBJECT");
         assertThat(subjectFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_SUBJECT);
         assertThat(subjectFunction.apply(logEntryWithoutSubject)).isEqualTo(null); // Subject is not guaranteed to be in the log entry
+
+        Function<AuditEntry, Object> singleLineOperationFunction = availableFieldFunctions.get("SINGLE_LINE_OPERATION");
+        assertThat(singleLineOperationFunction.apply(logEntryWithAll)).isEqualTo(EXPECTED_STATEMENT);
+        assertThat(singleLineOperationFunction.apply(logEntryWithNewlines)).isEqualTo("insert\\n into\\n ks.tbl (key, val)\\n values (?, ?)['kalle', 'anka']");
     }
 
     @Test
