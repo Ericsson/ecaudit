@@ -2,10 +2,10 @@
 
 We're really glad that you want to contribute to ecAudit!
 
-All kinds of improvements are welcomed.
+All kinds of improvements are welcome.
 Be it bug fixes, improved automation, new features, better documentation or new tests cases.
 We're accepting contributions as Pull Requests on GitHub.
-But before you dig into the code, consider to create a ticket on the [issue tracker](https://github.com/Ericsson/ecaudit/issues)
+Before you dig into the code, consider to create a ticket on the [issue tracker](https://github.com/Ericsson/ecaudit/issues)
 and discuss your improvement with the project maintainers.
 
 Below you'll find a few things to be aware of when you're working with this project.
@@ -37,7 +37,7 @@ Examples are the FieldFilterFlavorAdapter and the CqlLiteralFlavorAdapter.
 ### Maintenance
 
 We don't merge new features into the ```release/c3.0.11``` branch which is building with Cassandra 3.0.11 specifically.
-On request we will fix critical issues.
+On request, we will fix critical issues.
 This is handled by separate PR's for this specific branch.
 
 
@@ -45,20 +45,19 @@ This is handled by separate PR's for this specific branch.
 
 With Intellij IDEA you'll get a good setup, more or less, out of the box.
 From a fresh clone of the repository, navigate to the project root and do ```idea .&```
-This way Intellij will pick up some of the project settings which are included in git repository.
+This way Intellij will pick up some project settings which are included in git repository.
 The rest will be generated as need by Intellij.
 
-It is of course possible to setup the project with other IDEs as well,
+It is of course possible to set up the project with other IDEs as well,
 but you'll have to figure it out on your own.
 
-In general we're adopting the same code style and project settings as Apache Cassandra itself.
+In general, we're adopting the same code style and project settings as Apache Cassandra itself.
 
 
 ## Build & Test
 
-If you're looking to contribute to ecAudit you should sign up on [Travis](https://travis-ci.org/) and [Coveralls](https://coveralls.io/),
-and enable builds and reports on your own fork of ecAudit.
-This allow you to verify your patch before you create a pull request.
+The project is integrated with GitHub Actions and [Codecov](https://app.codecov.io/gh).
+This allows you to verify your patch before you create a pull request.
 
 The project is using Maven for build, test and deployment.
 The repository is divided in a few different Maven modules that make out the ecAudit plug-in and tools.
@@ -67,7 +66,7 @@ Modules named ```integration-test-*``` contain integration tests which are execu
 We're using unit tests, integration tests and mutation tests to make sure that we're testing the right behavior of ecAudit.
 On top of this we verify with PMD to get a consistent, maintainable and predictable code base.
 We're only using Javadoc sparsely since ecAudit don't have a public Java API.
-But in those cases where Javadoc is used, it should be valid and complete.
+In those cases where Javadoc is used, it should be valid and complete.
 The build cycle is also verifying that all source files have a valid license header.
 
 At the end of this document you'll find a shortlist of useful commands to trigger the different test suites on your local machine. 
@@ -89,7 +88,7 @@ To install ecAudit with Chronicle backend into the ccm cluster, execute:
 ```
 
 Now you can operate your ccm cluster as always and try out ecAudit.
-Remember to provide the standard credentials when you login:
+Remember to provide the standard credentials when you log in:
 ```bash
 ccm node1 cqlsh -u cassandra -p cassandra
 ```
