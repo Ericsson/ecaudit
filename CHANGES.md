@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.8.0
+* Bump to SnakeYAML 1.29 in eclog to close CVE-2017-18640
+
 ## Version 2.7.1
 * Obfuscate passwords properly - #170
 * Extend grant based audit to system tables - #172
