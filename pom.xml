@@ -51,13 +51,13 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <cassandra.version>3.11.11</cassandra.version>
+        <cassandra.version>4.0.1</cassandra.version>
         <artifact.flavor.version>c4.0</artifact.flavor.version>
 
         <pmd-config-url>pmd-rules.xml</pmd-config-url>
 
         <commons-cli.version>1.4</commons-cli.version>
-        <chronicle-queue.version>4.16.5</chronicle-queue.version>
+        <chronicle-queue.version>5.20.123</chronicle-queue.version>
 
         <assertj.version>3.22.0</assertj.version>
         <cassandra-driver.version>3.6.0</cassandra-driver.version>

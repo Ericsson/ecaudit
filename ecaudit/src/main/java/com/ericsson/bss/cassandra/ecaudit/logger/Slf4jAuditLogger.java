@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import com.ericsson.bss.cassandra.ecaudit.common.formatter.LogMessageFormatter;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Implements an {@link AuditLogger} that writes {@link AuditEntry} instance into file using {@link Logger}.
@@ -105,7 +104,6 @@ public class Slf4jAuditLogger implements AuditLogger
                .build();
     }
 
-    @Nullable
     private static Integer getPortOrNull(InetSocketAddress address)
     {
         return address.getPort() == AuditEntry.UNKNOWN_PORT ? null : address.getPort();

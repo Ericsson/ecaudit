@@ -22,17 +22,17 @@ import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer;
 import com.ericsson.bss.cassandra.ecaudit.utils.AuthenticatedUserUtil;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.config.SchemaConstants;
 import org.apache.cassandra.db.SystemKeyspace;
+import org.apache.cassandra.schema.SchemaConstants;
 
 public class AuditFilterAuthorizer
 {
@@ -42,12 +42,12 @@ public class AuditFilterAuthorizer
     // From SchemaKeyspace, will cause initialization errors if accessed directly
     private static final ImmutableList<String> ALL_SCHEMA_TABLES = ImmutableList.of("columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
 
-    // peers_v2 is read by the driver as well
-    private static final String PEERS_V2 = "peers_v2";
+    // peers is read by the driver as well
+    private static final String PEERS = "peers";
 
     static
     {
-        for (String cf : Arrays.asList(SystemKeyspace.LOCAL, SystemKeyspace.PEERS, PEERS_V2))
+        for (String cf : Arrays.asList(SystemKeyspace.LOCAL, SystemKeyspace.PEERS_V2, PEERS))
         {
             READABLE_SYSTEM_RESOURCES.add(DataResource.table(SchemaConstants.SYSTEM_KEYSPACE_NAME, cf));
         }

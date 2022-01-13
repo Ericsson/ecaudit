@@ -21,9 +21,10 @@ import java.util.concurrent.BlockingQueue;
 import com.google.common.annotations.VisibleForTesting;
 
 import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.WriteMarshallable;
+
 import org.apache.cassandra.concurrent.NamedThreadFactory;
 
 class ChronicleWriter implements AutoCloseable
@@ -39,7 +40,7 @@ class ChronicleWriter implements AutoCloseable
 
     ChronicleWriter(ChronicleAuditLoggerConfig config)
     {
-        chronicle = ChronicleQueueBuilder.single(config.getLogPath().toFile())
+        chronicle = SingleChronicleQueueBuilder.single(config.getLogPath().toFile())
                              .rollCycle(config.getRollCycle())
                              .storeFileListener(new SizeRotatingStoreFileListener(config.getLogPath(), config.getMaxLogSize()))
                              .build();

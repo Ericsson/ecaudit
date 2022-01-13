@@ -37,7 +37,6 @@ import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.QueryHandler;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.statements.BatchStatement;
-import org.apache.cassandra.cql3.statements.ParsedStatement;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.UnavailableException;
@@ -133,19 +132,19 @@ public class TestAuditQueryHandler
         String query = "select id from ks.ts where id = ?";
         MD5Digest statementId = MD5Digest.compute(query);
 
-        ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
-        Prepared prepared = new Prepared(statementId, parsedPrepared);
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement);
+        Prepared prepared = new Prepared(statementId, null, null, null);
 
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
-        when(mockHandler.prepare(query, mockQueryState, customPayload)).thenReturn(prepared);
+        when(mockHandler.prepare(query, mockClientState, customPayload)).thenReturn(prepared);
 
-        Prepared resultPrepared = queryHandler.prepare(query, mockQueryState, customPayload);
+        Prepared resultPrepared = queryHandler.prepare(query, mockClientState, customPayload);
         assertThat(resultPrepared).isSameAs(prepared);
 
         CQLStatement stmt = queryHandler.getPrepared(resultPrepared.statementId).statement;
         assertThat(stmt).isSameAs(mockStatement);
 
-        verify(mockHandler, times(1)).prepare(eq(query), eq(mockQueryState), eq(customPayload));
+        verify(mockHandler, times(1)).prepare(eq(query), eq(mockClientState), eq(customPayload));
         verify(mockHandler, times(1)).getPrepared(eq(statementId));
     }
 
@@ -154,23 +153,29 @@ public class TestAuditQueryHandler
     {
         String query = "select * from ks.ts";
 
-        queryHandler.process(query, mockQueryState, mockOptions, customPayload, System.nanoTime());
+        CQLStatement statement = queryHandler.parse(query, mockQueryState, mockOptions);
+
+        queryHandler.process(statement, mockQueryState, mockOptions, customPayload, System.nanoTime());
+        verify(mockHandler, times(1)).parse(eq(query), eq(mockQueryState), eq(mockOptions));
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.ATTEMPT), longThat(isCloseToNow()));
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).process(eq(query), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
     }
 
     @Test
     public void testProcessFailed()
     {
         String query = "select * from ks.ts";
-        whenProcessThrowUnavailable(query);
+
+        CQLStatement statement = queryHandler.parse(query, mockQueryState, mockOptions);
+        whenProcessThrowUnavailable(statement);
 
         assertThatExceptionOfType(RequestExecutionException.class)
-                .isThrownBy(() -> queryHandler.process(query, mockQueryState, mockOptions, customPayload, System.nanoTime()));
+                .isThrownBy(() -> queryHandler.process(statement, mockQueryState, mockOptions, customPayload, System.nanoTime()));
 
+        verify(mockHandler, times(1)).parse(eq(query), eq(mockQueryState), eq(mockOptions));
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).process(eq(query), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
@@ -179,8 +184,7 @@ public class TestAuditQueryHandler
     {
         String query = "select id from ks.ts where id = ?";
         MD5Digest statementId = MD5Digest.compute(query);
-        ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
-        parsedPrepared.rawCQLStatement = query;
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query);
 
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
 
@@ -198,8 +202,7 @@ public class TestAuditQueryHandler
     {
         String query = "select id from ks.ts where id = ?";
         MD5Digest statementId = MD5Digest.compute(query);
-        ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
-        parsedPrepared.rawCQLStatement = query;
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query);
 
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
         whenProcessPreparedThrowUnavailable();
@@ -215,44 +218,11 @@ public class TestAuditQueryHandler
     }
 
     @Test
-    public void testProcessPreparedForThriftSuccessful()
-    {
-        int thriftItemId = 345;
-        ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
-
-        when(mockHandler.getPreparedForThrift(eq(thriftItemId))).thenReturn(parsedPrepared);
-
-        CQLStatement stmt = queryHandler.getPreparedForThrift(thriftItemId).statement;
-        queryHandler.processPrepared(stmt, mockQueryState, mockOptions, customPayload, System.nanoTime());
-
-        verify(mockHandler, times(1)).getPreparedForThrift(eq(thriftItemId));
-        verify(mockHandler, times(1)).processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
-    }
-
-    @Test
-    public void testProcessPreparedForThriftFailed()
-    {
-        int thriftItemId = 345;
-        ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
-
-        when(mockHandler.getPreparedForThrift(eq(thriftItemId))).thenReturn(parsedPrepared);
-        whenProcessPreparedThrowUnavailable();
-
-        CQLStatement stmt = queryHandler.getPreparedForThrift(thriftItemId).statement;
-        assertThatExceptionOfType(UnavailableException.class)
-                .isThrownBy(() -> queryHandler.processPrepared(stmt, mockQueryState, mockOptions, customPayload, System.nanoTime()));
-
-        verify(mockHandler, times(1)).getPreparedForThrift(eq(thriftItemId));
-        verify(mockHandler, times(1)).processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
-    }
-
-    @Test
     public void testProcessBatchSuccessful()
     {
         String query = "INSERT INTO ks.ts (id, value) VALUES (?, 'abc')";
         MD5Digest statementId = MD5Digest.compute(query);
-        ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
-        parsedPrepared.rawCQLStatement = query;
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query);
 
         givenBatchOfTwoStatementsArePrepared(statementId, parsedPrepared);
 
@@ -269,13 +239,11 @@ public class TestAuditQueryHandler
     {
         String query1 = "INSERT INTO ks.ts (id, value) VALUES (?, ?)";
         MD5Digest statementId1 = MD5Digest.compute(query1);
-        ParsedStatement.Prepared parsedPrepared1 = new ParsedStatement.Prepared(mockStatement);
-        parsedPrepared1.rawCQLStatement = query1;
+        QueryHandler.Prepared parsedPrepared1 = new QueryHandler.Prepared(mockStatement, query1);
 
         String query2 = "INSERT INTO ks.ts (id, temperature) VALUES (?, ?)";
         MD5Digest statementId2 = MD5Digest.compute(query2);
-        ParsedStatement.Prepared parsedPrepared2 = new ParsedStatement.Prepared(mockStatement);
-        parsedPrepared2.rawCQLStatement = query2;
+        QueryHandler.Prepared parsedPrepared2 = new QueryHandler.Prepared(mockStatement, query2);
 
         givenBatchOfTwoStatementsAreNotPrepared(statementId1, parsedPrepared1);
         givenBatchOfTwoStatementsArePrepared(statementId2, parsedPrepared2);
@@ -294,8 +262,7 @@ public class TestAuditQueryHandler
     {
         String query = "INSERT INTO ks.ts (id, value) VALUES (?, 'abc')";
         MD5Digest statementId = MD5Digest.compute(query);
-        ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
-        parsedPrepared.rawCQLStatement = query;
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query);
 
         givenBatchOfTwoStatementsArePrepared(statementId, parsedPrepared);
         whenProcessBatchThrowUnavailable();
@@ -326,27 +293,27 @@ public class TestAuditQueryHandler
 
         when(mockHandler.getPrepared(statementId)).thenReturn(null);
 
-        ParsedStatement.Prepared prepared = queryHandler.getPrepared(statementId);
+        QueryHandler.Prepared prepared = queryHandler.getPrepared(statementId);
         assertThat(prepared).isNull();
         verify(mockHandler, times(1)).getPrepared(statementId);
     }
 
-    private void givenBatchOfTwoStatementsArePrepared(MD5Digest statementId, ParsedStatement.Prepared parsedPrepared)
+    private void givenBatchOfTwoStatementsArePrepared(MD5Digest statementId, QueryHandler.Prepared parsedPrepared)
     {
         when(mockHandler.getPrepared(eq(statementId))).thenReturn(parsedPrepared);
         queryHandler.getPrepared(statementId);
         queryHandler.getPrepared(statementId);
     }
 
-    private void givenBatchOfTwoStatementsAreNotPrepared(MD5Digest statementId, ParsedStatement.Prepared parsedPrepared) {
+    private void givenBatchOfTwoStatementsAreNotPrepared(MD5Digest statementId, QueryHandler.Prepared parsedPrepared) {
         when(mockHandler.getPrepared(eq(statementId))).thenReturn(parsedPrepared).thenReturn(null);
         queryHandler.getPrepared(statementId);
         queryHandler.getPrepared(statementId);
     }
 
     @SuppressWarnings("unchecked")
-    private void whenProcessThrowUnavailable(String query) {
-        when(mockHandler.process(eq(query), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
+    private void whenProcessThrowUnavailable(CQLStatement statement) {
+        when(mockHandler.process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
                 .thenThrow(UnavailableException.class);
     }
 

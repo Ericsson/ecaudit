@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,15 +29,17 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.auth.AuditAuthorizer;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
+
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
-import org.apache.cassandra.config.SchemaConstants;
 import org.apache.cassandra.db.SystemKeyspace;
+import org.apache.cassandra.schema.SchemaConstants;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -110,8 +113,8 @@ public class TestAuditFilterAuthorizer
     {
         List<Object[]> objects = new ArrayList<>();
         objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, SystemKeyspace.LOCAL)});
-        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, SystemKeyspace.PEERS)});
-        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, "peers_v2")});
+        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, SystemKeyspace.PEERS_V2)});
+        objects.add(new Object[] {toDataResources(SchemaConstants.SYSTEM_KEYSPACE_NAME, "peers")});
 
         for (String table : ALL_SCHEMA_TABLES)
         {

@@ -20,10 +20,12 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.junit.Test;
 
+import org.junit.Test;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.db.marshal.AsciiType;
+import org.apache.cassandra.db.marshal.SetType;
+import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.serializers.AsciiSerializer;
 import org.apache.cassandra.serializers.SetSerializer;
 import org.apache.cassandra.utils.ByteBufferUtil;
@@ -40,7 +42,7 @@ public class TestWhitelistDataAccess
     {
         // Given
         Set<Permission> operations = Sets.newHashSet(Permission.SELECT, Permission.MODIFY);
-        SetSerializer<String> stringSetSerializer = SetSerializer.getInstance(AsciiSerializer.instance, AsciiType.instance);
+        SetSerializer<String> stringSetSerializer = SetType.getInstance(UTF8Type.instance, true).getSerializer();
         // When
         List<ByteBuffer> values = WhitelistDataAccess.getSerializedUpdateValues("Role1", "Resource1", operations);
         // Then

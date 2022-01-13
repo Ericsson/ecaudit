@@ -18,8 +18,8 @@ package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
-import org.apache.cassandra.config.ColumnDefinition;
 import org.apache.cassandra.cql3.ColumnSpecification;
+import org.apache.cassandra.schema.ColumnMetadata;
 
 public class SuppressRegular extends AbstractSuppressor
 {
@@ -33,6 +33,6 @@ public class SuppressRegular extends AbstractSuppressor
 
     private static boolean isRegularKey(ColumnSpecification column)
     {
-        return column instanceof ColumnDefinition && ((ColumnDefinition) column).isRegular();
+        return column instanceof ColumnMetadata && ((ColumnMetadata) column).isRegular();
     }
 }

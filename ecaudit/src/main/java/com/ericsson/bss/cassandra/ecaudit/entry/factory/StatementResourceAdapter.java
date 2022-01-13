@@ -20,26 +20,25 @@ import java.util.List;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import com.ericsson.bss.cassandra.ecaudit.facade.CassandraAuditException;
+
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.FunctionResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.config.CFMetaData;
-import org.apache.cassandra.cql3.CFName;
 import org.apache.cassandra.cql3.CQL3Type;
-import org.apache.cassandra.cql3.functions.FunctionName;
-import org.apache.cassandra.cql3.statements.AlterViewStatement;
 import org.apache.cassandra.cql3.statements.AuthenticationStatement;
 import org.apache.cassandra.cql3.statements.AuthorizationStatement;
-import org.apache.cassandra.cql3.statements.CreateAggregateStatement;
-import org.apache.cassandra.cql3.statements.CreateFunctionStatement;
-import org.apache.cassandra.cql3.statements.CreateViewStatement;
-import org.apache.cassandra.cql3.statements.DropAggregateStatement;
-import org.apache.cassandra.cql3.statements.DropFunctionStatement;
-import org.apache.cassandra.cql3.statements.DropViewStatement;
 import org.apache.cassandra.cql3.statements.PermissionsManagementStatement;
 import org.apache.cassandra.cql3.statements.UseStatement;
+import org.apache.cassandra.cql3.statements.schema.AlterViewStatement;
+import org.apache.cassandra.cql3.statements.schema.CreateAggregateStatement;
+import org.apache.cassandra.cql3.statements.schema.CreateFunctionStatement;
+import org.apache.cassandra.cql3.statements.schema.CreateViewStatement;
+import org.apache.cassandra.cql3.statements.schema.DropAggregateStatement;
+import org.apache.cassandra.cql3.statements.schema.DropFunctionStatement;
+import org.apache.cassandra.cql3.statements.schema.DropViewStatement;
 import org.apache.cassandra.db.view.View;
+import org.apache.cassandra.schema.TableMetadataRef;
 
 class StatementResourceAdapter
 {
@@ -114,94 +113,76 @@ class StatementResourceAdapter
     {
         try
         {
-            CFName baseName  = (CFName) FieldUtils.readField(statement, "baseName", true);
-            return DataResource.table(statement.keyspace(), baseName.getColumnFamily());
+            String baseName  = (String) FieldUtils.readField(statement, "tableName", true);
+            return DataResource.table(statement.getAuditLogContext().keyspace, baseName);
         }
         catch (IllegalAccessException e)
         {
-            throw new CassandraAuditException("Failed to resolve base table of view " + statement.keyspace() + "." + statement.columnFamily(), e);
+            throw new CassandraAuditException("Failed to resolve base table of view " + statement.getAuditLogContext().keyspace + "." + statement.getAuditLogContext().scope, e);
         }
     }
 
     DataResource resolveBaseTableResource(AlterViewStatement statement)
     {
-        CFMetaData baseTable = View.findBaseTable(statement.keyspace(), statement.columnFamily());
+        TableMetadataRef baseTable = View.findBaseTable(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope);
         if (baseTable == null)
         {
-            return DataResource.keyspace(statement.keyspace());
+            return DataResource.keyspace(statement.getAuditLogContext().keyspace);
         }
         else
         {
-            return DataResource.table(statement.keyspace(), baseTable.cfName);
+            return DataResource.table(statement.getAuditLogContext().keyspace, baseTable.name);
         }
     }
 
     DataResource resolveBaseTableResource(DropViewStatement statement)
     {
-        CFMetaData baseTable = View.findBaseTable(statement.keyspace(), statement.columnFamily());
+        TableMetadataRef baseTable = View.findBaseTable(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope);
         if (baseTable == null)
         {
-            return DataResource.keyspace(statement.keyspace());
+            return DataResource.keyspace(statement.getAuditLogContext().keyspace);
         }
         else
         {
-            return DataResource.table(statement.keyspace(), baseTable.cfName);
+            return DataResource.table(statement.getAuditLogContext().keyspace, baseTable.name);
         }
     }
 
     FunctionResource resolveFunctionKeyspaceResource(CreateFunctionStatement statement)
     {
-        try
-        {
-            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, FUNCTION_NAME, true);
-            return FunctionResource.keyspace(functionName.keyspace);
-        }
-        catch (IllegalAccessException e)
-        {
-            throw new CassandraAuditException("Failed to resolve base keyspace of function" + statement.keyspace() + "." + statement.columnFamily(), e);
-        }
+        return FunctionResource.keyspace(statement.getAuditLogContext().keyspace);
     }
 
     FunctionResource resolveFunctionResource(DropFunctionStatement statement)
     {
         try
         {
-            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, FUNCTION_NAME, true);
             @SuppressWarnings("unchecked")
-            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "argRawTypes", true);
-            return FunctionResource.functionFromCql(functionName.keyspace, functionName.name, argRawTypes);
+            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "arguments", true);
+            return FunctionResource.functionFromCql(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope, argRawTypes);
         }
         catch (IllegalAccessException e)
         {
-            throw new CassandraAuditException("Failed to resolve base table of function " + statement.keyspace() + "." + statement.columnFamily(), e);
+            throw new CassandraAuditException("Failed to resolve base table of function " + statement.getAuditLogContext().keyspace + "." + statement.getAuditLogContext().scope, e);
         }
     }
 
     FunctionResource resolveAggregateKeyspaceResource(CreateAggregateStatement statement)
     {
-        try
-        {
-            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, FUNCTION_NAME, true);
-            return FunctionResource.keyspace(functionName.keyspace);
-        }
-        catch (IllegalAccessException e)
-        {
-            throw new CassandraAuditException("Failed to resolve base keyspace of aggregate" + statement.keyspace() + "." + statement.columnFamily(), e);
-        }
+        return FunctionResource.keyspace(statement.getAuditLogContext().keyspace);
     }
 
     FunctionResource resolveAggregateResource(DropAggregateStatement statement)
     {
         try
         {
-            FunctionName functionName = (FunctionName)  FieldUtils.readField(statement, FUNCTION_NAME, true);
             @SuppressWarnings("unchecked")
-            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "argRawTypes", true);
-            return FunctionResource.functionFromCql(functionName.keyspace, functionName.name, argRawTypes);
+            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "arguments", true);
+            return FunctionResource.functionFromCql(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope, argRawTypes);
         }
         catch (IllegalAccessException e)
         {
-            throw new CassandraAuditException("Failed to resolve base table of function " + statement.keyspace() + "." + statement.columnFamily(), e);
+            throw new CassandraAuditException("Failed to resolve base table of function " + statement.getAuditLogContext().keyspace + "." + statement.getAuditLogContext().scope, e);
         }
     }
 }

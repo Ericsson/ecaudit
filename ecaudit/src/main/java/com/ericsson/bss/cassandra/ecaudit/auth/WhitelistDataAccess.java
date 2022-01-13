@@ -29,14 +29,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.flavor.CassandraFlavorAdapter;
+
 import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
-import org.apache.cassandra.config.CFMetaData;
-import org.apache.cassandra.config.Schema;
-import org.apache.cassandra.config.SchemaConstants;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.QueryProcessor;
@@ -45,13 +43,16 @@ import org.apache.cassandra.cql3.statements.DeleteStatement;
 import org.apache.cassandra.cql3.statements.SelectStatement;
 import org.apache.cassandra.cql3.statements.UpdateStatement;
 import org.apache.cassandra.db.ConsistencyLevel;
+import org.apache.cassandra.db.marshal.SetType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.schema.KeyspaceMetadata;
+import org.apache.cassandra.schema.MigrationManager;
+import org.apache.cassandra.schema.Schema;
+import org.apache.cassandra.schema.SchemaConstants;
+import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.serializers.SetSerializer;
-import org.apache.cassandra.serializers.UTF8Serializer;
 import org.apache.cassandra.service.ClientState;
-import org.apache.cassandra.service.MigrationManager;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.utils.ByteBufferUtil;
@@ -64,7 +65,7 @@ public class WhitelistDataAccess
     private static final Logger LOG = LoggerFactory.getLogger(WhitelistDataAccess.class);
 
     private static final long SCHEMA_ALIGNMENT_DELAY_MS = Long.getLong("ecaudit.schema_alignment_delay_ms", 120_000L);
-    private static final SetSerializer<String> SET_SERIALIZER = SetSerializer.getInstance(UTF8Serializer.instance, UTF8Type.instance);
+    private static final SetSerializer<String> SET_SERIALIZER = SetType.getInstance(UTF8Type.instance, true).getSerializer();
 
     private boolean setupCompleted = false;
 
@@ -225,12 +226,12 @@ public class WhitelistDataAccess
     private synchronized void maybeCreateTable()
     {
         KeyspaceMetadata expected = AuditAuthKeyspace.metadata();
-        KeyspaceMetadata defined = Schema.instance.getKSMetaData(expected.name);
+        KeyspaceMetadata defined = Schema.instance.getKeyspaceMetadata(expected.name);
 
         boolean changesAnnounced = false;
-        for (CFMetaData expectedTable : expected.tables)
+        for (TableMetadata expectedTable : expected.tables)
         {
-            CFMetaData definedTable = defined.tables.get(expectedTable.cfName).orElse(null);
+            TableMetadata definedTable = defined.tables.get(expectedTable.name).orElse(null);
             if (definedTable == null || !definedTable.equals(expectedTable))
             {
                 CassandraFlavorAdapter.getInstance().forceAnnounceNewColumnFamily(expectedTable);
@@ -251,7 +252,7 @@ public class WhitelistDataAccess
     private synchronized void maybeMigrateTableData()
     {
         // The delay is to give the node a chance to see its peers before attempting the conversion
-        if (Schema.instance.getCFMetaData(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1) != null)
+        if (Schema.instance.getTableMetadata(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1) != null)
         {
             ScheduledExecutors.optionalTasks.schedule(this::migrateTableData, AuthKeyspace.SUPERUSER_SETUP_DELAY, TimeUnit.MILLISECONDS);
         }
@@ -292,14 +293,14 @@ public class WhitelistDataAccess
     void dropLegacyWhitelistTable()
     {
         LOG.info("Dropping legacy (v1) audit whitelist data");
-        MigrationManager.announceColumnFamilyDrop(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1);
+        MigrationManager.announceTableDrop(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1, false);
     }
 
     private CQLStatement prepare(String template, String keyspace, String table)
     {
         try
         {
-            return QueryProcessor.parseStatement(String.format(template, keyspace, table)).prepare(ClientState.forInternalCalls()).statement;
+            return QueryProcessor.parseStatement(String.format(template, keyspace, table)).prepare(ClientState.forInternalCalls());
         }
         catch (RequestValidationException e)
         {
