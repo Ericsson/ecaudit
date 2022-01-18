@@ -58,6 +58,7 @@ public class TestAuditFilterAuthorizer
 
     // From SchemaKeyspace
     private static final ImmutableList<String> ALL_SCHEMA_TABLES = ImmutableList.of("columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
+    private static final ImmutableList<String> ALL_VIRTUAL_SCHEMA_TABLES = ImmutableList.of("columns", "tables", "keyspaces");
 
     @BeforeClass
     public static void beforeAll()
@@ -119,6 +120,11 @@ public class TestAuditFilterAuthorizer
         for (String table : ALL_SCHEMA_TABLES)
         {
             objects.add(new Object[] {toDataResources(SchemaConstants.SCHEMA_KEYSPACE_NAME, table)});
+        }
+
+        for (String table : ALL_VIRTUAL_SCHEMA_TABLES)
+        {
+            objects.add(new Object[] {toDataResources(SchemaConstants.VIRTUAL_SCHEMA, table)});
         }
 
         return objects.toArray();

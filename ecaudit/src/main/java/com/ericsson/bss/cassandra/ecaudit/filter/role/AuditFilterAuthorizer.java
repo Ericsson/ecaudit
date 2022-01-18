@@ -41,6 +41,7 @@ public class AuditFilterAuthorizer
 
     // From SchemaKeyspace, will cause initialization errors if accessed directly
     private static final ImmutableList<String> ALL_SCHEMA_TABLES = ImmutableList.of("columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
+    private static final ImmutableList<String> ALL_VIRTUAL_SCHEMA_TABLES = ImmutableList.of("columns", "tables", "keyspaces");
 
     // peers is read by the driver as well
     private static final String PEERS = "peers";
@@ -53,6 +54,7 @@ public class AuditFilterAuthorizer
         }
 
         ALL_SCHEMA_TABLES.forEach(table -> READABLE_SYSTEM_RESOURCES.add(DataResource.table(SchemaConstants.SCHEMA_KEYSPACE_NAME, table)));
+        ALL_VIRTUAL_SCHEMA_TABLES.forEach(table -> READABLE_SYSTEM_RESOURCES.add(DataResource.table(SchemaConstants.VIRTUAL_SCHEMA, table)));
     }
 
     private IAuthorizer authorizer; // lazy initialization
