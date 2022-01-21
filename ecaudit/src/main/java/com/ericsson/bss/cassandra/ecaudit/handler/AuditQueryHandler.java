@@ -57,6 +57,7 @@ public class AuditQueryHandler implements QueryHandler
 
     // This ThreadLocal is populated on calls to getPrepared() and parse() in order to build context for statements.
     private final ThreadLocal<List<String>> rawCqlStatements = ThreadLocal.withInitial(ArrayList::new);
+    private final ThreadLocal<List<Long>> localTimestamp = ThreadLocal.withInitial(ArrayList::new);
 
     /**
      * Create a stand-alone instance of {@link AuditQueryHandler} that uses a default configuration for audit logging
@@ -101,9 +102,8 @@ public class AuditQueryHandler implements QueryHandler
         try
         {
             String rawCqlStatement = rawCqlStatements.get().get(0);
+            Long timestamp = localTimestamp.get().get(0);
 
-            long timestamp = System.currentTimeMillis();
-            auditAdapter.auditRegular(rawCqlStatement, state.getClientState(), Status.ATTEMPT, timestamp);
             try
             {
                 ResultMessage result = wrappedQueryHandler.process(statement, state, options, customPayload, queryStartNanoTime);
@@ -119,6 +119,7 @@ public class AuditQueryHandler implements QueryHandler
         finally
         {
             rawCqlStatements.remove();
+            localTimestamp.remove();
         }
     }
 
@@ -198,10 +199,7 @@ public class AuditQueryHandler implements QueryHandler
     public ResultMessage.Prepared prepare(String query, ClientState state, Map<String, ByteBuffer> customPayload)
     throws RequestValidationException
     {
-        ResultMessage.Prepared prepared = wrappedQueryHandler.prepare(query, state, customPayload);
-        rawCqlStatements.get().add(query);
-
-        return prepared;
+        return wrappedQueryHandler.prepare(query, state, customPayload);
     }
 
     @Override
@@ -222,6 +220,10 @@ public class AuditQueryHandler implements QueryHandler
     @Override
     public CQLStatement parse(String queryString, QueryState queryState, QueryOptions options)
     {
+        long timestamp = System.currentTimeMillis();
+        localTimestamp.get().add(timestamp);
+        auditAdapter.auditRegular(queryString, queryState.getClientState(), Status.ATTEMPT, timestamp);
+
         CQLStatement statement;
         try
         {
@@ -229,7 +231,8 @@ public class AuditQueryHandler implements QueryHandler
         }
         catch (Exception e)
         {
-            rawCqlStatements.remove();
+            auditAdapter.auditRegular(queryString, queryState.getClientState(), Status.FAILED, timestamp);
+            localTimestamp.remove();
             throw e;
         }
 

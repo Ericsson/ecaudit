@@ -95,6 +95,8 @@ public class ITVerifyAudit
 
         session.execute(new SimpleStatement(
         "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema' }"));
 
         session.execute(new SimpleStatement(
         "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
@@ -113,6 +115,8 @@ public class ITVerifyAudit
         "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system'}"));
         session.execute(new SimpleStatement(
         "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema'}"));
+        session.execute(new SimpleStatement(
+        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema'}"));
         session.execute(new SimpleStatement(
         "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl'}"));
         session.execute(new SimpleStatement(

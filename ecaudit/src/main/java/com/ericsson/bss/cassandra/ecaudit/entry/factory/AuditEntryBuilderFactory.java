@@ -225,7 +225,7 @@ public class AuditEntryBuilderFactory
             return createBatchEntryBuilder();
         }
 
-        LOG.warn("Detected unrecognized CQLStatement in audit mapping");
+        LOG.warn("Detected unrecognized CQLStatement in audit mapping: " + statement);
         return createDefaultEntryBuilder().knownOperation(false);
     }
 
@@ -422,6 +422,7 @@ public class AuditEntryBuilderFactory
                 || statement instanceof DropTypeStatement
                 || statement instanceof CreateFunctionStatement
                 || statement instanceof DropFunctionStatement
+                || statement instanceof CreateAggregateStatement
                 || statement instanceof DropAggregateStatement
                 || statement instanceof CreateIndexStatement
                 || statement instanceof DropIndexStatement

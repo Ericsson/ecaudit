@@ -89,7 +89,7 @@ public class ITDataAudit
         return new Object[]{
             new Object[]{ "CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false", "create", "data/dataks" },
             new Object[]{ "CREATE TABLE IF NOT EXISTS dataks.tbl (key int PRIMARY KEY, value text)", "create", "data/dataks" },
-            new Object[]{ "CREATE INDEX IF NOT EXISTS idx ON dataks.tbl (value)", "alter", "data/dataks/tbl" },
+            new Object[]{ "CREATE INDEX IF NOT EXISTS idx ON dataks.tbl (value)", "alter", "data/dataks/idx" },
             new Object[]{ "CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.viw AS SELECT key, value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)", "alter", "data/dataks/tbl" },
             new Object[]{ "CREATE TYPE IF NOT EXISTS dataks.tp (data1 int, data2 int)", "create", "data/dataks" },
             new Object[]{ "SELECT * FROM dataks.tbl WHERE key = 12", "select", "data/dataks/tbl" },
@@ -103,7 +103,7 @@ public class ITDataAudit
             new Object[]{ "ALTER KEYSPACE dataks WITH DURABLE_WRITES = false", "alter", "data/dataks" },
             new Object[]{ "DROP TYPE IF EXISTS dataks.tp", "drop", "data/dataks" },
             new Object[]{ "DROP MATERIALIZED VIEW dataks.viw", "alter", "data/dataks/tbl" },
-            new Object[]{ "DROP INDEX IF EXISTS dataks.idx", "alter", "data/dataks/tbl" },
+            new Object[]{ "DROP INDEX IF EXISTS dataks.idx", "alter", "data/dataks/idx" },
             new Object[]{ "DROP TABLE IF EXISTS dataks.tbl", "drop", "data/dataks/tbl" },
             new Object[]{ "DROP KEYSPACE IF EXISTS dataks", "drop", "data/dataks" },
         };
