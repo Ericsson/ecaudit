@@ -3,7 +3,7 @@
 [![tests](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml/badge.svg?branch=release/c3.0)](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml?query=branch%3Arelease/c3.0)
 [![coverage](https://codecov.io/gh/ericsson/ecaudit/branch/release/c3.0/graph/badge.svg)](https://codecov.io/gh/ericsson/ecaudit/branch/release/c3.0)
 
-With ecAudit you get auditing and query logger functionality for Apache Cassandra 2.2, 3.0 and 3.11.
+With ecAudit you get auditing and query logger functionality for Apache Cassandra 3.0 and 3.11.
 
 Features include:
 * Detailed audit records for CQL operations and login attempts
@@ -36,8 +36,6 @@ Official releases of ecAudit can be downloaded from Maven Central.
 Get the ecAudit flavor for your Cassandra version.
 
 [![ecAudit for Cassandra 3.11.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.11.svg?label=ecAudit%20for%20Cassandra%203.11.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.11%22)
-[![ecAudit for Cassandra 3.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=ecAudit%20for%20Cassandra%203.0.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
-[![ecAudit for Cassandra 2.2.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c2.2.svg?label=ecAudit%20for%20Cassandra%202.2)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c2.2%22)
 
 For a detailed description of compatible Cassandra versions, refer to the [Cassandra Compatibility Matrix](doc/cassandra_compatibility.md).
 
@@ -46,7 +44,15 @@ For a detailed description of compatible Cassandra versions, refer to the [Cassa
 
 The following flavors of ecAudit are in maintenance mode and will get critical fixes, but no new features.
 
+[![ecAudit for Cassandra 3.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=ecAudit%20for%20Cassandra%203.0.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
+
+
+#### Archive
+
+The following flavors of ecAudit are no longer maintained.
+
 [![ecAudit for Cassandra 3.0.11](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.11.svg?label=ecAudit%20for%20Cassandra%203.0.11)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0.11%22)
+[![ecAudit for Cassandra 2.2.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c2.2.svg?label=ecAudit%20for%20Cassandra%202.2)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c2.2%22)
 
 
 ### Setup
@@ -82,7 +88,7 @@ The following developers have contributed to the ecAudit project:
 
 ## License
 
-Copyright 2018-21 Telefonaktiebolaget LM Ericsson
+Copyright 2018-22 Telefonaktiebolaget LM Ericsson
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
