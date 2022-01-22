@@ -1,7 +1,7 @@
 # ecAudit
 
-[![tests](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml?query=branch%3Amaster)
-[![coverage](https://codecov.io/gh/ericsson/ecaudit/branch/master/graph/badge.svg)](https://codecov.io/gh/ericsson/ecaudit/branch/master)
+[![tests](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml/badge.svg?branch=release/c3.11)](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml?query=branch%3Arelease/c3.11)
+[![coverage](https://codecov.io/gh/ericsson/ecaudit/branch/release/3.11/graph/badge.svg)](https://codecov.io/gh/ericsson/ecaudit/branch/release/3.11)
 
 With ecAudit you get auditing and query logger functionality for Apache Cassandra 3.0 and 3.11.
 
@@ -59,7 +59,7 @@ The following flavors of ecAudit are no longer maintained.
 
 Install and configure ecAudit using the setup guide for your Cassandra version.
 
-* [ecAudit Setup Guide for Cassandra 3.11.\<latest>](https://github.com/Ericsson/ecaudit/blob/master/doc/setup.md)
+* [ecAudit Setup Guide for Cassandra 3.11.\<latest>](https://github.com/Ericsson/ecaudit/blob/release/c3.11/doc/setup.md)
 * [ecAudit Setup Guide for Cassandra 3.0.\<latest>](https://github.com/Ericsson/ecaudit/blob/release/c3.0/doc/setup.md)
 * [ecAudit Setup Guide for Cassandra 3.0.11](https://github.com/Ericsson/ecaudit/blob/release/c3.0.11/doc/setup.md)
 * [ecAudit Setup Guide for Cassandra 2.2.\<latest>](https://github.com/Ericsson/ecaudit/blob/release/c2.2/doc/setup.md)
