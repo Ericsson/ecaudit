@@ -1,6 +1,8 @@
 # Changes
 
 ## Version 2.8.0
+* Build with Cassandra 3.11.11 (only flavor ecaudit_c3.11)
+* Build with Cassandra 3.0.25 (only flavor ecaudit_c3.0)
 * Bump to SnakeYAML 1.29 in eclog to close CVE-2017-18640
 
 ## Version 2.7.1
