@@ -51,7 +51,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <cassandra.version>3.11.10</cassandra.version>
+        <cassandra.version>3.11.11</cassandra.version>
         <artifact.flavor.version>c3.11</artifact.flavor.version>
 
         <pmd-config-url>pmd-rules.xml</pmd-config-url>
@@ -93,6 +93,12 @@
             <dependency>
                 <groupId>org.apache.cassandra</groupId>
                 <artifactId>cassandra-all</artifactId>
+                <version>${cassandra.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>cassandra-thrift</artifactId>
                 <version>${cassandra.version}</version>
                 <scope>provided</scope>
             </dependency>
