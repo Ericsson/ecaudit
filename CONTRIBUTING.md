@@ -14,31 +14,28 @@ Below you'll find a few things to be aware of when you're working with this proj
 ## Flavors
 
 Since there are different flavors of ecAudit for different Cassandra versions,
-new patch sets should be created on the oldest maintained release branch.
+new feature patches should be created on the oldest supported release branch.
+Critical fixes should be created on the older maintained release branch.
 Once incorporated on the release branch the patch set will be merged forward
 on to more resent release branches (if any) and then finally into the master branch.
 
 This way feature compatibility will be maintained on the different flavors of ecAudit.
 
-At the moment the oldest maintained release branch is ```release/c2.2```
-which is tracking the latest release of Cassandra 2.2.x.
-Then comes ```release/3.0```
+At the moment the oldest maintained release branch is ```release/c3.0```
 which is tracking the latest release of Cassandra 3.0.x.
-The ```master``` branch is tracking the latest release of Cassandra 3.11.x.
+Then comes ```release/3.11```
+which is tracking the latest release of Cassandra 3.11.x.
+The ```master``` branch is tracking the latest release of Cassandra 4.0.x.
 
-Pull Requests with new features should typically target ```release/c2.2```.
-Merge order is then ```PR``` -> ```release/c2.2``` -> ```release/c3.0``` -> ```master```
+Pull Requests with new features should typically target ```release/c3.11```.
+Merge order is then ```PR``` -> ```release/c3.11``` -> ```master```
+
+Pull Requests with critical fixes should typically target ```release/c3.0```.
+Merge order is then ```PR``` -> ```release/c3.0``` -> ```release/c3.11``` -> ```master```
 
 It is encouraged to encapsulate differences between flavors in Flavor Adapters.
 This simplifies maintenance and merging between flavors.
 Examples are the FieldFilterFlavorAdapter and the CqlLiteralFlavorAdapter.
-
-
-### Maintenance
-
-We don't merge new features into the ```release/c3.0.11``` branch which is building with Cassandra 3.0.11 specifically.
-On request, we will fix critical issues.
-This is handled by separate PR's for this specific branch.
 
 
 ## Design Environment
