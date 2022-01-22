@@ -14,7 +14,8 @@ The table below list the Cassandra version used while building each ecAudit rele
 
 | ecAudit Version | Compiled With     | Compatible With             |
 | --------------- | ----------------- | --------------------------- |
-| 2.7.0 -> latest | Cassandra 3.11.10 | Cassandra 3.11.2 -> 3.11.10 |
+| 2.8.0 -> latest | Cassandra 3.11.11 | Cassandra 3.11.2 -> 3.11.11 |
+| 2.7.0 -> 2.7.1  | Cassandra 3.11.10 | Cassandra 3.11.2 -> 3.11.10 |
 | 2.3.0 -> 2.6.0  | Cassandra 3.11.6  | Cassandra 3.11.2 -> 3.11.6  |
 | 2.1.0 -> 2.2.2  | Cassandra 3.11.4  | Cassandra 3.11.2 -> 3.11.4  |
 | 1.0.0 -> 2.0.0  | Cassandra 3.11.3  | Cassandra 3.11.2 -> 3.11.3  |
@@ -27,7 +28,8 @@ The table below list the Cassandra version used while building each ecAudit rele
 
 | ecAudit Version | Compiled With    | Compatible With            |
 | --------------- | ---------------- | -------------------------- |
-| 2.7.0 -> latest | Cassandra 3.0.24 | Cassandra 3.0.16 -> 3.0.24 |
+| 2.8.0 -> latest | Cassandra 3.0.25 | Cassandra 3.0.16 -> 3.0.25 |
+| 2.7.0 -> 2.7.1  | Cassandra 3.0.24 | Cassandra 3.0.16 -> 3.0.24 |
 | 2.3.0 -> 2.6.0  | Cassandra 3.0.20 | Cassandra 3.0.16 -> 3.0.20 |
 | 2.1.0 -> 2.2.2  | Cassandra 3.0.18 | Cassandra 3.0.16 -> 3.0.18 |
 | 1.0.0 -> 2.0.0  | Cassandra 3.0.17 | Cassandra 3.0.16 -> 3.0.17 |
@@ -51,7 +53,7 @@ The table below list the Cassandra version used while building each ecAudit rele
 
 | ecAudit Version | Compiled With    | Compatible With           |
 | --------------- | ---------------- | ------------------------- |
-| 2.7.0 -> latest | Cassandra 2.2.19 | Cassandra 2.2.8 -> 2.2.19 |
+| 2.7.0 -> 2.8.0  | Cassandra 2.2.19 | Cassandra 2.2.8 -> 2.2.19 |
 | 2.3.0 -> 2.6.0  | Cassandra 2.2.16 | Cassandra 2.2.8 -> 2.2.16 |
 | 2.2.2           | Cassandra 2.2.14 | Cassandra 2.2.8 -> 2.2.14 |
 
