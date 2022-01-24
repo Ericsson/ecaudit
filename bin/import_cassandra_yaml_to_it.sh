@@ -43,12 +43,13 @@ format_for_it () {
  sed -i 's/key_cache_size_in_mb:.*/key_cache_size_in_mb: 0/' $2
  sed -i 's/counter_cache_size_in_mb:.*/counter_cache_size_in_mb: 0/' $2
  sed -i 's/^storage_port:.*/storage_port: ###storage_port###/' $2
- sed -i 's/^ssl_storage_port:.*/ssl_storage_port: ###ssl_storage_port###/' $2
+ sed -i 's/^storage_port:.*/storage_port: ###storage_port###/' $2
+ sed -i 's/- seeds:.*/- seeds: \"127.0.0.1:###storage_port###\"/' $2
  sed -i 's/^native_transport_port:.*/native_transport_port: ###native_transport_port###/' $2
- sed -i 's/^rpc_port:.*/rpc_port: ###rpc_port###/' $2
  sed -i 's/^num_tokens:.*/num_tokens: 1/' $2
  sed -i 's/^enable_user_defined_functions:.*/enable_user_defined_functions: true/' $2
  sed -i 's/^auto_snapshot:.*/auto_snapshot: false/' $2
+ sed -i 's/^enable_materialized_views:.*/enable_materialized_views: true/' $2
 }
 
 for IT_TARGET in ${SCRIPT_PATH}/../integration-test-*/src/test/resources/cassandra.yaml;
