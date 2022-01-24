@@ -19,10 +19,11 @@ import java.util.Set;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
-import org.apache.commons.lang3.StringUtils;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * IResource implementation representing database connections.
@@ -115,7 +116,7 @@ public final class ConnectionResource implements IResource, Comparable<Connectio
     }
 
     @Override
-    public int compareTo(ConnectionResource o)
+    public int compareTo(@NotNull ConnectionResource o)
     {
         return this.getName().compareTo(o.getName());
     }

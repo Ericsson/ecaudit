@@ -57,7 +57,7 @@
         <pmd-config-url>pmd-rules.xml</pmd-config-url>
 
         <commons-cli.version>1.4</commons-cli.version>
-        <chronicle-queue.version>5.20.123</chronicle-queue.version>
+        <annotations.version>19.0.0</annotations.version>
 
         <assertj.version>3.22.0</assertj.version>
         <cassandra-driver.version>3.6.0</cassandra-driver.version>
@@ -109,9 +109,9 @@
                 <version>${commons-cli.version}</version>
             </dependency>
             <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-queue</artifactId>
-                <version>${chronicle-queue.version}</version>
+                <groupId>org.jetbrains</groupId>
+                <artifactId>annotations</artifactId>
+                <version>${annotations.version}</version>
             </dependency>
             <!-- Test dependencies -->
             <dependency>
