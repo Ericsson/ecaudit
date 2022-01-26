@@ -641,14 +641,14 @@ public class AuditEntryBuilderFactory
     {
         return AuditEntry.newBuilder()
                          .permissions(ALTER_PERMISSIONS)
-                         .resource(DataResource.table(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope));
+                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
     }
 
     private Builder createDropIndexEntryBuilder(DropIndexStatement statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(ALTER_PERMISSIONS)
-                         .resource(DataResource.table(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope));
+                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
     }
 
     private Builder createCreateTriggerEntryBuilder(CreateTriggerStatement statement)

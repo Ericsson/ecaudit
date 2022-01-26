@@ -33,11 +33,16 @@ import org.apache.cassandra.cql3.statements.UseStatement;
 import org.apache.cassandra.cql3.statements.schema.AlterViewStatement;
 import org.apache.cassandra.cql3.statements.schema.CreateAggregateStatement;
 import org.apache.cassandra.cql3.statements.schema.CreateFunctionStatement;
+import org.apache.cassandra.cql3.statements.schema.CreateIndexStatement;
 import org.apache.cassandra.cql3.statements.schema.CreateViewStatement;
 import org.apache.cassandra.cql3.statements.schema.DropAggregateStatement;
 import org.apache.cassandra.cql3.statements.schema.DropFunctionStatement;
+import org.apache.cassandra.cql3.statements.schema.DropIndexStatement;
 import org.apache.cassandra.cql3.statements.schema.DropViewStatement;
 import org.apache.cassandra.db.view.View;
+import org.apache.cassandra.schema.KeyspaceMetadata;
+import org.apache.cassandra.schema.Schema;
+import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 
 class StatementResourceAdapter
@@ -138,6 +143,38 @@ class StatementResourceAdapter
     DataResource resolveBaseTableResource(DropViewStatement statement)
     {
         TableMetadataRef baseTable = View.findBaseTable(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope);
+        if (baseTable == null)
+        {
+            return DataResource.keyspace(statement.getAuditLogContext().keyspace);
+        }
+        else
+        {
+            return DataResource.table(statement.getAuditLogContext().keyspace, baseTable.name);
+        }
+    }
+
+    DataResource resolveBaseTableResource(CreateIndexStatement statement)
+    {
+        try
+        {
+             String baseTable = (String) FieldUtils.readField(statement, "tableName", true);
+
+             return DataResource.table(statement.getAuditLogContext().keyspace, baseTable);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_RESOURCE, e);
+        }
+    }
+
+    DataResource resolveBaseTableResource(DropIndexStatement statement)
+    {
+        KeyspaceMetadata keyspace = Schema.instance.getKeyspaceMetadata(statement.getAuditLogContext().keyspace);
+
+        TableMetadata baseTable = null == keyspace
+                ? null
+                : keyspace.findIndexedTable(statement.getAuditLogContext().scope).orElse(null);
+
         if (baseTable == null)
         {
             return DataResource.keyspace(statement.getAuditLogContext().keyspace);
