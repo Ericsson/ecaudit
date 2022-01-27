@@ -21,12 +21,14 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IResource;

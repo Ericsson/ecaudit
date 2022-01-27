@@ -31,13 +31,13 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
+
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.WriteMarshallable;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -51,7 +51,7 @@ public class TestWriteReadVersionCurrent
     @Before
     public void before()
     {
-        chronicleQueue = ChronicleQueueBuilder.single(temporaryFolder.getRoot()).blockSize(1024).build();
+        chronicleQueue = SingleChronicleQueueBuilder.single(temporaryFolder.getRoot()).blockSize(1024).build();
     }
 
     @After

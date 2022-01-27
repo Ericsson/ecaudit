@@ -48,7 +48,6 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     private File tempDir;
 
-    private volatile int rpcPort = -1;
     private volatile int storagePort = -1;
     private volatile int sslStoragePort = -1;
     private volatile int nativePort = -1;
@@ -174,7 +173,6 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     private void randomizePorts()
     {
-        rpcPort = randomAvailablePort();
         storagePort = randomAvailablePort();
         sslStoragePort = randomAvailablePort();
         nativePort = randomAvailablePort();
@@ -187,8 +185,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
         while (port < 0)
         {
             port = (new Random().nextInt(16300) + 49200);
-            if (rpcPort == port
-                || storagePort == port
+            if (storagePort == port
                 || sslStoragePort == port
                 || nativePort == port
                 || jmxPort == port)
@@ -217,7 +214,6 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
         Path outPath = Paths.get(tempDir.getPath(), filename);
         content = content.replaceAll("###tmp###", tempDir.getPath().replace("\\", "\\\\"));
-        content = content.replaceAll("###rpc_port###", String.valueOf(rpcPort));
         content = content.replaceAll("###storage_port###", String.valueOf(storagePort));
         content = content.replaceAll("###ssl_storage_port###", String.valueOf(sslStoragePort));
         content = content.replaceAll("###native_transport_port###", String.valueOf(nativePort));

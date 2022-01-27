@@ -8,7 +8,7 @@ Visit the [sertup guide](setup.md) for a detailed list of options.
 ## Deploy Plug-In Jar File
 
 Place the ecAudit jar file in your ```$CASSANDRA_HOME/lib/``` directory.
-Get the official releases from [Maven Central](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.11%22).
+Get the official releases from [Maven Central](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c4.0%22).
 
 
 ## Enable Plug-In

@@ -22,10 +22,12 @@ import java.util.Set;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.CassandraRoleManager;
 import org.apache.cassandra.auth.DataResource;
@@ -33,13 +35,14 @@ import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.IRoleManager;
 import org.apache.cassandra.auth.PasswordAuthenticator;
+import org.apache.cassandra.auth.Role;
 import org.apache.cassandra.auth.RoleOptions;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.config.SchemaConstants;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
+import org.apache.cassandra.schema.SchemaConstants;
 
 /**
  * Implements a {@link IRoleManager} that is meant to be paired with {@link AuditPasswordAuthenticator} and
@@ -211,6 +214,12 @@ public class AuditRoleManager implements IRoleManager
     throws RequestValidationException, RequestExecutionException
     {
         return wrappedRoleManager.getRoles(grantee, includeInherited);
+    }
+
+    @Override
+    public Set<Role> getRoleDetails(RoleResource grantee)
+    {
+        return wrappedRoleManager.getRoleDetails(grantee);
     }
 
     @Override

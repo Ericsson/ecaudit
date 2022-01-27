@@ -90,7 +90,7 @@ public class ITDataAudit
             new Object[]{ "CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false", "create", "data/dataks" },
             new Object[]{ "CREATE TABLE IF NOT EXISTS dataks.tbl (key int PRIMARY KEY, value text)", "create", "data/dataks" },
             new Object[]{ "CREATE INDEX IF NOT EXISTS idx ON dataks.tbl (value)", "alter", "data/dataks/tbl" },
-            new Object[]{ "CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.viw AS SELECT value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)", "alter", "data/dataks/tbl" },
+            new Object[]{ "CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.viw AS SELECT key, value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)", "alter", "data/dataks/tbl" },
             new Object[]{ "CREATE TYPE IF NOT EXISTS dataks.tp (data1 int, data2 int)", "create", "data/dataks" },
             new Object[]{ "SELECT * FROM dataks.tbl WHERE key = 12", "select", "data/dataks/tbl" },
             new Object[]{ "INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')", "modify", "data/dataks/tbl" },
@@ -175,6 +175,6 @@ public class ITDataAudit
 
     private void givenMaterializedView(String view)
     {
-        ccf.givenStatementExecutedAsSuperuserWithoutAudit("CREATE MATERIALIZED VIEW IF NOT EXISTS " + view + " AS SELECT value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)");
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit("CREATE MATERIALIZED VIEW IF NOT EXISTS " + view + " AS SELECT key, value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)");
     }
 }

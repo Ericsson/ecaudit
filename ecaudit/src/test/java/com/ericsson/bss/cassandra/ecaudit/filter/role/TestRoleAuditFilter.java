@@ -252,7 +252,7 @@ public class TestRoleAuditFilter
     public void unavailableExceptionIsNotWhitelisted()
     {
         when(getRolesFunctionMock.apply(any(RoleResource.class)))
-        .thenThrow(new UncheckedExecutionException(new RuntimeException(new UnavailableException(ConsistencyLevel.QUORUM, 2, 1))));
+        .thenThrow(new UncheckedExecutionException(new RuntimeException(UnavailableException.create(ConsistencyLevel.QUORUM, 2, 1))));
         AuditEntry auditEntry = givenAuditEntry(Collections.singleton(Permission.SELECT), DataResource.fromName("data/ks/tbl"));
 
         assertThat(filter.isWhitelisted(auditEntry)).isFalse();

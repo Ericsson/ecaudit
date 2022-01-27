@@ -86,6 +86,8 @@ public class ITVerifyThreadedAudit
             session.execute(new SimpleStatement(
             "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system_schema' }"));
             session.execute(new SimpleStatement(
+            "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system_virtual_schema' }"));
+            session.execute(new SimpleStatement(
             "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_execute' : 'connections' }"));
             session.execute(new SimpleStatement(
             "GRANT MODIFY ON ecks.ectbl TO test_role"));

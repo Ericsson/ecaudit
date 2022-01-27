@@ -17,10 +17,11 @@ package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.cassandra.config.CFMetaData;
-import org.apache.cassandra.config.SchemaConstants;
+import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
 import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.schema.KeyspaceParams;
+import org.apache.cassandra.schema.SchemaConstants;
+import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.Tables;
 
 final class AuditAuthKeyspace
@@ -34,10 +35,11 @@ final class AuditAuthKeyspace
                                                          + "PRIMARY KEY(role, resource))";
     private static final String WHITELIST_TABLE_DESCRIPTION = "audit whitelist assigned to db roles";
     private static final int WHITELIST_TABLE_GC_GRACE_SECONDS = (int) TimeUnit.DAYS.toSeconds(90);
-    private static final CFMetaData CREATE_ROLE_AUDIT_WHITELISTS =
-    CFMetaData.compile(WHITELIST_TABLE_SCHEMA, SchemaConstants.AUTH_KEYSPACE_NAME)
-              .comment(WHITELIST_TABLE_DESCRIPTION)
-              .gcGraceSeconds(WHITELIST_TABLE_GC_GRACE_SECONDS);
+    private static final TableMetadata CREATE_ROLE_AUDIT_WHITELISTS =
+            CreateTableStatement.parse(WHITELIST_TABLE_SCHEMA, SchemaConstants.AUTH_KEYSPACE_NAME)
+            .comment(WHITELIST_TABLE_DESCRIPTION)
+            .gcGraceSeconds(WHITELIST_TABLE_GC_GRACE_SECONDS)
+            .build();
 
     private AuditAuthKeyspace()
     {

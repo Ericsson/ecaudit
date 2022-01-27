@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.eclog;
 import com.ericsson.bss.cassandra.ecaudit.common.chronicle.AuditRecordReadMarshallable;
 import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 
@@ -46,7 +45,7 @@ public class QueueReader
 
     private static ChronicleQueue getChronicleQueue(ToolOptions toolOptions)
     {
-        SingleChronicleQueueBuilder chronicleBuilder = ChronicleQueueBuilder.single(toolOptions.path().toFile())
+        SingleChronicleQueueBuilder chronicleBuilder = SingleChronicleQueueBuilder.single(toolOptions.path().toFile())
                                                                             .readOnly(true);
         toolOptions.rollCycle().ifPresent(chronicleBuilder::rollCycle);
 
@@ -70,7 +69,7 @@ public class QueueReader
         {
             long startIndex = tempTailer.index();
 
-            tempTailer = tempTailer.toEnd();
+            tempTailer = tempTailer.toEnd(); // NOPMD
 
             long newIndex = tempTailer.index() - toolOptions.tail().get();
             newIndex = Math.max(newIndex, startIndex);

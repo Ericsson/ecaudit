@@ -184,7 +184,7 @@ public class ITVerifyChronicleBackend
         assertThat(record.getTimestamp().get()).isCloseTo(System.currentTimeMillis(), Offset.offset(30_000L));
         assertThat(record.getClientAddress()).contains(InetAddress.getLoopbackAddress());
         assertThat(record.getClientPort()).contains(0); // Port unknown in Authentication request
-        assertThat(record.getCoordinatorAddress()).contains(FBUtilities.getBroadcastAddress());
+        assertThat(record.getCoordinatorAddress()).contains(FBUtilities.getJustBroadcastAddress());
         assertThat(record.getUser()).contains(expectedUser);
         assertThat(record.getStatus()).contains(expectedStatus);
         assertThat(record.getOperation()).contains(expectedOperation);
@@ -251,7 +251,7 @@ public class ITVerifyChronicleBackend
         assertThat(record.getStatus()).contains(Status.ATTEMPT);
         assertThat(record.getClientAddress()).contains(InetAddress.getLoopbackAddress());
         assertThat(record.getClientPort().get()).isGreaterThan(0);
-        assertThat(record.getCoordinatorAddress()).contains(FBUtilities.getBroadcastAddress());
+        assertThat(record.getCoordinatorAddress()).contains(FBUtilities.getJustBroadcastAddress());
         assertThat(record.getTimestamp().get()).isLessThanOrEqualTo(System.currentTimeMillis());
         assertThat(record.getTimestamp().get()).isGreaterThan(System.currentTimeMillis() - 30_000);
     }
