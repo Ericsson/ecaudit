@@ -108,7 +108,7 @@ public class TestResourceFactory
     @Test
     public void testFunctionName()
     {
-        IResource resource = ResourceFactory.toResource("functions/ks/func|LongType^FloatType");
+        IResource resource = ResourceFactory.toResource("functions/ks/func[LongType^FloatType]");
         assertThat(resource.getName()).startsWith("functions/ks/func");
         assertThat(resource).isInstanceOf(FunctionResource.class);
     }

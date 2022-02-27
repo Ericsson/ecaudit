@@ -1,5 +1,10 @@
 # Changes
 
+## Version 2.9.0
+* Build with Cassandra 4.0.3 (only flavor ecaudit_c4.0)
+* Build with Cassandra 3.11.12 (only flavor ecaudit_c3.11)
+* Build with Cassandra 3.0.26 (only flavor ecaudit_c3.0)
+
 ## Version 2.8.0
 * Build with Cassandra 3.11.11 (only flavor ecaudit_c3.11)
 * Build with Cassandra 3.0.25 (only flavor ecaudit_c3.0)
