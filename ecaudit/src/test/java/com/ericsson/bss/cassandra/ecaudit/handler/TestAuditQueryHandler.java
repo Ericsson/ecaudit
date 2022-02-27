@@ -132,7 +132,7 @@ public class TestAuditQueryHandler
         String query = "select id from ks.ts where id = ?";
         MD5Digest statementId = MD5Digest.compute(query);
 
-        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement);
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query, false, "ks");
         Prepared prepared = new Prepared(statementId, null, null, null);
 
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
@@ -184,7 +184,7 @@ public class TestAuditQueryHandler
     {
         String query = "select id from ks.ts where id = ?";
         MD5Digest statementId = MD5Digest.compute(query);
-        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query);
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query, false, "ks");
 
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
 
@@ -202,7 +202,7 @@ public class TestAuditQueryHandler
     {
         String query = "select id from ks.ts where id = ?";
         MD5Digest statementId = MD5Digest.compute(query);
-        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query);
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query, false, "ks");
 
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
         whenProcessPreparedThrowUnavailable();
@@ -222,7 +222,7 @@ public class TestAuditQueryHandler
     {
         String query = "INSERT INTO ks.ts (id, value) VALUES (?, 'abc')";
         MD5Digest statementId = MD5Digest.compute(query);
-        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query);
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query, false, "ks");
 
         givenBatchOfTwoStatementsArePrepared(statementId, parsedPrepared);
 
@@ -239,11 +239,11 @@ public class TestAuditQueryHandler
     {
         String query1 = "INSERT INTO ks.ts (id, value) VALUES (?, ?)";
         MD5Digest statementId1 = MD5Digest.compute(query1);
-        QueryHandler.Prepared parsedPrepared1 = new QueryHandler.Prepared(mockStatement, query1);
+        QueryHandler.Prepared parsedPrepared1 = new QueryHandler.Prepared(mockStatement, query1, false, "ks");
 
         String query2 = "INSERT INTO ks.ts (id, temperature) VALUES (?, ?)";
         MD5Digest statementId2 = MD5Digest.compute(query2);
-        QueryHandler.Prepared parsedPrepared2 = new QueryHandler.Prepared(mockStatement, query2);
+        QueryHandler.Prepared parsedPrepared2 = new QueryHandler.Prepared(mockStatement, query2, false, "ks");
 
         givenBatchOfTwoStatementsAreNotPrepared(statementId1, parsedPrepared1);
         givenBatchOfTwoStatementsArePrepared(statementId2, parsedPrepared2);
@@ -262,7 +262,7 @@ public class TestAuditQueryHandler
     {
         String query = "INSERT INTO ks.ts (id, value) VALUES (?, 'abc')";
         MD5Digest statementId = MD5Digest.compute(query);
-        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query);
+        QueryHandler.Prepared parsedPrepared = new QueryHandler.Prepared(mockStatement, query, false, "ks");
 
         givenBatchOfTwoStatementsArePrepared(statementId, parsedPrepared);
         whenProcessBatchThrowUnavailable();

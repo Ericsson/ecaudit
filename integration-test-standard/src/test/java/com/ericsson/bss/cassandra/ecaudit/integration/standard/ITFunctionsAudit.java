@@ -90,9 +90,9 @@ public class ITFunctionsAudit
     {
         return new Object[]{
             new Object[]{ createFunctionCQL("funcks.flog1"), "create", "functions/funcks" },
-            new Object[]{ "DROP FUNCTION IF EXISTS funcks.flog1(double)", "drop", "functions/funcks/flog1|DoubleType" },
+            new Object[]{ "DROP FUNCTION IF EXISTS funcks.flog1(double)", "drop", "functions/funcks/flog1[DoubleType]" },
             new Object[]{ createAggregateCQL("aggks.aaverage1"), "create", "functions/aggks" },
-            new Object[]{ "DROP AGGREGATE IF EXISTS aggks.aaverage1(int)", "drop", "functions/aggks/aaverage1|Int32Type" },
+            new Object[]{ "DROP AGGREGATE IF EXISTS aggks.aaverage1(int)", "drop", "functions/aggks/aaverage1[Int32Type]" },
         };
     }
 
