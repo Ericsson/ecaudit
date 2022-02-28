@@ -21,6 +21,7 @@ import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
 import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.schema.KeyspaceParams;
 import org.apache.cassandra.schema.SchemaConstants;
+import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.Tables;
 
@@ -37,6 +38,7 @@ final class AuditAuthKeyspace
     private static final int WHITELIST_TABLE_GC_GRACE_SECONDS = (int) TimeUnit.DAYS.toSeconds(90);
     private static final TableMetadata CREATE_ROLE_AUDIT_WHITELISTS =
             CreateTableStatement.parse(WHITELIST_TABLE_SCHEMA, SchemaConstants.AUTH_KEYSPACE_NAME)
+            .id(TableId.forSystemTable(SchemaConstants.AUTH_KEYSPACE_NAME, WHITELIST_TABLE_NAME_V2))
             .comment(WHITELIST_TABLE_DESCRIPTION)
             .gcGraceSeconds(WHITELIST_TABLE_GC_GRACE_SECONDS)
             .build();
