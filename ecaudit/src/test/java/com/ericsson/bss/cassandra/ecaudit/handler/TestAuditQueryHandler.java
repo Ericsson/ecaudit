@@ -134,6 +134,7 @@ public class TestAuditQueryHandler
         MD5Digest statementId = MD5Digest.compute(query);
 
         ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
+        parsedPrepared.rawCQLStatement = "select id from ks.ts where id = ?";
         Prepared prepared = new Prepared(statementId, parsedPrepared);
 
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
@@ -144,6 +145,27 @@ public class TestAuditQueryHandler
 
         CQLStatement stmt = queryHandler.getPrepared(resultPrepared.statementId).statement;
         assertThat(stmt).isSameAs(mockStatement);
+
+        verify(mockHandler, times(1)).prepare(eq(query), eq(mockQueryState), eq(customPayload));
+        verify(mockHandler, times(1)).getPrepared(eq(statementId));
+    }
+
+    @Test
+    public void testPrepareAndGetPreparedWhenPreloaded()
+    {
+        String query = "select id from ks.ts where id = ?";
+        MD5Digest statementId = MD5Digest.compute(query);
+
+        ParsedStatement.Prepared parsedPrepared = new ParsedStatement.Prepared(mockStatement);
+        Prepared prepared = new Prepared(statementId, parsedPrepared);
+
+        when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
+        when(mockHandler.prepare(query, mockQueryState, customPayload)).thenReturn(prepared);
+
+        Prepared resultPrepared = queryHandler.prepare(query, mockQueryState, customPayload);
+        assertThat(resultPrepared).isSameAs(prepared);
+
+        assertThat(queryHandler.getPrepared(resultPrepared.statementId)).isNull();
 
         verify(mockHandler, times(1)).prepare(eq(query), eq(mockQueryState), eq(customPayload));
         verify(mockHandler, times(1)).getPrepared(eq(statementId));
