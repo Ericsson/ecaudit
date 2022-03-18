@@ -216,6 +216,13 @@ public class AuditQueryHandler implements QueryHandler
             return null; // Return null to client, will trigger a new attempt
         }
 
+        // When prepared statements are cached during startup the raw CQL statement can be missing
+        if ("".equals(prepared.rawCQLStatement))
+        {
+            QueryProcessor.instance.evictPrepared(id);
+            return null; // Return null to client, will trigger a re-prepare
+        }
+
         preparedRawCqlStatements.get().add(prepared.rawCQLStatement);
 
         return prepared;

@@ -47,6 +47,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
+import org.apache.cassandra.cql3.QueryProcessor;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -334,6 +335,35 @@ public class ITVerifyAudit
         for (int i = 1; i <= 2; i++)
         {
             session.execute(preparedInsertStatement.bind());
+        }
+
+        ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
+        verify(mockAuditAppender, atLeast(expectedStatements.size())).doAppend(loggingEventCaptor.capture());
+        List<ILoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertThat(loggingEvents
+                   .stream()
+                   .map(ILoggingEvent::getFormattedMessage)
+                   .collect(Collectors.toList()))
+        .containsAll(expectedAttempts(expectedStatements));
+    }
+
+    @Test
+    public void testPreloadedPreparedStatementsAreLogged()
+    {
+        PreparedStatement preparedSelectStatement = session.prepare("SELECT * FROM ecks.ectbl");
+
+        List<String> expectedStatements = Arrays.asList(
+        "SELECT * FROM ecks.ectbl[]",
+        "SELECT * FROM ecks.ectbl[]");
+
+        // Simulate caching behavior during a restart
+        QueryProcessor.clearPreparedStatements(true);
+        QueryProcessor.instance.preloadPreparedStatements();
+
+        for (int i = 1; i <= 2; i++)
+        {
+            session.execute(preparedSelectStatement.bind());
         }
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
