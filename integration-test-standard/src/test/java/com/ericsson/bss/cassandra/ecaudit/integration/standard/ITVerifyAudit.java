@@ -323,6 +323,31 @@ public class ITVerifyAudit
     }
 
     @Test
+    public void testPreparedStatementsWithoutValuesAreLogged()
+    {
+        PreparedStatement preparedInsertStatement = session.prepare("SELECT * FROM ecks.ectbl");
+
+        List<String> expectedStatements = Arrays.asList(
+        "SELECT * FROM ecks.ectbl[]",
+        "SELECT * FROM ecks.ectbl[]");
+
+        for (int i = 1; i <= 2; i++)
+        {
+            session.execute(preparedInsertStatement.bind());
+        }
+
+        ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
+        verify(mockAuditAppender, atLeast(expectedStatements.size())).doAppend(loggingEventCaptor.capture());
+        List<ILoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertThat(loggingEvents
+                   .stream()
+                   .map(ILoggingEvent::getFormattedMessage)
+                   .collect(Collectors.toList()))
+        .containsAll(expectedAttempts(expectedStatements));
+    }
+
+    @Test
     public void testValidBatchStatementsAreLogged()
     {
         PreparedStatement preparedInsertStatement1 = session

@@ -89,17 +89,24 @@ public class PreparedAuditOperation implements AuditOperation
 
         fullStatement.append('[');
 
-        Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
-        for (ColumnSpecification column : options.getColumnSpecifications())
+        if (options.getValues().isEmpty())
         {
-            ByteBuffer value = values.remove();
-            String valueString = boundValueSuppressor.suppress(column, value)
-                                                     .orElseGet(() -> CqlLiteralFlavorAdapter.toCQLLiteral(value, column));
-            fullStatement.append(valueString).append(", ");
+            fullStatement.append(']');
         }
+        else
+        {
+            Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
+            for (ColumnSpecification column : options.getColumnSpecifications())
+            {
+                ByteBuffer value = values.remove();
+                String valueString = boundValueSuppressor.suppress(column, value)
+                                                         .orElseGet(() -> CqlLiteralFlavorAdapter.toCQLLiteral(value, column));
+                fullStatement.append(valueString).append(", ");
+            }
 
-        fullStatement.setLength(fullStatement.length() - 1);
-        fullStatement.setCharAt(fullStatement.length() - 1, ']');
+            fullStatement.setLength(fullStatement.length() - 1);
+            fullStatement.setCharAt(fullStatement.length() - 1, ']');
+        }
 
         return fullStatement.toString();
     }
