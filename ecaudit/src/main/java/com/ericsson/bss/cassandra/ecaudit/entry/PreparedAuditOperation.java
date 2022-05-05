@@ -75,7 +75,7 @@ public class PreparedAuditOperation implements AuditOperation
      */
     private String bindValues()
     {
-        if (!options.hasColumnSpecifications())
+        if (!options.hasColumnSpecifications() || options.getColumnSpecifications().size() == 0)
         {
             return preparedStatement;
         }
