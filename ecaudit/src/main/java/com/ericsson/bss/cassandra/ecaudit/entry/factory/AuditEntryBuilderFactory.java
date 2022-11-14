@@ -187,7 +187,7 @@ public class AuditEntryBuilderFactory
         }
         if (parsedStatement instanceof DescribeStatement)
         {
-        	return createDescribeEntryBuilder((DescribeStatement) parsedStatement);
+            return createDescribeEntryBuilder((DescribeStatement) parsedStatement);
         }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
@@ -231,7 +231,7 @@ public class AuditEntryBuilderFactory
         }
         if (statement instanceof DescribeStatement)
         {
-        	return createDescribeEntryBuilder((DescribeStatement) statement);
+            return createDescribeEntryBuilder((DescribeStatement) statement);
         }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
