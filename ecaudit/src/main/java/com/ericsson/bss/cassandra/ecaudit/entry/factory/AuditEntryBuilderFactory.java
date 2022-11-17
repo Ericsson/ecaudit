@@ -77,6 +77,10 @@ import org.apache.cassandra.service.ClientState;
 @SuppressWarnings("PMD")
 public class AuditEntryBuilderFactory
 {
+    private static final String KEYSPACE_NAME = "keyspaceName";
+    private static final String NAME = "name";
+    private static final String TABLE_NAME = "tableName";
+
     private static final Logger LOG = LoggerFactory.getLogger(AuditEntryBuilderFactory.class);
 
     // This list of predefined and immutable permission sets are injected to the audit entries
@@ -676,7 +680,7 @@ public class AuditEntryBuilderFactory
         String keyspaceName;
         try
         {
-            keyspaceName = (String) FieldUtils.readField(statement, "keyspaceName", true);
+            keyspaceName = (String) FieldUtils.readField(statement, KEYSPACE_NAME, true);
         }
         catch (IllegalAccessException e)
         {
@@ -699,7 +703,7 @@ public class AuditEntryBuilderFactory
         String keyspaceName;
         try
         {
-            keyspaceName = (String) FieldUtils.readField(statement, "keyspaceName", true);
+            keyspaceName = (String) FieldUtils.readField(statement, KEYSPACE_NAME, true);
         }
         catch (IllegalAccessException e)
         {
@@ -736,7 +740,7 @@ public class AuditEntryBuilderFactory
         QualifiedName name;
         try
         {
-            name = (QualifiedName) FieldUtils.readField(statement, "name", true);
+            name = (QualifiedName) FieldUtils.readField(statement, NAME, true);
         }
         catch (IllegalAccessException e)
         {
@@ -759,7 +763,7 @@ public class AuditEntryBuilderFactory
         QualifiedName name;
         try
         {
-            name = (QualifiedName) FieldUtils.readField(statement, "name", true);
+            name = (QualifiedName) FieldUtils.readField(statement, NAME, true);
         }
         catch (IllegalAccessException e)
         {
@@ -824,7 +828,7 @@ public class AuditEntryBuilderFactory
         UTName name;
         try
         {
-            name = (UTName) FieldUtils.readField(statement, "name", true);
+            name = (UTName) FieldUtils.readField(statement, NAME, true);
         }
         catch (IllegalAccessException e)
         {
@@ -847,7 +851,7 @@ public class AuditEntryBuilderFactory
         UTName name;
         try
         {
-            name = (UTName) FieldUtils.readField(statement, "name", true);
+            name = (UTName) FieldUtils.readField(statement, NAME, true);
         }
         catch (IllegalAccessException e)
         {
@@ -870,7 +874,7 @@ public class AuditEntryBuilderFactory
         UTName name;
         try
         {
-            name = (UTName) FieldUtils.readField(statement, "name", true);
+            name = (UTName) FieldUtils.readField(statement, NAME, true);
         }
         catch (IllegalAccessException e)
         {
@@ -977,7 +981,7 @@ public class AuditEntryBuilderFactory
         QualifiedName name;
         try
         {
-            name = (QualifiedName) FieldUtils.readField(statement, "tableName", true);
+            name = (QualifiedName) FieldUtils.readField(statement, TABLE_NAME, true);
         }
         catch (IllegalAccessException e)
         {
@@ -1001,7 +1005,7 @@ public class AuditEntryBuilderFactory
         QualifiedName name;
         try
         {
-            name = (QualifiedName) FieldUtils.readField(statement, "tableName", true);
+            name = (QualifiedName) FieldUtils.readField(statement, TABLE_NAME, true);
         }
         catch (IllegalAccessException e)
         {

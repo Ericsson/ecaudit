@@ -49,13 +49,13 @@ import org.apache.cassandra.schema.TableMetadataRef;
 
 class StatementResourceAdapter //NOPMD
 {
-
     private static final String UNCHECKED = "unchecked";
-	private static final String ARGUMENTS = "arguments";
-	private static final String FAILED_TO_RESOLVE_BASE_TABLE_OF_FUNCTION = "Failed to resolve base table of function";
-	private static final String NAME = "name";
-	private static final String TABLE_NAME = "tableName";
-	private static final String FAILED_TO_RESOLVE_RESOURCE = "Failed to resolve resource";
+    private static final String ARGUMENTS = "arguments";
+    private static final String FAILED_TO_RESOLVE_BASE_TABLE_OF_FUNCTION = "Failed to resolve base table of function";
+    private static final String NAME = "name";
+    private static final String TABLE_NAME = "tableName";
+    private static final String FAILED_TO_RESOLVE_RESOURCE = "Failed to resolve resource";
+
     public static final String FUNCTION_NAME = "functionName";
 
     /**
