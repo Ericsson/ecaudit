@@ -33,7 +33,9 @@ import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.CQLStatement.Raw;
+import org.apache.cassandra.cql3.QualifiedName;
 import org.apache.cassandra.cql3.QueryProcessor;
+import org.apache.cassandra.cql3.UTName;
 import org.apache.cassandra.cql3.statements.AlterRoleStatement;
 import org.apache.cassandra.cql3.statements.AuthenticationStatement;
 import org.apache.cassandra.cql3.statements.AuthorizationStatement;
@@ -76,6 +78,10 @@ import org.apache.cassandra.service.ClientState;
 @SuppressWarnings("PMD")
 public class AuditEntryBuilderFactory
 {
+    private static final String KEYSPACE_NAME = "keyspaceName";
+    private static final String NAME = "name";
+    private static final String TABLE_NAME = "tableName";
+
     private static final Logger LOG = LoggerFactory.getLogger(AuditEntryBuilderFactory.class);
 
     // This list of predefined and immutable permission sets are injected to the audit entries
@@ -172,6 +178,10 @@ public class AuditEntryBuilderFactory
         if (parsedStatement instanceof UseStatement)
         {
             return createUseEntryBuilder((UseStatement) parsedStatement);
+        }
+        if (isAlterSchemaStatement(parsedStatement))
+        {
+            return createSchemaAlteringEntryBuilder(parsedStatement);
         }
         if (parsedStatement instanceof AuthenticationStatement)
         {
@@ -446,6 +456,30 @@ public class AuditEntryBuilderFactory
                 || statement instanceof DropTriggerStatement;
     }
 
+    private boolean isAlterSchemaStatement(Raw parsedStatement)
+    {
+        return parsedStatement instanceof CreateKeyspaceStatement.Raw
+                || parsedStatement instanceof AlterKeyspaceStatement.Raw
+                || parsedStatement instanceof DropKeyspaceStatement.Raw
+                || parsedStatement instanceof CreateTableStatement.Raw
+                || parsedStatement instanceof AlterTableStatement.Raw
+                || parsedStatement instanceof DropTableStatement.Raw
+                || parsedStatement instanceof CreateViewStatement.Raw
+                || parsedStatement instanceof AlterViewStatement.Raw
+                || parsedStatement instanceof DropViewStatement.Raw
+                || parsedStatement instanceof CreateTypeStatement.Raw
+                || parsedStatement instanceof AlterTypeStatement.Raw
+                || parsedStatement instanceof DropTypeStatement.Raw
+                || parsedStatement instanceof CreateFunctionStatement.Raw
+                || parsedStatement instanceof DropFunctionStatement.Raw
+                || parsedStatement instanceof CreateAggregateStatement.Raw
+                || parsedStatement instanceof DropAggregateStatement.Raw
+                || parsedStatement instanceof CreateIndexStatement.Raw
+                || parsedStatement instanceof DropIndexStatement.Raw
+                || parsedStatement instanceof CreateTriggerStatement.Raw
+                || parsedStatement instanceof DropTriggerStatement.Raw;
+    }
+
     @SuppressWarnings("PMD")
     private Builder createSchemaAlteringEntryBuilder(CQLStatement statement)
     {
@@ -541,11 +575,113 @@ public class AuditEntryBuilderFactory
         return createDefaultEntryBuilder();
     }
 
+    @SuppressWarnings("PMD")
+    private Builder createSchemaAlteringEntryBuilder(Raw parsedStatement)
+    {
+        if (parsedStatement instanceof CreateKeyspaceStatement.Raw)
+        {
+            return createCreateKeyspaceEntryBuilder((CreateKeyspaceStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof AlterKeyspaceStatement.Raw)
+        {
+            return createAlterKeyspaceEntryBuilder((AlterKeyspaceStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof DropKeyspaceStatement.Raw)
+        {
+            return createDropKeyspaceEntryBuilder((DropKeyspaceStatement.Raw) parsedStatement);
+        }
+
+        if (parsedStatement instanceof CreateTableStatement.Raw)
+        {
+            return createCreateTableEntryBuilder((CreateTableStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof AlterTableStatement.Raw)
+        {
+            return createAlterTableEntryBuilder((AlterTableStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof DropTableStatement.Raw)
+        {
+            return createDropTableEntryBuilder((DropTableStatement.Raw) parsedStatement);
+        }
+
+        if (parsedStatement instanceof CreateViewStatement.Raw)
+        {
+            return createCreateViewEntryBuilder((CreateViewStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof AlterViewStatement.Raw)
+        {
+            return createAlterViewEntryBuilder((AlterViewStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof DropViewStatement.Raw)
+        {
+            return createDropViewEntryBuilder((DropViewStatement.Raw) parsedStatement);
+        }
+
+        if (parsedStatement instanceof CreateTypeStatement.Raw)
+        {
+            return createCreateTypeEntryBuilder((CreateTypeStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof AlterTypeStatement.Raw)
+        {
+            return createAlterTypeEntryBuilder((AlterTypeStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof DropTypeStatement.Raw)
+        {
+            return createDropTypeEntryBuilder((DropTypeStatement.Raw) parsedStatement);
+        }
+
+        if (parsedStatement instanceof CreateFunctionStatement.Raw)
+        {
+            return createCreateFunctionEntryBuilder((CreateFunctionStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof DropFunctionStatement.Raw)
+        {
+            return createDropFunctionEntryBuilder((DropFunctionStatement.Raw) parsedStatement);
+        }
+
+        if (parsedStatement instanceof CreateAggregateStatement.Raw)
+        {
+            return createCreateAggregateEntryBuilder((CreateAggregateStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof DropAggregateStatement.Raw)
+        {
+            return createDropAggregateEntryBuilder((DropAggregateStatement.Raw) parsedStatement);
+        }
+
+        if (parsedStatement instanceof CreateIndexStatement.Raw)
+        {
+            return createCreateIndexEntryBuilder((CreateIndexStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof DropIndexStatement.Raw)
+        {
+            return createDropIndexEntryBuilder((DropIndexStatement.Raw) parsedStatement);
+        }
+
+        if (parsedStatement instanceof CreateTriggerStatement.Raw)
+        {
+            return createCreateTriggerEntryBuilder((CreateTriggerStatement.Raw) parsedStatement);
+        }
+        if (parsedStatement instanceof DropTriggerStatement.Raw)
+        {
+            return createDropTriggerEntryBuilder((DropTriggerStatement.Raw) parsedStatement);
+        }
+
+        LOG.warn("Detected unrecognized SchemaAlteringStatement in audit mapping");
+        return createDefaultEntryBuilder();
+    }
+
     private Builder createCreateKeyspaceEntryBuilder(CreateKeyspaceStatement statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(CREATE_PERMISSIONS)
                          .resource(DataResource.keyspace(statement.getAuditLogContext().keyspace));
+    }
+
+    private Builder createCreateKeyspaceEntryBuilder(CreateKeyspaceStatement.Raw statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(CREATE_PERMISSIONS)
+                         .resource(DataResource.keyspace(statement.keyspaceName));
     }
 
     private Builder createAlterKeyspaceEntryBuilder(AlterKeyspaceStatement statement)
@@ -555,11 +691,43 @@ public class AuditEntryBuilderFactory
                          .resource(DataResource.keyspace(statement.getAuditLogContext().keyspace));
     }
 
+    private Builder createAlterKeyspaceEntryBuilder(AlterKeyspaceStatement.Raw statement)
+    {
+        String keyspaceName;
+        try
+        {
+            keyspaceName = (String) FieldUtils.readField(statement, KEYSPACE_NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+        return AuditEntry.newBuilder()
+                         .permissions(ALTER_PERMISSIONS)
+                         .resource(DataResource.keyspace(keyspaceName));
+    }
+
     private Builder createDropKeyspaceEntryBuilder(DropKeyspaceStatement statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(DROP_PERMISSIONS)
                          .resource(DataResource.keyspace(statement.getAuditLogContext().keyspace));
+    }
+
+    private Builder createDropKeyspaceEntryBuilder(DropKeyspaceStatement.Raw statement)
+    {
+        String keyspaceName;
+        try
+        {
+            keyspaceName = (String) FieldUtils.readField(statement, KEYSPACE_NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+        return AuditEntry.newBuilder()
+                         .permissions(DROP_PERMISSIONS)
+                         .resource(DataResource.keyspace(keyspaceName));
     }
 
     private Builder createCreateTableEntryBuilder(CreateTableStatement statement)
@@ -569,11 +737,34 @@ public class AuditEntryBuilderFactory
                          .resource(DataResource.table(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope));
     }
 
+    private Builder createCreateTableEntryBuilder(CreateTableStatement.Raw statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(CREATE_PERMISSIONS)
+                         .resource(DataResource.table(statement.keyspace(), statement.table()));
+    }
+
     private Builder createAlterTableEntryBuilder(AlterTableStatement statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(ALTER_PERMISSIONS)
                          .resource(DataResource.table(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope));
+    }
+
+    private Builder createAlterTableEntryBuilder(AlterTableStatement.Raw statement)
+    {
+        QualifiedName name;
+        try
+        {
+            name = (QualifiedName) FieldUtils.readField(statement, NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+        return AuditEntry.newBuilder()
+                         .permissions(ALTER_PERMISSIONS)
+                         .resource(DataResource.table(name.getKeyspace(), name.getName()));
     }
 
     private Builder createDropTableEntryBuilder(DropTableStatement statement)
@@ -583,7 +774,30 @@ public class AuditEntryBuilderFactory
                          .resource(DataResource.table(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope));
     }
 
+    private Builder createDropTableEntryBuilder(DropTableStatement.Raw statement)
+    {
+        QualifiedName name;
+        try
+        {
+            name = (QualifiedName) FieldUtils.readField(statement, NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+        return AuditEntry.newBuilder()
+                         .permissions(DROP_PERMISSIONS)
+                         .resource(DataResource.table(name.getKeyspace(), name.getName()));
+    }
+
     private Builder createCreateViewEntryBuilder(CreateViewStatement statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(ALTER_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
+    }
+
+    private Builder createCreateViewEntryBuilder(CreateViewStatement.Raw statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(ALTER_PERMISSIONS)
@@ -597,7 +811,21 @@ public class AuditEntryBuilderFactory
                          .resource(statementResourceAdapter.resolveBaseTableResource(statement));
     }
 
+    private Builder createAlterViewEntryBuilder(AlterViewStatement.Raw statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(ALTER_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
+    }
+
     private Builder createDropViewEntryBuilder(DropViewStatement statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(ALTER_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
+    }
+
+    private Builder createDropViewEntryBuilder(DropViewStatement.Raw statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(ALTER_PERMISSIONS)
@@ -611,11 +839,43 @@ public class AuditEntryBuilderFactory
                          .resource(DataResource.keyspace(statement.getAuditLogContext().keyspace));
     }
 
+    private Builder createCreateTypeEntryBuilder(CreateTypeStatement.Raw statement)
+    {
+        UTName name;
+        try
+        {
+            name = (UTName) FieldUtils.readField(statement, NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+        return AuditEntry.newBuilder()
+                         .permissions(CREATE_PERMISSIONS)
+                         .resource(DataResource.keyspace(name.getKeyspace()));
+    }
+
     private Builder createAlterTypeEntryBuilder(AlterTypeStatement statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(ALTER_PERMISSIONS)
                          .resource(DataResource.keyspace(statement.getAuditLogContext().keyspace));
+    }
+
+    private Builder createAlterTypeEntryBuilder(AlterTypeStatement.Raw statement)
+    {
+        UTName name;
+        try
+        {
+            name = (UTName) FieldUtils.readField(statement, NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+        return AuditEntry.newBuilder()
+                         .permissions(ALTER_PERMISSIONS)
+                         .resource(DataResource.keyspace(name.getKeyspace()));
     }
 
     private Builder createDropTypeEntryBuilder(DropTypeStatement statement)
@@ -625,7 +885,30 @@ public class AuditEntryBuilderFactory
                          .resource(DataResource.keyspace(statement.getAuditLogContext().keyspace));
     }
 
+    private Builder createDropTypeEntryBuilder(DropTypeStatement.Raw statement)
+    {
+        UTName name;
+        try
+        {
+            name = (UTName) FieldUtils.readField(statement, NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+        return AuditEntry.newBuilder()
+                         .permissions(DROP_PERMISSIONS)
+                         .resource(DataResource.keyspace(name.getKeyspace()));
+    }
+
     private Builder createCreateFunctionEntryBuilder(CreateFunctionStatement statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(CREATE_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveFunctionKeyspaceResource(statement));
+    }
+
+    private Builder createCreateFunctionEntryBuilder(CreateFunctionStatement.Raw statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(CREATE_PERMISSIONS)
@@ -639,7 +922,21 @@ public class AuditEntryBuilderFactory
                          .resource(statementResourceAdapter.resolveFunctionResource(statement));
     }
 
+    private Builder createDropFunctionEntryBuilder(DropFunctionStatement.Raw statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(DROP_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveFunctionResource(statement));
+    }
+
     private Builder createCreateAggregateEntryBuilder(CreateAggregateStatement statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(CREATE_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveAggregateKeyspaceResource(statement));
+    }
+
+    private Builder createCreateAggregateEntryBuilder(CreateAggregateStatement.Raw statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(CREATE_PERMISSIONS)
@@ -653,7 +950,21 @@ public class AuditEntryBuilderFactory
                          .resource(statementResourceAdapter.resolveAggregateResource(statement));
     }
 
+    private Builder createDropAggregateEntryBuilder(DropAggregateStatement.Raw statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(DROP_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveAggregateResource(statement));
+    }
+
     private Builder createCreateIndexEntryBuilder(CreateIndexStatement statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(ALTER_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
+    }
+
+    private Builder createCreateIndexEntryBuilder(CreateIndexStatement.Raw statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(ALTER_PERMISSIONS)
@@ -667,6 +978,13 @@ public class AuditEntryBuilderFactory
                          .resource(statementResourceAdapter.resolveBaseTableResource(statement));
     }
 
+    private Builder createDropIndexEntryBuilder(DropIndexStatement.Raw statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(ALTER_PERMISSIONS)
+                         .resource(statementResourceAdapter.resolveBaseTableResource(statement));
+    }
+
     private Builder createCreateTriggerEntryBuilder(CreateTriggerStatement statement)
     {
         return AuditEntry.newBuilder()
@@ -674,11 +992,45 @@ public class AuditEntryBuilderFactory
                          .resource(DataResource.table(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope));
     }
 
+    private Builder createCreateTriggerEntryBuilder(CreateTriggerStatement.Raw statement)
+    {
+        QualifiedName name;
+        try
+        {
+            name = (QualifiedName) FieldUtils.readField(statement, TABLE_NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+
+        return AuditEntry.newBuilder()
+                         .permissions(USE_PERMISSIONS)
+                         .resource(DataResource.table(name.getKeyspace(), name.getName()));
+    }
+
     private Builder createDropTriggerEntryBuilder(DropTriggerStatement statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(USE_PERMISSIONS)
                          .resource(DataResource.table(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope));
+    }
+
+    private Builder createDropTriggerEntryBuilder(DropTriggerStatement.Raw statement)
+    {
+        QualifiedName name;
+        try
+        {
+            name = (QualifiedName) FieldUtils.readField(statement, TABLE_NAME, true);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve resource", e);
+        }
+
+        return AuditEntry.newBuilder()
+                         .permissions(USE_PERMISSIONS)
+                         .resource(DataResource.table(name.getKeyspace(), name.getName()));
     }
 
     private Builder createDefaultEntryBuilder()
