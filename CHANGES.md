@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.9.2
+* Fix unrecognized CQLStatement for unprepared schema altering statements (only flavor ecaudit_c4.0)
+
 ## Version 2.9.0
 * Use the correct id for system_auth.role_audit_whitelists_v2 with Cassandra 4.0.1 (only flavor ecaudit_c4.0)
 * Build with Cassandra 4.0.3 (only flavor ecaudit_c4.0)

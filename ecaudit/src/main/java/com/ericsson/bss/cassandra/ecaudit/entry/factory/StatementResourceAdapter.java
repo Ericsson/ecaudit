@@ -26,6 +26,8 @@ import org.apache.cassandra.auth.FunctionResource;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.RoleResource;
 import org.apache.cassandra.cql3.CQL3Type;
+import org.apache.cassandra.cql3.QualifiedName;
+import org.apache.cassandra.cql3.functions.FunctionName;
 import org.apache.cassandra.cql3.statements.AuthenticationStatement;
 import org.apache.cassandra.cql3.statements.AuthorizationStatement;
 import org.apache.cassandra.cql3.statements.PermissionsManagementStatement;
@@ -45,10 +47,15 @@ import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 
-class StatementResourceAdapter
+class StatementResourceAdapter //NOPMD
 {
-
+    private static final String UNCHECKED = "unchecked";
+    private static final String ARGUMENTS = "arguments";
+    private static final String FAILED_TO_RESOLVE_BASE_TABLE_OF_FUNCTION = "Failed to resolve base table of function";
+    private static final String NAME = "name";
+    private static final String TABLE_NAME = "tableName";
     private static final String FAILED_TO_RESOLVE_RESOURCE = "Failed to resolve resource";
+
     public static final String FUNCTION_NAME = "functionName";
 
     /**
@@ -118,12 +125,25 @@ class StatementResourceAdapter
     {
         try
         {
-            String baseName  = (String) FieldUtils.readField(statement, "tableName", true);
+            String baseName  = (String) FieldUtils.readField(statement, TABLE_NAME, true);
             return DataResource.table(statement.getAuditLogContext().keyspace, baseName);
         }
         catch (IllegalAccessException e)
         {
             throw new CassandraAuditException("Failed to resolve base table of view " + statement.getAuditLogContext().keyspace + "." + statement.getAuditLogContext().scope, e);
+        }
+    }
+
+    DataResource resolveBaseTableResource(CreateViewStatement.Raw statement)
+    {
+        try
+        {
+            QualifiedName baseName  = (QualifiedName) FieldUtils.readField(statement, TABLE_NAME, true);
+            return DataResource.table(baseName.getKeyspace(), baseName.getName());
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve base table of view", e);
         }
     }
 
@@ -140,6 +160,27 @@ class StatementResourceAdapter
         }
     }
 
+    DataResource resolveBaseTableResource(AlterViewStatement.Raw statement)
+    {
+        try
+        {
+            QualifiedName name  = (QualifiedName) FieldUtils.readField(statement, NAME, true);
+            TableMetadataRef baseTable = View.findBaseTable(name.getKeyspace(), name.getName());
+            if (baseTable == null)
+            {
+                return DataResource.keyspace(name.getName());
+            }
+            else
+            {
+                return DataResource.table(name.getKeyspace(), baseTable.name);
+            }
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve base table of view", e);
+        }
+    }
+
     DataResource resolveBaseTableResource(DropViewStatement statement)
     {
         TableMetadataRef baseTable = View.findBaseTable(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope);
@@ -153,13 +194,48 @@ class StatementResourceAdapter
         }
     }
 
+    DataResource resolveBaseTableResource(DropViewStatement.Raw statement)
+    {
+        try
+        {
+            QualifiedName name  = (QualifiedName) FieldUtils.readField(statement, NAME, true);
+            TableMetadataRef baseTable = View.findBaseTable(name.getKeyspace(), name.getName());
+            if (baseTable == null)
+            {
+                return DataResource.keyspace(name.getName());
+            }
+            else
+            {
+                return DataResource.table(name.getKeyspace(), baseTable.name);
+            }
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException("Failed to resolve base table of view", e);
+        }
+    }
+
     DataResource resolveBaseTableResource(CreateIndexStatement statement)
     {
         try
         {
-             String baseTable = (String) FieldUtils.readField(statement, "tableName", true);
+             String baseTable = (String) FieldUtils.readField(statement, TABLE_NAME, true);
 
              return DataResource.table(statement.getAuditLogContext().keyspace, baseTable);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_RESOURCE, e);
+        }
+    }
+
+    DataResource resolveBaseTableResource(CreateIndexStatement.Raw statement)
+    {
+        try
+        {
+            QualifiedName baseTable = (QualifiedName) FieldUtils.readField(statement, TABLE_NAME, true);
+
+            return DataResource.table(baseTable.getKeyspace(), baseTable.getName());
         }
         catch (IllegalAccessException e)
         {
@@ -185,22 +261,77 @@ class StatementResourceAdapter
         }
     }
 
+    DataResource resolveBaseTableResource(DropIndexStatement.Raw statement)
+    {
+        try
+        {
+            QualifiedName name = (QualifiedName) FieldUtils.readField(statement, NAME, true);
+
+            KeyspaceMetadata keyspace = Schema.instance.getKeyspaceMetadata(name.getKeyspace());
+
+            TableMetadata baseTable = null == keyspace
+                    ? null
+                    : keyspace.findIndexedTable(name.getName()).orElse(null);
+
+            if (baseTable == null)
+            {
+                return DataResource.keyspace(name.getKeyspace());
+            }
+            else
+            {
+                return DataResource.table(name.getKeyspace(), baseTable.name);
+            }
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_RESOURCE, e);
+        }
+    }
+
     FunctionResource resolveFunctionKeyspaceResource(CreateFunctionStatement statement)
     {
         return FunctionResource.keyspace(statement.getAuditLogContext().keyspace);
+    }
+
+    FunctionResource resolveFunctionKeyspaceResource(CreateFunctionStatement.Raw statement)
+    {
+        try
+        {
+            FunctionName name  = (FunctionName) FieldUtils.readField(statement, NAME, true);
+            return FunctionResource.keyspace(name.keyspace);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_BASE_TABLE_OF_FUNCTION, e);
+        }
     }
 
     FunctionResource resolveFunctionResource(DropFunctionStatement statement)
     {
         try
         {
-            @SuppressWarnings("unchecked")
-            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "arguments", true);
+            @SuppressWarnings(UNCHECKED)
+            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, ARGUMENTS, true);
             return FunctionResource.functionFromCql(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope, argRawTypes);
         }
         catch (IllegalAccessException e)
         {
             throw new CassandraAuditException("Failed to resolve base table of function " + statement.getAuditLogContext().keyspace + "." + statement.getAuditLogContext().scope, e);
+        }
+    }
+
+    FunctionResource resolveFunctionResource(DropFunctionStatement.Raw statement)
+    {
+        try
+        {
+            FunctionName name  = (FunctionName) FieldUtils.readField(statement, NAME, true);
+            @SuppressWarnings(UNCHECKED)
+            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, ARGUMENTS, true);
+            return FunctionResource.functionFromCql(name.keyspace, name.name, argRawTypes);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_BASE_TABLE_OF_FUNCTION, e);
         }
     }
 
@@ -209,17 +340,45 @@ class StatementResourceAdapter
         return FunctionResource.keyspace(statement.getAuditLogContext().keyspace);
     }
 
+    FunctionResource resolveAggregateKeyspaceResource(CreateAggregateStatement.Raw statement)
+    {
+        try
+        {
+            FunctionName name  = (FunctionName) FieldUtils.readField(statement, NAME, true);
+            return FunctionResource.keyspace(name.keyspace);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_BASE_TABLE_OF_FUNCTION, e);
+        }
+    }
+
     FunctionResource resolveAggregateResource(DropAggregateStatement statement)
     {
         try
         {
-            @SuppressWarnings("unchecked")
-            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, "arguments", true);
+            @SuppressWarnings(UNCHECKED)
+            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, ARGUMENTS, true);
             return FunctionResource.functionFromCql(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope, argRawTypes);
         }
         catch (IllegalAccessException e)
         {
             throw new CassandraAuditException("Failed to resolve base table of function " + statement.getAuditLogContext().keyspace + "." + statement.getAuditLogContext().scope, e);
+        }
+    }
+
+    FunctionResource resolveAggregateResource(DropAggregateStatement.Raw statement)
+    {
+        try
+        {
+            FunctionName name  = (FunctionName) FieldUtils.readField(statement, NAME, true);
+            @SuppressWarnings(UNCHECKED)
+            List<CQL3Type.Raw> argRawTypes = (List<CQL3Type.Raw>) FieldUtils.readField(statement, ARGUMENTS, true);
+            return FunctionResource.functionFromCql(name.keyspace, name.name, argRawTypes);
+        }
+        catch (IllegalAccessException e)
+        {
+            throw new CassandraAuditException(FAILED_TO_RESOLVE_BASE_TABLE_OF_FUNCTION, e);
         }
     }
 }
