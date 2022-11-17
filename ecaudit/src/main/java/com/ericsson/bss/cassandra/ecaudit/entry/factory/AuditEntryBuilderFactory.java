@@ -41,6 +41,7 @@ import org.apache.cassandra.cql3.statements.AuthenticationStatement;
 import org.apache.cassandra.cql3.statements.AuthorizationStatement;
 import org.apache.cassandra.cql3.statements.BatchStatement;
 import org.apache.cassandra.cql3.statements.CreateRoleStatement;
+import org.apache.cassandra.cql3.statements.DescribeStatement;
 import org.apache.cassandra.cql3.statements.DropRoleStatement;
 import org.apache.cassandra.cql3.statements.ListPermissionsStatement;
 import org.apache.cassandra.cql3.statements.ListRolesStatement;
@@ -194,6 +195,10 @@ public class AuditEntryBuilderFactory
         {
             return createBatchEntryBuilder();
         }
+        if (parsedStatement instanceof DescribeStatement)
+        {
+            return createDescribeEntryBuilder((DescribeStatement) parsedStatement);
+        }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
         return createDefaultEntryBuilder().knownOperation(false);
@@ -233,6 +238,10 @@ public class AuditEntryBuilderFactory
         if (statement instanceof BatchStatement)
         {
             return createBatchEntryBuilder();
+        }
+        if (statement instanceof DescribeStatement)
+        {
+            return createDescribeEntryBuilder((DescribeStatement) statement);
         }
 
         LOG.warn("Detected unrecognized CQLStatement in audit mapping");
@@ -316,6 +325,13 @@ public class AuditEntryBuilderFactory
         return AuditEntry.newBuilder()
                          .permissions(MODIFY_PERMISSIONS)
                          .resource(DataResource.table(statement.keyspace(), statement.name()));
+    }
+
+    private Builder createDescribeEntryBuilder(DescribeStatement statement)
+    {
+        return AuditEntry.newBuilder()
+                         .permissions(DESCRIBE_PERMISSIONS)
+                         .resource(DataResource.table(statement.getAuditLogContext().keyspace, statement.getAuditLogContext().scope));
     }
 
     private Builder createUseEntryBuilder(UseStatement statement)

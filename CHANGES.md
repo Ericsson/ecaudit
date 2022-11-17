@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.9.2
+* Support server side DESCRIBE command (only flavor ecaudit_c4.0)
 * Fix unrecognized CQLStatement for unprepared schema altering statements (only flavor ecaudit_c4.0)
 
 ## Version 2.9.0
