@@ -1,5 +1,8 @@
 # Changes
 
+## Version 2.9.2
+* Handle values that has not been assigned a value with prepared statements - #202
+
 ## Version 2.9.0
 * Build with Cassandra 4.0.3 (only flavor ecaudit_c4.0)
 * Build with Cassandra 3.11.12 (only flavor ecaudit_c3.11)

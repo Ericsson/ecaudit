@@ -61,6 +61,7 @@ public class ITDataPreparedAudit
 
         ccf.givenKeyspace("prepks");
         ccf.givenTable("prepks.tbl");
+        ccf.givenTableWithList("prepks.tbl1");
     }
 
     @Before
@@ -106,6 +107,22 @@ public class ITDataPreparedAudit
         PreparedStatement preparedStatement = testSession.prepare(statement);
         testSession.execute(preparedStatement.bind(value.toArray()));
         ccf.thenAuditLogContainEntryForUser(expectedTrace, testUsername);
+    }
+
+    @Test
+    public void preparedStatementWithUnsetValueIsLogged()
+    {
+        PreparedStatement preparedStatement = testSession.prepare("INSERT INTO prepks.tbl1 (key, value) VALUES (:k, :c)");
+        testSession.execute(preparedStatement.bind().setInt("k", 2));
+        ccf.thenAuditLogContainEntryForUser("INSERT INTO prepks.tbl1 (key, value) VALUES (:k, :c)[2, null]", testUsername);
+    }
+
+    @Test
+    public void preparedStatementWithNullValueIsLogged()
+    {
+        PreparedStatement preparedStatement = testSession.prepare("INSERT INTO prepks.tbl1 (key, value) VALUES (?, ?)");
+        testSession.execute(preparedStatement.bind(3, null));
+        ccf.thenAuditLogContainEntryForUser("INSERT INTO prepks.tbl1 (key, value) VALUES (?, ?)[3, null]", testUsername);
     }
 
     @Test

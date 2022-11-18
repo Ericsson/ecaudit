@@ -171,6 +171,11 @@ public class CassandraClusterFacade
         superSession.execute("CREATE TABLE IF NOT EXISTS " + table + " (key int PRIMARY KEY, value text)");
     }
 
+    void givenTableWithList(String table)
+    {
+        superSession.execute("CREATE TABLE IF NOT EXISTS " + table + " (key int PRIMARY KEY, value list<int>)");
+    }
+
     void givenRoleIsWhitelistedForOperationOnResource(String username, String operation, String resource)
     {
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = {'grant_audit_whitelist_for_" + operation + "' : '" + resource + "'}");
