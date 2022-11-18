@@ -21,6 +21,7 @@ import java.util.Queue;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
+
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.QueryOptions;
 
@@ -93,8 +94,16 @@ public class PreparedAuditOperation implements AuditOperation
         for (ColumnSpecification column : options.getColumnSpecifications())
         {
             ByteBuffer value = values.remove();
-            String valueString = boundValueSuppressor.suppress(column, value)
-                                                     .orElseGet(() -> CqlLiteralFlavorAdapter.toCQLLiteral(value, column));
+            String valueString;
+            try
+            {
+                valueString = boundValueSuppressor.suppress(column, value)
+                            .orElseGet(() -> CqlLiteralFlavorAdapter.toCQLLiteral(value, column));
+            }
+            catch (IndexOutOfBoundsException e)
+            {
+                valueString = "null";
+            }
             fullStatement.append(valueString).append(", ");
         }
 
