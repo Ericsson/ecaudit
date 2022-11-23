@@ -1,6 +1,9 @@
 # Changes
 
-## Version 2.9.2
+## Version 2.10.0
+* Build with Cassandra 4.0.7 (only flavor ecaudit_c4.0)
+* Build with Cassandra 3.11.14 (only flavor ecaudit_c3.11)
+* Build with Cassandra 3.0.28 (only flavor ecaudit_c3.0)
 * Bumps snakeyaml from 1.29 to 1.33
 * Handle values that has not been assigned a value with prepared statements - #202
 * Support server side DESCRIBE command (only flavor ecaudit_c4.0)
