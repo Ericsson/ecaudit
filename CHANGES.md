@@ -1,6 +1,7 @@
 # Changes
 
 ## Version 2.9.2
+* Bumps snakeyaml from 1.29 to 1.33
 * Handle values that has not been assigned a value with prepared statements - #202
 
 ## Version 2.9.0
