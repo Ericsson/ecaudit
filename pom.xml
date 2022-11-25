@@ -96,12 +96,6 @@
                 <version>${cassandra.version}</version>
                 <scope>provided</scope>
             </dependency>
-            <dependency>
-                <groupId>org.apache.cassandra</groupId>
-                <artifactId>cassandra-thrift</artifactId>
-                <version>${cassandra.version}</version>
-                <scope>provided</scope>
-            </dependency>
 
             <dependency>
                 <groupId>commons-cli</groupId>
