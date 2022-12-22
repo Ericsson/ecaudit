@@ -18,11 +18,12 @@ In the following sections you'll find examples on how to configure the SLF4J log
 
 To configure a custom log message format the following parameters can be configured in the ```audit.yaml``` file:
 
-| Parameter   | Description                                                       | Default |
-| ----------- | ----------------------------------------------------------------- | --------------- |
-| log_format  | Parameterized log message formatting string, see examples below  | the "legacy" format, see [README](../README.md) |
-| time_format | time formatter pattern, see examples below or [DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#patterns) | number of millis since EPOCH |
-| time_zone   | the time zone id, see examples below or [ZoneId](https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html#of-java.lang.String-) | system default |
+| Parameter         | Description                                                                                                                                                            | Default                                         |
+|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
+| log_format        | Parameterized log message formatting string, see examples below                                                                                                        | the "legacy" format, see [README](../README.md) |
+| time_format       | time formatter pattern, see examples below or [DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#patterns)          | number of millis since EPOCH                    |
+| time_zone         | the time zone id, see examples below or [ZoneId](https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html#of-java.lang.String-)                                 | system default                                  |
+| escape_characters | A comma separated list containing characters that should be escaped (using \\). The characters will be escaped in USER, SUBJECT, OPERATION and OPERATION_NAKED fields. | No escaping                                     |
 
 It is possible to configure a parameterized log message by providing a formatting string.
 The following fields are available:
