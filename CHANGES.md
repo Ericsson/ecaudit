@@ -1,5 +1,9 @@
 # Changes
 
+## Version 2.11.0
+
+* Support escaping characters in log messages - #207
+
 ## Version 2.10.0
 * Build with Cassandra 4.0.7 (only flavor ecaudit_c4.0)
 * Build with Cassandra 3.11.14 (only flavor ecaudit_c3.11)

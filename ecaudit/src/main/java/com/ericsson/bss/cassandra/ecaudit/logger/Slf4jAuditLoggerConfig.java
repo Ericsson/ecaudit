@@ -18,8 +18,11 @@ package com.ericsson.bss.cassandra.ecaudit.logger;
 import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 
@@ -28,16 +31,19 @@ class Slf4jAuditLoggerConfig
     private static final String CONFIG_LOG_FORMAT = "log_format";
     private static final String CONFIG_TIME_FORMAT = "time_format";
     private static final String CONFIG_TIME_ZONE = "time_zone";
+    private static final String CONFIG_ESCAPE_CHARACTERS = "escape_characters";
 
     private static final String DEFAULT_LOG_FORMAT = "client:'${CLIENT_IP}'|user:'${USER}'{?|batchId:'${BATCH_ID}'?}|status:'${STATUS}'|operation:'${OPERATION}'";
 
     private final String logFormat;
     private final DateTimeFormatter timeFormatter;
+    private final Set<String> escapeCharacters;
 
     Slf4jAuditLoggerConfig(Map<String, String> parameters)
     {
         logFormat = resolveLogFormat(parameters);
         timeFormatter = resolveTimeFormatter(parameters);
+        escapeCharacters = resolveEscapeCharacters(parameters);
     }
 
     private static String resolveLogFormat(Map<String, String> parameters) throws ConfigurationException
@@ -75,6 +81,25 @@ class Slf4jAuditLoggerConfig
         }
     }
 
+    private static Set<String> resolveEscapeCharacters(Map<String, String> parameters)
+    {
+        String escape = parameters.get(CONFIG_ESCAPE_CHARACTERS); //We expect a comma-separated list
+        if (escape == null || escape.isEmpty())
+        {
+            return Collections.emptySet();
+        }
+        Set<String> escapeChars = new HashSet<>();
+        for (String escapeChar : escape.split(","))
+        {
+            String trimmed = escapeChar.trim();
+            if (!trimmed.isEmpty())
+            {
+                escapeChars.add(trimmed);
+            }
+        }
+        return escapeChars;
+    }
+
     String getLogFormat()
     {
         return logFormat;
@@ -83,5 +108,10 @@ class Slf4jAuditLoggerConfig
     Optional<DateTimeFormatter> getTimeFormatter()
     {
         return Optional.ofNullable(timeFormatter);
+    }
+
+    Set<String> getEscapeCharacters()
+    {
+        return escapeCharacters;
     }
 }

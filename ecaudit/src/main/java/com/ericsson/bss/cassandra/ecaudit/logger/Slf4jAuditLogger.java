@@ -94,14 +94,24 @@ public class Slf4jAuditLogger implements AuditLogger
                .put("CLIENT_IP", entry -> entry.getClientAddress().getAddress().getHostAddress())
                .put("CLIENT_PORT", entry -> getPortOrNull(entry.getClientAddress()))
                .put("COORDINATOR_IP", entry -> entry.getCoordinatorAddress().getHostAddress())
-               .put("USER", AuditEntry::getUser)
+               .put("USER", entry -> sanitize(entry.getUser(), auditConfig))
                .put("BATCH_ID", entry -> entry.getBatchId().orElse(null))
                .put("STATUS", AuditEntry::getStatus)
-               .put("OPERATION", entry -> entry.getOperation().getOperationString())
-               .put("OPERATION_NAKED", entry -> entry.getOperation().getNakedOperationString())
+               .put("OPERATION", entry -> sanitize(entry.getOperation().getOperationString(), auditConfig))
+               .put("OPERATION_NAKED", entry -> sanitize(entry.getOperation().getNakedOperationString(), auditConfig))
                .put("TIMESTAMP", getTimeFunction(auditConfig))
-               .put("SUBJECT", entry -> entry.getSubject().orElse(null))
+               .put("SUBJECT", entry -> entry.getSubject().map(s -> sanitize(s, auditConfig)).orElse(null))
                .build();
+    }
+
+    private static String sanitize(String input, Slf4jAuditLoggerConfig auditConfig)
+    {
+        String sanitized = input;
+        for (String escapeCharacter : auditConfig.getEscapeCharacters())
+        {
+            sanitized = sanitized.replaceAll(escapeCharacter, "\\\\" + escapeCharacter);
+        }
+        return sanitized;
     }
 
     private static Integer getPortOrNull(InetSocketAddress address)

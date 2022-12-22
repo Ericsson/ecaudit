@@ -18,8 +18,10 @@ package com.ericsson.bss.cassandra.ecaudit.logger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -149,6 +151,30 @@ public class TestSlf4jAuditLogger
     }
 
     @Test
+    public void testCustomFormatJsonWithDoubleQuotesEscaped()
+    {
+        String jsonFormat = "{\"timestamp\": \"${TIMESTAMP}\",\"operation\": \"${OPERATION}\",\"user\": \"${USER}\"}";
+        Set<String> escapeChars = new HashSet<>();
+        escapeChars.add("\"");
+        Slf4jAuditLogger logger = loggerWithConfig(jsonFormat, escapeChars);
+        AuditOperation auditOperation = mock(AuditOperation.class);
+        when(auditOperation.getOperationString()).thenReturn("select somethingX from \"testKeyspace.table1\"");
+        AuditEntry logEntry = AuditEntry.newBuilder()
+                                        .user(EXPECTED_USER)
+                                        .client(new InetSocketAddress(EXPECTED_CLIENT_ADDRESS, EXPECTED_CLIENT_PORT))
+                                        .operation(auditOperation)
+                                        .status(EXPECTED_STATUS)
+                                        .timestamp(EXPECTED_TIMESTAMP)
+                                        .batch(EXPECTED_BATCH_ID)
+                                        .subject(EXPECTED_SUBJECT)
+                                        .build();
+        logger.log(logEntry);
+        assertThat(getSlf4jLogMessage()).isEqualTo("{\"timestamp\": \""+EXPECTED_TIMESTAMP+"\"," +
+                                                   "\"operation\": \"select somethingX from \\\"testKeyspace.table1\\\"\"," +
+                                                   "\"user\": \""+EXPECTED_USER+"\"}");
+    }
+
+    @Test
     public void testCustomLogFormat()
     {
         Slf4jAuditLogger logger = loggerWithConfig("User = ${USER}, Status = {${STATUS}}, Query = ${OPERATION_NAKED}");
@@ -239,7 +265,13 @@ public class TestSlf4jAuditLogger
 
     private Slf4jAuditLogger loggerWithConfig(String format)
     {
+        return loggerWithConfig(format, new HashSet<>());
+    }
+
+    private Slf4jAuditLogger loggerWithConfig(String format, Set<String> escapeChars)
+    {
         Slf4jAuditLoggerConfig mockConfig = mockAuditConfig(format);
+        when(mockConfig.getEscapeCharacters()).thenReturn(escapeChars);
         return new Slf4jAuditLogger(mockConfig, LOG);
     }
 
