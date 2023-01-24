@@ -2,6 +2,7 @@
 
 ## Version 2.11.0
 
+* Use SnakeYaml's SafeConstructor to avoid CVE-2022-1471
 * Support escaping characters in log messages - #207
 
 ## Version 2.10.0
