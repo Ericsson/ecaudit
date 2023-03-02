@@ -31,8 +31,6 @@ class WhitelistOptionParser
     private static final String REVOKE_PREFIX = "revoke_audit_whitelist_for_";
     private static final String VALID_PREFIX = "^" + GRANT_PREFIX + "|" + "^" + REVOKE_PREFIX;
 
-    private static final String DROP_LEGACY_KEY_PATTERN = "drop_legacy_audit_whitelist_table";
-
     WhitelistOperation parseWhitelistOperation(String inputOption)
     {
         String normalizedInput = normalizeUserInput(inputOption);
@@ -44,10 +42,6 @@ class WhitelistOptionParser
         else if (normalizedInput.startsWith(REVOKE_PREFIX))
         {
             return WhitelistOperation.REVOKE;
-        }
-        else if (normalizedInput.equals(DROP_LEGACY_KEY_PATTERN))
-        {
-            return WhitelistOperation.DROP_LEGACY;
         }
         else
         {

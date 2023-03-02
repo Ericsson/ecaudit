@@ -21,20 +21,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ericsson.bss.cassandra.ecaudit.flavor.CassandraFlavorAdapter;
-
-import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.auth.IResource;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.auth.RoleResource;
-import org.apache.cassandra.concurrent.ScheduledExecutors;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.QueryProcessor;
@@ -47,10 +42,11 @@ import org.apache.cassandra.db.marshal.SetType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.schema.KeyspaceMetadata;
-import org.apache.cassandra.schema.MigrationManager;
+import org.apache.cassandra.schema.Keyspaces.KeyspacesDiff;
 import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.schema.SchemaConstants;
-import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.schema.SchemaTransformation.SchemaTransformationResult;
+import org.apache.cassandra.schema.SchemaTransformations;
 import org.apache.cassandra.serializers.SetSerializer;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
@@ -70,6 +66,9 @@ public class WhitelistDataAccess
     private boolean setupCompleted = false;
 
     private static final String DEFAULT_SUPERUSER_NAME = "cassandra";
+
+    // Step the schema version if schema is updated
+	private static final long ECAUDIT_SCHEMA_VERSION = 1;
 
     private DeleteStatement deleteWhitelistStatement;
     private SelectStatement loadWhitelistStatement;
@@ -118,8 +117,6 @@ public class WhitelistDataAccess
                 "UPDATE %s.%s SET operations = operations - ? WHERE role = ? AND resource = ?",
                 SchemaConstants.AUTH_KEYSPACE_NAME,
                 AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
-
-        maybeMigrateTableData();
 
         setupCompleted = true;
     }
@@ -226,20 +223,10 @@ public class WhitelistDataAccess
     private synchronized void maybeCreateTable()
     {
         KeyspaceMetadata expected = AuditAuthKeyspace.metadata();
-        KeyspaceMetadata defined = Schema.instance.getKeyspaceMetadata(expected.name);
 
-        boolean changesAnnounced = false;
-        for (TableMetadata expectedTable : expected.tables)
-        {
-            TableMetadata definedTable = defined.tables.get(expectedTable.name).orElse(null);
-            if (definedTable == null || !definedTable.equals(expectedTable))
-            {
-                CassandraFlavorAdapter.getInstance().forceAnnounceNewColumnFamily(expectedTable);
-                changesAnnounced = true;
-            }
-        }
+        SchemaTransformationResult result = Schema.instance.transform(SchemaTransformations.updateSystemKeyspace(expected, ECAUDIT_SCHEMA_VERSION));
 
-        if (changesAnnounced)
+        if (result.diff != KeyspacesDiff.NONE)
         {
             SchemaHelper schemaHelper = new SchemaHelper();
             if (!schemaHelper.areSchemasAligned(SCHEMA_ALIGNMENT_DELAY_MS))
@@ -247,53 +234,6 @@ public class WhitelistDataAccess
                 LOG.warn("Schema alignment timeout - continuing startup");
             }
         }
-    }
-
-    private synchronized void maybeMigrateTableData()
-    {
-        // The delay is to give the node a chance to see its peers before attempting the conversion
-        if (Schema.instance.getTableMetadata(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1) != null)
-        {
-            ScheduledExecutors.optionalTasks.schedule(this::migrateTableData, AuthKeyspace.SUPERUSER_SETUP_DELAY, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    private void migrateTableData()
-    {
-        try
-        {
-            LOG.info("Converting legacy audit whitelist data");
-
-            UntypedResultSet whitelists = QueryProcessor.process(
-            String.format("SELECT role, resources FROM %s.%s",
-                          SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1),
-            ConsistencyLevel.LOCAL_ONE);
-
-            for (UntypedResultSet.Row row : whitelists)
-            {
-                Set<String> resourceNames = SET_SERIALIZER.deserialize(row.getBytes("resources"));
-                RoleResource role = RoleResource.role(row.getString("role"));
-                for (String resourceName : resourceNames)
-                {
-                    IResource resource = ResourceFactory.toResource(resourceName);
-                    addToWhitelist(role, resource, resource.applicablePermissions());
-                }
-            }
-
-            LOG.info("Whitelist data conversion completed. To remove this message - " + // NOPMD
-                     "as a super user perform ALTER ROLE statement on yourself with OPTIONS set to { 'drop_legacy_audit_whitelist_table' : 'now' }");
-        }
-        catch (Exception e)
-        {
-            LOG.warn("Unable to complete conversion of legacy whitelist data (perhaps not enough nodes are upgraded yet). " + // NOPMD
-                     "Conversion should not be considered complete", e);
-        }
-    }
-
-    void dropLegacyWhitelistTable()
-    {
-        LOG.info("Dropping legacy (v1) audit whitelist data");
-        MigrationManager.announceTableDrop(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1, false);
     }
 
     private CQLStatement prepare(String template, String keyspace, String table)

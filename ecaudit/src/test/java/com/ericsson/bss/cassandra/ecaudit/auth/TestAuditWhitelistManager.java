@@ -320,54 +320,6 @@ public class TestAuditWhitelistManager
     }
 
     @Test
-    public void testDropLegacyTable()
-    {
-        when(performer.isSuper()).thenReturn(true);
-        when(role.getRoleName()).thenReturn("bob");
-
-        RoleOptions options = createRoleOptions(
-        Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
-
-        whitelistManager.alterRoleOption(performer, role, options);
-
-        verify(mockWhitelistDataAccess, times(1))
-        .dropLegacyWhitelistTable();
-    }
-
-    @Test
-    public void testDropLegacyTableWithWrongValueIsRejected()
-    {
-        RoleOptions options = createRoleOptions(
-        Collections.singletonMap("drop_legacy_audit_whitelist_table", "not"));
-
-        assertThatExceptionOfType(InvalidRequestException.class)
-        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
-    }
-
-    @Test
-    public void testDropLegacyTableWithOtherRoleIsRejected()
-    {
-        when(performer.isSuper()).thenReturn(true);
-        when(role.getRoleName()).thenReturn("hans");
-
-        RoleOptions options = createRoleOptions(
-        Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
-
-        assertThatExceptionOfType(UnauthorizedException.class)
-        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
-    }
-
-    @Test
-    public void testDropLegacyTableWithNonSuperIsRejected()
-    {
-        RoleOptions options = createRoleOptions(
-        Collections.singletonMap("drop_legacy_audit_whitelist_table", "now"));
-
-        assertThatExceptionOfType(UnauthorizedException.class)
-        .isThrownBy(() -> whitelistManager.alterRoleOption(performer, role, options));
-    }
-
-    @Test
     public void testUnknownOption()
     {
         WhitelistOperation invalidOperation = Mockito.mock(WhitelistOperation.class);

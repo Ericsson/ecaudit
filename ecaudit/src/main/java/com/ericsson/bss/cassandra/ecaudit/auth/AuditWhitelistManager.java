@@ -97,10 +97,6 @@ class AuditWhitelistManager
         {
             removeFromWhitelist(performer, role, optionEntry);
         }
-        else if (whitelistOperation == WhitelistOperation.DROP_LEGACY)
-        {
-            dropRoleOption(performer, role, optionEntry);
-        }
         else
         {
             throw new InvalidRequestException(String.format("Illegal whitelist option [%s]", whitelistOperation));
@@ -129,13 +125,6 @@ class AuditWhitelistManager
         whitelistDataAccess.removeFromWhitelist(role, resource, operations);
     }
 
-    private void dropRoleOption(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
-    {
-        whitelistContract.verifyValidDropValue(optionEntry.getValue());
-        checkPermissionToDropLegacyTable(performer, role);
-        whitelistDataAccess.dropLegacyWhitelistTable();
-    }
-
     Map<String, String> getRoleWhitelist(RoleResource role)
     {
         Map<IResource, Set<Permission>> whitelist = whitelistDataAccess.getWhitelist(role);
@@ -147,18 +136,6 @@ class AuditWhitelistManager
     void dropRoleWhitelist(RoleResource role)
     {
         whitelistDataAccess.deleteWhitelist(role);
-    }
-
-    private void checkPermissionToDropLegacyTable(AuthenticatedUser performer, RoleResource role)
-    {
-        if (!performer.isSuper())
-        {
-            throw new UnauthorizedException("Only super-user can drop legacy audit whitelist data");
-        }
-        if (!performer.getName().equals(role.getRoleName()))
-        {
-            throw new UnauthorizedException("Drop of legacy audit whitelist options is only valid on your own user name");
-        }
     }
 
     private static void checkPermissionToWhitelist(AuthenticatedUser performer, IResource resource)

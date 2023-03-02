@@ -28,6 +28,7 @@ import java.util.UUID;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -44,8 +45,11 @@ import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory
 import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
+import org.apache.cassandra.auth.IAuthorizer;
+import org.apache.cassandra.auth.INetworkAuthorizer;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.BatchQueryOptions;
@@ -119,12 +123,22 @@ public class TestAuditAdapter
     private AuditAdapter auditAdapter;
 
     private static IPartitioner oldPartitionerToRestore;
+    private static IAuthorizer oldAuthorizerToRestore;
+    private static INetworkAuthorizer oldNetworkAuthorizerToRestore;
 
     @BeforeClass
     public static void beforeAll()
     {
         ClientInitializer.beforeClass();
         oldPartitionerToRestore = DatabaseDescriptor.setPartitionerUnsafe(Mockito.mock(IPartitioner.class));
+        oldAuthorizerToRestore = DatabaseDescriptor.getAuthorizer();
+        IAuthorizer authorizerMock = Mockito.mock(IAuthorizer.class);
+        when(authorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
+        DatabaseDescriptor.setAuthorizer(authorizerMock);
+        oldNetworkAuthorizerToRestore = DatabaseDescriptor.getNetworkAuthorizer();
+        INetworkAuthorizer networkAuthorizerMock = Mockito.mock(INetworkAuthorizer.class);
+        when(networkAuthorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
+        DatabaseDescriptor.setNetworkAuthorizer(networkAuthorizerMock);
     }
 
     @Before
@@ -147,6 +161,8 @@ public class TestAuditAdapter
     public static void afterAll()
     {
         DatabaseDescriptor.setPartitionerUnsafe(oldPartitionerToRestore);
+        DatabaseDescriptor.setAuthorizer(oldAuthorizerToRestore);
+        DatabaseDescriptor.setNetworkAuthorizer(oldNetworkAuthorizerToRestore);
         ClientInitializer.afterClass();
     }
 

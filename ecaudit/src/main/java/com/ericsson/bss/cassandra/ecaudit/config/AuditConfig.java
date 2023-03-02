@@ -120,6 +120,18 @@ public class AuditConfig
         yamlConfig.setWhitelistCacheMaxEntries(whitelistCacheMaxEntries);
     }
 
+    public boolean isWhitelistCacheActiveUpdate()
+    {
+        loadConfigIfNeeded();
+        return yamlConfig.isWhitelistCacheActiveUpdate();
+    }
+
+    public void setWhitelistCacheActiveUpdate(boolean whitelistCacheActiveUpdate)
+    {
+        loadConfigIfNeeded();
+        yamlConfig.setWhitelistCacheActiveUpdate(whitelistCacheActiveUpdate);
+    }
+
     private synchronized void loadConfigIfNeeded()
     {
         if (yamlConfig == null)

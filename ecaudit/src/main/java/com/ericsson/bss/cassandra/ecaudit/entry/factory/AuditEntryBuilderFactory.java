@@ -278,14 +278,14 @@ public class AuditEntryBuilderFactory
     {
         return builder
                .permissions(statement.hasConditions() ? CAS_PERMISSIONS : MODIFY_PERMISSIONS)
-               .resource(DataResource.table(statement.keyspace(), statement.columnFamily()));
+               .resource(DataResource.table(statement.keyspace(), statement.table()));
     }
 
     private Builder createSelectEntryBuilder(SelectStatement statement)
     {
         return AuditEntry.newBuilder()
                          .permissions(SELECT_PERMISSIONS)
-                         .resource(DataResource.table(statement.keyspace(), statement.columnFamily()));
+                         .resource(DataResource.table(statement.keyspace(), statement.table()));
     }
 
     private Builder createSelectEntryBuilder(SelectStatement.RawStatement statement)
@@ -299,7 +299,7 @@ public class AuditEntryBuilderFactory
     {
         return AuditEntry.newBuilder()
                          .permissions(statement.hasConditions() ? CAS_PERMISSIONS : MODIFY_PERMISSIONS)
-                         .resource(DataResource.table(statement.keyspace(), statement.columnFamily()));
+                         .resource(DataResource.table(statement.keyspace(), statement.table()));
     }
 
     private Builder createModificationEntryBuilder(ModificationStatement.Parsed statement)

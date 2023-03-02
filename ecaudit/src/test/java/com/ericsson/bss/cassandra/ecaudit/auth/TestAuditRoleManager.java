@@ -16,11 +16,12 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -30,6 +31,7 @@ import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
+
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DataResource;
 import org.apache.cassandra.auth.IAuthenticator;
@@ -161,9 +163,9 @@ public class TestAuditRoleManager
         AuthenticatedUser authenticatedUser = mock(AuthenticatedUser.class);
         RoleResource role = mock(RoleResource.class);
         RoleOptions roleOptions = mock(RoleOptions.class);
-        when(roleOptions.getPassword()).thenReturn(Optional.absent());
-        when(roleOptions.getLogin()).thenReturn(Optional.absent());
-        when(roleOptions.getSuperuser()).thenReturn(Optional.absent());
+        when(roleOptions.getPassword()).thenReturn(Optional.empty());
+        when(roleOptions.getLogin()).thenReturn(Optional.empty());
+        when(roleOptions.getSuperuser()).thenReturn(Optional.empty());
 
         auditRoleManager.alterRole(authenticatedUser, role, roleOptions);
 

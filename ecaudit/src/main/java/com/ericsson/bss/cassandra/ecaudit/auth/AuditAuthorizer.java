@@ -88,15 +88,15 @@ public class AuditAuthorizer implements IAuthorizer
     }
 
     @Override
-    public void grant(AuthenticatedUser performer, Set<Permission> permissions, IResource resource, RoleResource grantee) throws RequestValidationException, RequestExecutionException
+    public Set<Permission> grant(AuthenticatedUser performer, Set<Permission> permissions, IResource resource, RoleResource grantee) throws RequestValidationException, RequestExecutionException
     {
-        wrappedAuthorizer.grant(performer, permissions, resource, grantee);
+        return wrappedAuthorizer.grant(performer, permissions, resource, grantee);
     }
 
     @Override
-    public void revoke(AuthenticatedUser performer, Set<Permission> permissions, IResource resource, RoleResource revokee) throws RequestValidationException, RequestExecutionException
+    public Set<Permission> revoke(AuthenticatedUser performer, Set<Permission> permissions, IResource resource, RoleResource revokee) throws RequestValidationException, RequestExecutionException
     {
-        wrappedAuthorizer.revoke(performer, permissions, resource, revokee);
+        return wrappedAuthorizer.revoke(performer, permissions, resource, revokee);
     }
 
     @Override
