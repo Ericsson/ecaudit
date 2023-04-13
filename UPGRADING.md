@@ -4,6 +4,16 @@ Below you'll find special instructions to consider when upgrading to a new versi
 Check out the [change log](CHANGES.md) for a full list of new features and fixes.
 
 
+## To version 3.0.x
+
+Administrators should be aware of the following changes when upgrading to version 3.0.0 or later.
+ecAudit can be upgraded to 3.0.x from version 2.x.x as long as these and any intermediate upgrade instructions are observed.
+ecAudit 0.x.x or 1.x.x must be upgraded to 2.x.x before upgrading to 3.x.x.
+
+The command to drop legacy audit whitelist table is removed in 3.0.0, if ecAudit was updated from 0.x.x or 1.x.x to 2.x.x
+the legacy table must be dropped before upgrading to 3.x.x
+
+
 ## To version 2.5.x
 
 Administrators should be aware of the following changes when upgrading to version 2.5.0 or later.
