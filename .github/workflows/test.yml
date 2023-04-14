@@ -5,14 +5,18 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   code-analysis:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '11' ]
+    name: Java ${{ matrix.Java }} code analysis
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up JDK 8
+      - name: Set up JDK ${{ matrix.Java }}
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: '8'
+          java-version: ${{ matrix.Java }}
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
@@ -21,16 +25,20 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-ca-
       - name: Code Analysis
         run: mvn --batch-mode --activate-profiles github install pmd:check pmd:cpd-check license:check javadoc:jar -DskipTests=true
-  unit-tests-java8:
+  unit-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '11' ]
+    name: Java ${{ matrix.Java }} unit test
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up JDK 8
+      - name: Set up JDK ${{ matrix.Java }}
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: '8'
+          java-version: ${{ matrix.Java }}
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
@@ -46,41 +54,20 @@ jobs:
           flags: unit-tests
           fail_ci_if_error: true
           verbose: true
-  unit-tests-java11:
+  integration-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '11' ]
+    name: Java ${{ matrix.Java }} integration tests
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up JDK 11
+      - name: Set up JDK ${{ matrix.Java }}
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: '11'
-      - name: Cache Maven packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-ut-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2-ut-
-      - name: Unit Tests
-        run: mvn --batch-mode --activate-profiles github test jacoco:report
-      - name: Upload test coverage report
-        uses: codecov/codecov-action@v2
-        with:
-          files: ./ecaudit/target/site/jacoco/jacoco.xml,./common/target/site/jacoco/jacoco.xml,./eclog/target/site/jacoco/jacoco.xml
-          flags: unit-tests
-          fail_ci_if_error: true
-          verbose: true
-  integration-tests-java8:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up JDK 8
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '8'
+          java-version: ${{ matrix.Java }}
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
@@ -89,21 +76,4 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-it-
       - name: Integration Tests
         run: mvn --batch-mode --activate-profiles github test-compile failsafe:integration-test failsafe:verify
-  integration-tests-java11:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up JDK 11
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '11'
-      - name: Cache Maven packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-it-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2-it-
-      - name: Integration Tests
-        run: mvn --batch-mode --activate-profiles github test-compile failsafe:integration-test failsafe:verify
+
