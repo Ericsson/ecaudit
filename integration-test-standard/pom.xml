@@ -84,6 +84,7 @@
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
                             <argLine>
+                                ${argLine}
                                 -Djdk.attach.allowAttachSelf=true
                                 --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
                                 --add-exports java.base/jdk.internal.ref=ALL-UNNAMED
