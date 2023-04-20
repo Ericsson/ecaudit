@@ -1,5 +1,9 @@
 # Changes
 
+## Version 2.12.0
+
+* Test with java11 (only flavor ecaudit_c4.0) - #214
+
 ## Version 2.11.0
 
 * Use SnakeYaml's SafeConstructor to avoid CVE-2022-1471
