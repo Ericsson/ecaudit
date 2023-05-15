@@ -74,7 +74,7 @@ Upgrade ecAudit using then upgrade guide for your Cassandra version
 * [ecAudit Upgrade Guide for Cassandra 4.1.\<latest>](https://github.com/Ericsson/ecaudit/blob/master/UPGRADING.md)
 * [ecAudit Upgrade Guide for Cassandra 4.0.\<latest>](https://github.com/Ericsson/ecaudit/blob/release/c4.0/UPGRADING.md)
 * [ecAudit Upgrade Guide for Cassandra 3.11.\<latest>](https://github.com/Ericsson/ecaudit/blob/release/c3.11/UPGRADING.md)
-* [ecAudit Upgrade Guide for Cassandra 3.0.\<latest>](https://github.com/Ericsson/ecaudit/blob/release/c3.0/doc/UPGRADING.md)
+* [ecAudit Upgrade Guide for Cassandra 3.0.\<latest>](https://github.com/Ericsson/ecaudit/blob/release/c3.0/UPGRADING.md)
 
 
 ## Issues & Contributions
