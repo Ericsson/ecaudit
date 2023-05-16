@@ -4,10 +4,20 @@ Below you'll find special instructions to consider when upgrading to a new versi
 Check out the [change log](CHANGES.md) for a full list of new features and fixes.
 
 
+## To version 3.0.x
+
+Administrators should be aware of the following changes when upgrading to version 3.0.0 or later.
+ecAudit can be upgraded to 3.0.x from version 2.x.x as long as these and any intermediate upgrade instructions (described below) are followed.
+ecAudit 0.x.x or 1.x.x must be upgraded to 2.x.x before upgrading to 3.x.x.
+
+The command to drop legacy audit whitelist table is removed in 3.0.0, if ecAudit was updated from 0.x.x or 1.x.x to 2.x.x
+the legacy table must be dropped before upgrading to 3.x.x.
+
+
 ## To version 2.5.x
 
 Administrators should be aware of the following changes when upgrading to version 2.5.0 or later.
-ecAudit can be upgraded to 2.5.x from any previous major version as long as these and any intermediate upgrade instructions are observed.
+ecAudit can be upgraded to 2.5.x from any previous major version as long as these and any intermediate upgrade instructions (described below) are followed.
 
 As of version 2.5.0 the ```AuditPasswordAuthenticator``` is deprecated and should no longer be configured as the ```authenticator``` in ```cassandra.yaml```.
 Users should instead use the ```AuditAuthenticator``` which can delegate authentication operations to custom ```IAuthenticator``` implementation.
@@ -16,7 +26,7 @@ By default the new ```AuditAuthenticator``` will behave exactly like the ```Audi
 ## To version 2.1.x
 
 Administrators should be aware of the following changes when upgrading from version 0.x.x, 1.x.x or 2.0.x to 2.1.0 or later.
-ecAudit can be upgraded to 2.1.x from any previous major version as long as these and any intermediate upgrade instructions are observed.
+ecAudit can be upgraded to 2.1.x from any previous major version as long as these and any intermediate upgrade instructions (described below) are followed.
 
 As of version 2.1.0 ecAudit will read and use the configuration in the audit.yaml file stored in the Cassandra configuration directory.
 This directory is typically ```/etc/cassandra/conf/``` but may be different depending on your deployment.
@@ -28,7 +38,7 @@ Users who used this previously undocumented property should fix typo in their co
 ## To version 2.0.x
 
 Administrators should be aware of the following changes when upgrading from version 0.x.x or 1.x.x to 2.0.0 or later.
-ecAudit can be upgraded to 2.x.x from any previous major version as long as these and any intermediate upgrade instructions are observed.
+ecAudit can be upgraded to 2.x.x from any previous major version as long as these and any intermediate upgrade instructions (described below) are followed.
 
 As of version 2.0.0 ecAudit support whitelisting of specific operations on a resource.
 For example, it is possible to whitelisted a user for `SELECT` operations on a table, without whitelisting other operations such as the `MODIFY` operations on the same table.
@@ -75,7 +85,7 @@ cassandra@cqlsh> ALTER ROLE cassandra WITH OPTIONS = { 'drop_legacy_audit_whitel
 ## To version 1.x.x
 
 Administrators should be aware of the following changes when upgrading from version 0.x.x to 1.0.0 or later.
-ecAudit can be upgrade to 1.x.x from any 0.x.x version as long as the upgrade instructions below are observed.
+ecAudit can be upgrade to 1.x.x from any 0.x.x version as long as the upgrade instructions below are followed.
 
 ecAudit now provides a custom authorizer plug-in in.
 This is necessary in order to resolve issue #31,
