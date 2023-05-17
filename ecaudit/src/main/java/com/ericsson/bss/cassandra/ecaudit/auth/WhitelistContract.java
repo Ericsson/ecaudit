@@ -23,21 +23,11 @@ import org.apache.cassandra.exceptions.InvalidRequestException;
 
 class WhitelistContract
 {
-    private static final String DROP_LEGACY_VALUE_PATTERN = "now";
-
     void verify(Set<Permission> operations, IResource suppliedResource)
     {
         if (!suppliedResource.applicablePermissions().containsAll(operations))
         {
             throw new InvalidRequestException(String.format("Operation(s) %s are not applicable on %s", operations, suppliedResource));
-        }
-    }
-
-    void verifyValidDropValue(String value)
-    {
-        if (!DROP_LEGACY_VALUE_PATTERN.equalsIgnoreCase(value))
-        {
-            throw new InvalidRequestException(String.format("Legacy audit whitelist data will only be dropped if value is set to [%s]", DROP_LEGACY_VALUE_PATTERN));
         }
     }
 }
