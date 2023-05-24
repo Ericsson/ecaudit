@@ -58,7 +58,6 @@ public class TestPermissionChecker
     @Before
     public void before()
     {
-        DatabaseDescriptor.setAuthorizer(authorizer);
         permissionChecker = new PermissionChecker(authorizer);
     }
 
