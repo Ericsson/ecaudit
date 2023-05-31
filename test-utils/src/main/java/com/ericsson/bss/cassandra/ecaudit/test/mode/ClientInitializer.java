@@ -30,7 +30,7 @@ public final class ClientInitializer
     static private IAuthorizer authorizerMock = mock(IAuthorizer.class);
     static private INetworkAuthorizer networkAuthorizerMock = mock(INetworkAuthorizer.class);
 
-	private ClientInitializer()
+    private ClientInitializer()
     {
     }
 

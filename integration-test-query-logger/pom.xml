@@ -19,10 +19,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-        <artifactId>parent_c4.0</artifactId>
+        <artifactId>parent_c4.1</artifactId>
         <version>2.12.0-SNAPSHOT</version>
     </parent>
-    <artifactId>integration-test-query-logger_c4.0</artifactId>
+    <artifactId>integration-test-query-logger_c4.1</artifactId>
 
     <name>Ericsson Cassandra Audit - Query Logger IT</name>
 

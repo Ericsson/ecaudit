@@ -47,7 +47,7 @@ public class RoleAuditFilterCache extends AuthCache<RoleAuditFilterCacheKey, Boo
               auditConfig::setWhitelistCacheActiveUpdate,
               auditConfig::isWhitelistCacheActiveUpdate,
               loadFunction,
-              Collections::emptyMap, //Consider creating bilk loader
+              Collections::emptyMap,
               () -> true);
     }
 
