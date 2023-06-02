@@ -68,7 +68,7 @@ public class WhitelistDataAccess
     private static final String DEFAULT_SUPERUSER_NAME = "cassandra";
 
     // Step the schema version if schema is updated
-	private static final long ECAUDIT_SCHEMA_VERSION = 1;
+    private static final long ECAUDIT_SCHEMA_VERSION = 1;
 
     private DeleteStatement deleteWhitelistStatement;
     private SelectStatement loadWhitelistStatement;
