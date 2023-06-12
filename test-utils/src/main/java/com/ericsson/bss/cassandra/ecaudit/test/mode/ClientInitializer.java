@@ -15,15 +15,21 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.test.mode;
 
+import java.util.Collections;
+
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.INetworkAuthorizer;
 import org.apache.cassandra.config.DatabaseDescriptor;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public final class ClientInitializer
 {
+    static private IAuthorizer authorizerMock = mock(IAuthorizer.class);
+    static private INetworkAuthorizer networkAuthorizerMock = mock(INetworkAuthorizer.class);
+
     private ClientInitializer()
     {
     }
@@ -32,8 +38,10 @@ public final class ClientInitializer
     {
         DatabaseDescriptor.clientInitialization(true);
         DatabaseDescriptor.setAuthenticator(mock(IAuthenticator.class));
-        DatabaseDescriptor.setAuthorizer(mock(IAuthorizer.class));
-        DatabaseDescriptor.setNetworkAuthorizer(mock(INetworkAuthorizer.class));
+        when(authorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
+        DatabaseDescriptor.setAuthorizer(authorizerMock);
+        when(networkAuthorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
+        DatabaseDescriptor.setNetworkAuthorizer(networkAuthorizerMock);
     }
 
     public static void afterClass()

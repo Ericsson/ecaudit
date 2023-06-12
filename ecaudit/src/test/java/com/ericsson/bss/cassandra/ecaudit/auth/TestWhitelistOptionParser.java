@@ -60,13 +60,6 @@ public class TestWhitelistOptionParser
     }
 
     @Test
-    public void testParseDropLegacy()
-    {
-        WhitelistOperation operation = parser.parseWhitelistOperation("DROP LEGACY AUDIT WHITELIST TABLE");
-        assertThat(operation).isEqualTo(WhitelistOperation.DROP_LEGACY);
-    }
-
-    @Test
     public void testParseWhitelistOperationFoo()
     {
         assertThatExceptionOfType(InvalidRequestException.class)

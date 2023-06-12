@@ -15,13 +15,14 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.filter.role;
 
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-
 import com.ericsson.bss.cassandra.ecaudit.config.AuditConfig;
+
 import org.apache.cassandra.auth.AuthCache;
 
 public class RoleAuditFilterCache extends AuthCache<RoleAuditFilterCacheKey, Boolean>
@@ -43,7 +44,10 @@ public class RoleAuditFilterCache extends AuthCache<RoleAuditFilterCacheKey, Boo
               auditConfig::getWhitelistCacheUpdateInterval,
               auditConfig::setWhitelistCacheMaxEntries,
               auditConfig::getWhitelistCacheMaxEntries,
+              auditConfig::setWhitelistCacheActiveUpdate,
+              auditConfig::isWhitelistCacheActiveUpdate,
               loadFunction,
+              Collections::emptyMap,
               () -> true);
     }
 

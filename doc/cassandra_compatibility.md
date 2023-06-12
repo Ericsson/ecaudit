@@ -7,15 +7,25 @@ For instance, ecaudit_c3.11 indicate that the ecAudit flavor was built with Cass
 The ecAudit plug-in is maintained for selected Cassandra versions only.
 
 
+## ecaudit_c4.1
+
+This flavor is built with the latest version of the Apache Cassandra 4.1.x series.
+The table below list the Cassandra version used while building each ecAudit release and indicate compatibility with other Cassandra versions.
+
+| ecAudit Version  | Compiled With   | Compatible With          |
+| ---------------- | --------------- | ------------------------ |
+| 3.0.0 -> latest  | Cassandra 4.1.2 | Cassandra 4.1.0 -> 4.1.2 |
+
+
 ## ecaudit_c4.0
 
 This flavor is built with the latest version of the Apache Cassandra 4.0.x series.
 The table below list the Cassandra version used while building each ecAudit release and indicate compatibility with other Cassandra versions. 
 
-| ecAudit Version  | Compiled With   | Compatible With          |
-| ---------------- | --------------- | ------------------------ |
-| 2.10.0 -> latest | Cassandra 4.0.7 | Cassandra 4.0.2 -> 4.0.8 |
-| 2.9.0  -> latest | Cassandra 4.0.3 | Cassandra 4.0.2 -> 4.0.8 |
+| ecAudit Version  | Compiled With   | Compatible With           |
+| ---------------- | --------------- | ------------------------- |
+| 2.10.0 -> latest | Cassandra 4.0.7 | Cassandra 4.0.2 -> 4.0.10 |
+| 2.9.0            | Cassandra 4.0.3 | Cassandra 4.0.2 -> 4.0.8  |
 
 
 ## ecaudit_c3.11

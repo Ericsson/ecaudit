@@ -52,6 +52,7 @@ public final class AuditYamlConfig
     public Integer whitelist_cache_validity_in_ms;
     public Integer whitelist_cache_update_interval_in_ms;
     public Integer whitelist_cache_max_entries;
+    public Boolean whitelist_cache_active_update;
 
     static AuditYamlConfig createWithoutFile()
     {
@@ -156,5 +157,17 @@ public final class AuditYamlConfig
     public void setWhitelistCacheMaxEntries(Integer whitelistCacheMaxEntries)
     {
         this.whitelist_cache_max_entries = whitelistCacheMaxEntries;
+    }
+
+    public Boolean isWhitelistCacheActiveUpdate()
+    {
+        return whitelist_cache_active_update == null
+               ? DatabaseDescriptor.getRolesCacheActiveUpdate()
+               : whitelist_cache_active_update;
+    }
+
+    public void setWhitelistCacheActiveUpdate(Boolean whitelistCacheActiveUpdate)
+    {
+        this.whitelist_cache_active_update = whitelistCacheActiveUpdate;
     }
 }
