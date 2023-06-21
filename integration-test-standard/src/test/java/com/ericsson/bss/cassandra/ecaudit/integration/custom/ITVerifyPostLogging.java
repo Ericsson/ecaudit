@@ -32,17 +32,19 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.exceptions.AuthenticationException;
+
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.LogTimingStrategy;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
+
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -59,8 +61,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 public class ITVerifyPostLogging
 {
     private static final String CUSTOM_LOGGER_NAME = "ECAUDIT_CUSTOM";
-    private static Cluster cluster;
-    private static Session session;
+    private static CqlSession session;
     private static AuditLogger customLogger;
 
     @Captor
@@ -74,8 +75,7 @@ public class ITVerifyPostLogging
     public static void beforeClass() throws Exception
     {
         cdt = CassandraDaemonForAuditTest.getInstance();
-        cluster = cdt.createCluster();
-        session = cluster.connect();
+        session = cdt.createSession();
 
         // Configure logger with custom/simple format
         Map<String, String> configParameters = Collections.singletonMap("log_format", "Status=${STATUS}|User=${USER}|{?Batch-ID=${BATCH_ID}|?}Operation=${OPERATION}");
@@ -107,7 +107,6 @@ public class ITVerifyPostLogging
         AuditAdapter.getInstance().getAuditor().removeLogger(customLogger);
         AuditAdapter.getInstance().getAuditor().setLogTimingStrategy(LogTimingStrategy.PRE_LOGGING_STRATEGY);
         session.close();
-        cluster.close();
     }
 
     @Test
@@ -115,8 +114,7 @@ public class ITVerifyPostLogging
     {
         reset(mockAuditAppender);
 
-        try (Cluster privateCluster = cdt.createCluster("cassandra", "cassandra");
-             Session privateSession = privateCluster.connect())
+        try (CqlSession privateSession = cdt.createSession("cassandra", "cassandra"))
         {
             assertThat(privateSession.isClosed()).isFalse();
         }
@@ -126,13 +124,12 @@ public class ITVerifyPostLogging
         logEntries.forEach(s -> assertThat(s).as("No attempts should be logged").doesNotContain("Status=ATTEMPT"));
     }
 
-    @Test(expected = AuthenticationException.class)
+    @Test(expected = AllNodesFailedException.class)
     public void testFailedUserAuthentication()
     {
         reset(mockAuditAppender);
 
-        try (Cluster privateCluster = cdt.createCluster("unknown", "secret");
-             Session privateSession = privateCluster.connect())
+        try (CqlSession privateSession = cdt.createSession("unknown", "secret"))
         {
             assertThat(privateSession.isClosed()).isFalse();
         }
@@ -151,9 +148,10 @@ public class ITVerifyPostLogging
         givenTable("keyspace1", "table1");
         reset(mockAuditAppender);
 
-        BatchStatement batchStatement = new BatchStatement(BatchStatement.Type.UNLOGGED);
-        batchStatement.add(new SimpleStatement("INSERT INTO keyspace1.table1 (key, value) VALUES (42, 'Kalle')"));
-        batchStatement.add(new SimpleStatement("UPDATE keyspace1.table1 SET value = 'Anka' WHERE key = 42"));
+        BatchStatement batchStatement = BatchStatement.builder(DefaultBatchType.UNLOGGED)
+                .addStatement(SimpleStatement.newInstance("INSERT INTO keyspace1.table1 (key, value) VALUES (42, 'Kalle')"))
+                .addStatement(SimpleStatement.newInstance("UPDATE keyspace1.table1 SET value = 'Anka' WHERE key = 42"))
+                .build();
 
         String batch = "BEGIN UNLOGGED BATCH USING TIMESTAMP ? " +
                        "INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?); " +
@@ -167,7 +165,7 @@ public class ITVerifyPostLogging
         PreparedStatement preparedBatch = session.prepare(batch);
 
         // When
-        session.execute(new SimpleStatement("SELECT * from keyspace1.table1"));
+        session.execute("SELECT * from keyspace1.table1");
         session.execute(batchStatement);
         PreparedStatement preparedStatement = session.prepare("SELECT * FROM keyspace1.table1 WHERE key = ?");
         session.execute(preparedStatement.bind(42));
@@ -200,8 +198,8 @@ public class ITVerifyPostLogging
         reset(mockAuditAppender);
 
         // When
-        executeAndIgnoreException(() -> session.execute(new SimpleStatement("SELECT * from NON.EXISTING_TABLE1")));
-        executeAndIgnoreException(() -> session.execute(new SimpleStatement("INSERT INTO keyspace1.table1 (key, value) VALUES (42)")));
+        executeAndIgnoreException(() -> session.execute("SELECT * from NON.EXISTING_TABLE1"));
+        executeAndIgnoreException(() -> session.execute("INSERT INTO keyspace1.table1 (key, value) VALUES (42)"));
 
         // Then
         List<String> entries = getLogEntries().stream()
@@ -221,10 +219,11 @@ public class ITVerifyPostLogging
         reset(mockAuditAppender);
 
         // When
-        BatchStatement batchInserts = new BatchStatement(BatchStatement.Type.UNLOGGED);
         PreparedStatement preparedInsert = session.prepare("INSERT INTO keyspace1.table1 (key, value) VALUES (?, ?)");
-        batchInserts.add(preparedInsert.bind(42, "Kalle"));
-        batchInserts.add(preparedInsert.bind()); // No values -> will fail!
+        BatchStatement batchInserts = BatchStatement.builder(DefaultBatchType.UNLOGGED)
+                .addStatement(preparedInsert.bind(42, "Kalle"))
+                .addStatement(preparedInsert.bind()) // No values -> will fail!
+                .build();
         executeAndIgnoreException(() -> session.execute(batchInserts));
 
         // Then
@@ -307,10 +306,8 @@ public class ITVerifyPostLogging
 
     private void givenTable(String keyspace, String table)
     {
-        session.execute(new SimpleStatement(
-        "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
-        session.execute(new SimpleStatement(
-        "CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)"));
+        session.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        session.execute("CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)");
     }
 
     private void executeAndIgnoreException(Runnable runnable)

@@ -17,6 +17,7 @@ package com.ericsson.bss.cassandra.ecaudit.integration.standard;
 
 import java.net.InetAddress;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,18 +36,20 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.LocalDate;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
+
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
+
 import net.jcip.annotations.NotThreadSafe;
+
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -79,8 +82,7 @@ public class ITVerifyAudit
     private static final String UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
     private static CassandraDaemonForAuditTest cdt;
-    private static Cluster cluster;
-    private static Session session;
+    private static CqlSession session;
 
     @Mock
     private Appender<ILoggingEvent> mockAuditAppender;
@@ -90,76 +92,49 @@ public class ITVerifyAudit
     {
         cdt = CassandraDaemonForAuditTest.getInstance();
 
-        cluster = cdt.createCluster();
-        session = cluster.connect();
+        session = cdt.createSession();
 
-        session.execute(new SimpleStatement(
-        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema' }"));
+        session.execute("ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system' }");
+        session.execute("ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }");
+        session.execute("ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema' }");
 
-        session.execute(new SimpleStatement(
-        "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
-        session.execute(new SimpleStatement("CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
-        session.execute(new SimpleStatement(
-        "CREATE TABLE ecks.ectypetbl (partk int PRIMARY KEY, v0 text, v1 ascii, v2 bigint, v3 blob, v4 boolean, "
+        session.execute("CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        session.execute("CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)");
+        session.execute("CREATE TABLE ecks.ectypetbl (partk int PRIMARY KEY, v0 text, v1 ascii, v2 bigint, v3 blob, v4 boolean, "
         + "v5 date, v6 decimal, v7 double, v8 float, v9 inet, v10 int, v11 smallint, v12 time, v13 timestamp, "
-        + "v14 uuid, v15 varchar, v16 varint)"));
+        + "v14 uuid, v15 varchar, v16 varint)");
 
-        session.execute(new SimpleStatement("CREATE ROLE ecuser WITH PASSWORD = 'secret' AND LOGIN = true"));
-        session.execute(new SimpleStatement("GRANT CREATE ON ALL ROLES TO ecuser"));
+        session.execute("CREATE ROLE ecuser WITH PASSWORD = 'secret' AND LOGIN = true");
+        session.execute("GRANT CREATE ON ALL ROLES TO ecuser");
 
-        session.execute(new SimpleStatement(
-        "CREATE ROLE sam WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/nonexistingks'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/nonexistingtbl'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}"));
-        session.execute(new SimpleStatement(
-        "GRANT MODIFY ON ecks.ectbl TO sam"));
-        session.execute(new SimpleStatement(
-        "GRANT SELECT ON ecks.ectbl TO sam"));
+        session.execute("CREATE ROLE sam WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system'}");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema'}");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema'}");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl'}");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/nonexistingks'}");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/nonexistingtbl'}");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}");
+        session.execute("GRANT MODIFY ON ecks.ectbl TO sam");
+        session.execute("GRANT SELECT ON ecks.ectbl TO sam");
 
-        session.execute(new SimpleStatement(
-        "CREATE ROLE foo WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}"));
+        session.execute("CREATE ROLE foo WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
+        session.execute("ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}");
+        session.execute("ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}");
+        session.execute("ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}");
 
-        session.execute(new SimpleStatement(
-        "CREATE ROLE bar WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
-        session.execute(new SimpleStatement(
-        "CREATE ROLE mute WITH LOGIN = false"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}"));
-        session.execute(new SimpleStatement(
-        "ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}"));
-        session.execute(new SimpleStatement(
-        "GRANT mute TO bar"));
+        session.execute("CREATE ROLE bar WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
+        session.execute("CREATE ROLE mute WITH LOGIN = false");
+        session.execute("ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}");
+        session.execute("ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}");
+        session.execute("ALTER ROLE mute WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}");
+        session.execute("GRANT mute TO bar");
 
-        session.execute(new SimpleStatement(
-        "CREATE ROLE yser2 WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
+        session.execute("CREATE ROLE yser2 WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
 
-        session.execute(new SimpleStatement(
-        "CREATE KEYSPACE ecks2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+        session.execute("CREATE KEYSPACE ecks2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
 
-        session.execute(new SimpleStatement(
-        "CREATE KEYSPACE ecks3 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+        session.execute("CREATE KEYSPACE ecks3 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
     }
 
     @Before
@@ -180,21 +155,19 @@ public class ITVerifyAudit
     @AfterClass
     public static void afterClass()
     {
-        session.execute(new SimpleStatement("DROP KEYSPACE IF EXISTS ecks"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS ecuser"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS foo"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS bar"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS mute"));
+        session.execute("DROP KEYSPACE IF EXISTS ecks");
+        session.execute("DROP ROLE IF EXISTS ecuser");
+        session.execute("DROP ROLE IF EXISTS foo");
+        session.execute("DROP ROLE IF EXISTS bar");
+        session.execute("DROP ROLE IF EXISTS mute");
 
         session.close();
-        cluster.close();
     }
 
     @Test
     public void testAuthenticateUserSuccessIsLogged()
     {
-        try (Cluster privateCluster = cdt.createCluster("ecuser", "secret");
-                Session privateSession = privateCluster.connect())
+        try (CqlSession privateSession = cdt.createSession("ecuser", "secret"))
         {
             assertThat(privateSession.isClosed()).isFalse();
         }
@@ -217,19 +190,17 @@ public class ITVerifyAudit
 
         for (String user : unloggedUsers)
         {
-            try (Cluster privateCluster = cdt.createCluster(user, "secret");
-                    Session privateSession = privateCluster.connect())
+            try (CqlSession privateSession = cdt.createSession(user, "secret"))
             {
                 assertThat(privateSession.isClosed()).isFalse();
             }
         }
     }
 
-    @Test(expected = AuthenticationException.class)
+    @Test(expected = AllNodesFailedException.class)
     public void testAuthenticateUserRejectIsLogged()
     {
-        try (Cluster privateCluster = cdt.createCluster("unknown", "secret");
-                Session privateSession = privateCluster.connect())
+        try (CqlSession privateSession = cdt.createSession("unknown", "secret"))
         {
             assertThat(privateSession.isClosed()).isFalse();
         }
@@ -277,7 +248,7 @@ public class ITVerifyAudit
 
         for (String statement : statements)
         {
-            session.execute(new SimpleStatement(statement));
+            session.execute(statement);
         }
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
@@ -341,12 +312,13 @@ public class ITVerifyAudit
                 "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')",
                 "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'valid')[5, '5']");
 
-        BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
-        batch.add(preparedInsertStatement1.bind(1, "1", "valid"));
-        batch.add(preparedInsertStatement1.bind(2, "2", "valid"));
-        batch.add(preparedInsertStatement2.bind(3, "3"));
-        batch.add(new SimpleStatement("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"));
-        batch.add(preparedInsertStatement2.bind(5, "5"));
+        BatchStatement batch = BatchStatement.builder(DefaultBatchType.UNLOGGED)
+                .addStatement(preparedInsertStatement1.bind(1, "1", "valid"))
+                .addStatement(preparedInsertStatement1.bind(2, "2", "valid"))
+                .addStatement(preparedInsertStatement2.bind(3, "3"))
+                .addStatement(SimpleStatement.newInstance("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"))
+                .addStatement(preparedInsertStatement2.bind(5, "5"))
+                .build();
         session.execute(batch);
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
@@ -436,8 +408,8 @@ public class ITVerifyAudit
         // Was expecting "v13 timestamp" to get quotes
 
         session.execute(preparedStatement.bind(1, "text", "ascii", 123123123123123123L,
-                                               Boolean.TRUE, LocalDate.fromYearMonthDay(1976, 2, 25), InetAddress.getByName("8.8.8.8"),
-                                               Date.from(Instant.parse("2004-05-29T14:29:00.000Z")), "varchar"));
+                                               Boolean.TRUE, LocalDate.of(1976, 2, 25), InetAddress.getByName("8.8.8.8"),
+                                               Instant.parse("2004-05-29T14:29:00.000Z"), "varchar"));
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
         verify(mockAuditAppender, atLeast(1)).doAppend(loggingEventCaptor.capture());
@@ -488,12 +460,11 @@ public class ITVerifyAudit
 
         for (String user : unloggedUsers)
         {
-            try (Cluster privateCluster = cdt.createCluster(user, "secret");
-                    Session privateSession = privateCluster.connect())
+            try (CqlSession privateSession = cdt.createSession(user, "secret"))
             {
                 for (String statement : statements)
                 {
-                    privateSession.execute(new SimpleStatement(statement));
+                    privateSession.execute(statement);
                 }
             }
         }
@@ -512,12 +483,11 @@ public class ITVerifyAudit
                 "SELECT * FROM ectbl");
 
         String user = "sam";
-        try (Cluster privateCluster = cdt.createCluster(user, "secret");
-                Session privateSession = privateCluster.connect())
+        try (CqlSession privateSession = cdt.createSession(user, "secret"))
         {
             for (String statement : statements)
             {
-                privateSession.execute(new SimpleStatement(statement));
+                privateSession.execute(statement);
             }
         }
 
@@ -545,8 +515,7 @@ public class ITVerifyAudit
     public void testMultipleUseStatementsPreserveOrder()
     {
         String user = "sam";
-        try (Cluster privateCluster = cdt.createCluster(user, "secret");
-             Session privateSession = privateCluster.connect())
+        try (CqlSession privateSession = cdt.createSession(user, "secret"))
         {
             executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks\"");
             executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks2\"");
@@ -554,10 +523,10 @@ public class ITVerifyAudit
         }
     }
 
-    private void executeOneUseWithFollowingSelect(String user, Session privateSession, String useStatement) {
+    private void executeOneUseWithFollowingSelect(String user, CqlSession privateSession, String useStatement) {
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor1 = ArgumentCaptor.forClass(ILoggingEvent.class);
-        privateSession.execute(new SimpleStatement(useStatement));
-        privateSession.execute(new SimpleStatement("SELECT * FROM ecks.ectypetbl"));
+        privateSession.execute(useStatement);
+        privateSession.execute("SELECT * FROM ecks.ectypetbl");
         verify(mockAuditAppender, atLeast(2)).doAppend(loggingEventCaptor1.capture());
         List<ILoggingEvent> loggingEvents1 = loggingEventCaptor1.getAllValues();
         assertThat(loggingEvents1
@@ -585,7 +554,7 @@ public class ITVerifyAudit
 
         for (String statement : statements)
         {
-            assertThatExceptionOfType(DriverException.class).isThrownBy(() -> session.execute(new SimpleStatement(statement)));
+            assertThatExceptionOfType(DriverException.class).isThrownBy(() -> session.execute(statement));
         }
 
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
@@ -608,12 +577,11 @@ public class ITVerifyAudit
                 "INSERT INTO nonexistingks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
                 "INSERT INTO ecks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')");
 
-        try (Cluster privateCluster = cdt.createCluster("sam", "secret");
-             Session privateSession = privateCluster.connect())
+        try (CqlSession privateSession = cdt.createSession("sam", "secret"))
         {
             for (String statement : statements)
             {
-                assertThatExceptionOfType(InvalidQueryException.class).isThrownBy(() -> privateSession.execute(new SimpleStatement(statement)));
+                assertThatExceptionOfType(InvalidQueryException.class).isThrownBy(() -> privateSession.execute(statement));
             }
         }
     }
@@ -625,14 +593,14 @@ public class ITVerifyAudit
                 "INSERT INTO nonexistingks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
                 "INSERT INTO validks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')");
 
-        try (Cluster privateCluster = cdt.createCluster("sam", "secret");
-             Session privateSession = privateCluster.connect())
+        try (CqlSession privateSession = cdt.createSession("sam", "secret"))
         {
             for (String statement : statements)
             {
-                BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
-                batch.add(new SimpleStatement("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"));
-                batch.add(new SimpleStatement(statement));
+                BatchStatement batch = BatchStatement.builder(DefaultBatchType.UNLOGGED)
+                        .addStatement(SimpleStatement.newInstance("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"))
+                        .addStatement(SimpleStatement.newInstance(statement))
+                        .build();
                 assertThatExceptionOfType(InvalidQueryException.class).isThrownBy(() -> privateSession.execute(batch));
             }
         }
@@ -655,12 +623,11 @@ public class ITVerifyAudit
 
         for (String user : unloggedUsers)
         {
-            try (Cluster privateCluster = cdt.createCluster(user, "secret");
-                    Session privateSession = privateCluster.connect())
+            try (CqlSession privateSession = cdt.createSession(user, "secret"))
             {
                 for (String statement : statements)
                 {
-                    privateSession.execute(new SimpleStatement(statement));
+                    privateSession.execute(statement);
                 }
             }
         }

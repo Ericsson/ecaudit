@@ -22,9 +22,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.UnauthorizedException;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 
@@ -37,24 +36,20 @@ public class ITDataAudit
     private static final String GRANTEE = "data_grantee";
 
     private static String testUsername;
-    private static Cluster testCluster;
-    private static Session testSession;
+    private static CqlSession testSession;
 
     private static String basicUsername;
-    private static Cluster basicCluster;
-    private static Session basicSession;
+    private static CqlSession basicSession;
 
     @BeforeClass
     public static void beforeClass()
     {
         ccf.setup();
         testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
-        testCluster = ccf.createCluster(testUsername);
-        testSession = testCluster.connect();
+        testSession = ccf.createSession(testUsername);
 
         basicUsername = ccf.givenUniqueBasicUserWithMinimalWhitelist();
-        basicCluster = ccf.createCluster(basicUsername);
-        basicSession = basicCluster.connect();
+        basicSession = ccf.createSession(basicUsername);
 
         ccf.givenBasicUser(GRANTEE);
     }
@@ -77,9 +72,7 @@ public class ITDataAudit
     public static void afterClass()
     {
         basicSession.close();
-        basicCluster.close();
         testSession.close();
-        testCluster.close();
         ccf.tearDown();
     }
 
