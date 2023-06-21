@@ -172,7 +172,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
                     .build();
 
         return CqlSession.builder().addContactPoint(new InetSocketAddress(DatabaseDescriptor.getListenAddress(), nativePort))
-                      .withCredentials(username, password).withLocalDatacenter("datacenter1").build();
+                      .withCredentials(username, password).withLocalDatacenter("datacenter1").withConfigLoader(loader).build();
     }
 
     public Path getAuditDirectory()
