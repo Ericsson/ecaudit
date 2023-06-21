@@ -25,8 +25,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Random;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.CqlSession;
 
 import org.apache.commons.io.FileUtils;
@@ -163,6 +166,11 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     public CqlSession createSession(String username, String password)
     {
+        DriverConfigLoader loader =
+                DriverConfigLoader.programmaticBuilder()
+                    .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5))
+                    .build();
+
         return CqlSession.builder().addContactPoint(new InetSocketAddress(DatabaseDescriptor.getListenAddress(), nativePort))
                       .withCredentials(username, password).withLocalDatacenter("datacenter1").build();
     }
