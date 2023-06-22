@@ -26,8 +26,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import org.mockito.ArgumentCaptor;
@@ -48,8 +47,7 @@ public class CassandraClusterFacade
 
     private CassandraDaemonForAuditTest cdt;
     private String superName;
-    private Cluster superCluster;
-    private Session superSession;
+    private CqlSession superSession;
 
     private List<String> createdUsers = new ArrayList<>();
     private List<String> createdKeyspaces = new ArrayList<>();
@@ -69,8 +67,7 @@ public class CassandraClusterFacade
             throw new RuntimeException(e);
         }
 
-        try (Cluster cassandraCluster = cdt.createCluster();
-             Session cassandraSession = cassandraCluster.connect())
+        try (CqlSession cassandraSession = cdt.createSession())
         {
             cassandraSession.execute("CREATE ROLE " + superName + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
             cassandraSession.execute("ALTER ROLE " + superName + " WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'roles'}");
@@ -78,8 +75,7 @@ public class CassandraClusterFacade
             cassandraSession.execute("ALTER ROLE " + superName + " WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'functions'}");
         }
 
-        superCluster = cdt.createCluster(superName, "secret");
-        superSession = superCluster.connect();
+        superSession = cdt.createSession(superName, "secret");
     }
 
     void before()
@@ -106,10 +102,8 @@ public class CassandraClusterFacade
         createdKeyspaces.forEach(ks -> superSession.execute("DROP KEYSPACE IF EXISTS " + ks));
 
         superSession.close();
-        superCluster.close();
 
-        try (Cluster cassandraCluster = cdt.createCluster();
-             Session cassandraSession = cassandraCluster.connect())
+        try (CqlSession cassandraSession = cdt.createSession())
         {
             cassandraSession.execute("DROP ROLE IF EXISTS " + superName);
         }
@@ -222,8 +216,8 @@ public class CassandraClusterFacade
         return String.format("client:'127.0.0.1'|user:'%s'|status:'%s'|operation:'%s'", username, status, obfuscatedOperation);
     }
 
-    Cluster createCluster(String username)
+    CqlSession createSession(String username)
     {
-        return cdt.createCluster(username, "secret");
+        return cdt.createSession(username, "secret");
     }
 }

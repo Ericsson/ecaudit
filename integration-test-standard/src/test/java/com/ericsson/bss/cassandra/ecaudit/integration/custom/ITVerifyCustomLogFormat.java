@@ -35,11 +35,11 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
@@ -79,8 +79,7 @@ public class ITVerifyCustomLogFormat
     private static final String TIMESTAMP_REGEX = "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}";  // correnspons to "yyyy-MM-dd HH:mm:ss.SSS" timestamp
     private static final String UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
-    private static Cluster cluster;
-    private static Session session;
+    private static CqlSession session;
     private static AuditLogger customLogger;
 
     @Captor
@@ -93,8 +92,7 @@ public class ITVerifyCustomLogFormat
     public static void beforeClass() throws Exception
     {
         CassandraDaemonForAuditTest cdt = CassandraDaemonForAuditTest.getInstance();
-        cluster = cdt.createCluster();
-        session = cluster.connect();
+        session = cdt.createSession();
 
         // Configure logger with custom format
         Map<String, String> configParameters = new HashMap<>();
@@ -127,7 +125,6 @@ public class ITVerifyCustomLogFormat
     {
         AuditAdapter.getInstance().getAuditor().removeLogger(customLogger);
         session.close();
-        cluster.close();
     }
 
     @Test
@@ -148,14 +145,15 @@ public class ITVerifyCustomLogFormat
                                   "APPLY BATCH;";
 
         // When
-        session.execute(new SimpleStatement(createKeyspace));
-        session.execute(new SimpleStatement(createTable));
+        session.execute(createKeyspace);
+        session.execute(createTable);
         Instant now = Instant.now();
 
         PreparedStatement preparedInsert = session.prepare(insert);
-        BatchStatement batchStatement = new BatchStatement(BatchStatement.Type.UNLOGGED);
-        batchStatement.add(preparedInsert.bind("Kalle", "B"));
-        batchStatement.add(new SimpleStatement(update));
+        BatchStatement batchStatement = BatchStatement.builder(DefaultBatchType.UNLOGGED)
+                .addStatement(preparedInsert.bind("Kalle", "B"))
+                .addStatement(SimpleStatement.newInstance(update))
+                .build();
         session.execute(batchStatement);
 
         PreparedStatement preparedBatch = session.prepare(batch);
