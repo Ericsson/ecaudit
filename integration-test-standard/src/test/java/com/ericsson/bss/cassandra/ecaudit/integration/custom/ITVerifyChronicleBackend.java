@@ -33,11 +33,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
@@ -66,12 +64,10 @@ public class ITVerifyChronicleBackend
     private static final AtomicInteger usernameNumber = new AtomicInteger();
 
     private static CassandraDaemonForAuditTest cdt;
-    private static Cluster superCluster;
-    private static Session superSession;
+    private static CqlSession superSession;
 
     private static String testUsername;
-    private static Cluster testCluster;
-    private static Session testSession;
+    private static CqlSession testSession;
 
     private static QueueReader reader;
     private static AuditLogger customLogger;
@@ -81,37 +77,24 @@ public class ITVerifyChronicleBackend
     {
         cdt = CassandraDaemonForAuditTest.getInstance();
 
-        try (Cluster cassandraCluster = cdt.createCluster();
-             Session cassandraSession = cassandraCluster.connect())
+        try (CqlSession cassandraSession = cdt.createSession())
         {
-            cassandraSession.execute(new SimpleStatement(
-            "CREATE ROLE " + SUITE_SUPER_USER + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'roles'}"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'roles'}"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_drop' : 'roles'}"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'data'}"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'data'}"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_drop' : 'data'}"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data'}"));
-            cassandraSession.execute(new SimpleStatement(
-            "ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_modify' : 'data'}"));
+            cassandraSession.execute("CREATE ROLE " + SUITE_SUPER_USER + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'roles'}");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'roles'}");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_drop' : 'roles'}");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_create' : 'data'}");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_alter' : 'data'}");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_drop' : 'data'}");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data'}");
+            cassandraSession.execute("ALTER ROLE " + SUITE_SUPER_USER + " WITH OPTIONS = { 'grant_audit_whitelist_for_modify' : 'data'}");
         }
 
-        superCluster = cdt.createCluster(SUITE_SUPER_USER, "secret");
-        superSession = superCluster.connect();
+        superSession = cdt.createSession(SUITE_SUPER_USER, "secret");
 
         testUsername = givenUniqueSuperuserWithMinimalWhitelist();
-        testCluster = cdt.createCluster(testUsername, "secret");
-        testSession = testCluster.connect();
+        testSession = cdt.createSession(testUsername, "secret");
 
         Path auditDirectory = CassandraDaemonForAuditTest.getInstance().getAuditDirectory();
         ToolOptions options = ToolOptions
@@ -150,28 +133,25 @@ public class ITVerifyChronicleBackend
         AuditAdapter.getInstance().getAuditor().removeLogger(customLogger);
 
         testSession.close();
-        testCluster.close();
 
         for (int i = 0; i < usernameNumber.get(); i++)
         {
-            superSession.execute(new SimpleStatement("DROP ROLE IF EXISTS " + SUITE_TEST_USER_PREFIX + i));
+            superSession.execute("DROP ROLE IF EXISTS " + SUITE_TEST_USER_PREFIX + i);
         }
         superSession.close();
-        superCluster.close();
 
-        try (Cluster cassandraCluster = cdt.createCluster();
-             Session cassandraSession = cassandraCluster.connect())
+        try (CqlSession cassandraSession = cdt.createSession())
         {
-            cassandraSession.execute(new SimpleStatement("DROP ROLE IF EXISTS " + SUITE_SUPER_USER));
+            cassandraSession.execute("DROP ROLE IF EXISTS " + SUITE_SUPER_USER);
         }
     }
 
     @Test
     public void testFailedAuthenticationRequest()
     {
-        assertThatExceptionOfType(AuthenticationException.class)
-        .isThrownBy(() -> cdt.createCluster("user", "password").connect())
-        .withMessageContaining("Authentication error");
+        assertThatExceptionOfType(AllNodesFailedException.class)
+        .isThrownBy(() -> cdt.createSession("user", "password"))
+        .withMessageContaining("AuthenticationException: Authentication error");
 
         List<StoredAuditRecord> records = waitAndGetRecords();
         assertThat(records).hasSize(2);
@@ -286,15 +266,13 @@ public class ITVerifyChronicleBackend
 
     private void givenKeyspace(String keyspace)
     {
-        superSession.execute(new SimpleStatement(
-        "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+        superSession.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
     }
 
     private void givenTable(String keyspace, String table)
     {
         givenKeyspace(keyspace);
-        superSession.execute(new SimpleStatement(
-        "CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)"));
+        superSession.execute("CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)");
     }
 
     private static String getSuperuserWithMinimalWhitelist()
@@ -305,26 +283,20 @@ public class ITVerifyChronicleBackend
     private static String givenUniqueSuperuserWithMinimalWhitelist()
     {
         String username = SUITE_TEST_USER_PREFIX + usernameNumber.getAndIncrement();
-        superSession.execute(new SimpleStatement(
-        "CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true"));
-        superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }"));
-        superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }"));
-        superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }"));
+        superSession.execute("CREATE ROLE " + username + " WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_virtual_schema' }");
         return username;
     }
 
     private void resetTestUserWithMinimalWhitelist(String username)
     {
-        superSession.execute(new SimpleStatement(
-        "DELETE FROM system_auth.role_audit_whitelists_v2 WHERE role = '" + username + "'"));
-        superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }"));
-        superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }"));
-        superSession.execute(new SimpleStatement(
-        "ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }"));
+        superSession.execute("DELETE FROM system_auth.role_audit_whitelists_v2 WHERE role = '" + username + "'");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }");
+        superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_virtual_schema' }");
     }
 }
