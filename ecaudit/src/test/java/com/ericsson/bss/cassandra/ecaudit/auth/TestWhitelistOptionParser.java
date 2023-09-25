@@ -98,7 +98,7 @@ public class TestWhitelistOptionParser
     public void testParseGrantAll()
     {
         Set<Permission> operations = parser.parseTargetOperation("grant_audit_whitelist_for_all", DataResource.fromName("data"));
-        assertThat(operations).containsExactlyInAnyOrder(Permission.CREATE, Permission.ALTER, Permission.DROP, Permission.SELECT, Permission.MODIFY, Permission.AUTHORIZE);
+        assertThat(operations).containsExactlyInAnyOrder(Permission.CREATE, Permission.ALTER, Permission.DROP, Permission.SELECT, Permission.MODIFY, Permission.AUTHORIZE, Permission.UNMASK, Permission.SELECT_MASKED);
     }
 
     @Test

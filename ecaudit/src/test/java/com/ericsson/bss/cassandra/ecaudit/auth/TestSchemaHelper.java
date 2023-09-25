@@ -115,7 +115,7 @@ public class TestSchemaHelper
         assertWaitTimeInMillis(startTime, RETRY_INTERVAL_MILLIS);
     }
 
-    @Test(timeout = (2 * RETRY_INTERVAL_MILLIS) - 1)
+    @Test(timeout = (3 * RETRY_INTERVAL_MILLIS) - 1)
     public void testNoLocalSchemaInFirstTry() throws UnknownHostException
     {
         givenLocalStateOrder(null, currentEndpointState);

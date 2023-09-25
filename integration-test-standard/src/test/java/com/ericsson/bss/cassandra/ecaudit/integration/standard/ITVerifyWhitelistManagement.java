@@ -188,7 +188,7 @@ public class ITVerifyWhitelistManagement
     {
         authorizedSession.execute("ALTER ROLE authorized_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }");
 
-        assertRoleOperations("authorized_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("authorized_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     @Test
@@ -196,7 +196,7 @@ public class ITVerifyWhitelistManagement
     {
         authorizedSession.execute("ALTER ROLE other_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data' }");
 
-        assertRoleOperations("other_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("other_user", "data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     @Test
@@ -204,7 +204,7 @@ public class ITVerifyWhitelistManagement
     {
         authorizedSession.execute("ALTER ROLE authorized_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data' }");
 
-        assertRoleOperations("authorized_user", "grants/data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("authorized_user", "grants/data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     @Test
@@ -212,7 +212,7 @@ public class ITVerifyWhitelistManagement
     {
         authorizedSession.execute("ALTER ROLE other_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data' }");
 
-        assertRoleOperations("other_user", "grants/data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("other_user", "grants/data", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     @Test(expected = UnauthorizedException.class)
@@ -246,7 +246,7 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute("ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks_itvwm/ectbl' }");
 
-        assertRoleOperations("temporary_user", "data/ecks_itvwm/ectbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("temporary_user", "data/ecks_itvwm/ectbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     @Test
@@ -255,7 +255,7 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute("ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/unknownks' }");
 
-        assertRoleOperations("temporary_user", "data/unknownks", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("temporary_user", "data/unknownks", asList("CREATE", "ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -271,7 +271,7 @@ public class ITVerifyWhitelistManagement
         given_temporary_user(superSession);
         superSession.execute("ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks_itvwm/unknowntbl' }");
 
-        assertRoleOperations("temporary_user", "data/ecks_itvwm/unknowntbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("temporary_user", "data/ecks_itvwm/unknowntbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -319,7 +319,7 @@ public class ITVerifyWhitelistManagement
     {
         given_temporary_user(superSession);
         superSession.execute("ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'grants/data/ks/tb' }");
-        assertRoleOperations("temporary_user", "grants/data/ks/tb", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("temporary_user", "grants/data/ks/tb", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -370,7 +370,7 @@ public class ITVerifyWhitelistManagement
         superSession.execute("ALTER ROLE temporary_user WITH OPTIONS = { 'revoke_audit_whitelist_for_modify' : 'data' }");
         superSession.execute("ALTER ROLE temporary_user WITH OPTIONS = { 'revoke_audit_whitelist_for_drop' : 'data' }");
 
-        assertRoleOperations("temporary_user", "data", asList("CREATE", "ALTER", "SELECT", "AUTHORIZE"));
+        assertRoleOperations("temporary_user", "data", asList("CREATE", "ALTER", "SELECT", "AUTHORIZE", "UNMASK", "SELECT_MASKED"));
     }
 
     private void given_temporary_user(CqlSession privateSession)

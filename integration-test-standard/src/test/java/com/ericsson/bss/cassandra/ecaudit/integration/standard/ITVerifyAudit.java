@@ -410,7 +410,7 @@ public class ITVerifyAudit
         String expectedStatement = "INSERT INTO ecks_itva.ectypetbl "
                 + "(partk, v0, v1, v2, v4, v5, v9, v13, v15)"
                 + " VALUES "
-                + "(?, ?, ?, ?, ?, ?, ?, ?, ?)[1, 'text', 'ascii', 123123123123123123, true, 1976-02-25, 8.8.8.8, 2004-05-29T14:29:00.000Z, 'varchar']";
+                + "(?, ?, ?, ?, ?, ?, ?, ?, ?)[1, 'text', 'ascii', 123123123123123123, true, '1976-02-25', '8.8.8.8', '2004-05-29T14:29:00.000Z', 'varchar']";
         // TODO: Are these bugs in Cassandra?
         // Was expecting "v5 date" to get quotes
         // Was expecting "v9 inet" to get quotes
