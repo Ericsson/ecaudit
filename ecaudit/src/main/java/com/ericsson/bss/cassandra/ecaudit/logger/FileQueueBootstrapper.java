@@ -66,7 +66,10 @@ class FileQueueBootstrapper
 
         for (File discoveredFile : discoveredFiles)
         {
-            LOG.debug("Discovered {}", discoveredFile.getPath());
+            if(LOG.isDebugEnabled())
+            {
+                LOG.debug("Discovered {}", discoveredFile.getPath());
+            }
         }
     }
 

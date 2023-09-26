@@ -45,7 +45,7 @@ class WhitelistOptionParser
         {
             return WhitelistOperation.REVOKE;
         }
-        else if (normalizedInput.equals(DROP_LEGACY_KEY_PATTERN))
+        else if (DROP_LEGACY_KEY_PATTERN.equals(normalizedInput))
         {
             return WhitelistOperation.DROP_LEGACY;
         }
