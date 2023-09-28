@@ -226,7 +226,7 @@ public class WhitelistDataAccess
 
         SchemaTransformationResult result = Schema.instance.transform(SchemaTransformations.updateSystemKeyspace(expected, ECAUDIT_SCHEMA_VERSION));
 
-        if (result.diff != KeyspacesDiff.NONE)
+        if (result.diff.equals(KeyspacesDiff.NONE))
         {
             SchemaHelper schemaHelper = new SchemaHelper();
             if (!schemaHelper.areSchemasAligned(SCHEMA_ALIGNMENT_DELAY_MS))
@@ -251,7 +251,7 @@ public class WhitelistDataAccess
     private ConsistencyLevel consistencyForRole(RoleResource role)
     {
         String roleName = role.getRoleName();
-        if (roleName.equals(DEFAULT_SUPERUSER_NAME))
+        if (DEFAULT_SUPERUSER_NAME.equals(roleName))
         {
             return ConsistencyLevel.QUORUM;
         }
