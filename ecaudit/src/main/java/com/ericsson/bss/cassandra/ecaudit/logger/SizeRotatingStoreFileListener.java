@@ -48,7 +48,10 @@ class SizeRotatingStoreFileListener implements StoreFileListener
     @Override
     public synchronized void onAcquired(int cycle, File file)
     {
-        LOG.debug("Chronicle acquired [{}] {} at {} bytes", cycle, file.getPath(), file.length());
+        if(LOG.isDebugEnabled())
+        {
+            LOG.debug("Chronicle acquired [{}] {} at {} bytes", cycle, file.getPath(), file.length());
+        }
 
         if (bootstrapper.isBootstrapping())
         {
@@ -62,7 +65,10 @@ class SizeRotatingStoreFileListener implements StoreFileListener
     @Override
     public void onReleased(int cycle, File file)
     {
-        LOG.debug("Chronicle released [{}] {} at {} bytes", cycle, file.getPath(), file.length());
+        if(LOG.isDebugEnabled())
+        {
+            LOG.debug("Chronicle released [{}] {} at {} bytes", cycle, file.getPath(), file.length());
+        }
 
         releasedFileQueue.offer(file);
         maybeRotate();
@@ -89,10 +95,16 @@ class SizeRotatingStoreFileListener implements StoreFileListener
             return false;
         }
 
-        LOG.debug("Deleting Chronicle file {} at {} bytes", toDelete.getPath(), toDelete.getPath().length());
+        if(LOG.isDebugEnabled())
+        {
+            LOG.debug("Deleting Chronicle file {} at {} bytes", toDelete.getPath(), toDelete.getPath().length());
+        }
         if (!toDelete.delete())
         {
-            LOG.error("Failed to delete Chronicle file {}", toDelete.getPath());
+            if(LOG.isErrorEnabled())
+            {
+                LOG.error("Failed to delete Chronicle file {}", toDelete.getPath());
+            }
             return false;
         }
 
