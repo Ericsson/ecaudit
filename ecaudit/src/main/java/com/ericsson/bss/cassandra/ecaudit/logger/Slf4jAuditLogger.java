@@ -136,6 +136,9 @@ public class Slf4jAuditLogger implements AuditLogger
     @Override
     public void log(AuditEntry logEntry)
     {
-        auditLogger.info(formatter.getLogTemplate(), formatter.getArgumentsForEntry(logEntry));
+        if(auditLogger.isInfoEnabled())
+        {
+            auditLogger.info(formatter.getLogTemplate(), formatter.getArgumentsForEntry(logEntry));
+        }
     }
 }

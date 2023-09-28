@@ -77,7 +77,7 @@ public final class ConnectionResource implements IResource, Comparable<Connectio
     {
         String[] parts = StringUtils.split(name, '/');
 
-        if (!parts[0].equals(ROOT_NAME) || parts.length > 1)
+        if (!ROOT_NAME.equals(parts[0]) || parts.length > 1)
         {
             throw new IllegalArgumentException(String.format("%s is not a valid connection resource name", name));
         }

@@ -99,7 +99,10 @@ public class RoleAuditFilter implements AuditFilter
         }
         catch (UnavailableException e)
         {
-            LOG.debug("Audit entry for {} not whitelisted as filter backend is unavailable", logEntry.getUser(), e);
+            if(LOG.isDebugEnabled())
+            {
+                LOG.debug("Audit entry for {} not whitelisted as filter backend is unavailable", logEntry.getUser(), e);
+            }
             return false;
         }
     }
