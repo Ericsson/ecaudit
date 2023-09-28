@@ -41,7 +41,7 @@ public class SuppressBlobs extends AbstractSuppressor
     {
         if (type.asCQL3Type() instanceof CQL3Type.Native)
         {
-            return type.asCQL3Type() == CQL3Type.Native.BLOB;
+            return type.asCQL3Type().equals(CQL3Type.Native.BLOB);
         }
         if (type instanceof CollectionType)
         {

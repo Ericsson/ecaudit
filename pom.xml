@@ -85,7 +85,7 @@
         <org.apache.maven.plugins.maven-gpg-plugin.version>1.6</org.apache.maven.plugins.maven-gpg-plugin.version>
         <org.jacoco.jacoco-maven-plugin.version>0.8.6</org.jacoco.jacoco-maven-plugin.version>
         <org.pitest.pitest-maven.version>1.6.2</org.pitest.pitest-maven.version>
-        <org.apache.maven.plugins-maven-pmd-plugin.version>3.14.0</org.apache.maven.plugins-maven-pmd-plugin.version>
+        <org.apache.maven.plugins-maven-pmd-plugin.version>3.15.0</org.apache.maven.plugins-maven-pmd-plugin.version>
     </properties>
 
     <dependencyManagement>
