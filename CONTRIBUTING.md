@@ -25,13 +25,17 @@ At the moment the oldest maintained release branch is ```release/c3.0```
 which is tracking the latest release of Cassandra 3.0.x.
 Then comes ```release/3.11```
 which is tracking the latest release of Cassandra 3.11.x.
-The ```master``` branch is tracking the latest release of Cassandra 4.0.x.
+Then comes ```release/4.0```
+which is tracking the latest release of Cassandra 4.0.x.
+Then comes ```release/4.1```
+which is tracking the latest release of Cassandra 4.1.x.
+The ```master``` branch is tracking the latest release of Cassandra 5.0.x.
 
 Pull Requests with new features should typically target ```release/c3.11```.
-Merge order is then ```PR``` -> ```release/c3.11``` -> ```master```
+Merge order is then ```PR``` -> ```release/c3.11``` -> ```release/c4.0``` -> ```release/c4.1``` -> ```master```
 
 Pull Requests with critical fixes should typically target ```release/c3.0```.
-Merge order is then ```PR``` -> ```release/c3.0``` -> ```release/c3.11``` -> ```master```
+Merge order is then ```PR``` -> ```release/c3.0``` -> ```release/c3.11``` -> ```release/c4.0``` -> ```release/c4.1``` -> ```master```
 
 It is encouraged to encapsulate differences between flavors in Flavor Adapters.
 This simplifies maintenance and merging between flavors.
