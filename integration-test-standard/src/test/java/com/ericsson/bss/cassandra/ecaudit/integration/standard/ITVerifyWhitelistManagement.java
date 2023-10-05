@@ -77,19 +77,19 @@ public class ITVerifyWhitelistManagement
         session = cluster.connect();
 
         session.execute(new SimpleStatement(
-        "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
+        "CREATE KEYSPACE ecks_itvwm WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
         session.execute(new SimpleStatement(
-        "CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
+        "CREATE TABLE ecks_itvwm.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
 
         session.execute(new SimpleStatement(
         "CREATE ROLE ordinary_user WITH PASSWORD = 'secret' AND LOGIN = true"));
         session.execute(new SimpleStatement(
-        "GRANT SELECT ON TABLE ecks.ectbl TO ordinary_user"));
+        "GRANT SELECT ON TABLE ecks_itvwm.ectbl TO ordinary_user"));
 
         session.execute(new SimpleStatement(
         "CREATE ROLE create_user WITH PASSWORD = 'secret' AND LOGIN = true"));
         session.execute(new SimpleStatement(
-        "GRANT SELECT ON TABLE ecks.ectbl TO create_user"));
+        "GRANT SELECT ON TABLE ecks_itvwm.ectbl TO create_user"));
         session.execute(new SimpleStatement(
         "GRANT CREATE ON ALL ROLES TO create_user"));
 
@@ -99,7 +99,7 @@ public class ITVerifyWhitelistManagement
         session.execute(new SimpleStatement(
         "CREATE ROLE authorized_user WITH PASSWORD = 'secret' AND LOGIN = true"));
         session.execute(new SimpleStatement(
-        "GRANT SELECT ON TABLE ecks.ectbl TO authorized_user"));
+        "GRANT SELECT ON TABLE ecks_itvwm.ectbl TO authorized_user"));
         session.execute(new SimpleStatement(
         "GRANT CREATE ON ALL ROLES TO authorized_user"));
         session.execute(new SimpleStatement(
@@ -125,7 +125,7 @@ public class ITVerifyWhitelistManagement
         session.execute(new SimpleStatement(
         "CREATE ROLE trusted_user WITH PASSWORD = 'secret' AND LOGIN = true"));
         session.execute(new SimpleStatement(
-        "GRANT SELECT ON TABLE ecks.ectbl TO trusted_user"));
+        "GRANT SELECT ON TABLE ecks_itvwm.ectbl TO trusted_user"));
         session.execute(new SimpleStatement(
         "GRANT AUTHORIZE ON ROLE whitelist_role TO trusted_user"));
         session.execute(new SimpleStatement(
@@ -147,21 +147,39 @@ public class ITVerifyWhitelistManagement
     @AfterClass
     public static void afterClass()
     {
-        authorizedSession.close();
-        authorizedCluster.close();
+        if(session != null)
+        {
+            session.execute(new SimpleStatement("DROP KEYSPACE IF EXISTS ecks_itvwm"));
+            session.execute(new SimpleStatement("DROP ROLE IF EXISTS whitelist_role"));
+            session.execute(new SimpleStatement("DROP ROLE IF EXISTS ordinary_user"));
+            session.execute(new SimpleStatement("DROP ROLE IF EXISTS create_user"));
+            session.execute(new SimpleStatement("DROP ROLE IF EXISTS authorized_user"));
+            session.execute(new SimpleStatement("DROP ROLE IF EXISTS super_user"));
 
-        superSession.close();
-        superCluster.close();
+            session.close();
+        }
+        if(cluster != null)
+        {
+            cluster.close();
+        }
 
-        session.execute(new SimpleStatement("DROP KEYSPACE IF EXISTS ecks"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS whitelist_role"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS ordinary_user"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS create_user"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS authorized_user"));
-        session.execute(new SimpleStatement("DROP ROLE IF EXISTS super_user"));
+        if(superSession != null)
+        {
+            superSession.close();
+        }
+        if(superCluster != null)
+        {
+            superCluster.close();
+        }
 
-        session.close();
-        cluster.close();
+        if(authorizedSession != null)
+        {
+            authorizedCluster.close();
+        }
+        if(authorizedCluster != null)
+        {
+            authorizedCluster.close();
+        }
     }
 
     @Test
@@ -288,9 +306,9 @@ public class ITVerifyWhitelistManagement
     {
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl' }"));
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks_itvwm/ectbl' }"));
 
-        assertRoleOperations("temporary_user", "data/ecks/ectbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("temporary_user", "data/ecks_itvwm/ectbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
     }
 
     @Test
@@ -316,9 +334,9 @@ public class ITVerifyWhitelistManagement
     {
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl' }"));
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks_itvwm/unknowntbl' }"));
 
-        assertRoleOperations("temporary_user", "data/ecks/unknowntbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
+        assertRoleOperations("temporary_user", "data/ecks_itvwm/unknowntbl", asList("ALTER", "DROP", "SELECT", "MODIFY", "AUTHORIZE"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -326,7 +344,7 @@ public class ITVerifyWhitelistManagement
     {
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknown?tbl' }"));
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks_itvwm/unknown?tbl' }"));
     }
 
     @Test (expected = InvalidQueryException.class)
@@ -334,7 +352,7 @@ public class ITVerifyWhitelistManagement
     {
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/ecks' ,'grant_audit_whitelist_for_modify' : 'data/ecks'}"));
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/ecks_itvwm' ,'grant_audit_whitelist_for_modify' : 'data/ecks_itvwm'}"));
     }
 
     @Test
@@ -398,7 +416,7 @@ public class ITVerifyWhitelistManagement
     {
         given_temporary_user(superSession);
         superSession.execute(new SimpleStatement(
-        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/unknowntbl/invalid' }"));
+        "ALTER ROLE temporary_user WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks_itvwm/unknowntbl/invalid' }"));
     }
 
     @Test (expected = InvalidQueryException.class)
