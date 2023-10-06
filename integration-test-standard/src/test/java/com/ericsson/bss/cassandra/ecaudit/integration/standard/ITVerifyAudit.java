@@ -98,9 +98,13 @@ public class ITVerifyAudit
         session.execute("ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }");
         session.execute("ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema' }");
 
-        session.execute("CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
-        session.execute("CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)");
-        session.execute("CREATE TABLE ecks.ectypetbl (partk int PRIMARY KEY, v0 text, v1 ascii, v2 bigint, v3 blob, v4 boolean, "
+        session.execute("ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system' }");
+        session.execute("ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema' }");
+        session.execute("ALTER ROLE cassandra WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema' }");
+
+        session.execute("CREATE KEYSPACE ecks_itva WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        session.execute("CREATE TABLE ecks_itva.ectbl (partk int PRIMARY KEY, clustk text, value text)");
+        session.execute("CREATE TABLE ecks_itva.ectypetbl (partk int PRIMARY KEY, v0 text, v1 ascii, v2 bigint, v3 blob, v4 boolean, "
         + "v5 date, v6 decimal, v7 double, v8 float, v9 inet, v10 int, v11 smallint, v12 time, v13 timestamp, "
         + "v14 uuid, v15 varchar, v16 varint)");
 
@@ -111,12 +115,12 @@ public class ITVerifyAudit
         session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system'}");
         session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_schema'}");
         session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/system_virtual_schema'}");
-        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/ectbl'}");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks_itva/ectbl'}");
         session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/nonexistingks'}");
-        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks/nonexistingtbl'}");
+        session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data/ecks_itva/nonexistingtbl'}");
         session.execute("ALTER ROLE sam WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'connections'}");
-        session.execute("GRANT MODIFY ON ecks.ectbl TO sam");
-        session.execute("GRANT SELECT ON ecks.ectbl TO sam");
+        session.execute("GRANT MODIFY ON ecks_itva.ectbl TO sam");
+        session.execute("GRANT SELECT ON ecks_itva.ectbl TO sam");
 
         session.execute("CREATE ROLE foo WITH PASSWORD = 'secret' AND LOGIN = true AND SUPERUSER = true");
         session.execute("ALTER ROLE foo WITH OPTIONS = { 'grant_audit_whitelist_for_all' : 'data'}");
@@ -155,13 +159,17 @@ public class ITVerifyAudit
     @AfterClass
     public static void afterClass()
     {
-        session.execute("DROP KEYSPACE IF EXISTS ecks");
-        session.execute("DROP ROLE IF EXISTS ecuser");
-        session.execute("DROP ROLE IF EXISTS foo");
-        session.execute("DROP ROLE IF EXISTS bar");
-        session.execute("DROP ROLE IF EXISTS mute");
+        if(session != null)
+        {
+            session.execute("DROP KEYSPACE IF EXISTS ecks_itva");
+            session.execute("DROP ROLE IF EXISTS ecuser");
+            session.execute("DROP ROLE IF EXISTS foo");
+            session.execute("DROP ROLE IF EXISTS bar");
+            session.execute("DROP ROLE IF EXISTS mute");
 
-        session.close();
+            session.close();
+            session.close();
+        }
     }
 
     @Test
@@ -266,18 +274,18 @@ public class ITVerifyAudit
     public void testValidPreparedStatementsAreLogged()
     {
         PreparedStatement preparedInsertStatement = session
-                .prepare("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
+                .prepare("INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
         PreparedStatement preparedSelectStatement = session
-                .prepare("SELECT * FROM ecks.ectbl WHERE partk = ?");
-        PreparedStatement preparedDeleteStatement = session.prepare("DELETE FROM ecks.ectbl WHERE partk = ?");
+                .prepare("SELECT * FROM ecks_itva.ectbl WHERE partk = ?");
+        PreparedStatement preparedDeleteStatement = session.prepare("DELETE FROM ecks_itva.ectbl WHERE partk = ?");
 
         List<String> expectedStatements = Arrays.asList(
-                "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']",
-                "SELECT * FROM ecks.ectbl WHERE partk = ?[1]",
-                "DELETE FROM ecks.ectbl WHERE partk = ?[1]",
-                "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[2, '2', 'valid']",
-                "SELECT * FROM ecks.ectbl WHERE partk = ?[2]",
-                "DELETE FROM ecks.ectbl WHERE partk = ?[2]");
+                "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']",
+                "SELECT * FROM ecks_itva.ectbl WHERE partk = ?[1]",
+                "DELETE FROM ecks_itva.ectbl WHERE partk = ?[1]",
+                "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, ?)[2, '2', 'valid']",
+                "SELECT * FROM ecks_itva.ectbl WHERE partk = ?[2]",
+                "DELETE FROM ecks_itva.ectbl WHERE partk = ?[2]");
 
         for (int i = 1; i <= 2; i++)
         {
@@ -298,25 +306,26 @@ public class ITVerifyAudit
     }
 
     @Test
+
     public void testValidBatchStatementsAreLogged()
     {
         PreparedStatement preparedInsertStatement1 = session
-                .prepare("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
+                .prepare("INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
         PreparedStatement preparedInsertStatement2 = session
-                .prepare("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'valid')");
+                .prepare("INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, 'valid')");
 
         List<String> expectedStatements = Arrays.asList(
-                "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']",
-                "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[2, '2', 'valid']",
-                "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'valid')[3, '3']",
-                "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')",
-                "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'valid')[5, '5']");
+                "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, ?)[1, '1', 'valid']",
+                "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, ?)[2, '2', 'valid']",
+                "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, 'valid')[3, '3']",
+                "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')",
+                "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, 'valid')[5, '5']");
 
         BatchStatement batch = BatchStatement.builder(DefaultBatchType.UNLOGGED)
                 .addStatement(preparedInsertStatement1.bind(1, "1", "valid"))
                 .addStatement(preparedInsertStatement1.bind(2, "2", "valid"))
                 .addStatement(preparedInsertStatement2.bind(3, "3"))
-                .addStatement(SimpleStatement.newInstance("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"))
+                .addStatement(SimpleStatement.newInstance("INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"))
                 .addStatement(preparedInsertStatement2.bind(5, "5"))
                 .build();
         session.execute(batch);
@@ -337,11 +346,11 @@ public class ITVerifyAudit
     public void testValidNonPreparedBatchStatementsAreLogged()
     {
         List<String> allStatements = Arrays.asList(
-        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (1, '1', 'valid')",
-        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (2, '2', 'valid')",
-        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (3, '3', 'valid')",
-        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')",
-        "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (5, '5', 'valid')");
+        "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (1, '1', 'valid')",
+        "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (2, '2', 'valid')",
+        "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (3, '3', 'valid')",
+        "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')",
+        "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (5, '5', 'valid')");
 
         StringBuilder batchStatementBuilder = new StringBuilder("BEGIN UNLOGGED BATCH ");
         for (String statement : allStatements)
@@ -369,8 +378,8 @@ public class ITVerifyAudit
     public void testValidPreparedBatchStatementsAreLogged()
     {
         String statement = "BEGIN UNLOGGED BATCH USING TIMESTAMP ? " +
-                           "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?); " +
-                           "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'valid'); " +
+                           "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, ?); " +
+                           "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (?, ?, 'valid'); " +
                            "APPLY BATCH;";
 
         List<String> expectedStatements = Collections.singletonList(statement + "[1234, 1, '1', 'valid', 3, '3']");
@@ -393,12 +402,12 @@ public class ITVerifyAudit
     public void testValidPreparedStatementTypesAreLogged() throws Exception
     {
         PreparedStatement preparedStatement = session
-                .prepare("INSERT INTO ecks.ectypetbl "
+                .prepare("INSERT INTO ecks_itva.ectypetbl "
                         + "(partk, v0, v1, v2, v4, v5, v9, v13, v15)"
                         + " VALUES "
                         + "(?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-        String expectedStatement = "INSERT INTO ecks.ectypetbl "
+        String expectedStatement = "INSERT INTO ecks_itva.ectypetbl "
                 + "(partk, v0, v1, v2, v4, v5, v9, v13, v15)"
                 + " VALUES "
                 + "(?, ?, ?, ?, ?, ?, ?, ?, ?)[1, 'text', 'ascii', 123123123123123123, true, 1976-02-25, 8.8.8.8, 2004-05-29T14:29:00.000Z, 'varchar']";
@@ -425,7 +434,7 @@ public class ITVerifyAudit
     @Test
     public void testValidSimpleStatementTypesAreLogged()
     {
-        String statement = "INSERT INTO ecks.ectypetbl "
+        String statement = "INSERT INTO ecks_itva.ectypetbl "
                 + "(partk, v0, v1, v2, v4, v5, v9, v13, v15)"
                 + " VALUES "
                 + "(1, 'text', 'ascii', 123123123123123123, true, '1976-02-25', '8.8.8.8', '2004-05-29T14:29:00.000Z', 'varchar')";
@@ -476,9 +485,9 @@ public class ITVerifyAudit
         // Driver or Cassandra will add double-quotes to ks on one of the connections if statemens doesn't have it here.
         // TODO: Research if this is "bug" in Cassandra, driver or ecAudit?
         List<String> statements = Arrays.asList(
-                "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
-                "SELECT * FROM ecks.ectbl",
-                "USE \"ecks\"",
+                "INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
+                "SELECT * FROM ecks_itva.ectbl",
+                "USE \"ecks_itva\"",
                 "INSERT INTO ectbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
                 "SELECT * FROM ectbl");
 
@@ -501,7 +510,7 @@ public class ITVerifyAudit
                 .stream()
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(Collectors.toList()))
-                .containsOnlyElementsOf(expectedAttemptsAsUser(Arrays.asList("USE \"ecks\""), user));
+                .containsOnlyElementsOf(expectedAttemptsAsUser(Arrays.asList("USE \"ecks_itva\""), user));
     }
 
     /**
@@ -517,7 +526,7 @@ public class ITVerifyAudit
         String user = "sam";
         try (CqlSession privateSession = cdt.createSession(user, "secret"))
         {
-            executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks\"");
+            executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks_itva\"");
             executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks2\"");
             executeOneUseWithFollowingSelect(user, privateSession, "USE \"ecks3\"");
         }
@@ -526,14 +535,14 @@ public class ITVerifyAudit
     private void executeOneUseWithFollowingSelect(String user, CqlSession privateSession, String useStatement) {
         ArgumentCaptor<ILoggingEvent> loggingEventCaptor1 = ArgumentCaptor.forClass(ILoggingEvent.class);
         privateSession.execute(useStatement);
-        privateSession.execute("SELECT * FROM ecks.ectypetbl");
+        privateSession.execute("SELECT * FROM ecks_itva.ectypetbl");
         verify(mockAuditAppender, atLeast(2)).doAppend(loggingEventCaptor1.capture());
         List<ILoggingEvent> loggingEvents1 = loggingEventCaptor1.getAllValues();
         assertThat(loggingEvents1
                 .stream()
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(Collectors.toList()))
-                .containsOnlyElementsOf(expectedAttemptsAsUser(Arrays.asList(useStatement, "SELECT * FROM ecks.ectypetbl"), user));
+                .containsOnlyElementsOf(expectedAttemptsAsUser(Arrays.asList(useStatement, "SELECT * FROM ecks_itva.ectypetbl"), user));
         reset(mockAuditAppender);
     }
 
@@ -542,11 +551,11 @@ public class ITVerifyAudit
     {
         List<String> statements = Arrays.asList(
                 "CREATE ROLE ecuser WITH PASSWORD = 'secret' AND LOGIN = true",
-                "CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false",
-                "CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)",
+                "CREATE KEYSPACE ecks_itva WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false",
+                "CREATE TABLE ecks_itva.ectbl (partk int PRIMARY KEY, clustk text, value text)",
                 "INSERT INTO invalidks.invalidtbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
                 "SELECT * FROM invalidks.invalidtbl",
-                "SELECT * FROM ecks.invalidtbl",
+                "SELECT * FROM ecks_itva.invalidtbl",
                 "DELETE FROM invalidks.invalidtbl WHERE partk = 2",
                 "DROP KEYSPACE invalidks",
                 "DROP ROLE invaliduser",
@@ -573,9 +582,9 @@ public class ITVerifyAudit
     {
         List<String> statements = Arrays.asList(
                 "SELECT * FROM nonexistingks.nonexistingtbl",
-                "SELECT * FROM ecks.nonexistingtbl",
+                "SELECT * FROM ecks_itva.nonexistingtbl",
                 "INSERT INTO nonexistingks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')",
-                "INSERT INTO ecks.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')");
+                "INSERT INTO ecks_itva.nonexistingtbl (partk, clustk, value) VALUES (1, 'one', 'valid')");
 
         try (CqlSession privateSession = cdt.createSession("sam", "secret"))
         {
@@ -598,7 +607,7 @@ public class ITVerifyAudit
             for (String statement : statements)
             {
                 BatchStatement batch = BatchStatement.builder(DefaultBatchType.UNLOGGED)
-                        .addStatement(SimpleStatement.newInstance("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"))
+                        .addStatement(SimpleStatement.newInstance("INSERT INTO ecks_itva.ectbl (partk, clustk, value) VALUES (4, '4', 'valid')"))
                         .addStatement(SimpleStatement.newInstance(statement))
                         .build();
                 assertThatExceptionOfType(InvalidQueryException.class).isThrownBy(() -> privateSession.execute(batch));

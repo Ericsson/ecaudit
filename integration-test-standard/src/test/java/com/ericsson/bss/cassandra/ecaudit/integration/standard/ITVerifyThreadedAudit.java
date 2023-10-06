@@ -71,16 +71,16 @@ public class ITVerifyThreadedAudit
 
         try (CqlSession session = cdt.createSession())
         {
-            session.execute("CREATE KEYSPACE ecks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
-            session.execute("CREATE TABLE ecks.ectbl (partk int PRIMARY KEY, clustk text, value text)");
+            session.execute("CREATE KEYSPACE ecks_itvta WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+            session.execute("CREATE TABLE ecks_itvta.ectbl (partk int PRIMARY KEY, clustk text, value text)");
 
             session.execute("CREATE ROLE test_role WITH LOGIN = false");
             session.execute("ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system' }");
             session.execute("ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system_schema' }");
             session.execute("ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system_virtual_schema' }");
             session.execute("ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_execute' : 'connections' }");
-            session.execute("GRANT MODIFY ON ecks.ectbl TO test_role");
-            session.execute("GRANT SELECT ON ecks.ectbl TO test_role");
+            session.execute("GRANT MODIFY ON ecks_itvta.ectbl TO test_role");
+            session.execute("GRANT SELECT ON ecks_itvta.ectbl TO test_role");
 
             for (int i = 0; i < USER_COUNT; i++)
             {
@@ -110,8 +110,9 @@ public class ITVerifyThreadedAudit
     {
         try (CqlSession session = cdt.createSession())
         {
-            session.execute("DROP KEYSPACE IF EXISTS ecks");
+            session.execute("DROP KEYSPACE IF EXISTS ecks_itvta");
             session.execute("DROP ROLE IF EXISTS test_role");
+
             for (int i = 0; i < USER_COUNT; i++)
             {
                 session.execute("DROP ROLE IF EXISTS user" + i);
@@ -179,21 +180,21 @@ public class ITVerifyThreadedAudit
             try (CqlSession privateSession = cdt.createSession(username, "secret"))
             {
                 PreparedStatement preparedInsertStatement = privateSession
-                        .prepare("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
+                        .prepare("INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
                 PreparedStatement preparedSelectStatement = privateSession
-                        .prepare("SELECT * FROM ecks.ectbl WHERE partk = ?");
+                        .prepare("SELECT * FROM ecks_itvta.ectbl WHERE partk = ?");
                 PreparedStatement preparedDeleteStatement = privateSession
-                        .prepare("DELETE FROM ecks.ectbl WHERE partk = ?");
+                        .prepare("DELETE FROM ecks_itvta.ectbl WHERE partk = ?");
 
                 List<String> expectedStatements = new ArrayList<>();
 
                 for (int i = 0; i < 100; i++)
                 {
                     expectedStatements.addAll(Arrays.asList(
-                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[" + i + ", '" + i
+                            "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?)[" + i + ", '" + i
                                     + "', 'valid']",
-                            "SELECT * FROM ecks.ectbl WHERE partk = ?[" + i + "]",
-                            "DELETE FROM ecks.ectbl WHERE partk = ?[" + i + "]"));
+                            "SELECT * FROM ecks_itvta.ectbl WHERE partk = ?[" + i + "]",
+                            "DELETE FROM ecks_itvta.ectbl WHERE partk = ?[" + i + "]"));
 
                     privateSession.execute(preparedInsertStatement.bind(i, Integer.toString(i), "valid"));
                     privateSession.execute(preparedSelectStatement.bind(i));
@@ -220,22 +221,22 @@ public class ITVerifyThreadedAudit
             try (CqlSession session = cdt.createSession(username, "secret"))
             {
                 PreparedStatement preparedInsertStatement1 = session
-                        .prepare("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
+                        .prepare("INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
                 PreparedStatement preparedInsertStatement2 = session
-                        .prepare("INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'static')");
+                        .prepare("INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, 'static')");
                 PreparedStatement preparedInsertStatement3 = session
-                        .prepare("INSERT INTO ecks.ectbl (partk, clustk) VALUES (?, ?)");
+                        .prepare("INSERT INTO ecks_itvta.ectbl (partk, clustk) VALUES (?, ?)");
 
                 List<String> expectedStatements = new ArrayList<>();
 
                 for (int i = 0; i < 10; i++)
                 {
                     expectedStatements.addAll(Arrays.asList(
-                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[" + (100 + i) + ", '1', 'b1']",
-                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?)[" + (200 + i) + ", '2', 'b2']",
-                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'static')[" + (300 + i) + ", '3']",
-                            "INSERT INTO ecks.ectbl (partk, clustk) VALUES (?, ?)[" + (400 + i) + ", '4']",
-                            "INSERT INTO ecks.ectbl (partk, clustk) VALUES (?, ?)[" + (500 + i) + ", '5']"));
+                            "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?)[" + (100 + i) + ", '1', 'b1']",
+                            "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?)[" + (200 + i) + ", '2', 'b2']",
+                            "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, 'static')[" + (300 + i) + ", '3']",
+                            "INSERT INTO ecks_itvta.ectbl (partk, clustk) VALUES (?, ?)[" + (400 + i) + ", '4']",
+                            "INSERT INTO ecks_itvta.ectbl (partk, clustk) VALUES (?, ?)[" + (500 + i) + ", '5']"));
                     BatchStatement batch = BatchStatement.builder(DefaultBatchType.UNLOGGED)
                             .addStatement(preparedInsertStatement1.bind(100 + i, "1", "b1"))
                             .addStatement(preparedInsertStatement1.bind(200 + i, "2", "b2"))
@@ -270,11 +271,11 @@ public class ITVerifyThreadedAudit
                 for (int i = 0; i < 10; i++)
                 {
                     String batchStatement = "BEGIN UNLOGGED BATCH " +
-                                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (" + (100 + i) + ", '1', 'b1'); " +
-                                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (" + (200 + i) + ", '2', 'b2'); " +
-                                            "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (" + (300 + i) + ", '3', 'static'); " +
-                                            "INSERT INTO ecks.ectbl (partk, clustk) VALUES (" + (400 + i) + ", '4'); " +
-                                            "INSERT INTO ecks.ectbl (partk, clustk) VALUES (" + (500 + i) + ", '5'); " +
+                                            "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (" + (100 + i) + ", '1', 'b1'); " +
+                                            "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (" + (200 + i) + ", '2', 'b2'); " +
+                                            "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (" + (300 + i) + ", '3', 'static'); " +
+                                            "INSERT INTO ecks_itvta.ectbl (partk, clustk) VALUES (" + (400 + i) + ", '4'); " +
+                                            "INSERT INTO ecks_itvta.ectbl (partk, clustk) VALUES (" + (500 + i) + ", '5'); " +
                                             "APPLY BATCH;";
                     expectedStatements.add(batchStatement);
                     session.execute(batchStatement);
@@ -300,9 +301,9 @@ public class ITVerifyThreadedAudit
             try (CqlSession session = cdt.createSession(username, "secret"))
             {
                 String batch = "BEGIN UNLOGGED BATCH USING TIMESTAMP ? " +
-                               "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, ?); " +
-                               "INSERT INTO ecks.ectbl (partk, clustk, value) VALUES (?, ?, 'static'); " +
-                               "INSERT INTO ecks.ectbl (partk, clustk) VALUES (?, ?); " +
+                               "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?); " +
+                               "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, 'static'); " +
+                               "INSERT INTO ecks_itvta.ectbl (partk, clustk) VALUES (?, ?); " +
                                "APPLY BATCH;";
 
                 PreparedStatement preparedBatchStatement = session.prepare(batch);
