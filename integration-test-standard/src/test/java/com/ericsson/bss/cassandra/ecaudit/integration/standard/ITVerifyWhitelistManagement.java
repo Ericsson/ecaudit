@@ -174,7 +174,7 @@ public class ITVerifyWhitelistManagement
 
         if(authorizedSession != null)
         {
-            authorizedCluster.close();
+            authorizedSession.close();
         }
         if(authorizedCluster != null)
         {
