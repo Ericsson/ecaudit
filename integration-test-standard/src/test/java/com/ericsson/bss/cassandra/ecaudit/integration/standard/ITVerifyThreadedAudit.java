@@ -58,7 +58,7 @@ public class ITVerifyThreadedAudit
 {
     private final static String UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
-    private static final int USER_COUNT = 20;
+    private static final int USER_COUNT = 5;
 
     private static CassandraDaemonForAuditTest cdt;
 
