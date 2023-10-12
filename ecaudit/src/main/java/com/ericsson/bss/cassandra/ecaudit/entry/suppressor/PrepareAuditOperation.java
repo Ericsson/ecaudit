@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ericsson.bss.cassandra.ecaudit.filter;
+package com.ericsson.bss.cassandra.ecaudit.entry.suppressor;
 
-import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
+import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 
-/**
- * Implements an {@link AuditFilter} that does not filters any {@link AuditEntry} instances
- */
-public class DefaultAuditFilter implements AuditFilter {
+public class PrepareAuditOperation implements AuditOperation
+{
+    private final String operationString;
 
-    @Override
-    public boolean isWhitelisted(AuditEntry logEntry) {
-        return false;
+    /**
+     * Construct a new audit operation.
+     * @param operationString the operation/statement to wrap.
+     */
+    public PrepareAuditOperation(String operationString)
+    {
+        this.operationString = "Prepared: " + operationString;
     }
 
     @Override
-    public void setup()
+    public String getOperationString()
     {
-        // Intentionally left empty
+        return operationString;
     }
-
     @Override
-    public boolean shouldLogPrepareStatements()
+    public String getNakedOperationString()
     {
-        return true;
+        return operationString;
     }
 }
