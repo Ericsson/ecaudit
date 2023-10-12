@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ '8', '11' ]
+        java: [ '11', '17' ]
     name: Java ${{ matrix.java }} code analysis
     steps:
       - name: Checkout
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ '8', '11' ]
+        java: [ '11', '17' ]
     name: Java ${{ matrix.java }} unit test
     steps:
       - name: Checkout
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ '8', '11' ]
+        java: [ '11', '17' ]
     name: Java ${{ matrix.java }} integration tests
     steps:
       - name: Checkout

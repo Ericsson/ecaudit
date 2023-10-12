@@ -59,7 +59,7 @@ public class TestCqlLiteralFlavorAdapter
             { TimestampType.instance, EMPTY_BUFFER, "null" },
             { UTF8Type.instance, UTF8Type.instance.fromString("Kalle"), "'Kalle'" },
             { AsciiType.instance, AsciiType.instance.fromString("Anka"), "'Anka'" },
-            { TimestampType.instance, TimestampType.instance.fromTimeInMillis(42), "1970-01-01T00:00:00.042Z" }, // 42 ms after EPOCH
+            { TimestampType.instance, TimestampType.instance.fromTimeInMillis(42), "'1970-01-01T00:00:00.042Z'" }, // 42 ms after EPOCH
             { BooleanType.instance, BooleanType.instance.fromString("True"), "true" },
             { BytesType.instance, BytesType.instance.fromString("AABBCCDD"), "0xaabbccdd" },
         };
