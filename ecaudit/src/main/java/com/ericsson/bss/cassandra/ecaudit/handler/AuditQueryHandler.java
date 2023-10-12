@@ -203,9 +203,21 @@ public class AuditQueryHandler implements QueryHandler
     public Prepared prepare(String query, QueryState state, Map<String, ByteBuffer> customPayload)
     throws RequestValidationException
     {
-        return wrappedQueryHandler.prepare(query, state, customPayload);
-    }
+        long timestamp = System.currentTimeMillis();
+        auditAdapter.auditPrepare(query, state.getClientState(),  Status.ATTEMPT, timestamp);
+        ResultMessage.Prepared preparedStatement;
+        try
+        {
+            preparedStatement = wrappedQueryHandler.prepare(query, state, customPayload);
+        }
+        catch (RuntimeException e)
+        {
+            auditAdapter.auditPrepare(query, state.getClientState(),  Status.FAILED, timestamp);
+            throw e;
+        }
 
+        return preparedStatement;
+    }
     @Override
     public ParsedStatement.Prepared getPrepared(MD5Digest id)
     {
