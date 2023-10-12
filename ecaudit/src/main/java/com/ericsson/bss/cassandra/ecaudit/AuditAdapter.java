@@ -30,6 +30,7 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.entry.PreparedAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.entry.factory.AuditEntryBuilderFactory;
 import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
+import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.PrepareAuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.facade.Auditor;
 import com.ericsson.bss.cassandra.ecaudit.utils.Exceptions;
 import org.apache.cassandra.cql3.BatchQueryOptions;
@@ -107,7 +108,30 @@ public class AuditAdapter
             auditor.audit(logEntry);
         }
     }
+    /**
+     * Audit a regular CQL statement.
+     *
+     * @param operation the CQL statement to audit
+     * @param state     the client state accompanying the statement
+     * @param status    the statement operation status
+     * @param timestamp the system timestamp for the request
+     */
+    public void auditPrepare(String operation, ClientState state, Status status, long timestamp)
+    {
+        if (auditor.shouldLogForStatus(status) && auditor.shouldLogPrepareStatements())
+        {
+            AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
+                                                     .client(state.getRemoteAddress())
+                                                     .coordinator(FBUtilities.getJustBroadcastAddress())
+                                                     .user(state.getUser().getName())
+                                                     .operation(new PrepareAuditOperation(operation))
+                                                     .status(status)
+                                                     .timestamp(timestamp)
+                                                     .build();
 
+            auditor.audit(logEntry);
+        }
+    }
     /**
      * Audit a prepared statement.
      *
