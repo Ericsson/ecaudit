@@ -149,3 +149,8 @@ whitelist_cache_update_interval_in_ms: 20000
 # Maximum number of entries in the whitelist cache
 # Default to 10 x the value of roles_cache_max_entries (specified in cassandra.yaml)
 whitelist_cache_max_entries: 10000
+
+# Whether to suppress the auditing of prepare statements
+# Default is to suppress the audit statements this is to match the previous versions which do not audit prepare statements
+
+suppress_prepare_statements: true

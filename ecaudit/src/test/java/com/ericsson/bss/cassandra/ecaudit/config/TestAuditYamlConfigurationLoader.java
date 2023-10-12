@@ -97,6 +97,7 @@ public class TestAuditYamlConfigurationLoader
         assertThat(config.getWhitelistCacheValidity()).isEqualTo(DatabaseDescriptor.getRolesValidity());
         assertThat(config.getWhitelistCacheUpdateInterval()).isEqualTo(DatabaseDescriptor.getRolesUpdateInterval());
         assertThat(config.getWhitelistCacheMaxEntries()).isEqualTo(DatabaseDescriptor.getRolesCacheMaxEntries() * 10);
+        assertThat(config.isSuppressPrepareStatements()).isEqualTo(true);
     }
 
     @Test
@@ -122,6 +123,7 @@ public class TestAuditYamlConfigurationLoader
         assertThat(config.getWhitelistCacheValidity()).isEqualTo(42);
         assertThat(config.getWhitelistCacheUpdateInterval()).isEqualTo(41);
         assertThat(config.getWhitelistCacheMaxEntries()).isEqualTo(40);
+        assertThat(config.isSuppressPrepareStatements()).isEqualTo(false);
     }
 
     @Test

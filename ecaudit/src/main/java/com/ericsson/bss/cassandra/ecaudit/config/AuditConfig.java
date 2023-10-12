@@ -131,6 +131,11 @@ public class AuditConfig
         loadConfigIfNeeded();
         yamlConfig.setWhitelistCacheActiveUpdate(whitelistCacheActiveUpdate);
     }
+    public boolean isSuppressPrepareStatements()
+    {
+        loadConfigIfNeeded();
+        return yamlConfig.isSuppressPrepareStatements();
+    }
 
     private synchronized void loadConfigIfNeeded()
     {
