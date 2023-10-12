@@ -83,7 +83,7 @@ public class ITQueryLogger
     }
 
     @AfterClass
-    public static void afterClass() 
+    public static void afterClass()
     {
         session.close();
     }

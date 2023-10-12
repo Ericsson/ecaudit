@@ -3,6 +3,7 @@
 ## Version 2.12.0
 
 * Test with java11 (only flavor ecaudit_c4.0) - #214
+* Audit Prepare statements
 
 ## Version 2.11.0
 
