@@ -1,5 +1,6 @@
 # Changes
 
+
 ## Version 3.0.0
 * Build with Cassandra 4.1.2 (only flavor ecaudit_c4.1)
 
