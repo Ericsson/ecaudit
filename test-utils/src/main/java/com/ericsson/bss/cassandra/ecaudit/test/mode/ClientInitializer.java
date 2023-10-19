@@ -22,8 +22,8 @@ import org.apache.cassandra.auth.IAuthorizer;
 import org.apache.cassandra.auth.INetworkAuthorizer;
 import org.apache.cassandra.config.DatabaseDescriptor;
 
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public final class ClientInitializer
 {
@@ -36,11 +36,12 @@ public final class ClientInitializer
 
     public static void beforeClass()
     {
+        // This method is used by multiple tests, so lenient() is required for tests that don't require the when statements
         DatabaseDescriptor.clientInitialization(true);
         DatabaseDescriptor.setAuthenticator(mock(IAuthenticator.class));
-        when(authorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
+        lenient().when(authorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
         DatabaseDescriptor.setAuthorizer(authorizerMock);
-        when(networkAuthorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
+        lenient().when(networkAuthorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
         DatabaseDescriptor.setNetworkAuthorizer(networkAuthorizerMock);
     }
 
