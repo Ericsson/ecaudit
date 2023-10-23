@@ -98,6 +98,7 @@ public class ITQueryLogger
 
         assertThat(getLogEntries()).containsOnly("client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'INSERT INTO school.students (key, value) VALUES (42, 'Kalle')'");
     }
+
     @Test
     public void testPrepareStatement()
     {
@@ -108,9 +109,8 @@ public class ITQueryLogger
         session.execute(prepared.bind(42, "Kalle"));
         assertThat(getLogEntries()).containsOnly( "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'Prepared: INSERT INTO school.students (key, value) VALUES (?, ?)'",
                                                   "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'INSERT INTO school.students (key, value) VALUES (?, ?)[42, 'Kalle']'");
-
-//      assertThat(getLogEntries()).containsOnly("client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'INSERT INTO school.students (key, value) VALUES (?, ?)[42, 'Kalle']'");
     }
+
     @Test
     public void testFailedPrepareStatement()
     {
@@ -121,10 +121,8 @@ public class ITQueryLogger
 
         assertThat(getLogEntries()).containsOnly( "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'Prepared: INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)'",
                                                   "client:'127.0.0.1'|user:'anonymous'|status:'FAILED'|operation:'Prepared: INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)'");
-
-//        verify(mockAuditAppender, never() ).doAppend(loggingEventCaptor.capture());
-
     }
+
     @Test
     public void testGrantFails()
     {

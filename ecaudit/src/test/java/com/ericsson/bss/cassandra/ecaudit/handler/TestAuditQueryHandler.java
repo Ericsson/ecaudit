@@ -147,9 +147,6 @@ public class TestAuditQueryHandler
         verify(mockHandler, times(1)).prepare(eq(query), eq(mockClientState), eq(customPayload));
         verify(mockHandler, times(1)).getPrepared(eq(statementId));
         verify(mockAdapter, times(1)).auditPrepare(eq(query), eq(mockClientState), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-
-
-
     }
 
     @Test

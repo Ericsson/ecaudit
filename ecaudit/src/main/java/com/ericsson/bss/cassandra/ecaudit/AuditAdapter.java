@@ -108,6 +108,7 @@ public class AuditAdapter
             auditor.audit(logEntry);
         }
     }
+
     /**
      * Audit a regular CQL statement.
      *

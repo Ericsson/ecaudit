@@ -62,5 +62,4 @@ public class YamlAndRoleAuditFilter implements AuditFilter
     {
         return yamlFilter.shouldLogPrepareStatements();
     }
-
 }
