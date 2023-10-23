@@ -119,6 +119,7 @@ public class AuditConfig
         loadConfigIfNeeded();
         yamlConfig.setWhitelistCacheMaxEntries(whitelistCacheMaxEntries);
     }
+
     public boolean isSuppressPrepareStatements()
     {
         loadConfigIfNeeded();

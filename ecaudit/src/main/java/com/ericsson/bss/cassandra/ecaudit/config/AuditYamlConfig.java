@@ -158,6 +158,7 @@ public final class AuditYamlConfig
     {
         this.whitelist_cache_max_entries = whitelistCacheMaxEntries;
     }
+
     public Boolean isSuppressPrepareStatements()
     {
         return suppress_prepare_statements == null

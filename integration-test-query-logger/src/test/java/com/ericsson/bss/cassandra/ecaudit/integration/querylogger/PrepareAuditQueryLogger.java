@@ -32,7 +32,6 @@ import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.PreparedStatement;
-
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
@@ -100,6 +99,7 @@ public class PrepareAuditQueryLogger
         assertThat(getLogEntries()).containsOnly( "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'Prepared: INSERT INTO school.students (key, value) VALUES (?, ?)'",
                                                   "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'INSERT INTO school.students (key, value) VALUES (?, ?)[42, 'Kalle']'");
     }
+
     @Test
     public void testFailedPrepareStatement()
     {
@@ -111,8 +111,7 @@ public class PrepareAuditQueryLogger
         assertThat(getLogEntries()).containsOnly( "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'Prepared: INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)'",
                                                   "client:'127.0.0.1'|user:'anonymous'|status:'FAILED'|operation:'Prepared: INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)'");
     }
-
-
+    
     private void givenTable(String keyspace, String table)
     {
         session.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
