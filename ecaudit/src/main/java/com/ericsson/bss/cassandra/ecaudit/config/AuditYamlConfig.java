@@ -171,11 +171,11 @@ public final class AuditYamlConfig
     {
         this.whitelist_cache_active_update = whitelistCacheActiveUpdate;
     }
+
     public Boolean isSuppressPrepareStatements()
     {
         return suppress_prepare_statements == null
                ? Boolean.TRUE
                : suppress_prepare_statements;
     }
-
 }
