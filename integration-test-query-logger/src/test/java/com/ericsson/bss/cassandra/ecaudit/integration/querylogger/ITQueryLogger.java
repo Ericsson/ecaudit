@@ -32,7 +32,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
-
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
@@ -93,6 +92,7 @@ public class ITQueryLogger
         session.close();
         cluster.close();
     }
+    
     @Test
     public void testPrepareStatement()
     {

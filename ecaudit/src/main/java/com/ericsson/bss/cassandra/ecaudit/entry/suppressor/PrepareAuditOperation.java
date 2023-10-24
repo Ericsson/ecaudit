@@ -35,6 +35,7 @@ public class PrepareAuditOperation implements AuditOperation
     {
         return operationString;
     }
+
     @Override
     public String getNakedOperationString()
     {
