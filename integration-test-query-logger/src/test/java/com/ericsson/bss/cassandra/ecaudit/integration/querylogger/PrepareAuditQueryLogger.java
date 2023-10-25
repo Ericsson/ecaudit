@@ -15,7 +15,6 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.integration.querylogger;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,11 +30,9 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.UnauthorizedException;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import org.mockito.ArgumentCaptor;
@@ -46,13 +43,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ITQueryLogger
+public class PrepareAuditQueryLogger
 {
     private static Cluster cluster;
     private static Session session;
@@ -90,9 +86,8 @@ public class ITQueryLogger
     public static void afterClass()
     {
         session.close();
-        cluster.close();
     }
-    
+
     @Test
     public void testPrepareStatement()
     {
@@ -112,41 +107,15 @@ public class ITQueryLogger
         reset(mockAuditAppender);
 
         assertThatExceptionOfType(InvalidQueryException.class).isThrownBy(() ->  session.prepare("INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)"));
+
         assertThat(getLogEntries()).containsOnly( "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'Prepared: INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)'",
                                                   "client:'127.0.0.1'|user:'anonymous'|status:'FAILED'|operation:'Prepared: INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)'");
     }
 
-    @Test
-    public void testBasicStatement()
-    {
-        givenTable("school", "students");
-        reset(mockAuditAppender);
-
-        session.execute("INSERT INTO school.students (key, value) VALUES (42, 'Kalle')");
-
-        assertThat(getLogEntries()).containsOnly("client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'INSERT INTO school.students (key, value) VALUES (42, 'Kalle')'");
-    }
-
-    @Test
-    public void testGrantFails()
-    {
-        givenTable("company", "engineers");
-        reset(mockAuditAppender);
-
-        assertThatExceptionOfType(UnauthorizedException.class).isThrownBy(() -> session.execute("GRANT SELECT ON TABLE company.engineers TO cassandra"));
-
-        assertThat(getLogEntries()).containsOnly(
-        "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'GRANT SELECT ON TABLE company.engineers TO cassandra'",
-        "client:'127.0.0.1'|user:'anonymous'|status:'FAILED'|operation:'GRANT SELECT ON TABLE company.engineers TO cassandra'"
-        );
-    }
-
     private void givenTable(String keyspace, String table)
     {
-        session.execute(new SimpleStatement(
-        "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
-        session.execute(new SimpleStatement(
-        "CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)"));
+        session.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        session.execute("CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)");
     }
 
     private List<String> getLogEntries()

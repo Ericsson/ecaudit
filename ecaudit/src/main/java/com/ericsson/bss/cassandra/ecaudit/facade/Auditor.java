@@ -53,6 +53,8 @@ public interface Auditor
      */
     boolean shouldLogFailedBatchSummary();
 
+    boolean shouldLogPrepareStatements();
+
     /**
      * Sets the log timing strategy to use.
      *

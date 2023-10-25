@@ -4,6 +4,7 @@
 
 * Use SnakeYaml's SafeConstructor to avoid CVE-2022-1471
 * Support escaping characters in log messages - #207
+* Add Audit Prepare statements - #226
 
 ## Version 2.10.0
 * Build with Cassandra 4.0.7 (only flavor ecaudit_c4.0)

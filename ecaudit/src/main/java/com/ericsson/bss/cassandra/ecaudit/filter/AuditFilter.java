@@ -37,4 +37,6 @@ public interface AuditFilter {
      * For example, use this method to create any required keyspaces/tables.
      */
     void setup();
+
+    boolean shouldLogPrepareStatements();
 }

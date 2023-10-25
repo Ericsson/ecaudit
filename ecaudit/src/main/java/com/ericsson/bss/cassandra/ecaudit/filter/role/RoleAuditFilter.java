@@ -74,6 +74,9 @@ public class RoleAuditFilter implements AuditFilter
         whitelistDataAccess.setup();
     }
 
+    @Override
+    public boolean shouldLogPrepareStatements() { return true; }
+
     /**
      * Returns true if the supplied log entry's role or any other role granted to it (directly or indirectly) is
      * white-listed for the log entry's specified operations and resource.

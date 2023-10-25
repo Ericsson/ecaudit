@@ -123,6 +123,12 @@ public class DefaultAuditor implements Auditor
     }
 
     @Override
+    public boolean shouldLogPrepareStatements()
+    {
+        return filter.shouldLogPrepareStatements();
+    }
+
+    @Override
     public void setLogTimingStrategy(LogTimingStrategy logTimingStrategy)
     {
         this.logTimingStrategy = logTimingStrategy;
