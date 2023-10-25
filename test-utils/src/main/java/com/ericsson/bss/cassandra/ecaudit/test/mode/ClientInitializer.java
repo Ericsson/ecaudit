@@ -23,8 +23,8 @@ import org.apache.cassandra.auth.INetworkAuthorizer;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.dht.RandomPartitioner;
 
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public final class ClientInitializer
 {
@@ -39,9 +39,9 @@ public final class ClientInitializer
     {
         DatabaseDescriptor.clientInitialization(true);
         DatabaseDescriptor.setAuthenticator(mock(IAuthenticator.class));
-        when(authorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
+        lenient().when(authorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
         DatabaseDescriptor.setAuthorizer(authorizerMock);
-        when(networkAuthorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
+        lenient().when(networkAuthorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
         DatabaseDescriptor.setNetworkAuthorizer(networkAuthorizerMock);
         DatabaseDescriptor.setPartitionerUnsafe(RandomPartitioner.instance);
     }
