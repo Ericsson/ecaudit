@@ -27,3 +27,4 @@ bound_value_suppressor: SuppressBlobs
 whitelist_cache_validity_in_ms: 42
 whitelist_cache_update_interval_in_ms: 41
 whitelist_cache_max_entries: 40
+suppress_prepare_statements: false
