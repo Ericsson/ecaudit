@@ -109,7 +109,7 @@ public class PrepareAuditQueryLogger
         assertThat(getLogEntries()).containsOnly( "client:'127.0.0.1'|user:'anonymous'|status:'ATTEMPT'|operation:'Prepared: INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)'",
                                                   "client:'127.0.0.1'|user:'anonymous'|status:'FAILED'|operation:'Prepared: INSERT INTO school.invalidestudents (key, value) VALUES (?, ?)'");
     }
-    
+
     private void givenTable(String keyspace, String table)
     {
         session.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");

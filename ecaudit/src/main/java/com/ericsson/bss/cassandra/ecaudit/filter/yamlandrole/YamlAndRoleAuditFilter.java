@@ -57,6 +57,7 @@ public class YamlAndRoleAuditFilter implements AuditFilter
         yamlFilter.setup();
         roleFilter.setup();
     }
+
     @Override
     public boolean shouldLogPrepareStatements()
     {

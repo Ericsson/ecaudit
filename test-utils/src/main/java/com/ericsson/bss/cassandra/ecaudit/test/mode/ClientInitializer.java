@@ -37,6 +37,7 @@ public final class ClientInitializer
 
     public static void beforeClass()
     {
+        // This method is used by multiple tests, so lenient() is required for tests that don't require the when statements
         DatabaseDescriptor.clientInitialization(true);
         DatabaseDescriptor.setAuthenticator(mock(IAuthenticator.class));
         lenient().when(authorizerMock.bulkLoader()).thenReturn(Collections::emptyMap);
