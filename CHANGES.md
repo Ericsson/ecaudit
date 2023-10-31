@@ -1,12 +1,12 @@
 # Changes
 
+## Version 3.1.0 (unreleased)
+
+* Add Audit Prepare statements - #226
+* Test with java11 (only flavor ecaudit_c4.0) - #214
+
 ## Version 3.0.0
 * Build with Cassandra 4.1.2 (only flavor ecaudit_c4.1)
-
-## Version 2.12.0
-
-* Test with java11 (only flavor ecaudit_c4.0) - #214
-* Audit Prepare statements
 
 ## Version 2.11.0
 
