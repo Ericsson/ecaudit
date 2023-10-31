@@ -133,6 +133,7 @@ public class AuditAdapter
             auditor.audit(logEntry);
         }
     }
+
     /**
      * Audit a prepared statement.
      *
