@@ -35,10 +35,10 @@ ecAudit integrates with Apache Cassandra using its existing plug-in points.
 Official releases of ecAudit can be downloaded from Maven Central.
 Get the ecAudit flavor for your Cassandra version.
 
-[![ecAudit for Cassandra 5.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c5.0.svg?label=ecAudit%20for%20Cassandra%205.0.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c5.0%22)
-[![ecAudit for Cassandra 4.1.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c4.1.svg?label=ecAudit%20for%20Cassandra%204.1.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c4.1%22)
-[![ecAudit for Cassandra 4.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c4.0.svg?label=ecAudit%20for%20Cassandra%204.0.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c4.0%22)
-[![ecAudit for Cassandra 3.11.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.11.svg?label=ecAudit%20for%20Cassandra%203.11.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.11%22)
+[![ecAudit for Cassandra 5.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c5.0.svg?label=ecAudit%20for%20Cassandra%205.0.<latest>)](https://central.sonatype.com/search?q=g:com.ericsson.bss.cassandra.ecaudit%20AND%20a:ecaudit_c5.0)
+[![ecAudit for Cassandra 4.1.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c4.1.svg?label=ecAudit%20for%20Cassandra%204.1.<latest>)](https://central.sonatype.com/search?q=g:com.ericsson.bss.cassandra.ecaudit%20AND%20a:ecaudit_c4.1)
+[![ecAudit for Cassandra 4.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c4.0.svg?label=ecAudit%20for%20Cassandra%204.0.<latest>)](https://central.sonatype.com/search?q=g:com.ericsson.bss.cassandra.ecaudit%20AND%20a:ecaudit_c4.0)
+[![ecAudit for Cassandra 3.11.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.11.svg?label=ecAudit%20for%20Cassandra%203.11.<latest>)](https://central.sonatype.com/search?q=g:com.ericsson.bss.cassandra.ecaudit%20AND%20a:ecaudit_c3.11)
 
 For a detailed description of compatible Cassandra versions, refer to the [Cassandra Compatibility Matrix](doc/cassandra_compatibility.md).
 
@@ -47,15 +47,15 @@ For a detailed description of compatible Cassandra versions, refer to the [Cassa
 
 The following flavors of ecAudit are in maintenance mode and will get critical fixes, but no new features.
 
-[![ecAudit for Cassandra 3.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=ecAudit%20for%20Cassandra%203.0.<latest>)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0%22)
+[![ecAudit for Cassandra 3.0.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.svg?label=ecAudit%20for%20Cassandra%203.0.<latest>)](https://central.sonatype.com/search?q=g:com.ericsson.bss.cassandra.ecaudit%20AND%20a:ecaudit_c3.0)
 
 
 #### Archive
 
 The following flavors of ecAudit are no longer maintained.
 
-[![ecAudit for Cassandra 3.0.11](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.11.svg?label=ecAudit%20for%20Cassandra%203.0.11)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c3.0.11%22)
-[![ecAudit for Cassandra 2.2.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c2.2.svg?label=ecAudit%20for%20Cassandra%202.2)](https://search.maven.org/search?q=g:%22com.ericsson.bss.cassandra.ecaudit%22%20AND%20a:%22ecaudit_c2.2%22)
+[![ecAudit for Cassandra 3.0.11](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c3.0.11.svg?label=ecAudit%20for%20Cassandra%203.0.11)](https://central.sonatype.com/search?q=g:com.ericsson.bss.cassandra.ecaudit%20AND%20a:ecaudit_c3.0.11)
+[![ecAudit for Cassandra 2.2.<latest>](https://img.shields.io/maven-central/v/com.ericsson.bss.cassandra.ecaudit/ecaudit_c2.2.svg?label=ecAudit%20for%20Cassandra%202.2)](https://central.sonatype.com/search?q=g:com.ericsson.bss.cassandra.ecaudit%20AND%20a:ecaudit_c2.2)
 
 
 ### Setup
