@@ -18,7 +18,6 @@ package com.ericsson.bss.cassandra.ecaudit.entry;
 import java.nio.ByteBuffer;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
-import org.apache.cassandra.transport.ProtocolVersion;
 
 /**
  * This logic is extracted to a flavor specific adapter.
@@ -35,6 +34,6 @@ final class CqlLiteralFlavorAdapter
 
     static String toCQLLiteral(ByteBuffer serializedValue, ColumnSpecification column)
     {
-        return column.type.asCQL3Type().toCQLLiteral(serializedValue, ProtocolVersion.CURRENT);
+        return column.type.asCQL3Type().toCQLLiteral(serializedValue);
     }
 }

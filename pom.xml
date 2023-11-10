@@ -18,7 +18,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-    <artifactId>parent_c4.1</artifactId>
+    <artifactId>parent_c5.0</artifactId>
     <version>3.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -48,11 +48,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
 
-        <cassandra.version>4.1.2</cassandra.version>
-        <artifact.flavor.version>c4.1</artifact.flavor.version>
+        <cassandra.version>5.0-alpha1</cassandra.version>
+        <artifact.flavor.version>c5.0</artifact.flavor.version>
 
         <pmd-config-url>pmd-rules.xml</pmd-config-url>
 
@@ -83,7 +83,7 @@
         <org.apache.maven.plugins.maven-source-plugin.version>3.2.1</org.apache.maven.plugins.maven-source-plugin.version>
         <org.apache.maven.plugins.maven-javadoc-plugin.version>3.2.0</org.apache.maven.plugins.maven-javadoc-plugin.version>
         <org.apache.maven.plugins.maven-gpg-plugin.version>1.6</org.apache.maven.plugins.maven-gpg-plugin.version>
-        <org.jacoco.jacoco-maven-plugin.version>0.8.6</org.jacoco.jacoco-maven-plugin.version>
+        <org.jacoco.jacoco-maven-plugin.version>0.8.10</org.jacoco.jacoco-maven-plugin.version>
         <org.pitest.pitest-maven.version>1.6.2</org.pitest.pitest-maven.version>
         <org.apache.maven.plugins-maven-pmd-plugin.version>3.15.0</org.apache.maven.plugins-maven-pmd-plugin.version>
     </properties>
@@ -202,6 +202,36 @@
                         <execution />
                     </executions>
                     <configuration>
+                        <argLine>
+                            ${argLine}
+                            -Djdk.attach.allowAttachSelf=true
+                            --add-exports java.base/java.lang.ref=ALL-UNNAMED
+                            --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
+                            --add-exports java.base/jdk.internal.ref=ALL-UNNAMED
+                            --add-exports java.base/sun.nio.ch=ALL-UNNAMED
+                            --add-exports java.management.rmi/com.sun.jmx.remote.internal.rmi=ALL-UNNAMED
+                            --add-exports java.rmi/sun.rmi.registry=ALL-UNNAMED
+                            --add-exports java.rmi/sun.rmi.server=ALL-UNNAMED
+                            --add-exports java.sql/java.sql=ALL-UNNAMED
+                            --add-exports jdk.attach/sun.tools.attach=ALL-UNNAMED
+                            --add-exports jdk.unsupported/sun.misc=ALL-UNNAMED
+                            --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+                            --add-opens java.base/java.lang=ALL-UNNAMED
+                            --add-opens java.base/java.lang.module=ALL-UNNAMED
+                            --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                            --add-opens java.base/java.io=ALL-UNNAMED
+                            --add-opens java.base/java.nio=ALL-UNNAMED
+                            --add-opens java.base/java.util=ALL-UNNAMED
+                            --add-opens java.base/jdk.internal.loader=ALL-UNNAMED
+                            --add-opens java.base/jdk.internal.ref=ALL-UNNAMED
+                            --add-opens java.base/jdk.internal.reflect=ALL-UNNAMED
+                            --add-opens java.base/jdk.internal.math=ALL-UNNAMED
+                            --add-opens java.base/jdk.internal.module=ALL-UNNAMED
+                            --add-opens java.base/jdk.internal.util.jar=ALL-UNNAMED
+                            --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+                            --add-opens jdk.compiler/com.sun.tools.javac=ALL-UNNAMED
+                            --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED
+                        </argLine>
                         <excludes>
                             <exclude>com.ericsson.bss.cassandra.ecaudit.integration.*</exclude>
                         </excludes>
