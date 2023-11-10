@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only the latest release version of ecaduit is supported by security updates.
+Only the latest release version of ecaudit is supported by security updates.
 
 | Version         | Supported            |
 | --------------- | -------------------- |
@@ -11,4 +11,4 @@ Only the latest release version of ecaduit is supported by security updates.
 
 ## Reporting a Vulnerability
 
-If you find a vulnerability in ecaduit, please report it as a security vulnerability on GitHub https://github.com/Ericsson/ecaudit/security/advisories/new
+If you find a vulnerability in ecaudit, please report it as a security vulnerability on GitHub https://github.com/Ericsson/ecaudit/security/advisories/new
