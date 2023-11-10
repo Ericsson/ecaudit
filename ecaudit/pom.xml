@@ -19,10 +19,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-        <artifactId>parent_c3.11</artifactId>
+        <artifactId>parent_c4.0</artifactId>
         <version>3.1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>ecaudit_c3.11</artifactId>
+    <artifactId>ecaudit_c4.0</artifactId>
     <packaging>jar</packaging>
 
     <name>Ericsson Cassandra Audit - Plug-in</name>
@@ -40,6 +40,10 @@
             <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
             <artifactId>common_${artifact.flavor.version}</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
         </dependency>
         <!-- Test dependencies -->
         <dependency>

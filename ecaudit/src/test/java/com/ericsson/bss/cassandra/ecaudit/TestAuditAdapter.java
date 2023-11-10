@@ -179,7 +179,7 @@ public class TestAuditAdapter
         // Then
         AuditEntry entry = getAuditEntry();
         assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
-        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getJustBroadcastAddress());
         assertThat(entry.getOperation().getOperationString()).isEqualTo(STATEMENT);
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getStatus()).isEqualTo(Status.ATTEMPT);
@@ -224,7 +224,7 @@ public class TestAuditAdapter
 
         AuditEntry entry = getAuditEntry();
         assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
-        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getJustBroadcastAddress());
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedQuery);
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getStatus()).isEqualByComparingTo(Status.ATTEMPT);
@@ -266,7 +266,7 @@ public class TestAuditAdapter
         // Then
         AuditEntry entry = getAuditEntry();
         assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
-        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getJustBroadcastAddress());
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getBatchId()).contains(expectedBatchId);
         assertThat(entry.getStatus()).isEqualByComparingTo(Status.FAILED);
@@ -333,7 +333,7 @@ public class TestAuditAdapter
         verifyNoMoreInteractions(mockOptions);
         AuditEntry entry = getAuditEntry();
         assertThat(entry.getClientAddress()).isEqualTo(clientSocketAddress);
-        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getJustBroadcastAddress());
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getBatchId()).contains(BATCH_ID);
         assertThat(entry.getStatus()).isEqualByComparingTo(Status.ATTEMPT);
@@ -371,7 +371,7 @@ public class TestAuditAdapter
         // Then
         AuditEntry entry = getAuditEntry();
         assertThat(entry.getClientAddress()).isEqualTo(new InetSocketAddress(clientAddress, CLIENT_AUTH_PORT));
-        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getBroadcastAddress());
+        assertThat(entry.getCoordinatorAddress()).isEqualTo(FBUtilities.getJustBroadcastAddress());
         assertThat(entry.getUser()).isEqualTo(USER);
         assertThat(entry.getOperation().getOperationString()).isEqualTo(expectedOperation);
         assertThat(entry.getStatus()).isEqualTo(Status.ATTEMPT);

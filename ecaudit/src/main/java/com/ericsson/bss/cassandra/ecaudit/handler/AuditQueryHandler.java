@@ -22,24 +22,24 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
-import org.apache.cassandra.config.DatabaseDescriptor;
+
 import org.apache.cassandra.cql3.BatchQueryOptions;
 import org.apache.cassandra.cql3.CQLStatement;
 import org.apache.cassandra.cql3.QueryHandler;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.statements.BatchStatement;
-import org.apache.cassandra.cql3.statements.ParsedStatement;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
+import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.messages.ResultMessage;
-import org.apache.cassandra.transport.messages.ResultMessage.Prepared;
 import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.utils.UUIDGen;
 
@@ -55,9 +55,9 @@ public class AuditQueryHandler implements QueryHandler
     private final QueryHandler wrappedQueryHandler;
     private final AuditAdapter auditAdapter;
 
-    // This ThreadLocal is populated on calls to getPrepared() in order to build context for
-    // prepared statements. It is used for prepared single and batch statements.
-    private final ThreadLocal<List<String>> preparedRawCqlStatements = ThreadLocal.withInitial(ArrayList::new);
+    // This ThreadLocal is populated on calls to getPrepared() and parse() in order to build context for statements.
+    private final ThreadLocal<List<String>> rawCqlStatements = ThreadLocal.withInitial(ArrayList::new);
+    private final ThreadLocal<List<Long>> localTimestamp = ThreadLocal.withInitial(ArrayList::new);
 
     /**
      * Create a stand-alone instance of {@link AuditQueryHandler} that uses a default configuration for audit logging
@@ -89,33 +89,37 @@ public class AuditQueryHandler implements QueryHandler
     AuditQueryHandler(QueryHandler queryHandler, AuditAdapter auditAdapter)
     {
         LOG.info("Auditing enabled on queries");
-        if (DatabaseDescriptor.startRpc())
-        {
-            LOG.warn("Auditing will not be performed on prepared requests on the RPC (Thrift) interface. " // NOPMD
-                     + "Disable the RPC server to remove this message.");
-        }
 
         this.wrappedQueryHandler = queryHandler;
         this.auditAdapter = auditAdapter;
     }
 
     @Override
-    public ResultMessage process(String query, QueryState state, QueryOptions options,
+    public ResultMessage process(CQLStatement statement, QueryState state, QueryOptions options,
                                  Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
     throws RequestExecutionException, RequestValidationException
     {
-        long timestamp = System.currentTimeMillis();
-        auditAdapter.auditRegular(query, state.getClientState(), Status.ATTEMPT, timestamp);
         try
         {
-            ResultMessage result = wrappedQueryHandler.process(query, state, options, customPayload, queryStartNanoTime);
-            auditAdapter.auditRegular(query, state.getClientState(), Status.SUCCEEDED, timestamp);
-            return result;
+            String rawCqlStatement = rawCqlStatements.get().get(0);
+            Long timestamp = localTimestamp.get().get(0);
+
+            try
+            {
+                ResultMessage result = wrappedQueryHandler.process(statement, state, options, customPayload, queryStartNanoTime);
+                auditAdapter.auditRegular(rawCqlStatement, state.getClientState(), Status.SUCCEEDED, timestamp);
+                return result;
+            }
+            catch (RuntimeException e)
+            {
+                auditAdapter.auditRegular(rawCqlStatement, state.getClientState(), Status.FAILED, timestamp);
+                throw e;
+            }
         }
-        catch (RuntimeException e)
+        finally
         {
-            auditAdapter.auditRegular(query, state.getClientState(), Status.FAILED, timestamp);
-            throw e;
+            rawCqlStatements.remove();
+            localTimestamp.remove();
         }
     }
 
@@ -126,21 +130,13 @@ public class AuditQueryHandler implements QueryHandler
     {
         try
         {
-            List<String> rawCqlStatementList = preparedRawCqlStatements.get();
-            if (rawCqlStatementList.isEmpty())
-            {
-                // There is no raw CQL statement in the list if call is coming on the Thrift interface
-                return wrappedQueryHandler.processPrepared(statement, state, options, customPayload,
-                                                           queryStartNanoTime);
-            }
-
-            String rawCqlStatement = rawCqlStatementList.get(0);
+            String rawCqlStatement = rawCqlStatements.get().get(0);
             return processPreparedWithAudit(statement, rawCqlStatement, state, options, customPayload,
                                             queryStartNanoTime);
         }
         finally
         {
-            preparedRawCqlStatements.remove();
+            rawCqlStatements.remove();
         }
     }
 
@@ -170,12 +166,12 @@ public class AuditQueryHandler implements QueryHandler
     {
         try
         {
-            List<String> rawCqlStatementList = preparedRawCqlStatements.get();
+            List<String> rawCqlStatementList = rawCqlStatements.get();
             return processBatchWithAudit(statement, rawCqlStatementList, state, options, customPayload, queryStartNanoTime);
         }
         finally
         {
-            preparedRawCqlStatements.remove();
+            rawCqlStatements.remove();
         }
     }
 
@@ -200,11 +196,11 @@ public class AuditQueryHandler implements QueryHandler
     }
 
     @Override
-    public Prepared prepare(String query, QueryState state, Map<String, ByteBuffer> customPayload)
+    public ResultMessage.Prepared prepare(String query, ClientState state, Map<String, ByteBuffer> customPayload)
     throws RequestValidationException
     {
         long timestamp = System.currentTimeMillis();
-        auditAdapter.auditPrepare(query, state.getClientState(),  Status.ATTEMPT, timestamp);
+        auditAdapter.auditPrepare(query, state,  Status.ATTEMPT, timestamp);
         ResultMessage.Prepared preparedStatement;
         try
         {
@@ -212,39 +208,49 @@ public class AuditQueryHandler implements QueryHandler
         }
         catch (RuntimeException e)
         {
-            auditAdapter.auditPrepare(query, state.getClientState(),  Status.FAILED, timestamp);
+            auditAdapter.auditPrepare(query, state,  Status.FAILED, timestamp);
             throw e;
         }
 
         return preparedStatement;
     }
+
     @Override
-    public ParsedStatement.Prepared getPrepared(MD5Digest id)
+    public QueryHandler.Prepared getPrepared(MD5Digest id)
     {
-        ParsedStatement.Prepared prepared = wrappedQueryHandler.getPrepared(id);
+        QueryHandler.Prepared prepared = wrappedQueryHandler.getPrepared(id);
         if (prepared == null)
         {
-            preparedRawCqlStatements.remove();
+            rawCqlStatements.remove();
             return null; // Return null to client, will trigger a new attempt
         }
 
-        // When prepared statements are cached during startup the raw CQL statement can be missing
-        if ("".equals(prepared.rawCQLStatement))
-        {
-            QueryProcessor.instance.evictPrepared(id);
-            return null; // Return null to client, will trigger a re-prepare
-        }
-
-        preparedRawCqlStatements.get().add(prepared.rawCQLStatement);
+        rawCqlStatements.get().add(prepared.rawCQLStatement);
 
         return prepared;
     }
 
     @Override
-    public ParsedStatement.Prepared getPreparedForThrift(Integer id)
+    public CQLStatement parse(String queryString, QueryState queryState, QueryOptions options)
     {
-        // Not possible to update preparedRawCqlStatements here as we don't have a usable id
-        // Also no point in clearing preparedRawCqlStatements as it should already be empty.
-        return wrappedQueryHandler.getPreparedForThrift(id);
+        long timestamp = System.currentTimeMillis();
+        localTimestamp.get().add(timestamp);
+        auditAdapter.auditRegular(queryString, queryState.getClientState(), Status.ATTEMPT, timestamp);
+
+        CQLStatement statement;
+        try
+        {
+            statement = wrappedQueryHandler.parse(queryString, queryState, options);
+        }
+        catch (Exception e)
+        {
+            auditAdapter.auditRegular(queryString, queryState.getClientState(), Status.FAILED, timestamp);
+            localTimestamp.remove();
+            throw e;
+        }
+
+        rawCqlStatements.get().add(queryString);
+
+        return statement;
     }
 }

@@ -19,10 +19,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-        <artifactId>parent_c3.11</artifactId>
+        <artifactId>parent_c4.0</artifactId>
         <version>3.1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>test-utils_c3.11</artifactId>
+    <artifactId>test-utils_c4.0</artifactId>
     <packaging>jar</packaging>
 
     <name>Ericsson Cassandra Audit - Test Utils</name>
@@ -38,13 +38,8 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.cassandra</groupId>
-            <artifactId>cassandra-thrift</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
+            <groupId>com.datastax.oss</groupId>
+            <artifactId>java-driver-core</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>

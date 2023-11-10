@@ -15,15 +15,14 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.net.InetAddress;
-
 import com.google.common.annotations.VisibleForTesting;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.FBUtilities;
 
 class SchemaHelper
@@ -32,19 +31,19 @@ class SchemaHelper
 
     private static final long RETRY_INTERVAL_MS = 1000;
 
-    private final InetAddress localAddress;
+    private final InetAddressAndPort localAddress;
     private final Gossiper gossiper;
     private final long retryIntervalMillis;
 
     SchemaHelper()
     {
-        this(FBUtilities.getBroadcastAddress(), Gossiper.instance, RETRY_INTERVAL_MS);
+        this(FBUtilities.getBroadcastAddressAndPort(), Gossiper.instance, RETRY_INTERVAL_MS);
     }
 
     @VisibleForTesting
-    SchemaHelper(InetAddress localAddress, Gossiper gossiper, long retryIntervalMillis)
+    SchemaHelper(InetAddressAndPort inetAddress, Gossiper gossiper, long retryIntervalMillis)
     {
-        this.localAddress = localAddress;
+        this.localAddress = inetAddress;
         this.gossiper = gossiper;
         this.retryIntervalMillis = retryIntervalMillis;
     }
@@ -84,7 +83,7 @@ class SchemaHelper
             return true;
         }
 
-        for (InetAddress memberAddress : gossiper.getLiveMembers())
+        for (InetAddressAndPort memberAddress : gossiper.getLiveMembers())
         {
             if (isRemoteEndpoint(memberAddress) && isDifferentSchema(localSchemaId, memberAddress))
             {
@@ -96,7 +95,7 @@ class SchemaHelper
         return false;
     }
 
-    private String tryGetSchemaId(InetAddress address)
+    private String tryGetSchemaId(InetAddressAndPort address)
     {
         EndpointState endpointState = gossiper.getEndpointStateForEndpoint(address);
         if (endpointState == null)
@@ -106,12 +105,12 @@ class SchemaHelper
         return endpointState.getApplicationState(ApplicationState.SCHEMA).value;
     }
 
-    private boolean isRemoteEndpoint(InetAddress memberAddress)
+    private boolean isRemoteEndpoint(InetAddressAndPort memberAddress)
     {
         return !memberAddress.equals(localAddress);
     }
 
-    private boolean isDifferentSchema(String localSchemaId, InetAddress memberAddress)
+    private boolean isDifferentSchema(String localSchemaId, InetAddressAndPort memberAddress)
     {
         String remoteSchemaId = tryGetSchemaId(memberAddress);
         return !localSchemaId.equals(remoteSchemaId);

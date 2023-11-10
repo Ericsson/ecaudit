@@ -7,14 +7,18 @@ permissions: read-all
 jobs:
   code-analysis:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '11' ]
+    name: Java ${{ matrix.java }} code analysis
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Set up JDK 8
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
         with:
           distribution: 'adopt'
-          java-version: '8'
+          java-version: ${{ matrix.java }}
       - name: Cache Maven packages
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
@@ -25,14 +29,18 @@ jobs:
         run: mvn --batch-mode --activate-profiles github install pmd:check pmd:cpd-check license:check javadoc:jar -DskipTests=true
   unit-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '11' ]
+    name: Java ${{ matrix.java }} unit test
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Set up JDK 8
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
         with:
           distribution: 'adopt'
-          java-version: '8'
+          java-version: ${{ matrix.java }}
       - name: Cache Maven packages
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
@@ -48,16 +56,46 @@ jobs:
           flags: unit-tests
           fail_ci_if_error: true
           verbose: true
-  integration-tests:
+  unit-tests-java-target:
     runs-on: ubuntu-latest
+    name: Java 11 target 11 unit test
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Set up JDK 8
+      - name: Set up JDK 11
         uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
         with:
           distribution: 'adopt'
-          java-version: '8'
+          java-version: '11'
+      - name: Cache Maven packages
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-ut-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-ut-
+      - name: Unit Tests
+        run: mvn --batch-mode --activate-profiles github test jacoco:report -Dmaven.compiler.target=11 -Dmaven.compiler.source=11
+      - name: Upload test coverage report
+        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
+        with:
+          files: ./ecaudit/target/site/jacoco/jacoco.xml,./common/target/site/jacoco/jacoco.xml,./eclog/target/site/jacoco/jacoco.xml
+          flags: unit-tests
+          fail_ci_if_error: true
+          verbose: true
+  integration-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '11' ]
+    name: Java ${{ matrix.java }} integration tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+        with:
+          distribution: 'adopt'
+          java-version: ${{ matrix.java }}
       - name: Cache Maven packages
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
@@ -66,3 +104,22 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-it-
       - name: Integration Tests
         run: mvn --batch-mode --activate-profiles github test-compile failsafe:integration-test failsafe:verify
+  integration-tests-java-target:
+    runs-on: ubuntu-latest
+    name: Java 11 target 11 integration tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Set up JDK 11
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+      - name: Cache Maven packages
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-it-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-it-
+      - name: Integration Tests
+        run: mvn --batch-mode --activate-profiles github test-compile failsafe:integration-test failsafe:verify -Dmaven.compiler.target=11 -Dmaven.compiler.source=11

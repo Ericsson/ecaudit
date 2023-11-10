@@ -35,11 +35,10 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import net.jcip.annotations.NotThreadSafe;
@@ -70,32 +69,23 @@ public class ITVerifyThreadedAudit
     {
         cdt = CassandraDaemonForAuditTest.getInstance();
 
-        try (Cluster cluster = cdt.createCluster();
-                Session session = cluster.connect())
+        try (CqlSession session = cdt.createSession())
         {
+            session.execute("CREATE KEYSPACE ecks_itvta WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+            session.execute("CREATE TABLE ecks_itvta.ectbl (partk int PRIMARY KEY, clustk text, value text)");
 
-            session.execute(new SimpleStatement(
-            "CREATE KEYSPACE ecks_itvta WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
-            session.execute(new SimpleStatement(
-            "CREATE TABLE ecks_itvta.ectbl (partk int PRIMARY KEY, clustk text, value text)"));
-
-            session.execute(new SimpleStatement(
-            "CREATE ROLE test_role WITH LOGIN = false"));
-            session.execute(new SimpleStatement(
-            "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system' }"));
-            session.execute(new SimpleStatement(
-            "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system_schema' }"));
-            session.execute(new SimpleStatement(
-            "ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_execute' : 'connections' }"));
-            session.execute(new SimpleStatement(
-            "GRANT MODIFY ON ecks_itvta.ectbl TO test_role"));
-            session.execute(new SimpleStatement(
-            "GRANT SELECT ON ecks_itvta.ectbl TO test_role"));
+            session.execute("CREATE ROLE test_role WITH LOGIN = false");
+            session.execute("ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system' }");
+            session.execute("ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system_schema' }");
+            session.execute("ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_select' : 'data/system_virtual_schema' }");
+            session.execute("ALTER ROLE test_role WITH OPTIONS = { 'grant_audit_whitelist_for_execute' : 'connections' }");
+            session.execute("GRANT MODIFY ON ecks_itvta.ectbl TO test_role");
+            session.execute("GRANT SELECT ON ecks_itvta.ectbl TO test_role");
 
             for (int i = 0; i < USER_COUNT; i++)
             {
-                session.execute(new SimpleStatement("CREATE ROLE user" + i + " WITH PASSWORD = 'secret' AND LOGIN = true"));
-                session.execute(new SimpleStatement("GRANT test_role TO user" + i));
+                session.execute("CREATE ROLE user" + i + " WITH PASSWORD = 'secret' AND LOGIN = true");
+                session.execute("GRANT test_role TO user" + i);
             }
         }
     }
@@ -118,14 +108,14 @@ public class ITVerifyThreadedAudit
     @AfterClass
     public static void afterClass()
     {
-        try (Cluster cluster = cdt.createCluster();
-                Session session = cluster.connect())
+        try (CqlSession session = cdt.createSession())
         {
-            session.execute(new SimpleStatement("DROP KEYSPACE IF EXISTS ecks_itvta"));
-            session.execute(new SimpleStatement("DROP ROLE IF EXISTS test_role"));
+            session.execute("DROP KEYSPACE IF EXISTS ecks_itvta");
+            session.execute("DROP ROLE IF EXISTS test_role");
+
             for (int i = 0; i < USER_COUNT; i++)
             {
-                session.execute(new SimpleStatement("DROP ROLE IF EXISTS user" + i));
+                session.execute("DROP ROLE IF EXISTS user" + i);
             }
 
         }
@@ -187,8 +177,7 @@ public class ITVerifyThreadedAudit
         @Override
         public List<String> call()
         {
-            try (Cluster privateCluster = cdt.createCluster(username, "secret");
-                    Session privateSession = privateCluster.connect())
+            try (CqlSession privateSession = cdt.createSession(username, "secret"))
             {
                 PreparedStatement preparedInsertStatement = privateSession
                         .prepare("INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
@@ -229,8 +218,7 @@ public class ITVerifyThreadedAudit
         @Override
         public List<String> call()
         {
-            try (Cluster cluster = cdt.createCluster(username, "secret");
-                    Session session = cluster.connect())
+            try (CqlSession session = cdt.createSession(username, "secret"))
             {
                 PreparedStatement preparedInsertStatement1 = session
                         .prepare("INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?)");
@@ -249,12 +237,13 @@ public class ITVerifyThreadedAudit
                             "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, 'static')[" + (300 + i) + ", '3']",
                             "INSERT INTO ecks_itvta.ectbl (partk, clustk) VALUES (?, ?)[" + (400 + i) + ", '4']",
                             "INSERT INTO ecks_itvta.ectbl (partk, clustk) VALUES (?, ?)[" + (500 + i) + ", '5']"));
-                    BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
-                    batch.add(preparedInsertStatement1.bind(100 + i, "1", "b1"));
-                    batch.add(preparedInsertStatement1.bind(200 + i, "2", "b2"));
-                    batch.add(preparedInsertStatement2.bind(300 + i, "3"));
-                    batch.add(preparedInsertStatement3.bind(400 + i, "4"));
-                    batch.add(preparedInsertStatement3.bind(500 + i, "5"));
+                    BatchStatement batch = BatchStatement.builder(DefaultBatchType.UNLOGGED)
+                            .addStatement(preparedInsertStatement1.bind(100 + i, "1", "b1"))
+                            .addStatement(preparedInsertStatement1.bind(200 + i, "2", "b2"))
+                            .addStatement(preparedInsertStatement2.bind(300 + i, "3"))
+                            .addStatement(preparedInsertStatement3.bind(400 + i, "4"))
+                            .addStatement(preparedInsertStatement3.bind(500 + i, "5"))
+                            .build();
                     session.execute(batch);
                 }
 
@@ -275,8 +264,7 @@ public class ITVerifyThreadedAudit
         @Override
         public List<String> call()
         {
-            try (Cluster cluster = cdt.createCluster(username, "secret");
-                 Session session = cluster.connect())
+            try (CqlSession session = cdt.createSession(username, "secret"))
             {
                 List<String> expectedStatements = new ArrayList<>();
 
@@ -310,8 +298,7 @@ public class ITVerifyThreadedAudit
         @Override
         public List<String> call()
         {
-            try (Cluster cluster = cdt.createCluster(username, "secret");
-                 Session session = cluster.connect())
+            try (CqlSession session = cdt.createSession(username, "secret"))
             {
                 String batch = "BEGIN UNLOGGED BATCH USING TIMESTAMP ? " +
                                "INSERT INTO ecks_itvta.ectbl (partk, clustk, value) VALUES (?, ?, ?); " +

@@ -29,10 +29,8 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.exceptions.ServerError;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import org.mockito.ArgumentCaptor;
@@ -50,8 +48,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @RunWith(MockitoJUnitRunner.class)
 public class ITAllowAllAuthorizer
 {
-    private static Cluster cluster;
-    private static Session session;
+    private static CqlSession session;
 
     @Captor
     private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
@@ -63,8 +60,7 @@ public class ITAllowAllAuthorizer
     public static void beforeClass() throws Exception
     {
         CassandraDaemonForAuditTest cdt = CassandraDaemonForAuditTest.getInstance();
-        cluster = cdt.createCluster();
-        session = cluster.connect();
+        session = cdt.createSession();
     }
 
     @Before
@@ -86,7 +82,6 @@ public class ITAllowAllAuthorizer
     public static void afterClass()
     {
         session.close();
-        cluster.close();
     }
 
     @Test
@@ -116,10 +111,8 @@ public class ITAllowAllAuthorizer
 
     private void givenTable(String keyspace, String table)
     {
-        session.execute(new SimpleStatement(
-        "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false"));
-        session.execute(new SimpleStatement(
-        "CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)"));
+        session.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+        session.execute("CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " (key int PRIMARY KEY, value text)");
     }
 
     private List<String> getLogEntries()

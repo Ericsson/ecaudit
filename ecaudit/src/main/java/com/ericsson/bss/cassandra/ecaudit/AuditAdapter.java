@@ -98,7 +98,7 @@ public class AuditAdapter
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
                                                      .client(state.getRemoteAddress())
-                                                     .coordinator(FBUtilities.getBroadcastAddress())
+                                                     .coordinator(FBUtilities.getJustBroadcastAddress())
                                                      .user(state.getUser().getName())
                                                      .operation(new SimpleAuditOperation(operation))
                                                      .status(status)
@@ -123,7 +123,7 @@ public class AuditAdapter
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(operation, state)
                                                      .client(state.getRemoteAddress())
-                                                     .coordinator(FBUtilities.getBroadcastAddress())
+                                                     .coordinator(FBUtilities.getJustBroadcastAddress())
                                                      .user(state.getUser().getName())
                                                      .operation(new PrepareAuditOperation(operation))
                                                      .status(status)
@@ -150,7 +150,7 @@ public class AuditAdapter
         {
             AuditEntry logEntry = entryBuilderFactory.createEntryBuilder(statement)
                                                      .client(state.getRemoteAddress())
-                                                     .coordinator(FBUtilities.getBroadcastAddress())
+                                                     .coordinator(FBUtilities.getJustBroadcastAddress())
                                                      .user(state.getUser().getName())
                                                      .operation(new PreparedAuditOperation(rawStatement, options, boundValueSuppressor))
                                                      .status(status)
@@ -178,7 +178,7 @@ public class AuditAdapter
         {
             AuditEntry.Builder builder = entryBuilderFactory.createBatchEntryBuilder()
                                                             .client(state.getRemoteAddress())
-                                                            .coordinator(FBUtilities.getBroadcastAddress())
+                                                            .coordinator(FBUtilities.getJustBroadcastAddress())
                                                             .user(state.getUser().getName())
                                                             .batch(uuid)
                                                             .status(status)
@@ -229,7 +229,7 @@ public class AuditAdapter
         {
             AuditEntry logEntry = entryBuilderFactory.createAuthenticationEntryBuilder()
                                                      .client(new InetSocketAddress(clientIp, AuditEntry.UNKNOWN_PORT))
-                                                     .coordinator(FBUtilities.getBroadcastAddress())
+                                                     .coordinator(FBUtilities.getJustBroadcastAddress())
                                                      .user(userName)
                                                      .subject(subject)
                                                      .status(status)

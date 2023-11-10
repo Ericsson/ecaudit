@@ -29,10 +29,10 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import com.ericsson.bss.cassandra.ecaudit.logger.Slf4jAuditLogger;
 import com.ericsson.bss.cassandra.ecaudit.test.daemon.CassandraDaemonForAuditTest;
 import org.mockito.ArgumentCaptor;
@@ -50,8 +50,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @RunWith(MockitoJUnitRunner.class)
 public class PrepareAuditQueryLogger
 {
-    private static Cluster cluster;
-    private static Session session;
+    private static CqlSession session;
 
     @Captor
     private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
@@ -63,8 +62,7 @@ public class PrepareAuditQueryLogger
     public static void beforeClass() throws Exception
     {
         CassandraDaemonForAuditTest cdt = CassandraDaemonForAuditTest.getInstance();
-        cluster = cdt.createCluster();
-        session = cluster.connect();
+        session = cdt.createSession();
     }
 
     @Before

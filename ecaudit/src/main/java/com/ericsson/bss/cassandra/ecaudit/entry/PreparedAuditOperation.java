@@ -15,7 +15,6 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.entry;
 
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -91,32 +90,25 @@ public class PreparedAuditOperation implements AuditOperation
 
         fullStatement.append('[');
 
-        if (options.getValues().isEmpty())
+        Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
+        for (ColumnSpecification column : options.getColumnSpecifications())
         {
-            fullStatement.append(']');
-        }
-        else
-        {
-            Queue<ByteBuffer> values = new LinkedList<>(options.getValues());
-            for (ColumnSpecification column : options.getColumnSpecifications())
+            ByteBuffer value = values.remove();
+            String valueString;
+            try
             {
-                ByteBuffer value = values.remove();
-                String valueString;
-                try
-                {
-                    valueString = boundValueSuppressor.suppress(column, value)
-                                .orElseGet(() -> CqlLiteralFlavorAdapter.toCQLLiteral(value, column));
-                }
-                catch (BufferUnderflowException e)
-                {
-                    valueString = "null";
-                }
-                fullStatement.append(valueString).append(", ");
+                valueString = boundValueSuppressor.suppress(column, value)
+                            .orElseGet(() -> CqlLiteralFlavorAdapter.toCQLLiteral(value, column));
             }
-
-            fullStatement.setLength(fullStatement.length() - 1);
-            fullStatement.setCharAt(fullStatement.length() - 1, ']');
+            catch (IndexOutOfBoundsException e)
+            {
+                valueString = "null";
+            }
+            fullStatement.append(valueString).append(", ");
         }
+
+        fullStatement.setLength(fullStatement.length() - 1);
+        fullStatement.setCharAt(fullStatement.length() - 1, ']');
 
         return fullStatement.toString();
     }

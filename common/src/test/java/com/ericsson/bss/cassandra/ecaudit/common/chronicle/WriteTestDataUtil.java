@@ -24,10 +24,10 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.AuditOperation;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.SimpleAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ChronicleQueueBuilder;
-import net.openhft.chronicle.queue.ExcerptAppender;
 
+import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import static java.util.Arrays.asList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -60,7 +60,7 @@ public class WriteTestDataUtil
                                               .build();
 
         // Write Data to Queue
-        ChronicleQueue chronicleQueue = ChronicleQueueBuilder
+        ChronicleQueue chronicleQueue = SingleChronicleQueueBuilder
                                         .single(new File("common/src/test/resources/q" + version))
                                         .blockSize(1024)
                                         .build();

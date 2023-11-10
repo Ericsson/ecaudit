@@ -22,9 +22,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.UnauthorizedException;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 
@@ -37,24 +36,20 @@ public class ITDataAudit
     private static final String GRANTEE = "data_grantee";
 
     private static String testUsername;
-    private static Cluster testCluster;
-    private static Session testSession;
+    private static CqlSession testSession;
 
     private static String basicUsername;
-    private static Cluster basicCluster;
-    private static Session basicSession;
+    private static CqlSession basicSession;
 
     @BeforeClass
     public static void beforeClass()
     {
         ccf.setup();
         testUsername = ccf.givenUniqueSuperuserWithMinimalWhitelist();
-        testCluster = ccf.createCluster(testUsername);
-        testSession = testCluster.connect();
+        testSession = ccf.createSession(testUsername);
 
         basicUsername = ccf.givenUniqueBasicUserWithMinimalWhitelist();
-        basicCluster = ccf.createCluster(basicUsername);
-        basicSession = basicCluster.connect();
+        basicSession = ccf.createSession(basicUsername);
 
         ccf.givenBasicUser(GRANTEE);
     }
@@ -77,9 +72,7 @@ public class ITDataAudit
     public static void afterClass()
     {
         basicSession.close();
-        basicCluster.close();
         testSession.close();
-        testCluster.close();
         ccf.tearDown();
     }
 
@@ -90,7 +83,7 @@ public class ITDataAudit
             new Object[]{ "CREATE KEYSPACE IF NOT EXISTS dataks WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false", "create", "data/dataks" },
             new Object[]{ "CREATE TABLE IF NOT EXISTS dataks.tbl (key int PRIMARY KEY, value text)", "create", "data/dataks" },
             new Object[]{ "CREATE INDEX IF NOT EXISTS idx ON dataks.tbl (value)", "alter", "data/dataks/tbl" },
-            new Object[]{ "CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.viw AS SELECT value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)", "alter", "data/dataks/tbl" },
+            new Object[]{ "CREATE MATERIALIZED VIEW IF NOT EXISTS dataks.viw AS SELECT key, value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)", "alter", "data/dataks/tbl" },
             new Object[]{ "CREATE TYPE IF NOT EXISTS dataks.tp (data1 int, data2 int)", "create", "data/dataks" },
             new Object[]{ "SELECT * FROM dataks.tbl WHERE key = 12", "select", "data/dataks/tbl" },
             new Object[]{ "INSERT INTO dataks.tbl (key, value) VALUES (45, 'hepp')", "modify", "data/dataks/tbl" },
@@ -175,6 +168,6 @@ public class ITDataAudit
 
     private void givenMaterializedView(String view)
     {
-        ccf.givenStatementExecutedAsSuperuserWithoutAudit("CREATE MATERIALIZED VIEW IF NOT EXISTS " + view + " AS SELECT value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)");
+        ccf.givenStatementExecutedAsSuperuserWithoutAudit("CREATE MATERIALIZED VIEW IF NOT EXISTS " + view + " AS SELECT key, value FROM dataks.tbl WHERE value IS NOT NULL AND key IS NOT NULL PRIMARY KEY (value, key)");
     }
 }

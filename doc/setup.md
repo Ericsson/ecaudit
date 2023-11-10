@@ -7,7 +7,7 @@ When upgrading ecAudit to a new version, always consider special [upgrade instru
 
 ## Prerequisites
 
-ecAudit requires a Java 8 compatible JVM.
+ecAudit requires a Java 8 or Java 11 compatible JVM.
 
 
 ## Installation

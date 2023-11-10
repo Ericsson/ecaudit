@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.util.UUID;
 
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -27,10 +28,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.ericsson.bss.cassandra.ecaudit.test.mode.ClientInitializer;
+
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.gms.VersionedValue;
+import org.apache.cassandra.locator.InetAddressAndPort;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -64,8 +67,8 @@ public class TestSchemaHelper
         currentEndpointState = createEndpointStateWithSchema();
         previousEndpointState = createEndpointStateWithSchema();
 
-        InetAddress localEndpoint = InetAddress.getLoopbackAddress();
-        InetAddress remoteEndpoint = InetAddress.getByName("127.0.0.2");
+        InetAddressAndPort localEndpoint = InetAddressAndPort.getByAddress(InetAddress.getLoopbackAddress());
+        InetAddressAndPort remoteEndpoint = InetAddressAndPort.getByAddress(InetAddress.getByName("127.0.0.2"));
         when(mockGossiper.getLiveMembers()).thenReturn(ImmutableSet.of(localEndpoint, remoteEndpoint));
 
         schemaHelper = new SchemaHelper(localEndpoint, mockGossiper, RETRY_INTERVAL_MILLIS);
@@ -127,14 +130,14 @@ public class TestSchemaHelper
 
     private void givenLocalStateOrder(EndpointState endpointState, EndpointState... endpointStates)
     {
-        InetAddress localEndpoint = InetAddress.getLoopbackAddress();
+        InetAddressAndPort localEndpoint = InetAddressAndPort.getByAddress(InetAddress.getLoopbackAddress());
         when(mockGossiper.getEndpointStateForEndpoint(eq(localEndpoint)))
         .thenReturn(endpointState, endpointStates);
     }
 
     private void givenRemoteStateOrder(EndpointState endpointState, EndpointState... endpointStates) throws UnknownHostException
     {
-        InetAddress remoteEndpoint = InetAddress.getByName("127.0.0.2");
+        InetAddressAndPort remoteEndpoint = InetAddressAndPort.getByAddress(InetAddress.getByName("127.0.0.2"));
         when(mockGossiper.getEndpointStateForEndpoint(eq(remoteEndpoint)))
         .thenReturn(endpointState, endpointStates);
     }

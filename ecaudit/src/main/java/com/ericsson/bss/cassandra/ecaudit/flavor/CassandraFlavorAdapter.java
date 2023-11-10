@@ -18,9 +18,9 @@ package com.ericsson.bss.cassandra.ecaudit.flavor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.apache.cassandra.service.MigrationManager;
+import org.apache.cassandra.schema.MigrationManager;
+import org.apache.cassandra.schema.TableMetadata;
 
 public class CassandraFlavorAdapter
 {
@@ -50,13 +50,13 @@ public class CassandraFlavorAdapter
      * Note that this is only safe for system tables where we know the cfId is fixed and will be the same whatever version
      * of the definition is used.
      */
-    public void forceAnnounceNewColumnFamily(CFMetaData expectedTable) throws ConfigurationException
+    public void forceAnnounceNewColumnFamily(TableMetadata expectedTable) throws ConfigurationException
     {
         try
         {
-            Method m = MigrationManager.class.getDeclaredMethod("announceNewColumnFamily", CFMetaData.class, boolean.class, boolean.class, long.class);
+            Method m = MigrationManager.class.getDeclaredMethod("announceNewTable", TableMetadata.class, boolean.class, long.class);
             m.setAccessible(true);
-            m.invoke(null, expectedTable, Boolean.FALSE, Boolean.FALSE, 0L);
+            m.invoke(null, expectedTable, Boolean.FALSE, 0L);
         }
         catch (InvocationTargetException e)
         {
@@ -66,11 +66,11 @@ public class CassandraFlavorAdapter
                 throw (ConfigurationException) cause;
             }
 
-            throw new ConfigurationException("Failed to create table: " + expectedTable.cfName, e);
+            throw new ConfigurationException("Failed to create table: " + expectedTable.name, e);
         }
         catch (NoSuchMethodException | IllegalAccessException | SecurityException | IllegalArgumentException e)
         {
-            throw new ConfigurationException("Failed to create table: " + expectedTable.cfName, e);
+            throw new ConfigurationException("Failed to create table: " + expectedTable.name, e);
         }
     }
 }

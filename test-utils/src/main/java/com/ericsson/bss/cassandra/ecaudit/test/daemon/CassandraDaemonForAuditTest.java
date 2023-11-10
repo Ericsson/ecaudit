@@ -19,18 +19,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Random;
+
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.CqlSession;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.Cluster;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.service.CassandraDaemon;
 
@@ -48,7 +52,6 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     private File tempDir;
 
-    private volatile int rpcPort = -1;
     private volatile int storagePort = -1;
     private volatile int sslStoragePort = -1;
     private volatile int nativePort = -1;
@@ -156,15 +159,20 @@ public class CassandraDaemonForAuditTest // NOSONAR
         }
     }
 
-    public Cluster createCluster()
+    public CqlSession createSession()
     {
-        return createCluster("cassandra", "cassandra");
+        return createSession("cassandra", "cassandra");
     }
 
-    public Cluster createCluster(String username, String password)
+    public CqlSession createSession(String username, String password)
     {
-        return Cluster.builder().addContactPoint(DatabaseDescriptor.getListenAddress().getHostAddress())
-                      .withPort(nativePort).withCredentials(username, password).build();
+        DriverConfigLoader loader =
+                DriverConfigLoader.programmaticBuilder()
+                    .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5))
+                    .build();
+
+        return CqlSession.builder().addContactPoint(new InetSocketAddress(DatabaseDescriptor.getListenAddress(), nativePort))
+                      .withCredentials(username, password).withLocalDatacenter("datacenter1").withConfigLoader(loader).build();
     }
 
     public Path getAuditDirectory()
@@ -174,7 +182,6 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
     private void randomizePorts()
     {
-        rpcPort = randomAvailablePort();
         storagePort = randomAvailablePort();
         sslStoragePort = randomAvailablePort();
         nativePort = randomAvailablePort();
@@ -187,8 +194,7 @@ public class CassandraDaemonForAuditTest // NOSONAR
         while (port < 0)
         {
             port = (new Random().nextInt(16300) + 49200);
-            if (rpcPort == port
-                || storagePort == port
+            if (storagePort == port
                 || sslStoragePort == port
                 || nativePort == port
                 || jmxPort == port)
@@ -217,7 +223,6 @@ public class CassandraDaemonForAuditTest // NOSONAR
 
         Path outPath = Paths.get(tempDir.getPath(), filename);
         content = content.replaceAll("###tmp###", tempDir.getPath().replace("\\", "\\\\"));
-        content = content.replaceAll("###rpc_port###", String.valueOf(rpcPort));
         content = content.replaceAll("###storage_port###", String.valueOf(storagePort));
         content = content.replaceAll("###ssl_storage_port###", String.valueOf(sslStoragePort));
         content = content.replaceAll("###native_transport_port###", String.valueOf(nativePort));

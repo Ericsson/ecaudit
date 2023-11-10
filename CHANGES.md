@@ -3,6 +3,7 @@
 ## Version 3.1.0 (unreleased)
 
 * Add Audit Prepare statements - #226
+* Test with java11 (only flavor ecaudit_c4.0) - #214
 
 ## Version 3.0.0 (only flavor ecaudit_c4.1)
 
@@ -17,8 +18,11 @@
 * Build with Cassandra 3.0.28 (only flavor ecaudit_c3.0)
 * Bumps snakeyaml from 1.29 to 1.33
 * Handle values that has not been assigned a value with prepared statements - #202
+* Support server side DESCRIBE command (only flavor ecaudit_c4.0)
+* Fix unrecognized CQLStatement for unprepared schema altering statements (only flavor ecaudit_c4.0)
 
 ## Version 2.9.0
+* Use the correct id for system_auth.role_audit_whitelists_v2 with Cassandra 4.0.1 (only flavor ecaudit_c4.0)
 * Build with Cassandra 4.0.3 (only flavor ecaudit_c4.0)
 * Build with Cassandra 3.11.12 (only flavor ecaudit_c3.11)
 * Build with Cassandra 3.0.26 (only flavor ecaudit_c3.0)

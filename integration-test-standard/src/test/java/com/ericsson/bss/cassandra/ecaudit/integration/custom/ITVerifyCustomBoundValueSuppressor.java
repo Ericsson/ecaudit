@@ -31,15 +31,11 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.TupleType;
-import com.datastax.driver.core.UserType;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.TupleType;
+import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.ericsson.bss.cassandra.ecaudit.AuditAdapter;
 import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.BoundValueSuppressor;
 import com.ericsson.bss.cassandra.ecaudit.entry.suppressor.SuppressBlobs;
@@ -81,8 +77,7 @@ public class ITVerifyCustomBoundValueSuppressor
     private static final String TABLE = "CREATE TABLE ks1.t1 (key1 text, key2 int, key3 text, val1 blob, val2 list<blob>, val3 map<int, frozen<list<blob>>>, val4 int, val5 tuple<text, blob>, val6 frozen<ks1.mytype>, PRIMARY KEY((key1, key2), key3))";
     private static final String INSERT = "INSERT INTO ks1.t1 (key1, key2, key3, val1, val2, val3, val4, val5, val6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    private static Cluster cluster;
-    private static Session session;
+    private static CqlSession session;
     private static AuditLogger customLogger;
 
     private static BoundValueSuppressor defaultSuppressor;
@@ -97,12 +92,11 @@ public class ITVerifyCustomBoundValueSuppressor
     public static void beforeClass() throws Exception
     {
         CassandraDaemonForAuditTest cdt = CassandraDaemonForAuditTest.getInstance();
-        cluster = cdt.createCluster();
-        session = cluster.connect();
+        session = cdt.createSession();
 
-        session.execute(new SimpleStatement(KEYSPACE));
-        session.execute(new SimpleStatement(UDT));
-        session.execute(new SimpleStatement(TABLE));
+        session.execute(KEYSPACE);
+        session.execute(UDT);
+        session.execute(TABLE);
 
         // Configure logger with custom format with only operation
         customLogger = new Slf4jAuditLogger(Collections.singletonMap("log_format", "operation=${OPERATION}"), CUSTOM_LOGGER_NAME);
@@ -130,7 +124,6 @@ public class ITVerifyCustomBoundValueSuppressor
     {
         AuditAdapter.getInstance().getAuditor().removeLogger(customLogger);
         session.close();
-        cluster.close();
         setBoundValueSuppressor(defaultSuppressor);
     }
 
@@ -206,8 +199,12 @@ public class ITVerifyCustomBoundValueSuppressor
 
     private void executePreparedStatement()
     {
-        TupleType tupleType = TupleType.of(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE, DataType.text(), DataType.blob());
-        UserType udt = session.getCluster().getMetadata().getKeyspace("ks1").getUserType("mytype");
+        TupleType tupleType = DataTypes.tupleOf(DataTypes.TEXT, DataTypes.BLOB);
+        UserDefinedType udt = session.getMetadata()
+                .getKeyspace("ks1")
+                .flatMap(ks -> ks.getUserDefinedType("mytype"))
+                .orElseThrow(() -> new IllegalArgumentException("Missing UDT definition"));
+
 
         PreparedStatement preparedInsert = session.prepare(INSERT);
         session.execute(preparedInsert.bind("PartKey1",
@@ -218,7 +215,7 @@ public class ITVerifyCustomBoundValueSuppressor
                                             Collections.singletonMap(99, Arrays.asList(createBlob(4), createBlob(4))),
                                             43,
                                             tupleType.newValue("Hello", createBlob(4)),
-                                            udt.newValue().setString("mykey", "Kalle").setBytes("myval", (ByteBuffer)createBlob(16))
+                                            udt.newValue().setString("mykey", "Kalle").setByteBuffer("myval", (ByteBuffer)createBlob(16))
                                             ));
     }
 

@@ -25,10 +25,10 @@ import org.junit.Test;
 
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ChronicleQueueBuilder;
-import net.openhft.chronicle.queue.ExcerptTailer;
 
+import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestReadVersion0
@@ -40,7 +40,7 @@ public class TestReadVersion0
     public static void beforeClass()
     {
         File queueDirVersion0 = new File("src/test/resources/q0");
-        chronicleQueue = ChronicleQueueBuilder
+        chronicleQueue = SingleChronicleQueueBuilder
                          .single(queueDirVersion0)
                          .blockSize(1024)
                          .readOnly(true)
