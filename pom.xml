@@ -267,6 +267,7 @@ limitations under the License.
                         <strictCheck>true</strictCheck>
                         <failIfUnknown>true</failIfUnknown>
                         <excludes>
+                            <exclude>CODEOWNERS</exclude>
                             <exclude>LICENSE</exclude>
                             <exclude>NOTICE</exclude>
                             <exclude>.github/**</exclude>
