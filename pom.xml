@@ -267,6 +267,7 @@ limitations under the License.
                         <strictCheck>true</strictCheck>
                         <failIfUnknown>true</failIfUnknown>
                         <excludes>
+                            <exclude>osv-scanner.toml</exclude>
                             <exclude>CODEOWNERS</exclude>
                             <exclude>LICENSE</exclude>
                             <exclude>NOTICE</exclude>
