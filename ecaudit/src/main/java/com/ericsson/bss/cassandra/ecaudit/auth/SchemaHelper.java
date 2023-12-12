@@ -52,7 +52,7 @@ class SchemaHelper
     {
         LOG.info("Waiting for schema to align in cluster");
 
-        int delayMillis = 0;
+        long delayMillis = 0;
         while (areLiveNodesWaitingOnSchemaUpdate())
         {
             if (delayMillis >= schemaAlignmentDelayMillis)
