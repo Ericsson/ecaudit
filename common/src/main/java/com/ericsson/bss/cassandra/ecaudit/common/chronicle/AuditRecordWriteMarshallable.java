@@ -19,7 +19,6 @@ import com.ericsson.bss.cassandra.ecaudit.common.chronicle.FieldSelector.Field;
 import com.ericsson.bss.cassandra.ecaudit.common.record.AuditRecord;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.WriteMarshallable;
-import org.jetbrains.annotations.NotNull;
 
 public class AuditRecordWriteMarshallable implements WriteMarshallable
 {
@@ -33,7 +32,7 @@ public class AuditRecordWriteMarshallable implements WriteMarshallable
     }
 
     @Override
-    public void writeMarshallable(@NotNull WireOut wire)
+    public void writeMarshallable(WireOut wire)
     {
         // Mandatory fields
         wire.write(WireTags.KEY_VERSION).int16(WireTags.VALUE_VERSION_CURRENT);

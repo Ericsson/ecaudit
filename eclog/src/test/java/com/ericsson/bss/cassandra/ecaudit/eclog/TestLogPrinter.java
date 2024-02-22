@@ -36,7 +36,6 @@ import org.junit.runner.RunWith;
 import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import com.ericsson.bss.cassandra.ecaudit.eclog.config.EcLogYamlConfig;
-import org.jetbrains.annotations.NotNull;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.OngoingStubbing;
@@ -241,7 +240,6 @@ public class TestLogPrinter
         assertThat(availableFieldFunctions.get("TIMESTAMP").apply(FULL_RECORD)).isEqualTo("123");
     }
 
-    @NotNull
     private QueueReader givenReaderWithSingleRecord(StoredAuditRecord authRecord)
     {
         QueueReader reader = mock(QueueReader.class);
@@ -250,7 +248,6 @@ public class TestLogPrinter
         return reader;
     }
 
-    @NotNull
     private EcLogYamlConfig mockConfig(String format)
     {
         EcLogYamlConfig config = mock(EcLogYamlConfig.class);
