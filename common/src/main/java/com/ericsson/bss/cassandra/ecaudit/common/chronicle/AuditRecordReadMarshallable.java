@@ -25,14 +25,13 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.StoredAuditRecord;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.wire.ReadMarshallable;
 import net.openhft.chronicle.wire.WireIn;
-import org.jetbrains.annotations.NotNull;
 
 public class AuditRecordReadMarshallable implements ReadMarshallable
 {
     private StoredAuditRecord auditRecord;
 
     @Override
-    public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException
+    public void readMarshallable(WireIn wire) throws IORuntimeException
     {
         if (auditRecord != null)
         {
