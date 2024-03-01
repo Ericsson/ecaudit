@@ -46,7 +46,7 @@ jobs:
         with:
           files: ./ecaudit/target/site/jacoco/jacoco.xml,./common/target/site/jacoco/jacoco.xml,./eclog/target/site/jacoco/jacoco.xml
           flags: unit-tests
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           verbose: true
   integration-tests:
     runs-on: ubuntu-latest
