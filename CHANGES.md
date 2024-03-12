@@ -1,7 +1,8 @@
 # Changes
 
-## Version 3.1.0 (unreleased)
+## Version 3.1.0
 
+* Step commons-cli to version 1.6.0 - #263
 * Add Audit Prepare statements - #226
 
 ## Version 3.0.0 (only flavor ecaudit_c4.1)
