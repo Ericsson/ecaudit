@@ -2,6 +2,7 @@
 
 ## Version 3.1.0
 
+* Step commons-io to version 2.15.1 -#265
 * Step commons-cli to version 1.6.0 - #263
 * Add Audit Prepare statements - #226
 
