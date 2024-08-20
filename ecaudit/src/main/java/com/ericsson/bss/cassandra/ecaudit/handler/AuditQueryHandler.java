@@ -39,6 +39,7 @@ import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
+import org.apache.cassandra.transport.Dispatcher;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.utils.TimeUUID;
@@ -96,7 +97,7 @@ public class AuditQueryHandler implements QueryHandler
 
     @Override
     public ResultMessage process(CQLStatement statement, QueryState state, QueryOptions options,
-                                 Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
+                                 Map<String, ByteBuffer> customPayload, Dispatcher.RequestTime requestTime)
     throws RequestExecutionException, RequestValidationException
     {
         try
@@ -106,7 +107,7 @@ public class AuditQueryHandler implements QueryHandler
 
             try
             {
-                ResultMessage result = wrappedQueryHandler.process(statement, state, options, customPayload, queryStartNanoTime);
+                ResultMessage result = wrappedQueryHandler.process(statement, state, options, customPayload, requestTime);
                 auditAdapter.auditRegular(rawCqlStatement, state.getClientState(), Status.SUCCEEDED, timestamp);
                 return result;
             }
@@ -125,14 +126,14 @@ public class AuditQueryHandler implements QueryHandler
 
     @Override
     public ResultMessage processPrepared(CQLStatement statement, QueryState state, QueryOptions options,
-                                         Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
+                                         Map<String, ByteBuffer> customPayload, Dispatcher.RequestTime requestTime)
     throws RequestExecutionException, RequestValidationException
     {
         try
         {
             String rawCqlStatement = rawCqlStatements.get().get(0);
             return processPreparedWithAudit(statement, rawCqlStatement, state, options, customPayload,
-                                            queryStartNanoTime);
+                                            requestTime);
         }
         finally
         {
@@ -141,14 +142,14 @@ public class AuditQueryHandler implements QueryHandler
     }
 
     private ResultMessage processPreparedWithAudit(CQLStatement statement, String rawCqlStatement, QueryState state,
-                                                   QueryOptions options, Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
+                                                   QueryOptions options, Map<String, ByteBuffer> customPayload, Dispatcher.RequestTime requestTime)
     throws RequestExecutionException, RequestValidationException
     {
         long timestamp = System.currentTimeMillis();
         auditAdapter.auditPrepared(rawCqlStatement, statement, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try
         {
-            ResultMessage result = wrappedQueryHandler.processPrepared(statement, state, options, customPayload, queryStartNanoTime);
+            ResultMessage result = wrappedQueryHandler.processPrepared(statement, state, options, customPayload, requestTime);
             auditAdapter.auditPrepared(rawCqlStatement, statement, state.getClientState(), options, Status.SUCCEEDED, timestamp);
             return result;
         }
@@ -161,13 +162,13 @@ public class AuditQueryHandler implements QueryHandler
 
     @Override
     public ResultMessage processBatch(BatchStatement statement, QueryState state, BatchQueryOptions options,
-                                      Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
+                                      Map<String, ByteBuffer> customPayload, Dispatcher.RequestTime requestTime)
     throws RequestExecutionException, RequestValidationException
     {
         try
         {
             List<String> rawCqlStatementList = rawCqlStatements.get();
-            return processBatchWithAudit(statement, rawCqlStatementList, state, options, customPayload, queryStartNanoTime);
+            return processBatchWithAudit(statement, rawCqlStatementList, state, options, customPayload, requestTime);
         }
         finally
         {
@@ -176,7 +177,7 @@ public class AuditQueryHandler implements QueryHandler
     }
 
     private ResultMessage processBatchWithAudit(BatchStatement statement, List<String> rawCqlStatements,
-                                                QueryState state, BatchQueryOptions options, Map<String, ByteBuffer> customPayload, long queryStartNanoTime)
+                                                QueryState state, BatchQueryOptions options, Map<String, ByteBuffer> customPayload, Dispatcher.RequestTime requestTime)
     throws RequestExecutionException, RequestValidationException
     {
         UUID uuid = TimeUUID.Generator.nextTimeAsUUID();
@@ -184,7 +185,7 @@ public class AuditQueryHandler implements QueryHandler
         auditAdapter.auditBatch(statement, rawCqlStatements, uuid, state.getClientState(), options, Status.ATTEMPT, timestamp);
         try
         {
-            ResultMessage result = wrappedQueryHandler.processBatch(statement, state, options, customPayload, queryStartNanoTime);
+            ResultMessage result = wrappedQueryHandler.processBatch(statement, state, options, customPayload, requestTime);
             auditAdapter.auditBatch(statement, rawCqlStatements, uuid, state.getClientState(), options, Status.SUCCEEDED, timestamp);
             return result;
         }

@@ -49,7 +49,9 @@ public final class ClientInitializer
 
     public static void afterClass()
     {
-        DatabaseDescriptor.setPartitionerUnsafe(null);
+        // We should really restore the old value here but the default value is null and
+        // setPartitionerUnsafe does not allow null so there isn't mush we can do
+        //DatabaseDescriptor.setPartitionerUnsafe(null);
         DatabaseDescriptor.setNetworkAuthorizer(null);
         DatabaseDescriptor.setAuthorizer(null);
         DatabaseDescriptor.setAuthenticator(null);

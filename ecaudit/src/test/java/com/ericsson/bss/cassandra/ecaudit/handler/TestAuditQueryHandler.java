@@ -42,6 +42,7 @@ import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.UnavailableException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
+import org.apache.cassandra.transport.Dispatcher;
 import org.apache.cassandra.transport.messages.ResultMessage.Prepared;
 import org.apache.cassandra.utils.MD5Digest;
 import org.mockito.ArgumentCaptor;
@@ -156,11 +157,11 @@ public class TestAuditQueryHandler
 
         CQLStatement statement = queryHandler.parse(query, mockQueryState, mockOptions);
 
-        queryHandler.process(statement, mockQueryState, mockOptions, customPayload, System.nanoTime());
+        queryHandler.process(statement, mockQueryState, mockOptions, customPayload, Dispatcher.RequestTime.forImmediateExecution());
         verify(mockHandler, times(1)).parse(eq(query), eq(mockQueryState), eq(mockOptions));
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.ATTEMPT), longThat(isCloseToNow()));
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), any(Dispatcher.RequestTime.class));
     }
 
     @Test
@@ -172,11 +173,11 @@ public class TestAuditQueryHandler
         whenProcessThrowUnavailable(statement);
 
         assertThatExceptionOfType(RequestExecutionException.class)
-                .isThrownBy(() -> queryHandler.process(statement, mockQueryState, mockOptions, customPayload, System.nanoTime()));
+                .isThrownBy(() -> queryHandler.process(statement, mockQueryState, mockOptions, customPayload, Dispatcher.RequestTime.forImmediateExecution()));
 
         verify(mockHandler, times(1)).parse(eq(query), eq(mockQueryState), eq(mockOptions));
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), any(Dispatcher.RequestTime.class));
         verify(mockAdapter, times(1)).auditRegular(eq(query), eq(mockClientState), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
@@ -190,12 +191,12 @@ public class TestAuditQueryHandler
         when(mockHandler.getPrepared(statementId)).thenReturn(parsedPrepared);
 
         CQLStatement stmt = queryHandler.getPrepared(statementId).statement;
-        queryHandler.processPrepared(stmt, mockQueryState, mockOptions, customPayload, System.nanoTime());
+        queryHandler.processPrepared(stmt, mockQueryState, mockOptions, customPayload, Dispatcher.RequestTime.forImmediateExecution());
 
         verify(mockHandler, times(1)).getPrepared(eq(statementId));
         verify(mockAdapter, times(1)).auditPrepared(eq(query), eq(mockStatement), eq(mockClientState), eq(mockOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
         verify(mockAdapter, times(1)).auditPrepared(eq(query), eq(mockStatement), eq(mockClientState), eq(mockOptions), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), any(Dispatcher.RequestTime.class));
     }
 
     @Test
@@ -210,11 +211,11 @@ public class TestAuditQueryHandler
 
         CQLStatement stmt = queryHandler.getPrepared(statementId).statement;
         assertThatExceptionOfType(UnavailableException.class)
-                .isThrownBy(() -> queryHandler.processPrepared(stmt, mockQueryState, mockOptions, customPayload, System.nanoTime()));
+                .isThrownBy(() -> queryHandler.processPrepared(stmt, mockQueryState, mockOptions, customPayload, Dispatcher.RequestTime.forImmediateExecution()));
 
         verify(mockHandler, times(1)).getPrepared(eq(statementId));
         verify(mockAdapter, times(1)).auditPrepared(eq(query), eq(mockStatement), eq(mockClientState), eq(mockOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), any(Dispatcher.RequestTime.class));
         verify(mockAdapter, times(1)).auditPrepared(eq(query), eq(mockStatement), eq(mockClientState), eq(mockOptions), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
@@ -227,12 +228,12 @@ public class TestAuditQueryHandler
 
         givenBatchOfTwoStatementsArePrepared(statementId, parsedPrepared);
 
-        queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, System.nanoTime());
+        queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, Dispatcher.RequestTime.forImmediateExecution());
 
         verify(mockHandler, times(2)).getPrepared(eq(statementId));
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), eq(Arrays.asList(query, query)), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), eq(Arrays.asList(query, query)), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), any(Dispatcher.RequestTime.class));
     }
 
     @Test
@@ -249,13 +250,13 @@ public class TestAuditQueryHandler
         givenBatchOfTwoStatementsAreNotPrepared(statementId1, parsedPrepared1);
         givenBatchOfTwoStatementsArePrepared(statementId2, parsedPrepared2);
 
-        queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, System.nanoTime());
+        queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, Dispatcher.RequestTime.forImmediateExecution());
 
         verify(mockHandler, times(2)).getPrepared(eq(statementId1));
         verify(mockHandler, times(2)).getPrepared(eq(statementId2));
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), eq(Arrays.asList(query2, query2)), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), eq(Arrays.asList(query2, query2)), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.SUCCEEDED), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), any(Dispatcher.RequestTime.class));
     }
 
     @Test
@@ -269,18 +270,18 @@ public class TestAuditQueryHandler
         whenProcessBatchThrowUnavailable();
 
         assertThatExceptionOfType(RequestExecutionException.class)
-                .isThrownBy(() -> queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, System.nanoTime()));
+                .isThrownBy(() -> queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, Dispatcher.RequestTime.forImmediateExecution()));
 
         verify(mockHandler, times(2)).getPrepared(eq(statementId));
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), eq(Arrays.asList(query, query)), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.ATTEMPT), longThat(isCloseToNow()));
-        verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), anyLong());
+        verify(mockHandler, times(1)).processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), any(Dispatcher.RequestTime.class));
         verify(mockAdapter, times(1)).auditBatch(eq(mockBatchStatement), eq(Arrays.asList(query, query)), any(UUID.class), eq(mockClientState), eq(mockBatchOptions), eq(Status.FAILED), longThat(isCloseToNow()));
     }
 
     @Test
     public void testTimeBaseUuidIsCreatedForBatchId()
     {
-        queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, System.nanoTime());
+        queryHandler.processBatch(mockBatchStatement, mockQueryState, mockBatchOptions, customPayload, Dispatcher.RequestTime.forImmediateExecution());
         verify(mockAdapter).auditBatch(any(), any(), uuidCaptor.capture(), any(), any(), eq(Status.ATTEMPT), anyLong());
         reset(mockAdapter, mockHandler);
         assertThat(uuidCaptor.getValue().version()).as("UUID version should be time-based").isEqualTo(1);
@@ -314,19 +315,19 @@ public class TestAuditQueryHandler
 
     @SuppressWarnings("unchecked")
     private void whenProcessThrowUnavailable(CQLStatement statement) {
-        when(mockHandler.process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
+        when(mockHandler.process(eq(statement), eq(mockQueryState), eq(mockOptions), eq(customPayload), any(Dispatcher.RequestTime.class)))
                 .thenThrow(UnavailableException.class);
     }
 
     @SuppressWarnings("unchecked")
     private void whenProcessPreparedThrowUnavailable() {
-        when(mockHandler.processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), anyLong()))
+        when(mockHandler.processPrepared(eq(mockStatement), eq(mockQueryState), eq(mockOptions), eq(customPayload), any(Dispatcher.RequestTime.class)))
                 .thenThrow(UnavailableException.class);
     }
 
     @SuppressWarnings("unchecked")
     private void whenProcessBatchThrowUnavailable() {
-        when(mockHandler.processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), anyLong()))
+        when(mockHandler.processBatch(eq(mockBatchStatement), eq(mockQueryState), eq(mockBatchOptions), eq(customPayload), any(Dispatcher.RequestTime.class)))
                 .thenThrow(UnavailableException.class);
     }
 
