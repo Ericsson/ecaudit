@@ -50,6 +50,7 @@ import org.apache.cassandra.schema.SchemaTransformations;
 import org.apache.cassandra.serializers.SetSerializer;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
+import org.apache.cassandra.transport.Dispatcher;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -128,7 +129,7 @@ public class WhitelistDataAccess
         addToWhitelistStatement.execute(QueryState.forInternalCalls(),
                                         QueryOptions.forInternalCalls(consistencyForRole(role),
                                                                       values),
-                                        System.nanoTime());
+                                        Dispatcher.RequestTime.forImmediateExecution());
     }
 
     static List<ByteBuffer> getSerializedUpdateValues(String role, String resource, Set<Permission> whitelistOperations)
@@ -151,7 +152,7 @@ public class WhitelistDataAccess
         removeFromWhitelistStatement.execute(QueryState.forInternalCalls(),
                                              QueryOptions.forInternalCalls(consistencyForRole(role),
                                                                            values),
-                                             System.nanoTime());
+                                             Dispatcher.RequestTime.forImmediateExecution());
     }
 
     public Map<IResource, Set<Permission>> getWhitelist(RoleResource role)
@@ -161,7 +162,7 @@ public class WhitelistDataAccess
                 QueryOptions.forInternalCalls(
                         consistencyForRole(role),
                         Collections.singletonList(ByteBufferUtil.bytes(role.getRoleName()))),
-                System.nanoTime());
+                Dispatcher.RequestTime.forImmediateExecution());
 
         if (rows.result.isEmpty())
         {
@@ -217,7 +218,7 @@ public class WhitelistDataAccess
                 QueryOptions.forInternalCalls(
                         consistencyForRole(role),
                         Collections.singletonList(ByteBufferUtil.bytes(role.getRoleName()))),
-                System.nanoTime());
+                Dispatcher.RequestTime.forImmediateExecution());
     }
 
     private synchronized void maybeCreateTable()
