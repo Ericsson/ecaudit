@@ -2,6 +2,7 @@
 
 ## Version 3.1.0
 
+* Cassandra 5.0.0 support (only flavor ecaudit_c5.0) - #271
 * Cassandra 4.1.6 support (only flavor ecaudit_c4.1) - #269
 * Step commons-io to version 2.15.1 -#265
 * Step commons-cli to version 1.6.0 - #263
