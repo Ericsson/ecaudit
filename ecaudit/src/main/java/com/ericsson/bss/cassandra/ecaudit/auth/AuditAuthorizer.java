@@ -57,7 +57,7 @@ public class AuditAuthorizer implements IAuthorizer
     static IAuthorizer newWrappedAuthorizer(AuditConfig auditConfig)
     {
         String authorizerName = auditConfig.getWrappedAuthorizer();
-        return FBUtilities.newAuthorizer(authorizerName);
+        return FBUtilities.construct(authorizerName, "authorizer");
     }
 
     @VisibleForTesting
