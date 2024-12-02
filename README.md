@@ -1,9 +1,9 @@
 # ecAudit
 
-[![tests](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml?query=branch%3Amaster)
-[![coverage](https://codecov.io/gh/ericsson/ecaudit/branch/master/graph/badge.svg?token=f42z31Yqr3)](https://codecov.io/gh/Ericsson/ecaudit/branch/master)
+[![tests](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/Ericsson/ecaudit/actions/workflows/test.yml?query=branch%3Arelease/c4.0)
+[![coverage](https://codecov.io/gh/ericsson/ecaudit/branch/master/graph/badge.svg?token=f42z31Yqr3)](https://codecov.io/gh/Ericsson/ecaudit/branch/release%2Fc4.0)
 
-With ecAudit you get auditing and query logger functionality for Apache Cassandra 3.0, 3.11 and 4.0.
+With ecAudit you get auditing and query logger functionality for Apache Cassandra 3.0, 3.11, 4.0, 4.1 and 5.0.
 
 Features include:
 * Detailed audit records for CQL operations and login attempts
