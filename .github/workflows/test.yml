@@ -50,7 +50,7 @@ jobs:
       - name: Unit Tests
         run: mvn --batch-mode --activate-profiles github test jacoco:report
       - name: Upload test coverage report
-        uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4.1.0
+        uses: codecov/codecov-action@7f8b4b4bde536c465e797be725718b88c5d95e0e # v5.1.1
         with:
           files: ./ecaudit/target/site/jacoco/jacoco.xml,./common/target/site/jacoco/jacoco.xml,./eclog/target/site/jacoco/jacoco.xml
           flags: unit-tests
@@ -76,7 +76,7 @@ jobs:
       - name: Unit Tests
         run: mvn --batch-mode --activate-profiles github test jacoco:report -Dmaven.compiler.target=17 -Dmaven.compiler.source=17
       - name: Upload test coverage report
-        uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4.1.0
+        uses: codecov/codecov-action@7f8b4b4bde536c465e797be725718b88c5d95e0e # v5.1.1
         with:
           files: ./ecaudit/target/site/jacoco/jacoco.xml,./common/target/site/jacoco/jacoco.xml,./eclog/target/site/jacoco/jacoco.xml
           flags: unit-tests
