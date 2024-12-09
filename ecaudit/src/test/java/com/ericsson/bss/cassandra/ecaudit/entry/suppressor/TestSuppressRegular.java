@@ -27,7 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * Tests the {@link SuppressRegular} class.
@@ -51,7 +51,7 @@ public class TestSuppressRegular
         Optional<String> result = suppressor.suppress(PARTITION_KEY_COLUMN, valueMock);
         // Then
         assertThat(result).isEmpty();
-        verifyZeroInteractions(valueMock);
+        verifyNoInteractions(valueMock);
     }
 
     @Test
@@ -63,7 +63,7 @@ public class TestSuppressRegular
         Optional<String> result = suppressor.suppress(CLUSTER_KEY_COLUMN, valueMock);
         // Then
         assertThat(result).isEmpty();
-        verifyZeroInteractions(valueMock);
+        verifyNoInteractions(valueMock);
     }
 
     @Test
@@ -75,6 +75,6 @@ public class TestSuppressRegular
         Optional<String> result = suppressor.suppress(REGULAR_COLUMN, valueMock);
         // Then
         assertThat(result).contains("<text>");
-        verifyZeroInteractions(valueMock);
+        verifyNoInteractions(valueMock);
     }
 }

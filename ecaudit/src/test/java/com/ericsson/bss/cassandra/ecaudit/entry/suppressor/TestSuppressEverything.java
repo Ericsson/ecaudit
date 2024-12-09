@@ -28,7 +28,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * Tests the {@link SuppressEverything} class.
@@ -53,6 +53,6 @@ public class TestSuppressEverything
         // Then
         assertThat(textResult).contains("<text>");
         assertThat(integerResult).contains("<int>");
-        verifyZeroInteractions(valueMock);
+        verifyNoInteractions(valueMock);
     }
 }
