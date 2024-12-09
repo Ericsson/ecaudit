@@ -36,7 +36,7 @@ import org.apache.cassandra.db.marshal.UTF8Type;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -72,7 +72,7 @@ public class TestSuppressBlobs
         Optional<String> result = suppressor.suppress(column, valueMock);
         // Then
         assertThat(result).contains(expectedString);
-        verifyZeroInteractions(valueMock);
+        verifyNoInteractions(valueMock);
     }
 
     public Object[][] testBlobsAreHidden_parameters()
@@ -101,7 +101,7 @@ public class TestSuppressBlobs
         Optional<String> result = suppressor.suppress(column, valueMock);
         // Then
         assertThat(result).isEmpty();
-        verifyZeroInteractions(valueMock);
+        verifyNoInteractions(valueMock);
     }
 
     public Object[][] testNonBlobsColumns_parameters()

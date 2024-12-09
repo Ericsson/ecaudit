@@ -46,7 +46,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -103,7 +103,7 @@ public class TestDefaultAuditor
         verify(mockFilter).isWhitelisted(logEntry);
         verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
         verifyNoMoreInteractions(mockAuditMetrics);
-        verifyZeroInteractions(mockLogger, mockObfuscator);
+        verifyNoInteractions(mockLogger, mockObfuscator);
 
         long timeMeasured = timingCaptor.getValue();
         assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
@@ -214,7 +214,7 @@ public class TestDefaultAuditor
         auditor.audit(logEntry);
         // Then
         verify(mockLogger).log(logEntry);
-        verifyZeroInteractions(secondLogger);
+        verifyNoInteractions(secondLogger);
         reset(mockFilter, mockObfuscator, mockAuditMetrics);
     }
 

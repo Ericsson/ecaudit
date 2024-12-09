@@ -63,7 +63,7 @@
         <commons-io.version>2.15.1</commons-io.version>
         <jcip-annotations.version>1.0</jcip-annotations.version>
         <junit.version>4.13.2</junit.version>
-        <mockito.version>3.12.4</mockito.version>
+        <mockito.version>5.14.2</mockito.version>
         <jmh.version>1.27</jmh.version>
         <junitparams.version>1.1.1</junitparams.version>
         <awaitility.version>4.1.1</awaitility.version>
