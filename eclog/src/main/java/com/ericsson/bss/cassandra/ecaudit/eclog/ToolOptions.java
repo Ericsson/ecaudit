@@ -20,7 +20,7 @@ import java.util.Optional;
 
 import net.openhft.chronicle.queue.RollCycles;
 
-public class ToolOptions
+public class ToolOptions //NOPMD
 {
     private final Path path;
     private final Path config;

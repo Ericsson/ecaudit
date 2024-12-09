@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  *
  * @param <T> The type of log entries the log message formatter should operate on.
  */
-public class LogMessageFormatter<T>
+public final class LogMessageFormatter<T>
 {
     private static final String FIELD_EXP = "\\$\\{(.*?)}"; // Non-greedy matching of field
     private static final String OPTIONAL_FIELD_EXP = "\\{\\?(.*?)\\$\\{(.*?)}(.*?)\\?}";

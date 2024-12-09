@@ -74,7 +74,7 @@ public class AuditAdapter
         return SingletonHolder.INSTANCE;
     }
 
-    private static class SingletonHolder
+    private final static class SingletonHolder
     {
         private static final AuditAdapter INSTANCE = AuditAdapterFactory.createAuditAdapter();
     }

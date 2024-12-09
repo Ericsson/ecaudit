@@ -78,7 +78,7 @@ public class PasswordObfuscator implements AuditObfuscator
 
     private boolean isPasswordPermission(Set<Permission> permissions)
     {
-        return Sets.intersection(permissions, PASSWORD_PERMISSIONS).size() > 0;
+        return !Sets.intersection(permissions, PASSWORD_PERMISSIONS).isEmpty();
     }
 
     /**

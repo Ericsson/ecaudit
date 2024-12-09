@@ -32,7 +32,7 @@ import org.apache.cassandra.auth.Permission;
  *
  * Instances are immutable an may only be created using the {@link AuditEntry.Builder}.
  */
-public class AuditEntry implements AuditRecord
+public final class AuditEntry implements AuditRecord
 {
     public static final int UNKNOWN_PORT = 0;
 

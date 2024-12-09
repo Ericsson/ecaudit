@@ -40,8 +40,8 @@ public class AuditFilterAuthorizer
     private static final Set<IResource> READABLE_SYSTEM_RESOURCES = new HashSet<>();
 
     // From SchemaKeyspace, will cause initialization errors if accessed directly
-    private static final ImmutableList<String> ALL_SCHEMA_TABLES = ImmutableList.of("columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
-    private static final ImmutableList<String> ALL_VIRTUAL_SCHEMA_TABLES = ImmutableList.of("columns", "tables", "keyspaces");
+    private static final List<String> ALL_SCHEMA_TABLES = ImmutableList.of("column_masks", "columns", "dropped_columns", "triggers", "types", "functions", "aggregates", "indexes", "tables", "views", "keyspaces");
+    private static final List<String> ALL_VIRTUAL_SCHEMA_TABLES = ImmutableList.of("columns", "tables", "keyspaces");
 
     // peers is read by the driver as well
     private static final String PEERS = "peers";
@@ -90,12 +90,7 @@ public class AuditFilterAuthorizer
 
     private static boolean isReadingSystemResource(Permission operation, List<? extends IResource> resourceChain)
     {
-        if (operation != Permission.SELECT)
-        {
-            return false;
-        }
-
-        return resourceChain.stream().anyMatch(READABLE_SYSTEM_RESOURCES::contains);
+        return operation == Permission.SELECT && resourceChain.stream().anyMatch(READABLE_SYSTEM_RESOURCES::contains);
     }
 
     private synchronized void resolveAuthorizerSync()

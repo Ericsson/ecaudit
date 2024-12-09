@@ -88,7 +88,7 @@ class OptionParser
         {
             try
             {
-                return Optional.of(Math.abs(Long.valueOf(cmd.getOptionValue(option))));
+                return Optional.of(Math.abs(Long.parseLong(cmd.getOptionValue(option))));
             }
             catch (NumberFormatException e)
             {

@@ -23,7 +23,7 @@ import java.util.UUID;
  * Audit record that have been re-read into memory from storage.
  * Since it is configurable which fields to store, all fields in this record are optional.
  */
-public class StoredAuditRecord
+public class StoredAuditRecord //NOPMD
 {
     private final InetAddress clientAddress;
     private final Integer clientPort;

@@ -57,7 +57,7 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 /**
  * This DAO provides an interface for updating and retrieving role specific audit white-lists.
  */
-public class WhitelistDataAccess
+public final class WhitelistDataAccess
 {
     private static final Logger LOG = LoggerFactory.getLogger(WhitelistDataAccess.class);
 
@@ -85,7 +85,7 @@ public class WhitelistDataAccess
         return SingletonHolder.INSTANCE;
     }
 
-    private static class SingletonHolder
+    private final static class SingletonHolder
     {
         private static final WhitelistDataAccess INSTANCE = new WhitelistDataAccess();
     }
