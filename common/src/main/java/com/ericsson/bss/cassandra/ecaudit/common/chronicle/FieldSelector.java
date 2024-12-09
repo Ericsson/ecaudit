@@ -24,9 +24,9 @@ public final class FieldSelector
     /**
      * Default fields selected: TIMESTAMP, CLIENT_IP, CLIENT_PORT, COORDINATOR_IP, USER, BATCH_ID, STATUS, OPERATION
      */
-    public static final FieldSelector DEFAULT_FIELDS = FieldSelector.fromBitmap(383);
-    public static final FieldSelector NO_FIELDS = FieldSelector.fromBitmap(0);
-    public static final FieldSelector ALL_FIELDS = FieldSelector.fromBitmap((1 << FieldSelector.Field.values().length) - 1);
+    public static final FieldSelector DEFAULT_FIELDS = fromBitmap(383);
+    public static final FieldSelector NO_FIELDS = fromBitmap(0);
+    public static final FieldSelector ALL_FIELDS = fromBitmap((1 << FieldSelector.Field.values().length) - 1);
 
     public enum Field
     {

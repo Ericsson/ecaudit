@@ -15,7 +15,7 @@
  */
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -95,7 +95,7 @@ public class AuditRoleManager implements IRoleManager
 
     private Set<Option> resolveSupportedOptions(IAuthenticator authenticator)
     {
-        Set<Option> options = new HashSet<>(ImmutableSet.of(Option.LOGIN, Option.SUPERUSER, Option.OPTIONS));
+        Set<Option> options = EnumSet.of(Option.LOGIN, Option.SUPERUSER, Option.OPTIONS);
 
         if (authenticator instanceof AuditAuthenticator)
         {
@@ -112,7 +112,7 @@ public class AuditRoleManager implements IRoleManager
 
     private Set<Option> resolveAlterableOptions(IAuthenticator authenticator)
     {
-        Set<Option> options = new HashSet<>();
+        Set<Option> options = EnumSet.noneOf(Option.class);
 
         if (authenticator instanceof AuditAuthenticator)
         {
