@@ -1,8 +1,12 @@
-.settings
-.project
-.classpath
-target/
-.idea
+# Files
 *.iml
+*.ipr
+*.iws
 dependency-reduced-pom.xml
 
+# Directories
+.classpath/
+.idea/
+.project/
+.settings/
+target/
