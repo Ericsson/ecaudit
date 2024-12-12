@@ -72,7 +72,7 @@
         <com.mycila.license-maven-plugin.version>4.6</com.mycila.license-maven-plugin.version>
         <org.apache.maven.plugins.maven-enforcer-plugin.version>3.5.0</org.apache.maven.plugins.maven-enforcer-plugin.version>
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.13.0</org.apache.maven.plugins.maven-compiler-plugin.version>
-        <org.codehaus.mojo.build-helper-maven-plugin.version>1.12</org.codehaus.mojo.build-helper-maven-plugin.version>
+        <org.codehaus.mojo.build-helper-maven-plugin.version>3.6.0</org.codehaus.mojo.build-helper-maven-plugin.version>
         <org.apache.maven.plugins.maven-surefire-plugin.version>3.5.2</org.apache.maven.plugins.maven-surefire-plugin.version>
         <org.apache.maven.plugins.maven-failsafe-plugin.version>3.5.2</org.apache.maven.plugins.maven-failsafe-plugin.version>
         <org.apache.maven.plugins.maven-shade-plugin.version>3.6.0</org.apache.maven.plugins.maven-shade-plugin.version>
