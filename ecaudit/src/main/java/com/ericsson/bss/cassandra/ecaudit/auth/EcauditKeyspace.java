@@ -25,17 +25,17 @@ final class EcauditKeyspace
 {
     static final String ECAUDIT_KEYSPACE_NAME = "system_ecaudit";
     static final String CREATE_KEYSPACE = Schema.instance.getKeyspaceMetadata(SchemaConstants.AUTH_KEYSPACE_NAME)
-            .toCqlString(true, false).replace(SchemaConstants.AUTH_KEYSPACE_NAME, ECAUDIT_KEYSPACE_NAME);
+            .toCqlString(false,true, false).replace(SchemaConstants.AUTH_KEYSPACE_NAME, ECAUDIT_KEYSPACE_NAME);
     static final String WHITELIST_TABLE_NAME_V2 = "role_audit_whitelists_v2";
     private static final String WHITELIST_TABLE_DESCRIPTION = "audit whitelist assigned to db roles";
     private static final int WHITELIST_TABLE_GC_GRACE_SECONDS = (int) TimeUnit.DAYS.toSeconds(90);
     private static final String CREATE_WHITELIST_TABLE = "CREATE TABLE " + ECAUDIT_KEYSPACE_NAME + "." + WHITELIST_TABLE_NAME_V2 + " ("
-            + "role text,"
-            + "resource text,"
-            + "operations set<text>,"
-            + "PRIMARY KEY(role, resource))"
-            + "WITH comment = '" + WHITELIST_TABLE_DESCRIPTION + "'"
-            + "AND gc_grace_seconds = " + WHITELIST_TABLE_GC_GRACE_SECONDS;
+                                                         + "role text,"
+                                                         + "resource text,"
+                                                         + "operations set<text>,"
+                                                         + "PRIMARY KEY(role, resource))"
+                                                         + "WITH comment = '" + WHITELIST_TABLE_DESCRIPTION + "'"
+                                                         + "AND gc_grace_seconds = " + WHITELIST_TABLE_GC_GRACE_SECONDS;
 
     private EcauditKeyspace()
     {

@@ -19,10 +19,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
-        <artifactId>parent_c5.0</artifactId>
+        <artifactId>parent_c5.1</artifactId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>ecaudit_c5.0</artifactId>
+    <artifactId>ecaudit_c5.1</artifactId>
     <packaging>jar</packaging>
 
     <name>Ericsson Cassandra Audit - Plug-in</name>
