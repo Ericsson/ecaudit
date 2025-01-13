@@ -137,9 +137,9 @@ public class AuditRoleManager implements IRoleManager
     }
 
     @Override
-    public void setup()
+    public void setup(boolean asyncRoleSetup)
     {
-        wrappedRoleManager.setup();
+        wrappedRoleManager.setup(asyncRoleSetup);
         whitelistManager.setup();
         auditAdapter.setup();
     }

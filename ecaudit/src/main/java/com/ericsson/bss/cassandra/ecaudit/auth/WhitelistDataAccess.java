@@ -41,12 +41,8 @@ import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.marshal.SetType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.RequestValidationException;
-import org.apache.cassandra.schema.KeyspaceMetadata;
-import org.apache.cassandra.schema.Keyspaces.KeyspacesDiff;
 import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.schema.SchemaConstants;
-import org.apache.cassandra.schema.SchemaTransformation.SchemaTransformationResult;
-import org.apache.cassandra.schema.SchemaTransformations;
 import org.apache.cassandra.serializers.SetSerializer;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
@@ -69,7 +65,7 @@ public final class WhitelistDataAccess
     private static final String DEFAULT_SUPERUSER_NAME = "cassandra";
 
     // Step the schema version if schema is updated
-    private static final long ECAUDIT_SCHEMA_VERSION = 1;
+//    private static final long ECAUDIT_SCHEMA_VERSION = 1;
 
     private DeleteStatement deleteWhitelistStatement;
     private SelectStatement loadWhitelistStatement;
@@ -223,11 +219,20 @@ public final class WhitelistDataAccess
 
     private synchronized void maybeCreateTable()
     {
-        KeyspaceMetadata expected = AuditAuthKeyspace.metadata();
+        boolean needToAlign = false;
+        if (Schema.instance.getKeyspaceMetadata(EcauditKeyspace.ECAUDIT_KEYSPACE_NAME) == null)
+        {
+            EcauditKeyspace.createKeyspace();
+            needToAlign = true;
+        }
 
-        SchemaTransformationResult result = Schema.instance.transform(SchemaTransformations.updateSystemKeyspace(expected, ECAUDIT_SCHEMA_VERSION));
+        if (Schema.instance.getKeyspaceMetadata(EcauditKeyspace.ECAUDIT_KEYSPACE_NAME).getTableNullable(EcauditKeyspace.WHITELIST_TABLE_NAME_V2) == null)
+        {
+            EcauditKeyspace.createTable();
+            needToAlign = true;
+        }
 
-        if (result.diff.equals(KeyspacesDiff.NONE))
+        if (needToAlign)
         {
             SchemaHelper schemaHelper = new SchemaHelper();
             if (!schemaHelper.areSchemasAligned(SCHEMA_ALIGNMENT_DELAY_MS))
