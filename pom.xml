@@ -67,7 +67,7 @@
         <jmh.version>1.37</jmh.version>
         <junitparams.version>1.1.1</junitparams.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <equalsverifier.version>3.18.2</equalsverifier.version>
+        <equalsverifier.version>3.19</equalsverifier.version>
 
         <com.mycila.license-maven-plugin.version>4.6</com.mycila.license-maven-plugin.version>
         <org.apache.maven.plugins.maven-enforcer-plugin.version>3.5.0</org.apache.maven.plugins.maven-enforcer-plugin.version>
