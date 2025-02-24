@@ -83,7 +83,7 @@
         <org.apache.maven.plugins.maven-javadoc-plugin.version>3.11.2</org.apache.maven.plugins.maven-javadoc-plugin.version>
         <org.apache.maven.plugins.maven-gpg-plugin.version>3.2.7</org.apache.maven.plugins.maven-gpg-plugin.version>
         <org.jacoco.jacoco-maven-plugin.version>0.8.12</org.jacoco.jacoco-maven-plugin.version>
-        <org.pitest.pitest-maven.version>1.18.1</org.pitest.pitest-maven.version>
+        <org.pitest.pitest-maven.version>1.18.2</org.pitest.pitest-maven.version>
         <org.apache.maven.plugins-maven-pmd-plugin.version>3.26.0</org.apache.maven.plugins-maven-pmd-plugin.version>
     </properties>
 
