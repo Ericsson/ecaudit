@@ -20,7 +20,7 @@ jobs:
           distribution: 'adopt'
           java-version: ${{ matrix.java }}
       - name: Cache Maven packages
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-m2-ca-${{ hashFiles('**/pom.xml') }}
@@ -42,7 +42,7 @@ jobs:
           distribution: 'adopt'
           java-version: ${{ matrix.java }}
       - name: Cache Maven packages
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-m2-ut-${{ hashFiles('**/pom.xml') }}
@@ -50,7 +50,7 @@ jobs:
       - name: Unit Tests
         run: mvn --batch-mode --activate-profiles github test jacoco:report
       - name: Upload test coverage report
-        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
         with:
           files: ./ecaudit/target/site/jacoco/jacoco.xml,./common/target/site/jacoco/jacoco.xml,./eclog/target/site/jacoco/jacoco.xml
           flags: unit-tests
@@ -68,7 +68,7 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
       - name: Cache Maven packages
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-m2-ut-${{ hashFiles('**/pom.xml') }}
@@ -76,7 +76,7 @@ jobs:
       - name: Unit Tests
         run: mvn --batch-mode --activate-profiles github test jacoco:report -Dmaven.compiler.target=17 -Dmaven.compiler.source=17
       - name: Upload test coverage report
-        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
         with:
           files: ./ecaudit/target/site/jacoco/jacoco.xml,./common/target/site/jacoco/jacoco.xml,./eclog/target/site/jacoco/jacoco.xml
           flags: unit-tests
@@ -97,7 +97,7 @@ jobs:
           distribution: 'adopt'
           java-version: ${{ matrix.java }}
       - name: Cache Maven packages
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-m2-it-${{ hashFiles('**/pom.xml') }}
@@ -116,7 +116,7 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
       - name: Cache Maven packages
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-m2-it-${{ hashFiles('**/pom.xml') }}
