@@ -69,7 +69,7 @@
         <awaitility.version>4.3.0</awaitility.version>
         <equalsverifier.version>3.19.2</equalsverifier.version>
 
-        <com.mycila.license-maven-plugin.version>4.6</com.mycila.license-maven-plugin.version>
+        <com.mycila.license-maven-plugin.version>5.0.0</com.mycila.license-maven-plugin.version>
         <org.apache.maven.plugins.maven-enforcer-plugin.version>3.5.0</org.apache.maven.plugins.maven-enforcer-plugin.version>
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.14.0</org.apache.maven.plugins.maven-compiler-plugin.version>
         <org.codehaus.mojo.build-helper-maven-plugin.version>3.6.0</org.codehaus.mojo.build-helper-maven-plugin.version>
