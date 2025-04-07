@@ -17,7 +17,6 @@ package com.ericsson.bss.cassandra.ecaudit.facade;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +26,6 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
-import com.ericsson.bss.cassandra.ecaudit.metrics.AuditMetrics;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 
 /**
@@ -44,20 +42,14 @@ public class DefaultAuditor implements Auditor
     private final List<AuditLogger> loggers = new ArrayList<>();
     private final AuditFilter filter;
     private final AuditObfuscator obfuscator;
-    private final AuditMetrics auditMetrics;
     private LogTimingStrategy logTimingStrategy;
 
     public DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, LogTimingStrategy logTimingStrategy)
     {
-        this(logger, filter, obfuscator, new AuditMetrics(), logTimingStrategy);
-    }
 
-    DefaultAuditor(AuditLogger logger, AuditFilter filter, AuditObfuscator obfuscator, AuditMetrics auditMetrics, LogTimingStrategy logTimingStrategy)
-    {
         loggers.add(logger);
         this.filter = filter;
         this.obfuscator = obfuscator;
-        this.auditMetrics = auditMetrics;
         this.logTimingStrategy = logTimingStrategy;
     }
 
@@ -79,7 +71,6 @@ public class DefaultAuditor implements Auditor
 
     private boolean shouldAudit(AuditEntry logEntry)
     {
-        long start = System.nanoTime();
         try
         {
             return !filter.isWhitelisted(logEntry);
@@ -89,25 +80,11 @@ public class DefaultAuditor implements Auditor
             LOG.error("Failure in whitelist check", e);
             return true;
         }
-        finally
-        {
-            long end = System.nanoTime();
-            auditMetrics.filterAuditRequest(end - start, TimeUnit.NANOSECONDS);
-        }
     }
 
     private void performAudit(AuditEntry logEntry)
     {
-        long start = System.nanoTime();
-        try
-        {
-            loggers.forEach(logger -> logger.log(logEntry));
-        }
-        finally
-        {
-            long end = System.nanoTime();
-            auditMetrics.logAuditRequest(end - start, TimeUnit.NANOSECONDS);
-        }
+        loggers.forEach(logger -> logger.log(logEntry));
     }
 
     @Override
