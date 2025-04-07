@@ -16,7 +16,6 @@
 package com.ericsson.bss.cassandra.ecaudit.facade;
 
 import java.lang.reflect.Field;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
@@ -28,10 +27,8 @@ import com.ericsson.bss.cassandra.ecaudit.common.record.Status;
 import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 import com.ericsson.bss.cassandra.ecaudit.filter.AuditFilter;
 import com.ericsson.bss.cassandra.ecaudit.logger.AuditLogger;
-import com.ericsson.bss.cassandra.ecaudit.metrics.AuditMetrics;
 import com.ericsson.bss.cassandra.ecaudit.obfuscator.AuditObfuscator;
 import org.apache.cassandra.db.ConsistencyLevel;
-import org.apache.cassandra.exceptions.CassandraException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -43,7 +40,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -62,9 +58,6 @@ public class TestDefaultAuditor
     private AuditObfuscator mockObfuscator;
 
     @Mock
-    private AuditMetrics mockAuditMetrics;
-
-    @Mock
     private LogTimingStrategy mockLogTimingStrategy;
 
     @Captor
@@ -75,7 +68,7 @@ public class TestDefaultAuditor
     @Before
     public void before()
     {
-        auditor = new DefaultAuditor(mockLogger, mockFilter, mockObfuscator, mockAuditMetrics, mockLogTimingStrategy);
+        auditor = new DefaultAuditor(mockLogger, mockFilter, mockObfuscator, mockLogTimingStrategy);
     }
 
     @After
@@ -101,8 +94,6 @@ public class TestDefaultAuditor
         long timeTaken = timedOperation(() -> auditor.audit(logEntry));
 
         verify(mockFilter).isWhitelisted(logEntry);
-        verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
-        verifyNoMoreInteractions(mockAuditMetrics);
         verifyNoInteractions(mockLogger, mockObfuscator);
 
         long timeMeasured = timingCaptor.getValue();
@@ -120,9 +111,7 @@ public class TestDefaultAuditor
 
         verify(mockObfuscator).obfuscate(logEntry);
         verify(mockLogger).log(logEntry);
-        verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
-        verify(mockAuditMetrics).logAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
-        
+
         long timeMeasured = timingCaptor.getAllValues().stream().mapToLong(l -> l).sum();
         assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
     }
@@ -139,8 +128,6 @@ public class TestDefaultAuditor
         verify(mockFilter).isWhitelisted(logEntry);
         verify(mockObfuscator).obfuscate(logEntry);
         verify(mockLogger).log(logEntry);
-        verify(mockAuditMetrics).filterAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
-        verify(mockAuditMetrics).logAuditRequest(timingCaptor.capture(), eq(TimeUnit.NANOSECONDS));
 
         long timeMeasured = timingCaptor.getAllValues().stream().mapToLong(l -> l).sum();
         assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
@@ -198,7 +185,6 @@ public class TestDefaultAuditor
         // Then
         verify(mockLogger).log(logEntry);
         verify(secondLogger).log(logEntry);
-        reset(mockFilter, mockObfuscator, mockAuditMetrics);
     }
 
     @Test
@@ -215,7 +201,6 @@ public class TestDefaultAuditor
         // Then
         verify(mockLogger).log(logEntry);
         verifyNoInteractions(secondLogger);
-        reset(mockFilter, mockObfuscator, mockAuditMetrics);
     }
 
     private long timedOperation(Runnable runnable)
