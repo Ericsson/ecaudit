@@ -293,7 +293,7 @@ public class ITVerifyChronicleBackend
 
     private void resetTestUserWithMinimalWhitelist(String username)
     {
-        superSession.execute("DELETE FROM system_auth.role_audit_whitelists_v2 WHERE role = '" + username + "'");
+        superSession.execute("DELETE FROM system_ecaudit.role_audit_whitelists_v2 WHERE role = '" + username + "'");
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_execute'  : 'connections' }");
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system' }");
         superSession.execute("ALTER ROLE " + username + " WITH OPTIONS = { 'grant_audit_whitelist_for_select'  : 'data/system_schema' }");

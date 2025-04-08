@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.apache.cassandra.schema.SchemaConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,6 @@ import org.apache.cassandra.db.marshal.SetType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.schema.Schema;
-import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.serializers.SetSerializer;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
@@ -97,23 +97,23 @@ public final class WhitelistDataAccess
 
         loadWhitelistStatement = (SelectStatement) prepare(
                 "SELECT resource, operations from %s.%s WHERE role = ?",
-                SchemaConstants.AUTH_KEYSPACE_NAME,
-                AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
+                EcauditKeyspace.ECAUDIT_KEYSPACE_NAME,
+                EcauditKeyspace.WHITELIST_TABLE_NAME_V2);
 
         deleteWhitelistStatement = (DeleteStatement) prepare(
                 "DELETE FROM %s.%s WHERE role = ?",
-                SchemaConstants.AUTH_KEYSPACE_NAME,
-                AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
+                EcauditKeyspace.ECAUDIT_KEYSPACE_NAME,
+                EcauditKeyspace.WHITELIST_TABLE_NAME_V2);
 
         addToWhitelistStatement = (UpdateStatement) prepare(
                 "UPDATE %s.%s SET operations = operations + ? WHERE role = ? AND resource = ?",
-                SchemaConstants.AUTH_KEYSPACE_NAME,
-                AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
+                EcauditKeyspace.ECAUDIT_KEYSPACE_NAME,
+                EcauditKeyspace.WHITELIST_TABLE_NAME_V2);
 
         removeFromWhitelistStatement = (UpdateStatement) prepare(
                 "UPDATE %s.%s SET operations = operations - ? WHERE role = ? AND resource = ?",
-                SchemaConstants.AUTH_KEYSPACE_NAME,
-                AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2);
+                EcauditKeyspace.ECAUDIT_KEYSPACE_NAME,
+                EcauditKeyspace.WHITELIST_TABLE_NAME_V2);
 
         setupCompleted = true;
     }
@@ -247,28 +247,6 @@ public final class WhitelistDataAccess
         try
         {
             LOG.info("Migrating audit whitelist data");
-
-            boolean needToAlign = false;
-            if (Schema.instance.getKeyspaceMetadata(EcauditKeyspace.ECAUDIT_KEYSPACE_NAME) == null)
-            {
-                EcauditKeyspace.createKeyspace();
-                needToAlign = true;
-            }
-
-            if (Schema.instance.getKeyspaceMetadata(EcauditKeyspace.ECAUDIT_KEYSPACE_NAME).getTableNullable(EcauditKeyspace.WHITELIST_TABLE_NAME_V2) == null)
-            {
-                EcauditKeyspace.createTable();
-                needToAlign = true;
-            }
-
-            if (needToAlign)
-            {
-                SchemaHelper schemaHelper = new SchemaHelper();
-                if (!schemaHelper.areSchemasAligned(SCHEMA_ALIGNMENT_DELAY_MS))
-                {
-                    LOG.warn("Schema alignment timeout - continuing startup");
-                }
-            }
 
             UntypedResultSet whitelists = QueryProcessor.process(
                     String.format("SELECT * FROM %s.%s",

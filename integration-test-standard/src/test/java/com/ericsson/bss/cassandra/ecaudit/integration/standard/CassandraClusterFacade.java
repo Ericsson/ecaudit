@@ -138,7 +138,7 @@ public class CassandraClusterFacade
 
     void resetTestUserWithMinimalWhitelist(String username)
     {
-        superSession.execute("DELETE FROM system_auth.role_audit_whitelists_v2 WHERE role = '" + username + "'");
+        superSession.execute("DELETE FROM system_ecaudit.role_audit_whitelists_v2 WHERE role = '" + username + "'");
         setMinimumWhitelist(username);
     }
 

@@ -150,6 +150,7 @@ public class AuditRoleManager implements IRoleManager
         Set<IResource> combinedSet = Sets.newHashSet(wrappedRoleManager.protectedResources());
         combinedSet.add(DataResource.table(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V1));
         combinedSet.add(DataResource.table(SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2));
+        combinedSet.add(DataResource.table(EcauditKeyspace.ECAUDIT_KEYSPACE_NAME, EcauditKeyspace.WHITELIST_TABLE_NAME_V2));
         return ImmutableSet.copyOf(combinedSet);
     }
 
