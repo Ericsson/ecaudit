@@ -67,7 +67,7 @@
         <jmh.version>1.37</jmh.version>
         <junitparams.version>1.1.1</junitparams.version>
         <awaitility.version>4.3.0</awaitility.version>
-        <equalsverifier.version>3.19.4</equalsverifier.version>
+        <equalsverifier.version>3.19.4</equalsverifier.version> <!--bump to 4.0 after droping java 11-->
 
         <com.mycila.license-maven-plugin.version>5.0.0</com.mycila.license-maven-plugin.version>
         <org.apache.maven.plugins.maven-enforcer-plugin.version>3.6.2</org.apache.maven.plugins.maven-enforcer-plugin.version>
@@ -203,6 +203,7 @@
                             --add-exports java.base/java.lang.ref=ALL-UNNAMED
                             --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
                             --add-exports java.base/jdk.internal.ref=ALL-UNNAMED
+                            --add-exports java.base/jdk.internal.util=ALL-UNNAMED
                             --add-exports java.base/sun.nio.ch=ALL-UNNAMED
                             --add-exports java.management.rmi/com.sun.jmx.remote.internal.rmi=ALL-UNNAMED
                             --add-exports java.rmi/sun.rmi.registry=ALL-UNNAMED

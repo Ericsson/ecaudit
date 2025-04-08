@@ -101,7 +101,7 @@ public class TestAuditRoleManager
     {
         auditRoleManager.setup();
 
-        verify(mockWrappedRoleManager).setup();
+        verify(mockWrappedRoleManager).setup(anyBoolean());
         verify(mockAuditWhitelistManager).setup();
         verify(mockAuditAdapter).setup();
     }
@@ -291,8 +291,9 @@ public class TestAuditRoleManager
 
         assertThat(actualResources).containsAll(cassandraResources);
         assertThat(actualResources).containsAll(ImmutableSet.of(DataResource.table("system_auth", "role_audit_whitelists"),
-                                                                DataResource.table("system_auth", "role_audit_whitelists_v2")));
-        assertThat(actualResources).hasSize(cassandraResources.size() + 2);
+                                                                DataResource.table("system_auth", "role_audit_whitelists_v2"),
+                                                                DataResource.table("system_ecaudit", "role_audit_whitelists_v2")));
+        assertThat(actualResources).hasSize(cassandraResources.size() + 3);
     }
 
     @Test

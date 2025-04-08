@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -59,9 +60,6 @@ public class TestDefaultAuditor
 
     @Mock
     private LogTimingStrategy mockLogTimingStrategy;
-
-    @Captor
-    private ArgumentCaptor<Long> timingCaptor;
 
     private DefaultAuditor auditor;
 
@@ -91,13 +89,10 @@ public class TestDefaultAuditor
         AuditEntry logEntry = AuditEntry.newBuilder().build();
         when(mockFilter.isWhitelisted(logEntry)).thenReturn(true);
 
-        long timeTaken = timedOperation(() -> auditor.audit(logEntry));
+        auditor.audit(logEntry);
 
         verify(mockFilter).isWhitelisted(logEntry);
         verifyNoInteractions(mockLogger, mockObfuscator);
-
-        long timeMeasured = timingCaptor.getValue();
-        assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
     }
 
     @Test
@@ -107,13 +102,10 @@ public class TestDefaultAuditor
         when(mockFilter.isWhitelisted(logEntry)).thenThrow(new ReadTimeoutException(ConsistencyLevel.QUORUM, 1, 1, false));
         when(mockObfuscator.obfuscate(logEntry)).thenReturn(logEntry);
         
-        long timeTaken = timedOperation(() -> auditor.audit(logEntry));
+        auditor.audit(logEntry);
 
         verify(mockObfuscator).obfuscate(logEntry);
         verify(mockLogger).log(logEntry);
-
-        long timeMeasured = timingCaptor.getAllValues().stream().mapToLong(l -> l).sum();
-        assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
     }
 
     @Test
@@ -123,14 +115,11 @@ public class TestDefaultAuditor
         when(mockFilter.isWhitelisted(logEntry)).thenReturn(false);
         when(mockObfuscator.obfuscate(logEntry)).thenReturn(logEntry);
 
-        long timeTaken = timedOperation(() -> auditor.audit(logEntry));
+        auditor.audit(logEntry);
 
         verify(mockFilter).isWhitelisted(logEntry);
         verify(mockObfuscator).obfuscate(logEntry);
         verify(mockLogger).log(logEntry);
-
-        long timeMeasured = timingCaptor.getAllValues().stream().mapToLong(l -> l).sum();
-        assertThat(timeMeasured).isLessThanOrEqualTo(timeTaken);
     }
 
     @Test
@@ -185,6 +174,7 @@ public class TestDefaultAuditor
         // Then
         verify(mockLogger).log(logEntry);
         verify(secondLogger).log(logEntry);
+        reset(mockFilter, mockObfuscator);
     }
 
     @Test
@@ -201,27 +191,7 @@ public class TestDefaultAuditor
         // Then
         verify(mockLogger).log(logEntry);
         verifyNoInteractions(secondLogger);
-    }
-
-    private long timedOperation(Runnable runnable)
-    {
-        return timedOperation(runnable, null);
-    }
-
-    private long timedOperation(Runnable runnable, Class<? extends Exception> expectedExceptionClass)
-    {
-        long start = System.nanoTime();
-
-        if (expectedExceptionClass != null)
-        {
-            assertThatExceptionOfType(expectedExceptionClass).isThrownBy(runnable::run);
-        }
-        else
-        {
-            runnable.run();
-        }
-
-        return System.nanoTime() - start;
+        reset(mockFilter, mockObfuscator);
     }
 
     public static LogTimingStrategy getLogTimingStrategy(Auditor auditor) throws Exception

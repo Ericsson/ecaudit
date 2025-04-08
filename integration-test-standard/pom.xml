@@ -86,6 +86,7 @@
                         --add-exports java.base/java.lang.ref=ALL-UNNAMED
                         --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
                         --add-exports java.base/jdk.internal.ref=ALL-UNNAMED
+                        --add-exports java.base/jdk.internal.util=ALL-UNNAMED
                         --add-exports java.base/sun.nio.ch=ALL-UNNAMED
                         --add-exports java.management.rmi/com.sun.jmx.remote.internal.rmi=ALL-UNNAMED
                         --add-exports java.rmi/sun.rmi.registry=ALL-UNNAMED
