@@ -237,6 +237,82 @@ public final class WhitelistDataAccess
         }
     }
 
+    void migrateTableData()
+    {
+        try
+        {
+            LOG.info("Migrating audit whitelist data");
+
+            boolean needToAlign = false;
+            if (Schema.instance.getKeyspaceMetadata(EcauditKeyspace.ECAUDIT_KEYSPACE_NAME) == null)
+            {
+                EcauditKeyspace.createKeyspace();
+                needToAlign = true;
+            }
+
+            if (Schema.instance.getKeyspaceMetadata(EcauditKeyspace.ECAUDIT_KEYSPACE_NAME).getTableNullable(EcauditKeyspace.WHITELIST_TABLE_NAME_V2) == null)
+            {
+                EcauditKeyspace.createTable();
+                needToAlign = true;
+            }
+
+            if (needToAlign)
+            {
+                SchemaHelper schemaHelper = new SchemaHelper();
+                if (!schemaHelper.areSchemasAligned(SCHEMA_ALIGNMENT_DELAY_MS))
+                {
+                    LOG.warn("Schema alignment timeout - continuing startup");
+                }
+            }
+
+            UntypedResultSet whitelists = QueryProcessor.process(
+                    String.format("SELECT * FROM %s.%s",
+                            SchemaConstants.AUTH_KEYSPACE_NAME, AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2),
+                    ConsistencyLevel.LOCAL_QUORUM);
+
+            String insertWhiteList = "INSERT INTO " + EcauditKeyspace.ECAUDIT_KEYSPACE_NAME + "." + EcauditKeyspace.WHITELIST_TABLE_NAME_V2 + " (operations, role, resource) VALUES ( ?, ?, ?)";
+            for (UntypedResultSet.Row row : whitelists)
+            {
+                List<ByteBuffer> values = getSerializedUpdateValues(row.getString("role"), row.getString("resource"), OperationFactory.toOperationSet(row.getSet("operations", UTF8Type.instance)));
+                QueryProcessor.process(insertWhiteList, ConsistencyLevel.LOCAL_QUORUM, values);
+            }
+
+            LOG.info("Whitelist data migration completed.");
+        }
+        catch (Exception e)
+        {
+            LOG.warn("Unable to complete migration of whitelist data (perhaps not enough nodes are availible). Migration should not be considered complete", e);
+            throw new RuntimeException("Unable to complete migration of whitelist data (perhaps not enough nodes are availible). Migration should not be considered complete", e); //NOPMD
+        }
+    }
+
+    void demigrateTableData()
+    {
+        try
+        {
+            LOG.info("deMigrating audit whitelist data");
+
+            UntypedResultSet whitelists = QueryProcessor.process(
+                    String.format("SELECT * FROM %s.%s",
+                            EcauditKeyspace.ECAUDIT_KEYSPACE_NAME, EcauditKeyspace.WHITELIST_TABLE_NAME_V2),
+                    ConsistencyLevel.LOCAL_QUORUM);
+
+            String insertWhiteList = "INSERT INTO " + SchemaConstants.AUTH_KEYSPACE_NAME + "." + AuditAuthKeyspace.WHITELIST_TABLE_NAME_V2 + " (operations, role, resource) VALUES ( ?, ?, ?)";
+            for (UntypedResultSet.Row row : whitelists)
+            {
+                List<ByteBuffer> values = getSerializedUpdateValues(row.getString("role"), row.getString("resource"), OperationFactory.toOperationSet(row.getSet("operations", UTF8Type.instance)));
+                QueryProcessor.process(insertWhiteList, ConsistencyLevel.LOCAL_QUORUM, values);
+            }
+
+            LOG.info("Whitelist data demigration completed.");
+        }
+        catch (Exception e)
+        {
+            LOG.warn("Unable to complete demigration of whitelist data (perhaps not enough nodes are availible). deMigration should not be considered complete", e);
+            throw new RuntimeException("Unable to complete demigration of whitelist data (perhaps not enough nodes are availible). deMigration should not be considered complete", e); //NOPMD
+        }
+    }
+
     private CQLStatement prepare(String template, String keyspace, String table)
     {
         try

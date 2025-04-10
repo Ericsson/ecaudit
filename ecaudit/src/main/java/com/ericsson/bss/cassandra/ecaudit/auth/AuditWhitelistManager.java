@@ -97,6 +97,14 @@ class AuditWhitelistManager
         {
             removeFromWhitelist(performer, role, optionEntry);
         }
+        else if (whitelistOperation == WhitelistOperation.MIGRATE)
+        {
+            migrateRoleOption(performer, role, optionEntry);
+        }
+        else if (whitelistOperation == WhitelistOperation.DEMIGRATE)
+        {
+            demigrateRoleOption(performer, role, optionEntry);
+        }
         else
         {
             throw new InvalidRequestException(String.format("Illegal whitelist option [%s]", whitelistOperation));
@@ -123,6 +131,32 @@ class AuditWhitelistManager
         checkPermissionToWhitelist(performer, resource);
 
         whitelistDataAccess.removeFromWhitelist(role, resource, operations);
+    }
+
+    private void migrateRoleOption(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
+    {
+        whitelistContract.verifyValidMigrateValue(optionEntry.getValue());
+        checkPermissionToMigrateTable(performer, role);
+        whitelistDataAccess.migrateTableData();
+    }
+
+    private void demigrateRoleOption(AuthenticatedUser performer, RoleResource role, Map.Entry<String, String> optionEntry)
+    {
+        whitelistContract.verifyValidMigrateValue(optionEntry.getValue());
+        checkPermissionToMigrateTable(performer, role);
+        whitelistDataAccess.demigrateTableData();
+    }
+
+    private void checkPermissionToMigrateTable(AuthenticatedUser performer, RoleResource role)
+    {
+        if (!performer.isSuper())
+        {
+            throw new UnauthorizedException("Only super-user can migrate audit whitelist data");
+        }
+        if (!performer.getName().equals(role.getRoleName()))
+        {
+            throw new UnauthorizedException("Migrate audit whitelist options is only valid on your own user name");
+        }
     }
 
     Map<String, String> getRoleWhitelist(RoleResource role)
