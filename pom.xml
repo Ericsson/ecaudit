@@ -51,7 +51,7 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
 
-        <cassandra.version>5.0.3</cassandra.version>
+        <cassandra.version>5.0.4</cassandra.version>
         <artifact.flavor.version>c5.0</artifact.flavor.version>
 
         <pmd-config-url>pmd-rules.xml</pmd-config-url>
@@ -60,7 +60,7 @@
 
         <assertj.version>3.27.3</assertj.version>
         <cassandra-driver.version>4.19.0</cassandra-driver.version>
-        <commons-io.version>2.18.0</commons-io.version>
+        <commons-io.version>2.19.0</commons-io.version>
         <jcip-annotations.version>1.0</jcip-annotations.version>
         <junit.version>4.13.2</junit.version>
         <mockito.version>5.17.0</mockito.version>
