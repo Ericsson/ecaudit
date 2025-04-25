@@ -23,11 +23,21 @@ import org.apache.cassandra.exceptions.InvalidRequestException;
 
 class WhitelistContract
 {
+    private static final String MIGRATE_LEGACY_VALUE_PATTERN = "now";
+
     void verify(Set<Permission> operations, IResource suppliedResource)
     {
         if (!suppliedResource.applicablePermissions().containsAll(operations))
         {
             throw new InvalidRequestException(String.format("Operation(s) %s are not applicable on %s", operations, suppliedResource));
+        }
+    }
+
+    void verifyValidMigrateValue(String value)
+    {
+        if (!MIGRATE_LEGACY_VALUE_PATTERN.equalsIgnoreCase(value))
+        {
+            throw new InvalidRequestException(String.format("Audit whitelist data will only be migrated if value is set to [%s]", MIGRATE_LEGACY_VALUE_PATTERN));
         }
     }
 }

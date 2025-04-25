@@ -30,6 +30,8 @@ class WhitelistOptionParser
     private static final String GRANT_PREFIX = "grant_audit_whitelist_for_";
     private static final String REVOKE_PREFIX = "revoke_audit_whitelist_for_";
     private static final String VALID_PREFIX = "^" + GRANT_PREFIX + "|" + "^" + REVOKE_PREFIX;
+    private static final String MIGRATE_PATTERN = "migrate_audit_whitelist_table";
+    private static final String DEMIGRATE_PATTERN = "syncback_audit_whitelist_table";
 
     WhitelistOperation parseWhitelistOperation(String inputOption)
     {
@@ -42,6 +44,14 @@ class WhitelistOptionParser
         else if (normalizedInput.startsWith(REVOKE_PREFIX))
         {
             return WhitelistOperation.REVOKE;
+        }
+        else if (normalizedInput.matches(MIGRATE_PATTERN))
+        {
+            return WhitelistOperation.MIGRATE;
+        }
+        else if (normalizedInput.matches(DEMIGRATE_PATTERN))
+        {
+            return WhitelistOperation.DEMIGRATE;
         }
         else
         {

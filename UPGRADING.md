@@ -4,6 +4,13 @@ Below you'll find special instructions to consider when upgrading to a new versi
 Check out the [change log](CHANGES.md) for a full list of new features and fixes.
 
 
+## Notes regarding Cassandra 6.0
+
+For ecAudit to support Cassandra 6.0 the table role_audit_whitelists_v2 that ecAudit has created in the system_auth keyspace will move to a new keyspace.
+Upgrading to Cassandra 6.0 will require creation of this keyspace and migration of the table to the new keyspace before upgrading. This ecAudit version
+is prepared to handle this migration, instructions for doing the migration will be in the upograde guide for the ecAudit version supporting Cassandra 6.0.
+
+
 ## To version 3.0.x
 
 Administrators should be aware of the following changes when upgrading to version 3.0.0 or later.
