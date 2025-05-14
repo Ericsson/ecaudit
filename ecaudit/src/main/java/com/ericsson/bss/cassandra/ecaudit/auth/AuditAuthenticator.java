@@ -37,6 +37,8 @@ import org.apache.cassandra.exceptions.AuthenticationException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.utils.FBUtilities;
 
+import javax.security.cert.X509Certificate;
+
 /**
  * An auditing {@link IAuthenticator} which is delegating authentication
  * to a {@link IDecoratedAuthenticator}.
@@ -115,6 +117,12 @@ public class AuditAuthenticator implements IAuthenticator
     public SaslNegotiator newSaslNegotiator(InetAddress clientAddress)
     {
         return new AuditSaslNegotiator(clientAddress, wrappedAuthenticator.newDecoratedSaslNegotiator(clientAddress));
+    }
+
+    @Override
+    public SaslNegotiator newSaslNegotiator(InetAddress clientAddress, X509Certificate[] certificates)
+    {
+        return new AuditSaslNegotiator(clientAddress, wrappedAuthenticator.newDecoratedSaslNegotiator(clientAddress, certificates));
     }
 
     @Override
