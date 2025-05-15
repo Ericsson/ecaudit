@@ -85,6 +85,7 @@
         <org.jacoco.jacoco-maven-plugin.version>0.8.13</org.jacoco.jacoco-maven-plugin.version>
         <org.pitest.pitest-maven.version>1.19.2</org.pitest.pitest-maven.version>
         <org.apache.maven.plugins-maven-pmd-plugin.version>3.26.0</org.apache.maven.plugins-maven-pmd-plugin.version>
+        <org.sonatype.central-central-publishing-maven-plugin>0.7.0</org.sonatype.central-central-publishing-maven-plugin>
     </properties>
 
     <dependencyManagement>
@@ -337,6 +338,9 @@ limitations under the License.
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>${org.apache.maven.plugins.maven-deploy-plugin.version}</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -386,6 +390,23 @@ limitations under the License.
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>${org.sonatype.central-central-publishing-maven-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>publish</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <publishingServerId>publisher</publishingServerId>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -505,17 +526,6 @@ limitations under the License.
         <developerConnection>scm:git:git@github.com:ericsson/ecaudit.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>publisher</id>
-            <url>https://ossrh-staging-api.central.sonatype.com/content/repositories/snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>publisher</id>
-            <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 
     <organization>
         <name>Ericsson AB</name>
