@@ -1,5 +1,9 @@
 # Changes
 
+## Version 3.1.3
+
+* Add support for IAuthenticator.newSaslNegotiator(InetAddress clientAddress, Certificate[] certificates) - #360
+
 ## Version 3.1.2
 
 * Prepare migration task for upgrading to Cassandra 6.0

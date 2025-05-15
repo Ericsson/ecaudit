@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.net.InetAddress;
+import java.security.cert.Certificate;
 import java.util.Optional;
 import java.util.Set;
 
@@ -57,6 +58,21 @@ public interface IDecoratedAuthenticator extends IAuthenticator
      */
     DecoratedSaslNegotiator newDecoratedSaslNegotiator(InetAddress clientAddress);
 
+    /**
+     * Returns an <em>audited</em> {@link DecoratedSaslNegotiator}.
+     *
+     * Note: Implementations should probably use this method when
+     * {@link IAuthenticator#newSaslNegotiator(InetAddress, Certificate[])} is called.
+     *
+     * @param clientAddress the IP address of the client whom we wish to authenticate, or null
+     *                      if an internal client (one not connected over the remote transport).
+     * @param certificates the peer's X509 Certificate chain, if present.
+     * @return an instance of an {@link DecoratedSaslNegotiator}
+     */
+    default DecoratedSaslNegotiator newDecoratedSaslNegotiator(InetAddress clientAddress, Certificate[] certificates) // NOPMD
+    {
+        return newDecoratedSaslNegotiator(clientAddress);
+    }
 
     /**
      * A <em>decorated</em> implementation of {@link SaslNegotiator} that will return additional fields to be used for

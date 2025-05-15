@@ -16,6 +16,7 @@
 package com.ericsson.bss.cassandra.ecaudit.auth;
 
 import java.net.InetAddress;
+import java.security.cert.Certificate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -115,6 +116,12 @@ public class AuditAuthenticator implements IAuthenticator
     public SaslNegotiator newSaslNegotiator(InetAddress clientAddress)
     {
         return new AuditSaslNegotiator(clientAddress, wrappedAuthenticator.newDecoratedSaslNegotiator(clientAddress));
+    }
+
+    @Override
+    public SaslNegotiator newSaslNegotiator(InetAddress clientAddress, Certificate[] certificates)
+    {
+        return new AuditSaslNegotiator(clientAddress, wrappedAuthenticator.newDecoratedSaslNegotiator(clientAddress, certificates));
     }
 
     @Override
