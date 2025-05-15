@@ -22,6 +22,8 @@ import java.util.Set;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IRoleManager;
 
+import javax.security.cert.X509Certificate;
+
 /**
  * An {@link IAuthenticator} that provide custom fields to be used during authentication auditing.
  */
@@ -57,6 +59,21 @@ public interface IDecoratedAuthenticator extends IAuthenticator
      */
     DecoratedSaslNegotiator newDecoratedSaslNegotiator(InetAddress clientAddress);
 
+    /**
+     * Returns an <em>audited</em> {@link DecoratedSaslNegotiator}.
+     *      *
+     *      * Note: Implementations should probably use this method when
+     *      * {@link IAuthenticator#newSaslNegotiator(InetAddress, X509Certificate[])} is called.
+     *      *
+     *      * @param clientAddress the IP address of the client whom we wish to authenticate, or null
+     *      *                      if an internal client (one not connected over the remote transport).
+     * @param certificates the peer's X509 Certificate chain, if present.
+     * @return an instance of an {@link DecoratedSaslNegotiator}
+     */
+    default DecoratedSaslNegotiator newDecoratedSaslNegotiator(InetAddress clientAddress, X509Certificate[] certificates) // NOPMD
+    {
+        return newDecoratedSaslNegotiator(clientAddress);
+    }
 
     /**
      * A <em>decorated</em> implementation of {@link SaslNegotiator} that will return additional fields to be used for

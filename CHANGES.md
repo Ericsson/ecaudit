@@ -1,5 +1,13 @@
 # Changes
 
+## Version 3.1.3
+
+* Add support for IAuthenticator.newSaslNegotiator(InetAddress clientAddress, Certificate[] certificates) - #360
+
+## Version 3.1.2 (only flavor ecaudit_c5.0)
+
+## Version 3.1.1 (only flavor ecaudit_c5.0)
+
 ## Version 3.1.0
 
 * Cassandra 4.1.6 support (only flavor ecaudit_c4.1) - #269
