@@ -44,7 +44,7 @@ public class AuditRecordReadMarshallable implements ReadMarshallable
             case WireTags.VALUE_VERSION_0:
                 auditRecord = readV0(wire);
                 break;
-            case WireTags.VALUE_VERSION_1: // NOPMD
+            case WireTags.VALUE_VERSION_1:
             case WireTags.VALUE_VERSION_CURRENT:
                 auditRecord = readBitmappedRecord(wire);
                 break;
