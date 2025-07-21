@@ -70,7 +70,7 @@
         <equalsverifier.version>3.19.4</equalsverifier.version>
 
         <com.mycila.license-maven-plugin.version>5.0.0</com.mycila.license-maven-plugin.version>
-        <org.apache.maven.plugins.maven-enforcer-plugin.version>3.5.0</org.apache.maven.plugins.maven-enforcer-plugin.version>
+        <org.apache.maven.plugins.maven-enforcer-plugin.version>3.6.1</org.apache.maven.plugins.maven-enforcer-plugin.version>
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.14.0</org.apache.maven.plugins.maven-compiler-plugin.version>
         <org.codehaus.mojo.build-helper-maven-plugin.version>3.6.1</org.codehaus.mojo.build-helper-maven-plugin.version>
         <org.apache.maven.plugins.maven-surefire-plugin.version>3.5.3</org.apache.maven.plugins.maven-surefire-plugin.version>
@@ -81,7 +81,7 @@
         <org.apache.maven.plugins.maven-deploy-plugin.version>3.1.4</org.apache.maven.plugins.maven-deploy-plugin.version>
         <org.apache.maven.plugins.maven-source-plugin.version>3.3.1</org.apache.maven.plugins.maven-source-plugin.version>
         <org.apache.maven.plugins.maven-javadoc-plugin.version>3.11.2</org.apache.maven.plugins.maven-javadoc-plugin.version>
-        <org.apache.maven.plugins.maven-gpg-plugin.version>3.2.7</org.apache.maven.plugins.maven-gpg-plugin.version>
+        <org.apache.maven.plugins.maven-gpg-plugin.version>3.2.8</org.apache.maven.plugins.maven-gpg-plugin.version>
         <org.jacoco.jacoco-maven-plugin.version>0.8.13</org.jacoco.jacoco-maven-plugin.version>
         <org.pitest.pitest-maven.version>1.20.0</org.pitest.pitest-maven.version>
         <org.apache.maven.plugins-maven-pmd-plugin.version>3.27.0</org.apache.maven.plugins-maven-pmd-plugin.version>
