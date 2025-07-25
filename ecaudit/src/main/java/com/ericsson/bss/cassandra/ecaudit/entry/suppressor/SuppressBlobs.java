@@ -64,9 +64,8 @@ public class SuppressBlobs extends AbstractSuppressor
                 return setContainsBlob((SetType) type);
             case MAP:
                 return mapContainsBlob((MapType) type);
-            default:
-                throw new IllegalArgumentException("Invalid collection type: " + type.kind);
         }
+        throw new IllegalArgumentException("Invalid collection type: " + type.kind);
     }
 
     private boolean listContainsBlob(ListType type)

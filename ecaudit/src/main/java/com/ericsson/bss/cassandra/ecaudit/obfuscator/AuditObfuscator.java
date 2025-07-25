@@ -20,6 +20,7 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
 /**
  * An interface for obfuscating the sensitive information in {@link AuditEntry} instances.
  */
+@FunctionalInterface
 public interface AuditObfuscator
 {
 
