@@ -69,7 +69,7 @@ public class QueueReader
         {
             long startIndex = tempTailer.index();
 
-            tempTailer = tempTailer.toEnd(); // NOPMD
+            tempTailer = tempTailer.toEnd();
 
             long newIndex = tempTailer.index() - toolOptions.tail().get();
             newIndex = Math.max(newIndex, startIndex);

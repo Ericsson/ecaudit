@@ -23,6 +23,7 @@ import org.apache.cassandra.cql3.ColumnSpecification;
 /**
  * Used to suppress prepared statement bound values.
  */
+@FunctionalInterface
 public interface BoundValueSuppressor
 {
     /**

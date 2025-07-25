@@ -26,6 +26,7 @@ import com.ericsson.bss.cassandra.ecaudit.entry.AuditEntry;
  * which is using {@link String} for both keys and values.
  * The map represents configuration parameters to the logger strategy.
  */
+@FunctionalInterface
 public interface AuditLogger
 {
 

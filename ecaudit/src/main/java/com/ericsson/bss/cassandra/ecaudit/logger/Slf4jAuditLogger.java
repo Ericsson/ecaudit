@@ -39,7 +39,7 @@ public class Slf4jAuditLogger implements AuditLogger
 {
     public static final String AUDIT_LOGGER_NAME = "ECAUDIT";
 
-    private final Logger auditLogger; // NOPMD
+    private final Logger auditLogger;
     private final LogMessageFormatter<AuditEntry> formatter;
 
     /**
