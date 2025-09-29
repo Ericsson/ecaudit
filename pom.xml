@@ -58,7 +58,7 @@
 
         <commons-cli.version>1.10.0</commons-cli.version>
 
-        <assertj.version>3.27.5</assertj.version>
+        <assertj.version>3.27.6</assertj.version>
         <cassandra-driver.version>4.19.0</cassandra-driver.version>
         <commons-io.version>2.20.0</commons-io.version>
         <jcip-annotations.version>1.0</jcip-annotations.version>
