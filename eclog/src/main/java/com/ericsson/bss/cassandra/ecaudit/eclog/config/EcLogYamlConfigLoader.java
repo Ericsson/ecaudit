@@ -29,6 +29,8 @@ import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public final class EcLogYamlConfigLoader
 {
     private static final EcLogYamlConfig DEFAULT_CONFIG = new EcLogYamlConfig();
@@ -63,7 +65,7 @@ public final class EcLogYamlConfigLoader
         Yaml yaml = new Yaml(constructor);
         try
         {
-            String fileAsString = new String(Files.readAllBytes(filePath));
+            String fileAsString = new String(Files.readAllBytes(filePath), UTF_8);
             EcLogYamlConfig auditYamlConfig = (EcLogYamlConfig) yaml.load(fileAsString);
             return auditYamlConfig == null
                    ? new EcLogYamlConfig() // File is valid but empty

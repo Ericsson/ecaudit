@@ -44,7 +44,7 @@ import org.apache.cassandra.utils.FBUtilities;
  */
 final class AuditAdapterFactory
 {
-    private final static Logger LOG = LoggerFactory.getLogger(AuditAdapterFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuditAdapterFactory.class);
 
     static final String FILTER_TYPE_PROPERTY_NAME = "ecaudit.filter_type";
     static final String FILTER_TYPE_YAML = "YAML";

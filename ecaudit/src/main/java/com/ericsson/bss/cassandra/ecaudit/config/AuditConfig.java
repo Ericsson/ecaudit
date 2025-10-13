@@ -38,7 +38,7 @@ public class AuditConfig
         return SingletonHolder.INSTANCE;
     }
 
-    private final static class SingletonHolder
+    private static final class SingletonHolder
     {
         private static final AuditConfig INSTANCE = new AuditConfig(AuditYamlConfigurationLoader.withSystemProperties());
     }

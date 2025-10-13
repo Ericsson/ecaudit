@@ -28,8 +28,8 @@ import static org.mockito.Mockito.mock;
 
 public final class ClientInitializer
 {
-    static private IAuthorizer authorizerMock = mock(IAuthorizer.class);
-    static private INetworkAuthorizer networkAuthorizerMock = mock(INetworkAuthorizer.class);
+    private static IAuthorizer authorizerMock = mock(IAuthorizer.class);
+    private static INetworkAuthorizer networkAuthorizerMock = mock(INetworkAuthorizer.class);
 
     private ClientInitializer()
     {

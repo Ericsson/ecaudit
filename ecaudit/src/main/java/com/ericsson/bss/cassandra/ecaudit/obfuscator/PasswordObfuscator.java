@@ -34,15 +34,15 @@ import com.google.common.collect.Sets;
  */
 public class PasswordObfuscator implements AuditObfuscator
 {
-    private final static String PASSWORD_OBFUSCATED = "*****";
+    private static final String PASSWORD_OBFUSCATED = "*****";
 
     private static final int PATTERN_FLAGS = Pattern.CASE_INSENSITIVE | Pattern.DOTALL;
 
-    private final static String REGEX_PASSWORD_GROUP = "password";
-    private final static Pattern PASSWORD_PATTERN =
+    private static final String REGEX_PASSWORD_GROUP = "password";
+    private static final Pattern PASSWORD_PATTERN =
             Pattern.compile(".*password\\s*=?\\s*'(?<password>[^\\s]+)'.*", PATTERN_FLAGS);
 
-    private final static Set<Permission> PASSWORD_PERMISSIONS = ImmutableSet.of(Permission.CREATE, Permission.ALTER);
+    private static final Set<Permission> PASSWORD_PERMISSIONS = ImmutableSet.of(Permission.CREATE, Permission.ALTER);
 
     @Override
     public AuditEntry obfuscate(AuditEntry entry)
