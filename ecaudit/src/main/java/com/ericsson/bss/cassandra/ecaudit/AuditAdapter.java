@@ -49,7 +49,7 @@ import org.apache.cassandra.utils.MD5Digest;
 public class AuditAdapter
 {
     // Batch
-    private final static String BATCH_FAILURE = "Apply batch failed: %s";
+    private static final String BATCH_FAILURE = "Apply batch failed: %s";
 
     private final Auditor auditor;
     private final AuditEntryBuilderFactory entryBuilderFactory;
@@ -74,7 +74,7 @@ public class AuditAdapter
         return SingletonHolder.INSTANCE;
     }
 
-    private final static class SingletonHolder
+    private static final class SingletonHolder
     {
         private static final AuditAdapter INSTANCE = AuditAdapterFactory.createAuditAdapter();
     }
@@ -275,7 +275,8 @@ public class AuditAdapter
             if (queryOrId instanceof MD5Digest)
             {
                 entryBuilderFactory.updateBatchEntryBuilder(builder, batchStatement.getStatements().get(statementIndex));
-                builder.operation(new PreparedAuditOperation(rawStatements.get(rawStatementIndex++), options.forStatement(statementIndex), boundValueSuppressor));
+                builder.operation(new PreparedAuditOperation(rawStatements.get(rawStatementIndex), options.forStatement(statementIndex), boundValueSuppressor));
+                rawStatementIndex++;
                 batchOperations.add(builder.build());
             }
             else

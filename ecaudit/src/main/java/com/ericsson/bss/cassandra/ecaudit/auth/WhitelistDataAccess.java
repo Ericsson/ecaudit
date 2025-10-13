@@ -85,7 +85,7 @@ public final class WhitelistDataAccess
         return SingletonHolder.INSTANCE;
     }
 
-    private final static class SingletonHolder
+    private static final class SingletonHolder
     {
         private static final WhitelistDataAccess INSTANCE = new WhitelistDataAccess();
     }
