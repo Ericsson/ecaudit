@@ -24,6 +24,7 @@ import java.util.List;
 
 import com.ericsson.bss.cassandra.ecaudit.eclog.ToolOptions;
 
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -61,7 +62,9 @@ public final class EcLogYamlConfigLoader
 
     static EcLogYamlConfig loadConfigFromUrl(Path filePath)
     {
-        SafeConstructor constructor = new CustomClassLoaderConstructor(EcLogYamlConfig.class, Thread.currentThread().getContextClassLoader());
+        SafeConstructor constructor = new CustomClassLoaderConstructor(EcLogYamlConfig.class,
+                Thread.currentThread().getContextClassLoader(),
+                new LoaderOptions());
         Yaml yaml = new Yaml(constructor);
         try
         {

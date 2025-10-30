@@ -1,5 +1,9 @@
 # Changes
 
+## Version 3.1.4
+
+* Fix build error with Cassandra 5.0.2 (only flavor ecaudit_c5.0) - #401
+
 ## Version 3.1.3
 
 * Add support for IAuthenticator.newSaslNegotiator(InetAddress clientAddress, Certificate[] certificates) - #360
