@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.cassandra.exceptions.ConfigurationException;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -127,7 +128,9 @@ public final class AuditYamlConfigurationLoader
 
         try (InputStream input = url.openStream())
         {
-            SafeConstructor constructor = new CustomClassLoaderConstructor(AuditYamlConfig.class, Thread.currentThread().getContextClassLoader());
+            SafeConstructor constructor = new CustomClassLoaderConstructor(AuditYamlConfig.class,
+                    Thread.currentThread().getContextClassLoader(),
+                    new LoaderOptions());
             Yaml yaml = new Yaml(constructor);
 
             AuditYamlConfig auditYamlConfig = (AuditYamlConfig) yaml.load(input);
