@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.ericsson.bss.cassandra.ecaudit</groupId>
         <artifactId>parent_c5.0</artifactId>
-        <version>3.1.4</version>
+        <version>3.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>integration-test-query-logger_c5.0</artifactId>
 
