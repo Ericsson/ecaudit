@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 public class TestSuppressEverything
 {
     private static final ColumnSpecification TEXT_KEY_COLUMN = ColumnMetadata.partitionKeyColumn("ks", "cf", "partitionKey", UTF8Type.instance, 1);
-    private static final ColumnSpecification INT_REGULAR_COLUMN = ColumnMetadata.regularColumn("ks", "cf", "regular", Int32Type.instance);
+    private static final ColumnSpecification INT_REGULAR_COLUMN = ColumnMetadata.regularColumn("ks", "cf", "regular", Int32Type.instance, ColumnMetadata.NO_UNIQUE_ID);
 
     @Mock
     ByteBuffer valueMock;
