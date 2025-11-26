@@ -38,7 +38,7 @@ public class TestSuppressClusteringAndRegular
 {
     private static final ColumnSpecification CLUSTER_KEY_COLUMN = ColumnMetadata.clusteringColumn("ks", "cf", "clusterKey", Int32Type.instance, 1);
     private static final ColumnSpecification PARTITION_KEY_COLUMN = ColumnMetadata.partitionKeyColumn("ks", "cf", "partitionKey", UTF8Type.instance, 1);
-    private static final ColumnSpecification REGULAR_COLUMN = ColumnMetadata.regularColumn("ks", "cf", "regular", UTF8Type.instance);
+    private static final ColumnSpecification REGULAR_COLUMN = ColumnMetadata.regularColumn("ks", "cf", "regular", UTF8Type.instance, ColumnMetadata.NO_UNIQUE_ID);
 
     @Mock
     ByteBuffer valueMock;
