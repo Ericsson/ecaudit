@@ -85,7 +85,7 @@
         <org.jacoco.jacoco-maven-plugin.version>0.8.14</org.jacoco.jacoco-maven-plugin.version>
         <org.pitest.pitest-maven.version>1.22.0</org.pitest.pitest-maven.version>
         <org.apache.maven.plugins-maven-pmd-plugin.version>3.28.0</org.apache.maven.plugins-maven-pmd-plugin.version>
-        <org.sonatype.central-central-publishing-maven-plugin>0.9.0</org.sonatype.central-central-publishing-maven-plugin>
+        <org.sonatype.central-central-publishing-maven-plugin>0.10.0</org.sonatype.central-central-publishing-maven-plugin>
     </properties>
 
     <dependencyManagement>
