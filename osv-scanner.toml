@@ -1,3 +1,0 @@
-[[IgnoredVulns]]
-id = "GHSA-mjmj-j48q-9wg2"
-reason = "Using SafeConsturctor"
