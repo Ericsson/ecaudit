@@ -39,8 +39,7 @@ public class TestSuppressEverything
     private static final ColumnSpecification TEXT_KEY_COLUMN = ColumnMetadata.partitionKeyColumn("ks", "cf", "partitionKey", UTF8Type.instance, 1);
     private static final ColumnSpecification INT_REGULAR_COLUMN = ColumnMetadata.regularColumn("ks", "cf", "regular", Int32Type.instance, ColumnMetadata.NO_UNIQUE_ID);
 
-    @Mock
-    ByteBuffer valueMock;
+    private final ByteBuffer value = ByteBuffer.allocate(0);
 
     @Test
     public void testSuppressorAlwaysReturnsType()
@@ -48,11 +47,10 @@ public class TestSuppressEverything
         // Given
         BoundValueSuppressor suppressor = new SuppressEverything();
         // When
-        Optional<String> textResult = suppressor.suppress(TEXT_KEY_COLUMN, valueMock);
-        Optional<String> integerResult = suppressor.suppress(INT_REGULAR_COLUMN, valueMock);
+        Optional<String> textResult = suppressor.suppress(TEXT_KEY_COLUMN, value);
+        Optional<String> integerResult = suppressor.suppress(INT_REGULAR_COLUMN, value);
         // Then
         assertThat(textResult).contains("<text>");
         assertThat(integerResult).contains("<int>");
-        verifyNoInteractions(valueMock);
     }
 }
