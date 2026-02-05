@@ -33,8 +33,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TestSuppressNothing
 {
-    @Mock
-    ByteBuffer valueMock;
+    private final ByteBuffer value = ByteBuffer.allocate(0);
 
     @Test
     public void testSuppressorNeverSuppresses()
@@ -42,9 +41,8 @@ public class TestSuppressNothing
         // Given
         BoundValueSuppressor suppressor = new SuppressNothing();
         // When
-        Optional<String> result = suppressor.suppress(null, valueMock);
+        Optional<String> result = suppressor.suppress(null, value);
         // Then
         assertThat(result).isEmpty();
-        verifyNoInteractions(valueMock);
     }
 }

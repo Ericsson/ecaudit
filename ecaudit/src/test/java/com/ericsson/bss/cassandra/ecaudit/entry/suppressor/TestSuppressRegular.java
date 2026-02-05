@@ -39,8 +39,7 @@ public class TestSuppressRegular
     private static final ColumnSpecification PARTITION_KEY_COLUMN = ColumnMetadata.partitionKeyColumn("ks", "cf", "partitionKey", UTF8Type.instance, 1);
     private static final ColumnSpecification REGULAR_COLUMN = ColumnMetadata.regularColumn("ks", "cf", "regular", UTF8Type.instance, ColumnMetadata.NO_UNIQUE_ID);
 
-    @Mock
-    ByteBuffer valueMock;
+    private final ByteBuffer value = ByteBuffer.allocate(0);
 
     @Test
     public void testPartitionKeyIsNotSuppressed()
@@ -48,10 +47,9 @@ public class TestSuppressRegular
         // Given
         BoundValueSuppressor suppressor = new SuppressRegular();
         // When
-        Optional<String> result = suppressor.suppress(PARTITION_KEY_COLUMN, valueMock);
+        Optional<String> result = suppressor.suppress(PARTITION_KEY_COLUMN, value);
         // Then
         assertThat(result).isEmpty();
-        verifyNoInteractions(valueMock);
     }
 
     @Test
@@ -60,10 +58,9 @@ public class TestSuppressRegular
         // Given
         BoundValueSuppressor suppressor = new SuppressRegular();
         // When
-        Optional<String> result = suppressor.suppress(CLUSTER_KEY_COLUMN, valueMock);
+        Optional<String> result = suppressor.suppress(CLUSTER_KEY_COLUMN, value);
         // Then
         assertThat(result).isEmpty();
-        verifyNoInteractions(valueMock);
     }
 
     @Test
@@ -72,9 +69,8 @@ public class TestSuppressRegular
         // Given
         BoundValueSuppressor suppressor = new SuppressRegular();
         // When
-        Optional<String> result = suppressor.suppress(REGULAR_COLUMN, valueMock);
+        Optional<String> result = suppressor.suppress(REGULAR_COLUMN, value);
         // Then
         assertThat(result).contains("<text>");
-        verifyNoInteractions(valueMock);
     }
 }

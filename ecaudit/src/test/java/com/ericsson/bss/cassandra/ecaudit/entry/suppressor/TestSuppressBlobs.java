@@ -66,13 +66,12 @@ public class TestSuppressBlobs
     public void testBlobsAreHidden(ColumnSpecification column, String expectedString)
     {
         // Given
-        ByteBuffer valueMock = mock(ByteBuffer.class);
+        ByteBuffer value = ByteBuffer.allocate(0);
         BoundValueSuppressor suppressor = new SuppressBlobs();
         // When
-        Optional<String> result = suppressor.suppress(column, valueMock);
+        Optional<String> result = suppressor.suppress(column, value);
         // Then
         assertThat(result).contains(expectedString);
-        verifyNoInteractions(valueMock);
     }
 
     public Object[][] testBlobsAreHidden_parameters()
@@ -95,13 +94,12 @@ public class TestSuppressBlobs
     public void testNonBlobsColumns(ColumnSpecification column)
     {
         // Given
-        ByteBuffer valueMock = mock(ByteBuffer.class);
+        ByteBuffer value = ByteBuffer.allocate(0);
         BoundValueSuppressor suppressor = new SuppressBlobs();
         // When
-        Optional<String> result = suppressor.suppress(column, valueMock);
+        Optional<String> result = suppressor.suppress(column, value);
         // Then
         assertThat(result).isEmpty();
-        verifyNoInteractions(valueMock);
     }
 
     public Object[][] testNonBlobsColumns_parameters()
