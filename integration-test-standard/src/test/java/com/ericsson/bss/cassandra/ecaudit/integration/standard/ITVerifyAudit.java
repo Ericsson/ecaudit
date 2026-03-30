@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.cassandra.auth.CassandraRoleManager;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -139,6 +140,8 @@ public class ITVerifyAudit
         session.execute("CREATE KEYSPACE ecks2 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
 
         session.execute("CREATE KEYSPACE ecks3 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1} AND DURABLE_WRITES = false");
+
+        CassandraRoleManager.updatePasswordUpdateMinInterval(0);
     }
 
     @Before
@@ -161,6 +164,8 @@ public class ITVerifyAudit
     {
         if(session != null)
         {
+            CassandraRoleManager.updatePasswordUpdateMinInterval(5000);
+
             session.execute("DROP KEYSPACE IF EXISTS ecks_itva");
             session.execute("DROP ROLE IF EXISTS ecuser");
             session.execute("DROP ROLE IF EXISTS foo");
