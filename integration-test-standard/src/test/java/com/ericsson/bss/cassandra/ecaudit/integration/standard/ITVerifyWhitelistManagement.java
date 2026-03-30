@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Splitter;
+import org.apache.cassandra.auth.CassandraRoleManager;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -105,6 +106,8 @@ public class ITVerifyWhitelistManagement
         superSession = cdt.createSession(SUPER_USER, "secret");
 
         authorizedSession = cdt.createSession(AUTHORIZED_USER, "secret");
+
+        CassandraRoleManager.updatePasswordUpdateMinInterval(0);
     }
 
     @After
@@ -118,6 +121,8 @@ public class ITVerifyWhitelistManagement
     {
         if(session != null)
         {
+            CassandraRoleManager.updatePasswordUpdateMinInterval(5000);
+
             session.execute("DROP KEYSPACE IF EXISTS ecks_itvwm");
             session.execute("DROP ROLE IF EXISTS whitelist_role");
             session.execute("DROP ROLE IF EXISTS ordinary_user");
