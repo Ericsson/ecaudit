@@ -14,7 +14,8 @@ The table below list the Cassandra version used while building each ecAudit rele
 
 | ecAudit Version | Compiled With   | Compatible With          |
 |-----------------|-----------------|--------------------------|
-| 3.1.4 -> latest | Cassandra 5.0.6 | Cassandra 5.0.6 -> 5.0.7 |
+| 3.1.5 -> latest | Cassandra 5.0.7 | Cassandra 5.0.6 -> 5.0.7 |
+| 3.1.4           | Cassandra 5.0.6 | Cassandra 5.0.6 -> 5.0.7 |
 | 3.1.1 -> 3.1.3  | Cassandra 5.0.2 | Cassandra 5.0.0 -> 5.0.5 |
 | 3.1.0           | Cassandra 5.0.0 | Cassandra 5.0.0 -> 5.0.1 |
 

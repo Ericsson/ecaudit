@@ -1,5 +1,7 @@
 # Changes
 
+## Version 3.1.5 (only flavor ecaudit_c5.0)
+
 ## Version 3.1.4
 
 * Fix build error with Cassandra 5.0.6 (only flavor ecaudit_c5.0) - #401
