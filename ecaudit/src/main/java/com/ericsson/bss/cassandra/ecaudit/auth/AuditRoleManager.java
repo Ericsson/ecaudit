@@ -80,6 +80,11 @@ public class AuditRoleManager implements IRoleManager
              DatabaseDescriptor.getAuthenticator());
     }
 
+    protected AuditRoleManager(IRoleManager wrappedRoleManager)
+    {
+        this(wrappedRoleManager, new AuditWhitelistManager(), AuditAdapter.getInstance(), DatabaseDescriptor.getAuthenticator());
+    }
+
     @VisibleForTesting
     AuditRoleManager(IRoleManager wrappedRoleManager, AuditWhitelistManager whitelistManager, AuditAdapter auditAdapter, IAuthenticator authenticator)
     {
