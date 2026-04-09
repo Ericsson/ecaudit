@@ -51,7 +51,9 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
 
-        <cassandra.version>6.0-alpha1</cassandra.version>
+        <failsafe.extra.argLine></failsafe.extra.argLine>
+
+        <cassandra.version>6.0-alpha2-SNAPSHOT</cassandra.version>
         <artifact.flavor.version>c6.0</artifact.flavor.version>
 
         <pmd-config-url>pmd-rules.xml</pmd-config-url>
@@ -413,6 +415,15 @@ limitations under the License.
     </build>
 
     <profiles>
+        <profile>
+            <id>java21</id>
+            <activation>
+                <jdk>21</jdk>
+            </activation>
+            <properties>
+                <failsafe.extra.argLine>-Djava.security.manager=allow</failsafe.extra.argLine>
+            </properties>
+        </profile>
         <profile>
             <id>dev</id>
             <activation>

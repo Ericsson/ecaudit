@@ -82,8 +82,8 @@
                     <reuseForks>true</reuseForks>
                     <argLine>
                         ${argLine}
+                        ${failsafe.extra.argLine}
                         -Djdk.attach.allowAttachSelf=true
-                        -Djava.security.manager=allow
                         --add-exports java.base/java.lang.ref=ALL-UNNAMED
                         --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
                         --add-exports java.base/jdk.internal.ref=ALL-UNNAMED

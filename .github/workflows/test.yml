@@ -74,7 +74,7 @@ jobs:
           key: ${{ runner.os }}-m2-ut-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2-ut-
       - name: Unit Tests
-        run: mvn --batch-mode --activate-profiles github test jacoco:report -Dmaven.compiler.target=17 -Dmaven.compiler.source=17
+        run: mvn --batch-mode --activate-profiles github test jacoco:report -Dmaven.compiler.target=21 -Dmaven.compiler.source=21
       - name: Upload test coverage report
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         with:
@@ -122,4 +122,4 @@ jobs:
           key: ${{ runner.os }}-m2-it-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2-it-
       - name: Integration Tests
-        run: mvn --batch-mode --activate-profiles github test-compile failsafe:integration-test failsafe:verify -Dmaven.compiler.target=17 -Dmaven.compiler.source=17
+        run: mvn --batch-mode --activate-profiles github test-compile failsafe:integration-test failsafe:verify -Dmaven.compiler.target=21 -Dmaven.compiler.source=21
