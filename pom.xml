@@ -60,7 +60,7 @@
 
         <assertj.version>3.27.7</assertj.version>
         <cassandra-driver.version>4.19.2</cassandra-driver.version>
-        <commons-io.version>2.21.0</commons-io.version>
+        <commons-io.version>2.22.0</commons-io.version>
         <jcip-annotations.version>1.0</jcip-annotations.version>
         <junit.version>4.13.2</junit.version>
         <mockito.version>5.23.0</mockito.version>
